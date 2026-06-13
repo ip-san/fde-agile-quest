@@ -43,6 +43,7 @@ interface Props {
 export function EventModal({ event, unexpected, onChoose }: Props) {
   const ref = useFocusTrap<HTMLDivElement>()
   const titleId = `event-title-${event.id}`
+  const segId = `event-seg-${event.id}`
   const eventImgKey = eventImage(event)
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
@@ -50,7 +51,9 @@ export function EventModal({ event, unexpected, onChoose }: Props) {
         ref={ref}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={titleId}
+        // 止まったセグメント名をアクセシブルネームに含め、フォーカス移動時に必ず読み上げる。
+        // ルーレットの結果通知は背景の aria-live にあり aria-modal 下で取りこぼれ得るため
+        aria-labelledby={`${segId} ${titleId}`}
         className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl"
       >
         <header
@@ -61,6 +64,7 @@ export function EventModal({ event, unexpected, onChoose }: Props) {
             {CEREMONY_LABELS[event.ceremony]}
           </span>
           <span
+            id={segId}
             className="rounded-full px-2.5 py-0.5 text-xs font-bold text-slate-950"
             style={{ backgroundColor: SEGMENT_COLORS[event.segment] }}
           >

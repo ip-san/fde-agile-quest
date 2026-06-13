@@ -38,6 +38,14 @@ describe('applyEffects', () => {
       meters({ insight: 4, culture: 1 }),
     )
   })
+  // in-game の唯一のメーター変更経路。境界を跨いで 0..10 にクランプされることを固定
+  // （clampMeters ラッパーを外す回帰を検出する）
+  it('上限 10 を超える加算は 10 に丸める', () => {
+    expect(applyEffects(meters({ trust: 9 }), { trust: 5 }).trust).toBe(10)
+  })
+  it('下限 0 を下回る減算は 0 に丸める', () => {
+    expect(applyEffects(meters({ trust: 1 }), { trust: -5 }).trust).toBe(0)
+  })
 })
 
 describe('resolveChoice', () => {

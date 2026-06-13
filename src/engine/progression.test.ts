@@ -114,6 +114,15 @@ describe('chooseCore — 効果適用と結果ビュー', () => {
     const next = chooseCore(eventCore(), choice({}, { setsFlag: 'wrongKpi' }))
     expect(next.flags.has('wrongKpi')).toBe(true)
   })
+  it('in-game 経路でも 0..10 にクランプされる（上限）', () => {
+    const next = chooseCore(eventCore({ meters: m({ trust: 9 }) }), choice({ trust: 5 }))
+    expect(next.meters.trust).toBe(10)
+  })
+  it('in-game 経路でも 0..10 にクランプされる（下限・負値にしない）', () => {
+    const next = chooseCore(eventCore({ meters: m({ trust: 1 }) }), choice({ trust: -5 }))
+    expect(next.meters.trust).toBe(0) // -4 でなく 0。0ルールで fail-trust になる
+    expect(next.ending?.id).toBe('fail-trust')
+  })
   it('status!==event / currentEvent無し では何もしない', () => {
     const core = freshCore(STARTING_METERS)
     expect(chooseCore(core, choice({ trust: 1 }))).toBe(core)
