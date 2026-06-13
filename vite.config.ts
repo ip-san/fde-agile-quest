@@ -25,13 +25,13 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // prompt: 新バージョンを自動適用せず、ユーザーが「更新」ボタンを押したら反映する
+      registerType: 'prompt',
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,jpg,jpeg,ico,webmanifest}'],
         cleanupOutdatedCaches: true,
-        clientsClaim: true,
-        skipWaiting: true,
+        // skipWaiting はしない（待機させ、更新ボタンの押下で skipWaiting → リロード）
       },
       manifest: {
         name: 'FDE Agile Quest',
