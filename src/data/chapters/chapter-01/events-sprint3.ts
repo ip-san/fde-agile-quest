@@ -694,7 +694,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'chance',
-    title: '「いっそ3PLに出せば?」',
+    title: '「いっそ3PLに出せば？」',
     narrative:
       '赤城部長が「いっそ庫内まるごと{{3PL}}に出せば、コストもKPIも一発で良くなる」と言い出した。確かに数字は良くなる。だが現場で育ちかけた知は、外へ出ていく。',
     choices: [
@@ -798,7 +798,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'genba',
-    title: 'もう少し磨いてから?',
+    title: 'もう少し磨いてから？',
     narrative:
       '改善した在庫最適化は、検証環境では完璧に回っている。「もう少し磨いてから本番に」という声。だが現場が本当に使うのは、本番に出てからだ。',
     choices: [
@@ -930,14 +930,14 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     segment: 'chance',
     title: '久遠さんの問い',
     narrative:
-      '夜の倉庫で、久遠さんがコーヒーを差し出した。「で、お前は何を“残せた”と思う?」。FDEとして来た意味を、問われている。',
+      '夜の倉庫で、久遠さんがコーヒーを差し出した。「で、お前は何を“残せた”と思う？」。FDEとして来た意味を、問われている。',
     choices: [
       {
         id: 'a',
         label: '「{{誤出荷率}}を下げた成果です」と、出した数字で答える',
         effects: { insight: -1 },
         resultText:
-          '久遠さんは静かに首を振った。「数字は、お前が抜けたら誰が守る?」。成果の手前で、問いの芯を外していた。',
+          '久遠さんは静かに首を振った。「数字は、お前が抜けたら誰が守る？」。成果の手前で、問いの芯を外していた。',
         warn: true,
       },
       {

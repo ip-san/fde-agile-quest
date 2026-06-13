@@ -558,7 +558,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     segment: 'chance',
     title: '速すぎるAIエージェント',
     narrative:
-      '受託部門が連れてきたAIエージェントは、とにかく速い。需要予測のコードも{{WMS}}の改修案も数分で吐き出す。橋本さんは「これ全部任せちゃえば?」と半分本気だ。',
+      '受託部門が連れてきたAIエージェントは、とにかく速い。需要予測のコードも{{WMS}}の改修案も数分で吐き出す。橋本さんは「これ全部任せちゃえば？」と半分本気だ。',
     choices: [
       {
         id: 'a',
@@ -583,7 +583,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     sprint: 2,
     ceremony: 'daily',
     segment: 'team',
-    title: '「完成」って、どこから?',
+    title: '「完成」って、どこから？',
     narrative:
       'チームで{{完成の定義}}を決める。「テストもレビューもドキュメントも全部」を理想に掲げるか、続けられる現実解にするか。',
     choices: [
@@ -704,7 +704,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         label: '落ちた事実と原因、次の手を正直に共有する',
         effects: { insight: 1, culture: 1 },
         resultText:
-          '気まずい沈黙のあと、郷田専務は「で、次どうする?」と前を向いた。隠さない者が、次の信頼を得る。（取り繕いの信頼+は取り逃す）',
+          '気まずい沈黙のあと、郷田専務は「で、次どうする？」と前を向いた。隠さない者が、次の信頼を得る。（取り繕いの信頼+は取り逃す）',
       },
     ],
   },
@@ -765,7 +765,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     sprint: 2,
     ceremony: 'daily',
     segment: 'team',
-    title: '曖昧なまま着手する?',
+    title: '曖昧なまま着手する？',
     narrative:
       'プランニング当日、{{バックログ}}の上位がまだ曖昧だ。「とりあえず着手しよう」という声と、「{{リファインメント}}が先だ」という声が割れる。',
     choices: [
