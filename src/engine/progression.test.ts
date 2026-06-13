@@ -118,6 +118,11 @@ describe('chooseCore — 効果適用と結果ビュー', () => {
     const core = freshCore(STARTING_METERS)
     expect(chooseCore(core, choice({ trust: 1 }))).toBe(core)
   })
+  it('currentEvent はあるが status!==event なら何もしない（status ガード単独の固定）', () => {
+    // currentEvent 非null かつ status='playing'。!event 側では短絡しないので status ガードを独立検証
+    const core = eventCore({ status: 'playing' })
+    expect(chooseCore(core, choice({ trust: 1 }))).toBe(core)
+  })
 })
 
 describe('chooseCore — 0ルール（即バッドエンド）', () => {

@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { CHAPTER_TITLE, SPRINTS, STARTING_METERS } from '../data/chapters/chapter-01'
+import { CEREMONY_ORDER, CHAPTER_TITLE, SPRINTS, STARTING_METERS } from '../data/chapters/chapter-01'
 import {
   type Persisted,
   type ProgressCore,
@@ -12,7 +12,7 @@ import {
   spinCore,
   toPersisted,
 } from '../engine/progression'
-import type { Ceremony, Choice, Segment } from '../types'
+import type { Ceremony, Choice, GameFlag, Segment } from '../types'
 
 const STORAGE_KEY = 'fde-agile-quest:chapter-01-v2'
 // 心得手帳は「周回をまたいで集める」コレクションなので別キーで保存し、reset では消さない
@@ -71,14 +71,21 @@ function coreOf(s: EngagementState): ProgressCore {
   }
 }
 
+const CEREMONY_SET = new Set<string>(CEREMONY_ORDER)
+// GameFlag を増やすと satisfies が未網羅をコンパイルエラーで知らせる（検証セットの取りこぼし防止）
+const VALID_FLAGS = { wrongKpi: true } satisfies Record<GameFlag, true>
+const FLAG_SET = new Set<string>(Object.keys(VALID_FLAGS))
+
 /** log の各要素が LogEntry の形（描画が前提とする string/number フィールド）を満たすか。
- *  破損・旧スキーマで非文字列が混ざると RichText の split で実行時クラッシュするため弾く */
+ *  破損・旧スキーマで非文字列・union外の値が混ざると RichText の split で実行時クラッシュ／
+ *  CEREMONY_SHORT 未定義キーでバッジが壊れるため弾く（型 LogEntry の宣言と実体を一致させる） */
 function isValidLogEntry(e: unknown): boolean {
   if (!e || typeof e !== 'object') return false
   const r = e as Record<string, unknown>
   return (
     typeof r.sprint === 'number' &&
     typeof r.ceremony === 'string' &&
+    CEREMONY_SET.has(r.ceremony) &&
     typeof r.eventTitle === 'string' &&
     typeof r.choiceLabel === 'string' &&
     typeof r.resultText === 'string'
@@ -101,7 +108,7 @@ export function isValidPersisted(x: unknown): x is Persisted {
   if (typeof o.sprintIndex !== 'number' || typeof o.beatIndex !== 'number') return false
   if (!Array.isArray(o.resolvedIds) || !Array.isArray(o.flags) || !Array.isArray(o.log)) return false
   if (!o.resolvedIds.every((id) => typeof id === 'string')) return false
-  if (!o.flags.every((f) => typeof f === 'string')) return false
+  if (!o.flags.every((f) => typeof f === 'string' && FLAG_SET.has(f))) return false
   if (!o.log.every(isValidLogEntry)) return false
   const si = o.sprintIndex as number
   const bi = o.beatIndex as number

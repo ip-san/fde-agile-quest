@@ -125,6 +125,10 @@ describe('evaluateEnding', () => {
     it('disliked はちょうど trust=2 で成立する', () => {
       expect(evaluateEnding(ENDINGS, meters({ trust: 2, insight: 8 })).id).toBe('disliked')
     })
+    it('orderTaker はちょうど insight=3 で成立し、insight=4 では成立しない', () => {
+      expect(evaluateEnding(ENDINGS, meters({ trust: 6, insight: 3, culture: 5 })).id).toBe('orderTaker')
+      expect(evaluateEnding(ENDINGS, meters({ trust: 6, insight: 4, culture: 5 })).id).toBe('decent')
+    })
     it('hero はちょうど trust=4・culture=2 で成立し、trust=3 では成立しない', () => {
       expect(evaluateEnding(ENDINGS, meters({ trust: 4, insight: 7, culture: 2 })).id).toBe('hero')
       expect(evaluateEnding(ENDINGS, meters({ trust: 3, insight: 7, culture: 2 })).id).toBe('decent')

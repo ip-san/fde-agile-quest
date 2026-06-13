@@ -14,7 +14,7 @@ const EFFECT_LABEL: Record<keyof Effects, string> = {
 function EffectDeltas({ effects }: { effects: Effects }) {
   const entries = (Object.keys(effects) as (keyof Effects)[]).filter((k) => effects[k] !== 0)
   if (entries.length === 0) {
-    return <span className="text-sm text-slate-500">メーターの変化はなかった</span>
+    return <span className="text-sm text-slate-400">メーターの変化はなかった</span>
   }
   return (
     <span className="flex flex-wrap items-center gap-2">
@@ -90,7 +90,7 @@ export function ResultModal({ result, onContinue }: Props) {
         <div className="space-y-4 px-5 py-4">
           {/* 選んだ判断 */}
           <div className="rounded-xl border border-slate-700 bg-slate-800/40 px-4 py-2.5">
-            <p className="text-[11px] font-semibold text-slate-500">あなたの判断</p>
+            <p className="text-[11px] font-semibold text-slate-400">あなたの判断</p>
             <p className="text-sm font-medium text-slate-100">
               {result.warn && <span className="mr-1">⚠</span>}
               <RichText text={result.choiceLabel} />
@@ -99,7 +99,7 @@ export function ResultModal({ result, onContinue }: Props) {
 
           {/* 何が起きたか（結果文を一度ちゃんと見せる） */}
           <div>
-            <p className="mb-1 text-[11px] font-semibold text-slate-500">結果</p>
+            <p className="mb-1 text-[11px] font-semibold text-slate-400">結果</p>
             <p className="text-[15px] leading-relaxed text-slate-100">
               <RichText text={result.resultText} />
             </p>
@@ -107,21 +107,21 @@ export function ResultModal({ result, onContinue }: Props) {
 
           {/* メーター増減 */}
           <div className="flex items-center gap-2 border-t border-slate-800 pt-3">
-            <span className="text-[11px] font-semibold text-slate-500">メーター</span>
+            <span className="text-[11px] font-semibold text-slate-400">メーター</span>
             <EffectDeltas effects={result.effects} />
           </div>
 
           {/* この場面のFDE心得（手帳に集まる） */}
           {result.precepts.length > 0 && (
             <div className="space-y-1.5 border-t border-slate-800 pt-3">
-              <span className="text-[11px] font-semibold text-slate-500">この場面の心得</span>
+              <span className="text-[11px] font-semibold text-slate-400">この場面の心得</span>
               {result.precepts.map((id) => {
                 const p = PRECEPT_BY_ID[id]
                 if (!p) return null
                 const isNew = result.newPreceptIds.includes(id)
                 return (
                   <div key={id} className="flex items-start gap-2 text-sm">
-                    <span className="mt-0.5 shrink-0 tabular-nums text-[11px] text-slate-500">
+                    <span className="mt-0.5 shrink-0 tabular-nums text-[11px] text-slate-400">
                       <span aria-hidden="true">🧭</span> #{id}
                     </span>
                     <span className="text-slate-100">{p.text}</span>

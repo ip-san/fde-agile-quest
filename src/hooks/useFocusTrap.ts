@@ -33,10 +33,15 @@ export function useFocusTrap<T extends HTMLElement>(onEscape?: () => void) {
     const prevFocus = document.activeElement as HTMLElement | null
 
     const items = () => Array.from(node.querySelectorAll<HTMLElement>(FOCUSABLE))
-    // ダイアログ本体にフォーカス（SR がタイトルを読み上げる）。本文中の用語チップに
-    // 直接フォーカスしてツールチップが勝手に開くのを避ける
+    // 明示的に autoFocus 指定された要素があればそれを優先（例: ResultModal の「次へ（Enter）」）。
+    // React の autoFocus は commit 時に当たるが、この effect の node.focus() が後勝ちで奪うため、
+    // ここで拾い直して Enter/Space が native に効くようにする。
+    // 無ければダイアログ本体にフォーカス（SR がタイトルを読み上げる。本文中の用語チップに
+    // 直接フォーカスしてツールチップが勝手に開くのを避ける）
     if (node.tabIndex < 0) node.tabIndex = -1
-    node.focus()
+    const auto = node.querySelector<HTMLElement>('[autofocus]')
+    if (canFocus(auto)) auto.focus()
+    else node.focus()
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {

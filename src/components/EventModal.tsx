@@ -12,7 +12,7 @@ const EFFECT_LABEL: Record<keyof Effects, string> = {
 
 function EffectBadge({ effects }: { effects: Effects }) {
   const entries = (Object.keys(effects) as (keyof Effects)[]).filter((k) => effects[k] !== 0)
-  if (entries.length === 0) return <span className="text-xs text-slate-500">変化なし</span>
+  if (entries.length === 0) return <span className="text-xs text-slate-400">変化なし</span>
   return (
     <span className="flex flex-wrap gap-1.5">
       {entries.map((k) => {
@@ -114,7 +114,7 @@ export function EventModal({ event, unexpected, onChoose }: Props) {
               </button>
             ))}
           </div>
-          <p className="text-center text-[11px] text-slate-500">
+          <p className="text-center text-[11px] text-slate-400">
             ※ 正解はない。すべてはトレードオフ。
           </p>
         </div>

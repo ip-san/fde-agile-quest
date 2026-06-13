@@ -55,6 +55,16 @@ describe('isValidPersisted', () => {
     expect(isValidPersisted({ ...valid, flags: [true] })).toBe(false)
   })
 
+  it('flags が GameFlag union 外の文字列なら弾く', () => {
+    expect(isValidPersisted({ ...valid, flags: ['bogusFlag'] })).toBe(false)
+  })
+
+  it('log の ceremony が Ceremony union 外なら弾く', () => {
+    expect(
+      isValidPersisted({ ...valid, log: [{ ...valid.log[0], ceremony: 'standup' }] }),
+    ).toBe(false)
+  })
+
   it('空の log / resolvedIds / flags は許容する', () => {
     expect(isValidPersisted({ ...valid, log: [], resolvedIds: [], flags: [] })).toBe(true)
   })
