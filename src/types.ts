@@ -30,6 +30,12 @@ export type Ceremony = 'planning' | 'daily' | 'review' | 'retro'
 /** ルーレットのセグメント＝イベントの種類（現場の不確実性） */
 export type Segment = 'genba' | 'kokyaku' | 'team' | 'trouble' | 'chance'
 
+/** 選択後の「実行」ミニゲームの種類（開発＝タイミング型／ヒアリング＝選択型） */
+export type MiniGameKind = 'dev' | 'hearing'
+
+/** ミニゲームの出来。倍率＝選択の主正メーターを great:+1 / good:±0 / poor:-1 する */
+export type ExecTier = 'great' | 'good' | 'poor'
+
 /** メーターへの効果（指定キーのみ加算） */
 export type Effects = Partial<Meters>
 
@@ -61,6 +67,8 @@ export interface GameEvent {
   choices: Choice[]
   /** このフラグが立っている時だけ出現する（手戻りイベント等） */
   requiresFlag?: GameFlag
+  /** 選択後の実行ミニゲームの種類。未指定なら segment から既定（作る/直す=dev、人と現場=hearing） */
+  minigame?: MiniGameKind
 }
 
 /** スプリント定義 */
@@ -115,9 +123,14 @@ export interface ResultView {
   segment: Segment
   choiceLabel: string
   resultText: string
-  /** 選んだ選択肢のメーター増減（差分表示用） */
+  /** 実際に適用されたメーター増減（ミニゲームの倍率込み・差分表示用） */
   effects: Effects
   warn?: boolean
+  /** 実行ミニゲームの出来と、倍率で増減した主正メーター（結果バッジ表示用） */
+  execTier?: ExecTier
+  execPrimary?: MeterKey | null
+  execDelta?: number
+  minigameKind?: MiniGameKind
   /** このイベントが体現するFDE心得のID（手帳に集まる） */
   precepts: number[]
   /** このうち、今回はじめて出会った心得のID（「NEW」表示用）。store が埋める */

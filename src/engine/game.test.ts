@@ -12,11 +12,14 @@ import { EVENT_PRECEPTS, PRECEPTS } from '../data/precepts'
 import type { GameFlag, MeterKey } from '../types'
 import type { Ceremony, Choice, GameEvent, Meters } from '../types'
 import {
+  amplifyEffects,
   applyEffects,
   availableEvents,
   clampMeters,
   drawEvent,
   evaluateEnding,
+  miniGameKindFor,
+  primaryPositive,
   resolveChoice,
 } from './game'
 
@@ -45,6 +48,62 @@ describe('applyEffects', () => {
   })
   it('下限 0 を下回る減算は 0 に丸める', () => {
     expect(applyEffects(meters({ trust: 1 }), { trust: -5 }).trust).toBe(0)
+  })
+})
+
+describe('primaryPositive / amplifyEffects（実行ミニゲームの倍率）', () => {
+  it('主正メーターは最大の正効果。同値は trust→insight→culture 優先', () => {
+    expect(primaryPositive({ trust: 2, culture: -1 })).toBe('trust')
+    expect(primaryPositive({ insight: 1, culture: 1 })).toBe('insight') // 同値は順序で
+    expect(primaryPositive({ culture: 1 })).toBe('culture')
+    expect(primaryPositive({})).toBeNull()
+    expect(primaryPositive({ trust: -1 })).toBeNull() // 正が無ければ null
+  })
+  it('great は主正+1、負効果・非主正は不変', () => {
+    const r = amplifyEffects({ insight: 1, culture: 1 }, 'great')
+    expect(r.effects).toEqual({ insight: 2, culture: 1 })
+    expect(r.primary).toBe('insight')
+    expect(r.delta).toBe(1)
+    // warn 選択でも主正(trust)だけ増え、代償(culture-1)は不変
+    expect(amplifyEffects({ trust: 1, culture: -1 }, 'great').effects).toEqual({ trust: 2, culture: -1 })
+  })
+  it('good は原文どおり（±0）', () => {
+    const r = amplifyEffects({ insight: 1, culture: 1 }, 'good')
+    expect(r.effects).toEqual({ insight: 1, culture: 1 })
+    expect(r.delta).toBe(0)
+  })
+  it('poor は主正-1。0未満にはしない＝新たな負を足さない', () => {
+    expect(amplifyEffects({ insight: 1, culture: 1 }, 'poor').effects).toEqual({ insight: 0, culture: 1 })
+    expect(amplifyEffects({ trust: 2 }, 'poor').effects).toEqual({ trust: 1 })
+    // 負効果は poor でも不変（0ルールを壊さない）
+    expect(amplifyEffects({ trust: 1, culture: -1 }, 'poor').effects).toEqual({ trust: 0, culture: -1 })
+  })
+  it('主正が無い選択はどのティアでも無変化', () => {
+    expect(amplifyEffects({}, 'great').effects).toEqual({})
+    expect(amplifyEffects({ trust: -1 }, 'poor')).toEqual({ effects: { trust: -1 }, primary: null, delta: 0 })
+  })
+})
+
+describe('miniGameKindFor', () => {
+  const ev = (segment: GameEvent['segment'], minigame?: GameEvent['minigame']): GameEvent => ({
+    id: 'x',
+    sprint: 1,
+    ceremony: 'daily',
+    segment,
+    title: '',
+    narrative: '',
+    choices: [],
+    minigame,
+  })
+  it('作る/直す系(team,trouble)は dev、人と現場系は hearing', () => {
+    expect(miniGameKindFor(ev('team'))).toBe('dev')
+    expect(miniGameKindFor(ev('trouble'))).toBe('dev')
+    expect(miniGameKindFor(ev('genba'))).toBe('hearing')
+    expect(miniGameKindFor(ev('kokyaku'))).toBe('hearing')
+    expect(miniGameKindFor(ev('chance'))).toBe('hearing')
+  })
+  it('event.minigame があればセグメント既定より優先', () => {
+    expect(miniGameKindFor(ev('team', 'hearing'))).toBe('hearing')
   })
 })
 

@@ -1,16 +1,25 @@
 import { useState } from 'react'
 import { CEREMONY_LABELS, CEREMONY_SHORT, SPRINTS } from '../data/chapters/chapter-01'
 import { PRECEPTS } from '../data/precepts'
+import { miniGameKindFor } from '../engine/game'
 import { isRouletteCeremony } from '../engine/progression'
 import { useEngagement } from '../store/engagementStore'
-import type { Ceremony } from '../types'
+import type { Choice, Ceremony } from '../types'
 import { EventLog } from './EventLog'
 import { EventModal } from './EventModal'
 import { MeterHUD } from './MeterHUD'
+import { MiniGame } from './minigame/MiniGame'
 import { PreceptBook } from './PreceptBook'
 import { Prologue } from './Prologue'
 import { ResultModal } from './ResultModal'
 import { Roulette } from './Roulette'
+
+/** イベントIDから決定的なシード（ミニゲームの内容選択用） */
+function seedFor(id: string): number {
+  let s = 0
+  for (let i = 0; i < id.length; i++) s = (s * 31 + id.charCodeAt(i)) >>> 0
+  return s
+}
 
 const PROLOGUE_SEEN_KEY = 'fde-agile-quest:prologue-seen'
 function prologueSeen(): boolean {
@@ -41,6 +50,8 @@ export function Board() {
     reset,
   } = useEngagement()
   const [bookOpen, setBookOpen] = useState(false)
+  // 選択 → 実行ミニゲーム → 結果。選んだ choice を保持し、ミニゲームの出来を tier として渡す
+  const [pendingChoice, setPendingChoice] = useState<Choice | null>(null)
   // 初回はプロローグを自動表示。以降は「あらすじ」から再生できる
   const [prologueOpen, setPrologueOpen] = useState(prologueSeen() === false)
   const closePrologue = () => {
@@ -179,9 +190,25 @@ export function Board() {
         </div>
       </section>
 
-      {/* イベント＝判断モーダル */}
-      {status === 'event' && currentEvent && !result && (
-        <EventModal event={currentEvent} unexpected={unexpected} onChoose={choose} />
+      {/* イベント＝判断モーダル（選択するとミニゲームへ） */}
+      {status === 'event' && currentEvent && !result && !pendingChoice && (
+        <EventModal event={currentEvent} unexpected={unexpected} onChoose={setPendingChoice} />
+      )}
+
+      {/* 実行ミニゲーム（選択後・結果前）。出来=tier で主正メーターを倍率調整 */}
+      {status === 'event' && currentEvent && !result && pendingChoice && (
+        <MiniGame
+          kind={miniGameKindFor(currentEvent)}
+          seed={seedFor(currentEvent.id)}
+          onDone={(tier) => {
+            choose(pendingChoice, tier)
+            setPendingChoice(null)
+          }}
+          onSkip={() => {
+            choose(pendingChoice, 'good')
+            setPendingChoice(null)
+          }}
+        />
       )}
 
       {/* 結果オーバーレイ（判断直後に一度ちゃんと見せる） */}

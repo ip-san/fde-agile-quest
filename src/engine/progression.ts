@@ -4,11 +4,12 @@
 // ───────────────────────────────────────────────────────────
 import { ENDINGS, EVENTS, FAILURE_EPILOGUES, SPRINTS } from '../data/chapters/chapter-01'
 import { preceptsForEvent } from '../data/precepts'
-import { availableEvents, drawEvent, evaluateEnding, resolveChoice } from './game'
+import { amplifyEffects, availableEvents, drawEvent, evaluateEnding, miniGameKindFor, resolveChoice } from './game'
 import type {
   Ceremony,
   Choice,
   Epilogue,
+  ExecTier,
   GameEvent,
   GameFlag,
   LogEntry,
@@ -125,12 +126,15 @@ export function spinCore(core: ProgressCore, segment: Segment, pickRandom: numbe
   return { ...core, currentEvent: event, unexpected: unexpected && ceremony === 'daily', status: 'event' }
 }
 
-/** 進行中イベントの選択を解決し、結果ビューを添えて次状態を返す */
-export function chooseCore(core: ProgressCore, choice: Choice): ProgressCore {
+/** 進行中イベントの選択を解決し、結果ビューを添えて次状態を返す。
+ *  tier＝実行ミニゲームの出来。選択の主正メーターだけを great:+1 / good:±0 / poor:-1 する */
+export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 'good'): ProgressCore {
   const event = core.currentEvent
   if (!event || core.status !== 'event') return core
 
-  const { meters, flags } = resolveChoice(core.meters, core.flags, choice)
+  // ミニゲームの出来で「意図した正の効果」だけ倍率調整（負効果は不変＝代償と0ルールを守る）
+  const amp = amplifyEffects(choice.effects, tier)
+  const { meters, flags } = resolveChoice(core.meters, core.flags, { ...choice, effects: amp.effects })
   const resolvedIds = new Set(core.resolvedIds).add(event.id)
   const log: LogEntry[] = [
     ...core.log,
@@ -150,10 +154,14 @@ export function chooseCore(core: ProgressCore, choice: Choice): ProgressCore {
     segment: event.segment,
     choiceLabel: choice.label,
     resultText: choice.resultText,
-    effects: choice.effects,
+    effects: amp.effects, // 実際に適用された増減（倍率込み）
     warn: choice.warn,
     precepts: preceptsForEvent(event.id),
     newPreceptIds: [], // 新規判定は store が seenPrecepts と突き合わせて埋める
+    execTier: tier,
+    execPrimary: amp.primary,
+    execDelta: amp.delta,
+    minigameKind: miniGameKindFor(event),
   }
 
   const base = { ...core, meters, flags, resolvedIds, log }

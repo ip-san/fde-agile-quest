@@ -13,7 +13,7 @@ import {
   spinCore,
   toPersisted,
 } from '../engine/progression'
-import type { Ceremony, Choice, GameFlag, Segment } from '../types'
+import type { Ceremony, Choice, ExecTier, GameFlag, Segment } from '../types'
 
 const STORAGE_KEY = 'fde-agile-quest:chapter-01-v2'
 // 心得手帳は「周回をまたいで集める」コレクションなので別キーで保存し、reset では消さない
@@ -31,7 +31,8 @@ interface EngagementState extends ProgressCore {
   spin: (segment: Segment, pickRandom: number) => void
   /** 単発セレモニーで「進める」。ルーレットを介さず直接イベントを出す */
   proceed: () => void
-  choose: (choice: Choice) => void
+  /** tier＝選択後の実行ミニゲームの出来（省略時は good＝標準） */
+  choose: (choice: Choice, tier?: ExecTier) => void
   dismissResult: () => void
   reset: () => void
 }
@@ -171,9 +172,9 @@ export const useEngagement = create<EngagementState>((set, get) => ({
     if (next.status !== 'event') persistCore(next)
   },
 
-  choose: (choice) => {
+  choose: (choice, tier) => {
     const seen = get().seenPrecepts
-    const next = chooseCore(coreOf(get()), choice)
+    const next = chooseCore(coreOf(get()), choice, tier)
 
     // 心得手帳の更新: このイベントの心得のうち、初めて出会ったものを記録
     const eventPrecepts = next.result?.precepts ?? []

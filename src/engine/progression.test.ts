@@ -126,6 +126,40 @@ describe('chooseCore — 効果適用と結果ビュー', () => {
     const next = chooseCore(eventCore(), choice({}, { setsFlag: 'wrongKpi' }))
     expect(next.flags.has('wrongKpi')).toBe(true)
   })
+  it('実行ティアで主正メーターだけ倍率調整される（great/good/poor）', () => {
+    const base = eventCore({ meters: m() }) // trust5 insight3 culture3
+    // good=既存挙動。insight が主正
+    expect(chooseCore(base, choice({ insight: 1, culture: 1 }), 'good').meters).toEqual(
+      m({ insight: 4, culture: 4 }),
+    )
+    // great=主正(insight)+1
+    expect(chooseCore(base, choice({ insight: 1, culture: 1 }), 'great').meters).toEqual(
+      m({ insight: 5, culture: 4 }),
+    )
+    // poor=主正(insight)-1（伸びしろを取り逃すだけ）
+    expect(chooseCore(base, choice({ insight: 1, culture: 1 }), 'poor').meters).toEqual(
+      m({ insight: 3, culture: 4 }),
+    )
+    // 引数省略時は good 相当
+    expect(chooseCore(base, choice({ insight: 1, culture: 1 })).meters).toEqual(
+      m({ insight: 4, culture: 4 }),
+    )
+  })
+  it('poor は負効果を増やさず、0ルール敗北を新たに生まない', () => {
+    // warn 選択 {trust:1, culture:-1} を poor 実行: trust の伸びを取り逃すが culture-1 は不変
+    const next = chooseCore(eventCore({ meters: m({ culture: 1 }) }), choice({ trust: 1, culture: -1 }), 'poor')
+    expect(next.meters).toEqual(m({ culture: 0, trust: 5 }))
+    // culture が 0 ちょうど → 0ルール発火（poor がさらに負を足したからではなく、選択本来の代償）
+    expect(next.ending?.id).toBe('fail-culture')
+  })
+  it('結果ビューに実行ティアと主正の増減が載る', () => {
+    const next = chooseCore(eventCore({ meters: m() }), choice({ insight: 1 }), 'great')
+    expect(next.result?.execTier).toBe('great')
+    expect(next.result?.execPrimary).toBe('insight')
+    expect(next.result?.execDelta).toBe(1)
+    expect(next.result?.effects).toEqual({ insight: 2 })
+    expect(next.result?.minigameKind).toBe('hearing') // synthEvent は segment 'genba' → hearing
+  })
   it('in-game 経路でも 0..10 にクランプされる（上限）', () => {
     const next = chooseCore(eventCore({ meters: m({ trust: 9 }) }), choice({ trust: 5 }))
     expect(next.meters.trust).toBe(10)

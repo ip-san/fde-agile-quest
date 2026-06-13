@@ -37,6 +37,47 @@ function EffectDeltas({ effects }: { effects: Effects }) {
   )
 }
 
+const KIND_LABEL = { dev: '開発', hearing: 'ヒアリング' } as const
+
+/** 選択後ミニゲームの出来バッジ。great=主正+1上乗せ / good=標準 / poor=伸びしろ取り逃し */
+function ExecBadge({ result }: { result: ResultView }) {
+  const tier = result.execTier
+  if (!tier) return null
+  const kind = result.minigameKind ? KIND_LABEL[result.minigameKind] : '実行'
+  const primary = result.execPrimary ? EFFECT_LABEL[result.execPrimary] : null
+  const delta = result.execDelta ?? 0
+  const conf =
+    tier === 'great'
+      ? {
+          cls: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
+          icon: '◎',
+          text:
+            primary && delta > 0
+              ? `会心の${kind}！ ${primary}の伸びを ＋${delta} 上乗せ`
+              : `会心の${kind}！`,
+        }
+      : tier === 'poor'
+        ? {
+            cls: 'border-rose-500/40 bg-rose-500/10 text-rose-300',
+            icon: '△',
+            text:
+              primary && delta < 0
+                ? `${kind}の詰めが甘く、${primary}の伸びを ${delta} 取り逃した`
+                : `${kind}の詰めが甘かった`,
+          }
+        : {
+            cls: 'border-slate-700 bg-slate-800/40 text-slate-300',
+            icon: '○',
+            text: `無難に${kind}をやり切った`,
+          }
+  return (
+    <div className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm ${conf.cls}`}>
+      <span aria-hidden="true">{conf.icon}</span>
+      <span className="font-medium">{conf.text}</span>
+    </div>
+  )
+}
+
 interface Props {
   result: ResultView
   onContinue: () => void
@@ -105,6 +146,9 @@ export function ResultModal({ result, onContinue }: Props) {
               <RichText text={result.resultText} />
             </p>
           </div>
+
+          {/* 実行ミニゲームの出来 */}
+          <ExecBadge result={result} />
 
           {/* メーター増減 */}
           <div className="flex items-center gap-2 border-t border-slate-800 pt-3">
