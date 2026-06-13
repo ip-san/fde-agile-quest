@@ -101,6 +101,22 @@ describe('drawEvent', () => {
   it('空なら null', () => {
     expect(drawEvent([], 'genba', 0).event).toBeNull()
   })
+  it('一致が複数あるとき pickRandom に応じて要素が選ばれ、上限は最後の要素にクランプされる', () => {
+    const ev = (id: string): GameEvent => ({
+      id,
+      sprint: 1,
+      ceremony: 'daily',
+      segment: 'genba',
+      title: '',
+      narrative: '',
+      choices: [],
+    })
+    const pool = [ev('g0'), ev('g1'), ev('g2')] // genba が3件
+    expect(drawEvent(pool, 'genba', 0).event?.id).toBe('g0') // 下端
+    expect(drawEvent(pool, 'genba', 0.5).event?.id).toBe('g1') // 中間（index0固定デグレを検出）
+    expect(drawEvent(pool, 'genba', 0.99).event?.id).toBe('g2') // 上端近傍
+    expect(drawEvent(pool, 'genba', 1).event?.id).toBe('g2') // 契約上限1でも範囲外参照しない（Math.min クランプ）
+  })
 })
 
 describe('evaluateEnding', () => {
