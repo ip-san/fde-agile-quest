@@ -13,7 +13,10 @@ import type { GameEvent, Segment } from '../types'
 export const AVAILABLE_IMAGES = new Set<string>([
   // 問題（状況）のテーマ画像。public/img/theme__{segment}.jpg
   'theme__genba',
-  // 'theme__kokyaku', 'theme__team', 'theme__trouble', 'theme__chance', ← 画像が入り次第ここに追加
+  'theme__kokyaku',
+  'theme__team',
+  'theme__trouble',
+  'theme__chance',
   // 結果（顛末）の個別画像。public/img/{eventId}__{choiceId}__r.jpg
   's1-daily-warehouse__b__r',
 ])
