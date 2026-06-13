@@ -8,7 +8,7 @@ import {
   STARTING_METERS,
 } from '../data/chapters/chapter-01'
 import { GLOSSARY } from '../data/glossary'
-import type { MeterKey } from '../types'
+import type { GameFlag, MeterKey } from '../types'
 import type { Ceremony, Choice, GameEvent, Meters } from '../types'
 import {
   applyEffects,
@@ -41,7 +41,7 @@ describe('applyEffects', () => {
 
 describe('resolveChoice', () => {
   it('setsFlag があるとフラグが立ち、元の集合を破壊しない', () => {
-    const base = new Set<string>()
+    const base = new Set<GameFlag>()
     const choice: Choice = {
       id: 'x',
       label: 'l',

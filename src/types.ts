@@ -18,6 +18,12 @@ export interface Meters {
 /** メーターのキー */
 export type MeterKey = keyof Meters
 
+/** ゲーム内フラグ（選択で立ち、後のイベント出現条件になる）。生stringだとタイポを検知できないためユニオンで縛る */
+export type GameFlag = 'wrongKpi'
+
+/** 進行状態 */
+export type Status = 'playing' | 'event' | 'ended'
+
 /** スクラムのセレモニー（スプリントの中の節目） */
 export type Ceremony = 'planning' | 'daily' | 'review' | 'retro'
 
@@ -36,7 +42,7 @@ export interface Choice {
   /** 選択後に表示される結果テキスト。{{用語}} 可 */
   resultText: string
   /** この選択で立つフラグ（例: 'wrongKpi'）。後スプリントの手戻りイベントを誘発 */
-  setsFlag?: string
+  setsFlag?: GameFlag
   /** 危険な選択（UIで警告表示） */
   warn?: boolean
 }
@@ -54,7 +60,7 @@ export interface GameEvent {
   narrative: string
   choices: Choice[]
   /** このフラグが立っている時だけ出現する（手戻りイベント等） */
-  requiresFlag?: string
+  requiresFlag?: GameFlag
 }
 
 /** スプリント定義 */

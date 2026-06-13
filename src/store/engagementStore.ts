@@ -1,213 +1,112 @@
 import { create } from 'zustand'
+import { CHAPTER_TITLE, SPRINTS, STARTING_METERS } from '../data/chapters/chapter-01'
 import {
-  CHAPTER_TITLE,
-  ENDINGS,
-  EVENTS,
-  FAILURE_EPILOGUES,
-  SPRINTS,
-  STARTING_METERS,
-} from '../data/chapters/chapter-01'
-import { availableEvents, drawEvent, evaluateEnding, resolveChoice } from '../engine/game'
-import type {
-  Ceremony,
-  Choice,
-  Epilogue,
-  GameEvent,
-  LogEntry,
-  MeterKey,
-  Meters,
-  ResultView,
-  Segment,
-} from '../types'
-
-/** 0以下になったメーターがあれば、その最初のキーを返す（無ければ undefined） */
-function zeroedMeter(m: Meters): MeterKey | undefined {
-  return (['trust', 'insight', 'culture'] as MeterKey[]).find((k) => m[k] <= 0)
-}
+  type Persisted,
+  type ProgressCore,
+  ceremonyAt,
+  chooseCore,
+  dismissResultCore,
+  freshCore,
+  restoreCore,
+  spinCore,
+  toPersisted,
+} from '../engine/progression'
+import type { Ceremony, Choice, Segment } from '../types'
 
 const STORAGE_KEY = 'fde-agile-quest:chapter-01-v2'
 
-type Status = 'playing' | 'event' | 'ended'
-
-interface Persisted {
-  meters: Meters
-  sprintIndex: number
-  beatIndex: number
-  resolvedIds: string[]
-  flags: string[]
-  log: LogEntry[]
-}
-
-interface EngagementState {
+interface EngagementState extends ProgressCore {
   chapterTitle: string
-  status: Status
-  meters: Meters
-  /** SPRINTS の index（0始まり） */
-  sprintIndex: number
-  /** 現在スプリント内の beats（セレモニー列）の index */
-  beatIndex: number
-  resolvedIds: Set<string>
-  flags: Set<string>
-  log: LogEntry[]
-
-  currentEvent: GameEvent | null
-  unexpected: boolean
-  ending: Epilogue | null
-  /** 判断直後の結果ビュー（「次へ」で消す）。null の間は結果オーバーレイ非表示 */
-  result: ResultView | null
+  /** reset のたびに +1。Roulette を key 付け替えで再マウントし、回転中の取りこぼし発火を断つ */
+  generation: number
 
   /** 現在のセレモニー（位置から導出）。終了後は null */
   currentCeremony: () => Ceremony | null
-  /** ルーレット結果セグメントを受け取り、現セレモニーのイベントを引く */
   spin: (segment: Segment, pickRandom: number) => void
-  /** 進行中イベントの選択を解決し、結果ビューを出す（盤面の状態は内部で確定） */
   choose: (choice: Choice) => void
-  /** 結果ビューを閉じて次へ進む */
   dismissResult: () => void
   reset: () => void
 }
 
-function ceremonyAt(sprintIndex: number, beatIndex: number): Ceremony | null {
-  const sprint = SPRINTS[sprintIndex]
-  if (!sprint) return null
-  return sprint.beats[beatIndex] ?? null
+/** ProgressCore 部分だけを抜き出す（純粋関数へ渡す用） */
+function coreOf(s: EngagementState): ProgressCore {
+  return {
+    meters: s.meters,
+    flags: s.flags,
+    resolvedIds: s.resolvedIds,
+    log: s.log,
+    sprintIndex: s.sprintIndex,
+    beatIndex: s.beatIndex,
+    status: s.status,
+    ending: s.ending,
+    currentEvent: s.currentEvent,
+    unexpected: s.unexpected,
+    result: s.result,
+  }
+}
+
+/** 永続データの妥当性検証（旧スキーマ・破損・章改訂で範囲外なら破棄して新規開始） */
+function isValidPersisted(x: unknown): x is Persisted {
+  if (!x || typeof x !== 'object') return false
+  const o = x as Record<string, unknown>
+  const m = o.meters as Record<string, unknown> | undefined
+  if (!m) return false
+  for (const k of ['trust', 'insight', 'culture']) {
+    if (typeof m[k] !== 'number' || !Number.isFinite(m[k] as number)) return false
+  }
+  if (typeof o.sprintIndex !== 'number' || typeof o.beatIndex !== 'number') return false
+  if (!Array.isArray(o.resolvedIds) || !Array.isArray(o.flags) || !Array.isArray(o.log)) return false
+  const si = o.sprintIndex as number
+  const bi = o.beatIndex as number
+  if (si < 0 || si > SPRINTS.length) return false
+  // キャンペーン完了（si===length）以外は、beatIndex がそのスプリントの範囲内であること
+  if (si < SPRINTS.length && (bi < 0 || bi >= SPRINTS[si].beats.length)) return false
+  return true
 }
 
 function loadPersisted(): Persisted | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? (JSON.parse(raw) as Persisted) : null
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    return isValidPersisted(parsed) ? parsed : null
   } catch {
     return null
   }
 }
 
-function persist(s: EngagementState) {
+function persistCore(core: ProgressCore) {
   try {
-    const p: Persisted = {
-      meters: s.meters,
-      sprintIndex: s.sprintIndex,
-      beatIndex: s.beatIndex,
-      resolvedIds: [...s.resolvedIds],
-      flags: [...s.flags],
-      log: s.log,
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(p))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(toPersisted(core)))
   } catch {
     /* localStorage 不可環境は無視 */
   }
 }
 
-const FRESH = {
-  status: 'playing' as Status,
-  meters: { ...STARTING_METERS },
-  sprintIndex: 0,
-  beatIndex: 0,
-  resolvedIds: new Set<string>(),
-  flags: new Set<string>(),
-  log: [] as LogEntry[],
-  currentEvent: null,
-  unexpected: false,
-  ending: null,
-  result: null,
-}
-
 const saved = loadPersisted()
+const initialCore: ProgressCore = saved ? restoreCore(saved) : freshCore(STARTING_METERS)
 
 export const useEngagement = create<EngagementState>((set, get) => ({
   chapterTitle: CHAPTER_TITLE,
-  ...FRESH,
-  ...(saved
-    ? (() => {
-        const zeroed = zeroedMeter(saved.meters)
-        const campaignDone = saved.sprintIndex >= SPRINTS.length
-        const ending: Epilogue | null = zeroed
-          ? FAILURE_EPILOGUES[zeroed]
-          : campaignDone
-            ? evaluateEnding(ENDINGS, saved.meters)
-            : null
-        return {
-          meters: saved.meters,
-          sprintIndex: saved.sprintIndex,
-          beatIndex: saved.beatIndex,
-          resolvedIds: new Set(saved.resolvedIds),
-          flags: new Set(saved.flags),
-          log: saved.log,
-          status: (ending ? 'ended' : 'playing') as Status,
-          ending,
-        }
-      })()
-    : {}),
+  generation: 0,
+  ...initialCore,
 
   currentCeremony: () => ceremonyAt(get().sprintIndex, get().beatIndex),
 
   spin: (segment, pickRandom) => {
-    const s = get()
-    if (s.status !== 'playing') return
-    const ceremony = ceremonyAt(s.sprintIndex, s.beatIndex)
-    if (!ceremony) return
-    const sprintNo = SPRINTS[s.sprintIndex].n
-    const avail = availableEvents(EVENTS, sprintNo, ceremony, s.resolvedIds, s.flags)
-    const { event, unexpected } = drawEvent(avail, segment, pickRandom)
-    if (!event) {
-      // このビートに出せるイベントが無い → 何事もなく次へ
-      advance(set, get, s.meters, s.flags, s.resolvedIds, s.log)
-      return
-    }
-    // 想定外バナーはデイリー（不確実な開発中）でのみ意味を持たせる
-    set({ currentEvent: event, unexpected: unexpected && ceremony === 'daily', status: 'event' })
+    const next = spinCore(coreOf(get()), segment, pickRandom)
+    set(next)
+    // イベント提示は一時状態なので保存しない。素通り前進（=durableな進行）した時だけ保存
+    if (next.status !== 'event') persistCore(next)
   },
 
   choose: (choice) => {
-    const s = get()
-    const event = s.currentEvent
-    if (!event || s.status !== 'event') return
-    const { meters, flags } = resolveChoice(s.meters, s.flags, choice)
-    const resolvedIds = new Set(s.resolvedIds).add(event.id)
-    const log: LogEntry[] = [
-      ...s.log,
-      {
-        sprint: event.sprint,
-        ceremony: event.ceremony,
-        eventTitle: event.title,
-        choiceLabel: choice.label,
-        resultText: choice.resultText,
-      },
-    ]
-
-    // 判断直後に一度ちゃんと見せる結果ビュー（盤面の状態は裏で確定し、オーバーレイで覆う）
-    const result: ResultView = {
-      eventTitle: event.title,
-      ceremony: event.ceremony,
-      segment: event.segment,
-      choiceLabel: choice.label,
-      resultText: choice.resultText,
-      effects: choice.effects,
-      warn: choice.warn,
-    }
-
-    // ★0ルール: どれか1つでもゲージが0になったら、その場で失敗エピローグ
-    const zeroed = zeroedMeter(meters)
-    if (zeroed) {
-      set({
-        meters,
-        flags,
-        resolvedIds,
-        log,
-        currentEvent: null,
-        unexpected: false,
-        status: 'ended',
-        ending: FAILURE_EPILOGUES[zeroed],
-        result,
-      })
-      persist(get())
-      return
-    }
-
-    advance(set, get, meters, flags, resolvedIds, log, result)
+    const next = chooseCore(coreOf(get()), choice)
+    set(next)
+    persistCore(next)
   },
 
-  dismissResult: () => set({ result: null }),
+  dismissResult: () => set(dismissResultCore(coreOf(get()))),
 
   reset: () => {
     try {
@@ -215,65 +114,6 @@ export const useEngagement = create<EngagementState>((set, get) => ({
     } catch {
       /* noop */
     }
-    set({
-      ...FRESH,
-      meters: { ...STARTING_METERS },
-      resolvedIds: new Set<string>(),
-      flags: new Set<string>(),
-      log: [],
-    })
+    set({ ...freshCore(STARTING_METERS), generation: get().generation + 1 })
   },
 }))
-
-/** ビートを1つ進め、スプリント／キャンペーンの終端を判定して状態を確定する */
-function advance(
-  set: (partial: Partial<EngagementState>) => void,
-  get: () => EngagementState,
-  meters: Meters,
-  flags: Set<string>,
-  resolvedIds: Set<string>,
-  log: LogEntry[],
-  result: ResultView | null = null,
-) {
-  const s = get()
-  let sprintIndex = s.sprintIndex
-  let beatIndex = s.beatIndex + 1
-
-  if (beatIndex >= SPRINTS[sprintIndex].beats.length) {
-    sprintIndex += 1
-    beatIndex = 0
-  }
-
-  if (sprintIndex >= SPRINTS.length) {
-    const ending = evaluateEnding(ENDINGS, meters)
-    set({
-      meters,
-      flags,
-      resolvedIds,
-      log,
-      sprintIndex,
-      beatIndex,
-      currentEvent: null,
-      unexpected: false,
-      status: 'ended',
-      ending,
-      result,
-    })
-    persist(get())
-    return
-  }
-
-  set({
-    meters,
-    flags,
-    resolvedIds,
-    log,
-    sprintIndex,
-    beatIndex,
-    currentEvent: null,
-    unexpected: false,
-    status: 'playing',
-    result,
-  })
-  persist(get())
-}

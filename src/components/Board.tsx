@@ -18,6 +18,7 @@ export function Board() {
     currentEvent,
     unexpected,
     result,
+    generation,
     spin,
     choose,
     dismissResult,
@@ -107,7 +108,7 @@ export function Board() {
           いまは <span className="font-bold text-sky-300">{CEREMONY_LABELS[ceremony]}</span>
           <span className="ml-1 text-xs text-slate-500">— 回して始める</span>
         </p>
-        <Roulette disabled={status !== 'playing'} onResult={spin} />
+        <Roulette key={generation} disabled={status !== 'playing' || !!result} onResult={spin} />
       </div>
 
       {/* イベントログ */}

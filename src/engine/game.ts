@@ -4,6 +4,7 @@ import type {
   Ending,
   Effects,
   GameEvent,
+  GameFlag,
   Meters,
   Segment,
 } from '../types'
@@ -29,9 +30,9 @@ export function applyEffects(m: Meters, e: Effects): Meters {
 /** 選択を解決し、新メーターと新フラグ集合を返す（純粋関数） */
 export function resolveChoice(
   meters: Meters,
-  flags: Set<string>,
+  flags: Set<GameFlag>,
   choice: Choice,
-): { meters: Meters; flags: Set<string> } {
+): { meters: Meters; flags: Set<GameFlag> } {
   const nextFlags = new Set(flags)
   if (choice.setsFlag) nextFlags.add(choice.setsFlag)
   return { meters: applyEffects(meters, choice.effects), flags: nextFlags }
@@ -43,7 +44,7 @@ export function availableEvents(
   sprint: number,
   ceremony: Ceremony,
   resolvedIds: Set<string>,
-  flags: Set<string>,
+  flags: Set<GameFlag>,
 ): GameEvent[] {
   return allEvents.filter(
     (ev) =>

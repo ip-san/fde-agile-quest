@@ -29,17 +29,36 @@ interface Props {
   onResult: (segment: Segment, pickRandom: number) => void
 }
 
+const SPIN_MS = 3600
+
 export function Roulette({ disabled, onResult }: Props) {
   const [rotation, setRotation] = useState(0)
   const [spinning, setSpinning] = useState(false)
   const pendingSegment = useRef<Segment | null>(null)
   const pendingPick = useRef(0)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // 1回の回転で onResult を二重発火させないためのガード（transitionend と保険タイマーの競合対策）
+  const resolvedRef = useRef(true)
+
+  // 回転の解決を1回だけ行う。transitionend が飛ばない環境でも保険タイマーから呼ばれる
+  const finishSpin = useCallback(() => {
+    if (resolvedRef.current) return
+    resolvedRef.current = true
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
+    setSpinning(false)
+    const seg = pendingSegment.current
+    if (seg) onResult(seg, pendingPick.current)
+  }, [onResult])
 
   const spin = useCallback(() => {
     if (disabled || spinning) return
     const targetIndex = Math.floor(Math.random() * N)
     pendingSegment.current = SEGMENTS[targetIndex]
     pendingPick.current = Math.random()
+    resolvedRef.current = false
 
     // セグメント中心(targetIndex*SLICE + SLICE/2)を上のポインタ下に持ってくる回転量
     const center = targetIndex * SLICE + SLICE / 2
@@ -48,7 +67,11 @@ export function Roulette({ disabled, onResult }: Props) {
     const spins = 5 + Math.floor(Math.random() * 3)
     setRotation(base + spins * 360 + landing)
     setSpinning(true)
-  }, [disabled, spinning, rotation])
+
+    // transitionend 取りこぼし（タブ非アクティブ・reduced-motion 等）の保険
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    timeoutRef.current = setTimeout(finishSpin, SPIN_MS + 300)
+  }, [disabled, spinning, rotation, finishSpin])
 
   // SPACE で回す
   useEffect(() => {
@@ -62,11 +85,15 @@ export function Roulette({ disabled, onResult }: Props) {
     return () => window.removeEventListener('keydown', onKey)
   }, [spin, disabled, spinning])
 
-  const handleTransitionEnd = () => {
-    if (!spinning) return
-    setSpinning(false)
-    const seg = pendingSegment.current
-    if (seg) onResult(seg, pendingPick.current)
+  // アンマウント時に保険タイマーを破棄（reset による key 付け替え再マウントで stale 発火を断つ）
+  useEffect(() => () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+  }, [])
+
+  // 回転(transform)の遷移完了のみを拾う。他プロパティの transitionend で多重発火しない
+  const handleTransitionEnd = (e: { propertyName: string }) => {
+    if (e.propertyName !== 'transform') return
+    finishSpin()
   }
 
   return (
