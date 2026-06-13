@@ -8,6 +8,7 @@ import {
   advanceCore,
   chooseCore,
   dismissResultCore,
+  finalEndingFor,
   freshCore,
   isRouletteCeremony,
   proceedCore,
@@ -272,6 +273,48 @@ describe('主軸の分岐：背骨バリアント（topDown / genbaTrust）', ()
     expect(top.flags.has('topDown')).toBe(true)
     const trust = chooseCore(eventCore({ currentEvent: s2retro }), s2retro.choices[1])
     expect(trust.flags.has('genbaTrust')).toBe(true)
+  })
+})
+
+describe('不正暴露アーク：フィナーレ（finalEndingFor / circular ゲート）', () => {
+  const flags = (...f: GameFlag[]) => new Set<GameFlag>(f)
+  it('暴露の決断済みフラグ → 専用フィナーレED・finalePending=false', () => {
+    expect(finalEndingFor(m(), flags('exposed')).ending?.id).toBe('finale-expose')
+    expect(finalEndingFor(m(), flags('complicit')).ending?.id).toBe('finale-complicit')
+    expect(finalEndingFor(m(), flags('coopted')).ending?.id).toBe('finale-coopted')
+    expect(finalEndingFor(m(), flags('exposed')).finalePending).toBe(false)
+  })
+  it('未決断だが手がかり(fraudClue)あり → ending=null・finalePending=true', () => {
+    const fin = finalEndingFor(m(), flags('fraudClue'))
+    expect(fin.ending).toBeNull()
+    expect(fin.finalePending).toBe(true)
+  })
+  it('手がかり無し → 従来のメーター駆動エンディング', () => {
+    expect(finalEndingFor(m({ trust: 8, insight: 7, culture: 7 }), flags()).ending?.id).toBe('trueFde')
+    expect(finalEndingFor(m({ trust: 8, insight: 7, culture: 7 }), flags()).finalePending).toBe(false)
+  })
+  it('完走を advanceCore で迎えると、fraudClue で finalePending、決断後は専用ED（往復で保たれる）', () => {
+    const lastBeat = SPRINTS[SPRINTS.length - 1].beats.length - 1
+    const core: ProgressCore = {
+      ...freshCore(STARTING_METERS),
+      sprintIndex: SPRINTS.length - 1,
+      beatIndex: lastBeat,
+      flags: flags('fraudClue'),
+    }
+    const ended = advanceCore(core)
+    expect(ended.status).toBe('ended')
+    expect(ended.finalePending).toBe(true)
+    expect(ended.ending).toBeNull()
+    // 決断（exposed）を永続相当で復元 → 専用ED
+    const restored = restoreCore(toPersisted({ ...ended, flags: flags('fraudClue', 'exposed') }))
+    expect(restored.finalePending).toBe(false)
+    expect(restored.ending?.id).toBe('finale-expose')
+  })
+  it('循環取引イベントは fraudClue がある時だけ Sprint3 daily プールに入る', () => {
+    const pool = (f: GameFlag[]) =>
+      availableEvents(EVENTS, 3, 'daily', new Set<string>(), new Set(f)).map((e) => e.id)
+    expect(pool(['fraudClue'])).toContain('s3-daily-circular')
+    expect(pool([])).not.toContain('s3-daily-circular')
   })
 })
 

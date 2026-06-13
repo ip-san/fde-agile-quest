@@ -3,6 +3,7 @@ import type {
   Ending,
   Epilogue,
   GameEvent,
+  GameFlag,
   MeterKey,
   Meters,
   Segment,
@@ -148,6 +149,64 @@ export const FAILURE_EPILOGUES: Record<MeterKey, Epilogue> = {
     reflection:
       '何でも自分で巻き取り、速さと引き換えにチームを置き去りにした。メンバーはいつしか指示待ちになり、あなたが休んだ一日、すべてが止まった。あなたが去ると、仕組みごと記憶から消えた。——巻き込めなかった文化は、根付かずに枯れる。',
   },
+}
+
+// ───────────────────────────────────────────────────────────
+// 不正暴露アークのフィナーレ。手がかり(fraudClue)を掴んでキャンペーンを完走すると、
+// 通常エンディングの前に「暴露の決断」が出る（App/store が finalePending で制御）。
+// ───────────────────────────────────────────────────────────
+export const FINALE_EPILOGUES: Record<'expose' | 'complicit' | 'coopted', Epilogue> = {
+  expose: {
+    id: 'finale-expose',
+    title: '告発したFDE',
+    reflection:
+      '集めた証拠を、あなたは外に出した。ジェネリックは揺れ、買収された外様のカルゴ物流の行く末も不透明になる。現場の雇用に痛みも走るだろう。それでも——あなたは“見栄えの数字”でなく“本物の数字”の側に立った。正しさは、いつもほろ苦い。だが、沈黙していた現場が、初めて本当のことを言える場所になった。',
+  },
+  complicit: {
+    id: 'finale-complicit',
+    title: '見て見ぬふりのFDE',
+    reflection:
+      '証拠は、引き出しの奥にしまった。案件はうまく回ったように見える。だが——あなたが現場と築いた“本物の成果”は、グループの粉飾を化粧するために使われた。数字を盛る側の、いちばん上等な道具。鏡を見るたび、田淵さんの顔が浮かぶ。',
+  },
+  coopted: {
+    id: 'finale-coopted',
+    title: '取り込まれたFDE',
+    reflection:
+      '口止めに応じ、昇進と報酬を受け取った。肩書きは増え、財布は厚くなる。だが、現場の信頼も、自分の手で出した成果も、保身と引き換えに静かに腐っていく。あなたはもう、現場の側の人間ではない。——FDEが守るべきだったものを、自分で売った。',
+  },
+}
+
+export interface FinaleChoice {
+  id: string
+  label: string
+  /** この選択で立つフラグ（結末を永続化） */
+  flag: GameFlag
+  /** 対応するフィナーレ・エピローグ */
+  ending: keyof typeof FINALE_EPILOGUES
+  warn?: boolean
+}
+
+/** 「暴露の決断」。fraudClue を掴んだ周回でのみ、完走後に提示される */
+export const FINALE: { prompt: string; choices: FinaleChoice[] } = {
+  prompt:
+    '現場をIT化して実数を可視化し、組織の壁を壊して取引データを繋いだ。すると——“導入済み”のはずのフィジカルAI機材が、倉庫のどこにも無い。同じ機材が、グループ各社を書類の上だけぐるぐると巡り、そのたびに売上が立っていた。架空の循環取引——カルゴ物流を踏み台にした、ジェネリックの粉飾だ。本物の成果を出そうとして、本物でない数字にたどり着いてしまった。さあ、どうする。',
+  choices: [
+    { id: 'expose', label: '証拠を公にし、不正を告発する', flag: 'exposed', ending: 'expose' },
+    {
+      id: 'complicit',
+      label: '見なかったことにして、案件を無難に終える',
+      flag: 'complicit',
+      ending: 'complicit',
+      warn: true,
+    },
+    {
+      id: 'coopted',
+      label: '口止めに応じ、昇進と報酬を受け取る',
+      flag: 'coopted',
+      ending: 'coopted',
+      warn: true,
+    },
+  ],
 }
 
 // テスト/型補助用に Ceremony の並びを公開

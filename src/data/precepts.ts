@@ -219,6 +219,7 @@ export const EVENT_PRECEPTS: Record<string, number[]> = {
   's2-daily-blamewar': [73, 27],
   's2-daily-costcut': [81, 83],
   's2-daily-hqorder': [52, 55],
+  's2-daily-ghost-stock': [8, 73],
   's3-plan-handoff': [16, 99],
   's3-daily-rework': [67],
   's3-daily-onboard': [99],
@@ -258,6 +259,7 @@ export const EVENT_PRECEPTS: Record<string, number[]> = {
   's3-daily-credit': [73, 40],
   's3-daily-subcon': [69, 82],
   's3-daily-faction': [84, 30],
+  's3-daily-circular': [73, 89],
 }
 
 export function preceptsForEvent(eventId: string): number[] {

@@ -19,7 +19,17 @@ export interface Meters {
 export type MeterKey = keyof Meters
 
 /** ゲーム内フラグ（選択で立ち、後のイベント出現条件になる）。生stringだとタイポを検知できないためユニオンで縛る */
-export type GameFlag = 'wrongKpi' | 'aiOverreliance' | 'genbaTrust' | 'topDown'
+export type GameFlag =
+  | 'wrongKpi'
+  | 'aiOverreliance'
+  | 'genbaTrust'
+  | 'topDown'
+  // 不正暴露アーク: 手がかり / 強い証拠 / フィナーレの選択（暴く・黙認・取り込まれる）
+  | 'fraudClue'
+  | 'fraudCase'
+  | 'exposed'
+  | 'complicit'
+  | 'coopted'
 
 /** 進行状態 */
 export type Status = 'playing' | 'event' | 'ended'

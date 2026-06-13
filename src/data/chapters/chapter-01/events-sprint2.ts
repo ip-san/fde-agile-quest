@@ -968,4 +968,31 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       },
     ],
   },
+  {
+    id: 's2-daily-ghost-stock',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'genba',
+    title: '在るはずの機材が、無い',
+    narrative:
+      '現場をIT化して、初めて在庫を実数で突き合わせた。すると——帳簿に「導入済み」と載っている高額なフィジカルAI機材が、倉庫のどこにも見当たらない。IT化されていなかったから、誰も気づかなかった。これは、普通の{{棚卸}}差異だろうか。',
+    choices: [
+      {
+        id: 'a',
+        label: '面倒事の匂いがする。帳簿に合わせて、見なかったことにする',
+        effects: { insight: -1 },
+        resultText:
+          '数字は帳簿に合わせた。だが“在るはずの機材が無い”という違和感に、自分から蓋をした。資料の外の事実を、また一つ閉じた。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '実物と帳簿のズレの出所を、現場と一台ずつ突き合わせて追う',
+        effects: { insight: 1 },
+        resultText:
+          '「この型番、見たことないっすね」と現場。導入されたはずの機材が、最初から無い。これは棚卸差異じゃない。何か、もっと大きなものの尻尾だ。',
+        setsFlag: 'fraudClue',
+      },
+    ],
+  },
 ]

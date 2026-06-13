@@ -1027,4 +1027,32 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       },
     ],
   },
+  {
+    id: 's3-daily-circular',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'trouble',
+    requiresFlag: 'fraudClue',
+    title: '書類の上だけ、ぐるぐる回る',
+    narrative:
+      '“在るはずの無い機材”を追い、組織の壁を壊して本社の取引データに繋いだ。すると見えてきた——同じシリアルのフィジカルAI機材が、グループ各社を書類の上だけで巡り、一周するたびに売上が立っている。架空の循環取引。カルゴ物流は、その踏み台にされていた。',
+    choices: [
+      {
+        id: 'a',
+        label: 'これは触れてはいけない領域だ。気づかなかったことにして蓋をする',
+        effects: { insight: -1 },
+        resultText:
+          '見て見ぬふりを選んだ。だが一度見えた循環は、もう目に焼き付いている。事実から逃げた重さだけが残った。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '取引データを突き合わせ、循環取引の証拠を一本につなげて固める',
+        effects: { insight: 1 },
+        resultText:
+          '伝票・在庫・入出庫のログが、一本の輪につながった。これは状況証拠ではない。動かぬ証拠だ。——あとは、これをどうするか、だけ。',
+        setsFlag: 'fraudCase',
+      },
+    ],
+  },
 ]

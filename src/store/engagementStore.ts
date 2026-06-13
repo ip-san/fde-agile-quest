@@ -7,6 +7,7 @@ import {
   ceremonyAt,
   chooseCore,
   dismissResultCore,
+  finalEndingFor,
   freshCore,
   proceedCore,
   restoreCore,
@@ -34,6 +35,8 @@ interface EngagementState extends ProgressCore {
   /** tier＝選択後の実行ミニゲームの出来（省略時は good＝標準） */
   choose: (choice: Choice, tier?: ExecTier) => void
   dismissResult: () => void
+  /** 不正暴露アークの「暴露の決断」を解決（選んだフラグで結末を確定・永続化） */
+  resolveFinale: (flag: GameFlag) => void
   reset: () => void
 }
 
@@ -76,6 +79,7 @@ function coreOf(s: EngagementState): ProgressCore {
     currentEvent: s.currentEvent,
     unexpected: s.unexpected,
     result: s.result,
+    finalePending: s.finalePending,
   }
 }
 
@@ -86,6 +90,11 @@ const VALID_FLAGS = {
   aiOverreliance: true,
   genbaTrust: true,
   topDown: true,
+  fraudClue: true,
+  fraudCase: true,
+  exposed: true,
+  complicit: true,
+  coopted: true,
 } satisfies Record<GameFlag, true>
 const FLAG_SET = new Set<string>(Object.keys(VALID_FLAGS))
 
@@ -193,6 +202,21 @@ export const useEngagement = create<EngagementState>((set, get) => ({
   },
 
   dismissResult: () => set(dismissResultCore(coreOf(get()))),
+
+  resolveFinale: (flag) => {
+    const core = coreOf(get())
+    const flags = new Set(core.flags).add(flag)
+    const fin = finalEndingFor(core.meters, flags)
+    const next: ProgressCore = {
+      ...core,
+      flags,
+      status: 'ended',
+      ending: fin.ending,
+      finalePending: fin.finalePending,
+    }
+    set(next)
+    persistCore(next) // フラグを永続化し、リロードしても結末が保たれる
+  },
 
   reset: () => {
     try {

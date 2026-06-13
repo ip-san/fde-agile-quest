@@ -2,7 +2,7 @@
 // 進行ロジック（純粋関数）。localStorage / zustand / 乱数源に依存しない。
 // store はこれらを呼ぶ薄いラッパに徹し、ここを game.test と同様に単体テストする。
 // ───────────────────────────────────────────────────────────
-import { ENDINGS, EVENTS, FAILURE_EPILOGUES, SPRINTS } from '../data/chapters/chapter-01'
+import { ENDINGS, EVENTS, FAILURE_EPILOGUES, FINALE_EPILOGUES, SPRINTS } from '../data/chapters/chapter-01'
 import { preceptsForEvent } from '../data/precepts'
 import { amplifyEffects, availableEvents, drawEvent, evaluateEnding, miniGameKindFor, resolveChoice } from './game'
 import type {
@@ -33,6 +33,8 @@ export interface ProgressCore {
   currentEvent: GameEvent | null
   unexpected: boolean
   result: ResultView | null
+  /** 完走したが、不正暴露アークの「暴露の決断」待ち（fraudClue 有りで未決断）。App が Finale を出す */
+  finalePending: boolean
 }
 
 /** localStorage に保存する最小形 */
@@ -71,7 +73,23 @@ export function freshCore(starting: Meters): ProgressCore {
     currentEvent: null,
     unexpected: false,
     result: null,
+    finalePending: false,
   }
+}
+
+/** キャンペーン完走時のエンディング決定（純粋）。advanceCore と restoreCore で共用。
+ *  - 暴露の決断済み(exposed/complicit/coopted) → 対応するフィナーレED
+ *  - 未決断だが手がかり(fraudClue)あり → ending=null・finalePending=true（決断待ち）
+ *  - それ以外 → 従来のメーター駆動エンディング */
+export function finalEndingFor(
+  meters: Meters,
+  flags: Set<GameFlag>,
+): { ending: Epilogue | null; finalePending: boolean } {
+  if (flags.has('exposed')) return { ending: FINALE_EPILOGUES.expose, finalePending: false }
+  if (flags.has('complicit')) return { ending: FINALE_EPILOGUES.complicit, finalePending: false }
+  if (flags.has('coopted')) return { ending: FINALE_EPILOGUES.coopted, finalePending: false }
+  if (flags.has('fraudClue')) return { ending: null, finalePending: true }
+  return { ending: evaluateEnding(ENDINGS, meters), finalePending: false }
 }
 
 /** ビートを1つ進め、スプリント／キャンペーンの終端を判定する */
@@ -87,9 +105,10 @@ export function advanceCore(core: ProgressCore, result: ResultView | null = null
   const base = { ...core, sprintIndex, beatIndex, currentEvent: null, unexpected: false, result }
 
   if (sprintIndex >= SPRINTS.length) {
-    return { ...base, status: 'ended', ending: evaluateEnding(ENDINGS, core.meters) }
+    const fin = finalEndingFor(core.meters, core.flags)
+    return { ...base, status: 'ended', ending: fin.ending, finalePending: fin.finalePending }
   }
-  return { ...base, status: 'playing', ending: null }
+  return { ...base, status: 'playing', ending: null, finalePending: false }
 }
 
 /** ルーレットを回すセレモニーか（デイリーのみ＝開発中の不確実性）。
@@ -192,11 +211,13 @@ export function restoreCore(p: Persisted): ProgressCore {
   const resolvedIds = new Set<string>(p.resolvedIds)
   const zeroed = zeroedMeter(p.meters)
   const campaignDone = p.sprintIndex >= SPRINTS.length
-  const ending: Epilogue | null = zeroed
-    ? FAILURE_EPILOGUES[zeroed]
+  // 0ルール失敗 > 完走（フィナーレ含む）> 進行中
+  const fin = zeroed
+    ? { ending: FAILURE_EPILOGUES[zeroed], finalePending: false }
     : campaignDone
-      ? evaluateEnding(ENDINGS, p.meters)
-      : null
+      ? finalEndingFor(p.meters, flags)
+      : { ending: null, finalePending: false }
+  const isEnded = zeroed !== undefined || campaignDone
   return {
     meters: p.meters,
     flags,
@@ -204,11 +225,12 @@ export function restoreCore(p: Persisted): ProgressCore {
     log: p.log,
     sprintIndex: p.sprintIndex,
     beatIndex: p.beatIndex,
-    status: ending ? 'ended' : 'playing',
-    ending,
+    status: isEnded ? 'ended' : 'playing',
+    ending: fin.ending,
     currentEvent: null,
     unexpected: false,
     result: null,
+    finalePending: fin.finalePending,
   }
 }
 
