@@ -78,8 +78,17 @@ export function useFocusTrap<T extends HTMLElement>(onEscape?: () => void) {
       }
     }
 
+    // backdrop（余白）クリックでフォーカスが body へ落ちると、node 限定の keydown が
+    // 効かずトラップを突破される。外側の mousedown を preventDefault してフォーカスを
+    // ダイアログ内に保ち、突破経路を塞ぐ（aria-modal はキーボード移動を止めないため）
+    const onMouseDown = (e: MouseEvent) => {
+      if (!node.contains(e.target as Node)) e.preventDefault()
+    }
+    document.addEventListener('mousedown', onMouseDown)
+
     node.addEventListener('keydown', onKey)
     return () => {
+      document.removeEventListener('mousedown', onMouseDown)
       node.removeEventListener('keydown', onKey)
       // APG: 閉じたらトリガーへフォーカスを戻す。トリガーがモーダル表示中に disabled 化
       // または消滅して body に落ちる場合は、盤面の主操作（[data-focus-return]）へ戻す

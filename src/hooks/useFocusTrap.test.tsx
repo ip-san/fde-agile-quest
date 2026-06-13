@@ -51,4 +51,19 @@ describe('useFocusTrap', () => {
     fireEvent.keyDown(first, { key: 'Tab', shiftKey: true })
     expect(document.activeElement).toBe(last)
   })
+
+  it('ダイアログ外（backdrop 余白）の mousedown は preventDefault され、フォーカスが body へ落ちない', () => {
+    render(
+      <div data-testid="backdrop">
+        <Dialog />
+      </div>,
+    )
+    const backdrop = screen.getByTestId('backdrop')
+    // 外側 mousedown はキャンセルされる（＝既定のフォーカス移動が起きない）
+    const prevented = !fireEvent.mouseDown(backdrop)
+    expect(prevented).toBe(true)
+    // ダイアログ内の mousedown はキャンセルされない（通常操作を妨げない）
+    const insidePrevented = !fireEvent.mouseDown(screen.getByText('first'))
+    expect(insidePrevented).toBe(false)
+  })
 })

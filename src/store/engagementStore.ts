@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { CEREMONY_ORDER, CHAPTER_TITLE, SPRINTS, STARTING_METERS } from '../data/chapters/chapter-01'
+import { PRECEPT_BY_ID } from '../data/precepts'
 import {
   type Persisted,
   type ProgressCore,
@@ -35,12 +36,18 @@ interface EngagementState extends ProgressCore {
   reset: () => void
 }
 
+/** 永続化された seenPrecepts を、実在する心得ID（1..100）だけの集合に正規化する。
+ *  破損/改竄で範囲外や非数値が混じっても「101/100」のような不整合表示にしない。テストのため export */
+export function sanitizeSeenPrecepts(arr: unknown): Set<number> {
+  if (!Array.isArray(arr)) return new Set()
+  return new Set(arr.filter((n) => typeof n === 'number' && PRECEPT_BY_ID[n] !== undefined))
+}
+
 function loadSeenPrecepts(): Set<number> {
   try {
     const raw = localStorage.getItem(PRECEPTS_KEY)
     if (!raw) return new Set()
-    const arr = JSON.parse(raw)
-    return Array.isArray(arr) ? new Set(arr.filter((n) => typeof n === 'number')) : new Set()
+    return sanitizeSeenPrecepts(JSON.parse(raw))
   } catch {
     return new Set()
   }
@@ -73,7 +80,7 @@ function coreOf(s: EngagementState): ProgressCore {
 
 const CEREMONY_SET = new Set<string>(CEREMONY_ORDER)
 // GameFlag を増やすと satisfies が未網羅をコンパイルエラーで知らせる（検証セットの取りこぼし防止）
-const VALID_FLAGS = { wrongKpi: true } satisfies Record<GameFlag, true>
+const VALID_FLAGS = { wrongKpi: true, aiOverreliance: true } satisfies Record<GameFlag, true>
 const FLAG_SET = new Set<string>(Object.keys(VALID_FLAGS))
 
 /** log の各要素が LogEntry の形（描画が前提とする string/number フィールド）を満たすか。

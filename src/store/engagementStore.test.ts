@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Persisted } from '../engine/progression'
-import { isValidPersisted } from './engagementStore'
+import { isValidPersisted, sanitizeSeenPrecepts } from './engagementStore'
 
 // 正常な永続データ（Sprint1・最初の daily 進行中を想定）
 const valid: Persisted = {
@@ -72,5 +72,16 @@ describe('isValidPersisted', () => {
   it('sprintIndex / beatIndex の範囲外は弾く', () => {
     expect(isValidPersisted({ ...valid, sprintIndex: -1 })).toBe(false)
     expect(isValidPersisted({ ...valid, beatIndex: 999 })).toBe(false)
+  })
+})
+
+describe('sanitizeSeenPrecepts', () => {
+  it('実在する心得ID（1..100）だけを残す', () => {
+    expect([...sanitizeSeenPrecepts([1, 50, 100])]).toEqual([1, 50, 100])
+  })
+  it('範囲外・非整数・非数値・非配列を除外する（101/100 を防ぐ）', () => {
+    expect([...sanitizeSeenPrecepts([0, 101, 99999, 3.5, '5', null, 42])]).toEqual([42])
+    expect(sanitizeSeenPrecepts('nope').size).toBe(0)
+    expect(sanitizeSeenPrecepts(null).size).toBe(0)
   })
 })
