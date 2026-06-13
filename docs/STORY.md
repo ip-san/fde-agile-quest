@@ -5,6 +5,7 @@
 本ファイルはその設計意図を人間可読にまとめたもの。
 
 関連:
+- **設定の原型カタログ（モチーフ・設定づくりの型）**: [`docs/MOTIFS.md`](./MOTIFS.md)
 - **全イベント索引（自動生成・最新の現状）**: [`docs/EVENT_INDEX.md`](./EVENT_INDEX.md) ← `node scripts/gen-event-index.mjs` で再生成
 - **出典・参考文献**: [`../REFERENCES.md`](../REFERENCES.md)
 - **キャラ/3幕/分岐の実体**: `src/data/chapters/chapter-01/cast.ts`（物語バイブル）
