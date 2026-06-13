@@ -71,17 +71,38 @@ function coreOf(s: EngagementState): ProgressCore {
   }
 }
 
-/** 永続データの妥当性検証（旧スキーマ・破損・章改訂で範囲外なら破棄して新規開始） */
-function isValidPersisted(x: unknown): x is Persisted {
+/** log の各要素が LogEntry の形（描画が前提とする string/number フィールド）を満たすか。
+ *  破損・旧スキーマで非文字列が混ざると RichText の split で実行時クラッシュするため弾く */
+function isValidLogEntry(e: unknown): boolean {
+  if (!e || typeof e !== 'object') return false
+  const r = e as Record<string, unknown>
+  return (
+    typeof r.sprint === 'number' &&
+    typeof r.ceremony === 'string' &&
+    typeof r.eventTitle === 'string' &&
+    typeof r.choiceLabel === 'string' &&
+    typeof r.resultText === 'string'
+  )
+}
+
+/** 永続データの妥当性検証（旧スキーマ・破損・章改訂で範囲外なら破棄して新規開始）。
+ *  配列は要素の型まで検証する——LogEntry[] 等の型宣言と実体を一致させ、描画時クラッシュを防ぐ。
+ *  テストのため export（ストア本体は loadPersisted 経由で利用） */
+export function isValidPersisted(x: unknown): x is Persisted {
   if (!x || typeof x !== 'object') return false
   const o = x as Record<string, unknown>
   const m = o.meters as Record<string, unknown> | undefined
   if (!m) return false
+  // メーターは仕様上すべて 0..10 の整数。範囲外・非整数は破損とみなして破棄
   for (const k of ['trust', 'insight', 'culture']) {
-    if (typeof m[k] !== 'number' || !Number.isFinite(m[k] as number)) return false
+    const v = m[k]
+    if (typeof v !== 'number' || !Number.isInteger(v) || v < 0 || v > 10) return false
   }
   if (typeof o.sprintIndex !== 'number' || typeof o.beatIndex !== 'number') return false
   if (!Array.isArray(o.resolvedIds) || !Array.isArray(o.flags) || !Array.isArray(o.log)) return false
+  if (!o.resolvedIds.every((id) => typeof id === 'string')) return false
+  if (!o.flags.every((f) => typeof f === 'string')) return false
+  if (!o.log.every(isValidLogEntry)) return false
   const si = o.sprintIndex as number
   const bi = o.beatIndex as number
   if (si < 0 || si > SPRINTS.length) return false

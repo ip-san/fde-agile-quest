@@ -158,6 +158,7 @@ export function Roulette({ disabled, onResult }: Props) {
         type="button"
         onClick={spin}
         disabled={disabled || spinning}
+        data-focus-return
         aria-label="ルーレットを回して、その日の出来事を引く"
         className="rounded-xl bg-sky-500 px-8 py-3 text-lg font-bold text-slate-950 shadow-lg shadow-sky-500/30 transition hover:bg-sky-400 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-600 disabled:text-slate-400 disabled:shadow-none"
       >

@@ -134,6 +134,7 @@ export function Board() {
             type="button"
             onClick={proceed}
             disabled={status !== 'playing' || !!result}
+            data-focus-return
             className="rounded-xl bg-sky-500 px-10 py-3 text-lg font-bold text-slate-950 shadow-lg shadow-sky-500/30 transition hover:bg-sky-400 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-600 disabled:text-slate-400 disabled:shadow-none"
           >
             ▶ 進める

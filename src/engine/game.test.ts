@@ -111,6 +111,25 @@ describe('evaluateEnding', () => {
   it('どれにも該当しなければ 及第点', () => {
     expect(evaluateEnding(ENDINGS, meters({ trust: 6, insight: 5, culture: 5 })).id).toBe('decent')
   })
+
+  // しきい値の「ちょうど境界」を踏み、>= を > 等にずらす off-by-one を検出できるようにする
+  describe('エンディング閾値の境界値', () => {
+    it('trueFde はちょうど 7/6/6 で成立する', () => {
+      expect(evaluateEnding(ENDINGS, meters({ trust: 7, insight: 6, culture: 6 })).id).toBe('trueFde')
+    })
+    it('trueFde は各次元を1下回ると成立しない（→及第点）', () => {
+      expect(evaluateEnding(ENDINGS, meters({ trust: 6, insight: 6, culture: 6 })).id).toBe('decent')
+      expect(evaluateEnding(ENDINGS, meters({ trust: 7, insight: 5, culture: 6 })).id).toBe('decent')
+      expect(evaluateEnding(ENDINGS, meters({ trust: 7, insight: 6, culture: 5 })).id).toBe('decent')
+    })
+    it('disliked はちょうど trust=2 で成立する', () => {
+      expect(evaluateEnding(ENDINGS, meters({ trust: 2, insight: 8 })).id).toBe('disliked')
+    })
+    it('hero はちょうど trust=4・culture=2 で成立し、trust=3 では成立しない', () => {
+      expect(evaluateEnding(ENDINGS, meters({ trust: 4, insight: 7, culture: 2 })).id).toBe('hero')
+      expect(evaluateEnding(ENDINGS, meters({ trust: 3, insight: 7, culture: 2 })).id).toBe('decent')
+    })
+  })
 })
 
 describe('キャンペーン構造の健全性', () => {
