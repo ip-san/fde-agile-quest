@@ -525,4 +525,317 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       },
     ],
   },
+  {
+    id: 's3-daily-ai-regression',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'trouble',
+    requiresFlag: 'aiOverreliance',
+    title: 'モデル更新、突然のバカ',
+    narrative:
+      'ある朝、{{需要予測}}AIの出力が突然おかしくなった。提供元のモデルが黙って更新され、昨日まで通っていた在庫提案が軒並み的外れに。検証を省いて全面委任していた箇所が、一斉に火を噴く。{{欠品}}が広がり、{{充足率}}が急落していく。',
+    choices: [
+      {
+        id: 'a',
+        label: 'とりあえずプロンプトを盛って、その場の出力を取り繕う',
+        effects: { trust: -1, insight: -1 },
+        resultText:
+          '一時はそれらしい数字に戻った。だが根本は{{リグレッション}}したまま。顧客に出した在庫提案がまたズレ、結城さんの信頼が削れた（顧客に実害＝信頼−）。{{ハルシネーション}}を、{{ハルシネーション}}で塗り重ねた。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '一旦AIを“下書き”に格下げし、人の検証と{{完成の定義}}を作り直す',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '出力は遅くなった。だが人の目を通す関所を取り戻し、二度と黙って壊れない構えにした。AIが書いた答えも、最後は自分の責任だ。',
+      },
+    ],
+  },
+  {
+    id: 's3-daily-outcome',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'kokyaku',
+    title: '「動く」と「使われる」の谷',
+    narrative:
+      '新しい在庫画面は{{完成の定義}}を満たし、本番に乗った。だが田淵さんはまだ手書きメモを併用している。「動く」けれど、現場の習慣はまだ変わっていない。',
+    choices: [
+      {
+        id: 'a',
+        label: 'DoDは満たしたので「完了」とし、次の機能に進む',
+        effects: { insight: -1 },
+        resultText:
+          'チケットは閉じた。だが使われない機能が、また一つ増えた。作って動くことを、成果と取り違えた。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '{{成果の定義}}——田淵さんが手書きをやめたか——まで見届ける',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '画面に一手間足したら、ついに手書きが消えた。出力でなく、現場に起きた変化が“完了”だ。',
+      },
+    ],
+  },
+  {
+    id: 's3-daily-3pl',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'chance',
+    title: '「いっそ3PLに出せば?」',
+    narrative:
+      '赤城部長が「いっそ庫内まるごと{{3PL}}に出せば、コストもKPIも一発で良くなる」と言い出した。確かに数字は良くなる。だが現場で育ちかけた知は、外へ出ていく。',
+    choices: [
+      {
+        id: 'a',
+        label: '数字が良くなるなら、と{{3PL}}全面移管を後押しする',
+        effects: { trust: 1, culture: -1 },
+        resultText:
+          '提案は経営に受けた（コスト削減で信頼+）。だが現場の改善文化は根こそぎ外注され、せっかくの知が霧散した。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '移管は定型業務に絞り、現場で育った改善の核は社内に残す',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '全部は出さない。{{3PL}}に任せる所と、自分たちで握る所を線引きした。文化は、残す形を選ばないと残らない。（コストの信頼+は取り逃す）',
+      },
+    ],
+  },
+  {
+    id: 's3-daily-handover2',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'team',
+    title: '手順書か、橋本さんか',
+    narrative:
+      '橋本さんの手順書ができ始めた。だが「結局あの人に聞くのが速い」と、みんなまた橋本さんに駆け寄る。仕組みは作っても、習慣が戻る。',
+    choices: [
+      {
+        id: 'a',
+        label: '急ぎだから、今日もまた橋本さんに直接聞いて済ませる',
+        effects: { culture: -1 },
+        resultText:
+          '今日は速かった。だが手順書は使われず埃をかぶる。仕組みは、使う習慣まで作って初めて根付く。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: 'あえて橋本さん抜きで、手順書を見ながらチームで対応してみる',
+        effects: { culture: 1, insight: 1 },
+        resultText:
+          'つっかえながらも、チームだけで捌けた。橋本さんが「もう俺いらんかもな」と笑った。属人化が、ほどけ始めた。',
+      },
+    ],
+  },
+  {
+    id: 's3-daily-retro-owner',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'team',
+    title: '「やろう」で終わる改善',
+    narrative:
+      '改善案はたくさん出た。だが「誰が・いつまでに」やるかが、いつものように曖昧なまま終わりそうだ。',
+    choices: [
+      {
+        id: 'a',
+        label: '空気よく、たくさんの改善に全部「やろう」と頷いて終える',
+        effects: { culture: -1 },
+        resultText:
+          '前向きな空気で散会した。だが誰のものでもない改善は、誰もやらず、次も同じ議題が並ぶ。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '改善を3つに絞り、それぞれ担当と期限を{{バックログ}}に刻む',
+        effects: { culture: 1, insight: 1 },
+        resultText:
+          '少ないが、確実に回る改善が残った。所有と期限のない合意は、ただの願望にすぎない。',
+      },
+    ],
+  },
+  {
+    id: 's3-daily-leadership',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'trouble',
+    title: '誰が決めるのか',
+    narrative:
+      '本番直前、重大な判断が要る局面。全員が当事者として意見を出すが、誰が最終決定をするのかが曖昧で、時間だけが過ぎていく。',
+    choices: [
+      {
+        id: 'a',
+        label: '波風を立てず、全員一致を待って判断を先送りにする',
+        effects: { insight: -1 },
+        resultText:
+          '合議は続き、決まらないまま好機を逃した。全員の責任は、しばしば誰の責任でもなくなる。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '意見を出し切らせた上で、自分がラストマンとして決め、責任を引き受ける',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '「自分が決める。責任は取る」。決まった瞬間、チームが動き出した。分散した当事者性も、最後の一点は要る。',
+      },
+    ],
+  },
+  {
+    id: 's3-daily-prod',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'genba',
+    title: 'もう少し磨いてから?',
+    narrative:
+      '改善した在庫最適化は、検証環境では完璧に回っている。「もう少し磨いてから本番に」という声。だが現場が本当に使うのは、本番に出てからだ。',
+    choices: [
+      {
+        id: 'a',
+        label: 'もう少し作り込んでから、と本番投入を先送りする',
+        effects: { insight: -1 },
+        resultText:
+          '磨きは進んだが、現場の反応は得られないまま。{{PoC}}で満足する“あと一歩”が、いちばん遠い。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '荒削りでも本番に出し、現場の反応で次を決める',
+        effects: { insight: 1 },
+        resultText:
+          '本番に出した瞬間、検証環境では見えなかった例外が噴き出した。ユーザーが使って、初めて設計が始まる。',
+      },
+    ],
+  },
+  {
+    id: 's3-daily-handoff-trust',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'kokyaku',
+    title: '「あなたが抜けたら…」',
+    narrative:
+      'プロジェクトの終わりが見えてきた。結城さんが不安げだ。「あなたが抜けたら、また元に戻るんじゃ…」。自分がいなくても回る形を、どう残すか。',
+    choices: [
+      {
+        id: 'a',
+        label: '不安に応え、自分が居続けて手厚く面倒を見ると約束する',
+        effects: { trust: 1, culture: -1 },
+        resultText:
+          '結城さんは安心した（寄り添って信頼+）。だが自分への依存を作っただけ。FDEがヒーローのままでは、文化は残らない。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '結城さんと橋本さんが自走できる運用と勘所を、一緒に文書化する',
+        effects: { culture: 1, insight: 1 },
+        resultText:
+          '「これなら、自分たちで回せそうだ」。頼られることより、要らなくなることを目指した。（寄り添いの信頼+は取り逃す）',
+      },
+    ],
+  },
+  {
+    id: 's3-daily-numbers',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'kokyaku',
+    title: '数字だけ並べるか',
+    narrative:
+      '郷田専務に最終成果を報告する。{{誤出荷率}}は確かに下がった。だが「なぜ下がったか」「次に何を残すか」を語らず、数字だけ並べることもできる。',
+    choices: [
+      {
+        id: 'a',
+        label: '良い数字だけをきれいに並べ、成功として締める',
+        effects: { insight: -1 },
+        resultText:
+          '数字は拍手を呼んだ。だが理由を語らなかったぶん、再現性は残らない。定量は方向、定性は理由なのに。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '数字に、現場で何が変わったかの物語を添えて報告する',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '「だから、ここを残すんです」。数字と理由が揃って初めて、次へ続く成果になった。',
+      },
+    ],
+  },
+  {
+    id: 's3-daily-blame',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'trouble',
+    title: '「誰のミスだ」',
+    narrative:
+      '本番で小さな事故が出た。経営は「誰のミスだ」と犯人を探したがる。チームは萎縮し始めている。',
+    choices: [
+      {
+        id: 'a',
+        label: '経営の手前、原因者を特定して報告し、収拾を図る',
+        effects: { culture: -1 },
+        resultText:
+          '犯人は見つかった。だが次から誰も失敗を言わなくなり、小さな火種が水面下に潜った。責任追及は、透明性を殺す。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '個人でなく仕組みの欠陥として扱い、再発防止に振り向ける',
+        effects: { culture: 1, insight: 1 },
+        resultText:
+          '「誰が、ではなく、なぜ起きたか」。安心して失敗を出せる場が、いちばん早く学ぶ。炎上は授業料つきの実地訓練だ。',
+      },
+    ],
+  },
+  {
+    id: 's3-daily-scope-creep',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'chance',
+    title: '「ついでにあれも」',
+    narrative:
+      '成果が出て、結城さんも郷田専務も上機嫌だ。「ついでにあれも、これも」と新しい要望が一気に膨らみ始めた。',
+    choices: [
+      {
+        id: 'a',
+        label: '機運に乗って、出てきた要望を全部この案件に詰め込む',
+        effects: { insight: -1 },
+        resultText:
+          '欲張ったぶん、どれも中途半端になった。成功の勢いは、焦点を溶かす毒にもなる。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '今回の{{スプリントゴール}}は守り、新要望は次の{{プロダクトゴール}}として整理する',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '「次の約束」に並べ替えた。広げたい時こそ、Whyの最上段から積み直す。',
+      },
+    ],
+  },
+  {
+    id: 's3-daily-mentor',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'chance',
+    title: '久遠さんの問い',
+    narrative:
+      '夜の倉庫で、久遠さんがコーヒーを差し出した。「で、お前は何を“残せた”と思う?」。FDEとして来た意味を、問われている。',
+    choices: [
+      {
+        id: 'a',
+        label: '「{{誤出荷率}}を下げた成果です」と、出した数字で答える',
+        effects: { insight: -1 },
+        resultText:
+          '久遠さんは静かに首を振った。「数字は、お前が抜けたら誰が守る?」。成果の手前で、問いの芯を外していた。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '「現場が、自分たちで直し始めたことです」と答える',
+        effects: { culture: 1, insight: 1 },
+        resultText:
+          '久遠さんはうなずいた。「現場を変え、プロダクトに戻し、組織を賢くする。それがFDEだ」。残すべきは、数字でなく回り続ける仕組みだった。',
+      },
+    ],
+  },
 ]

@@ -195,6 +195,12 @@ describe('フラグ→Sprint3 手戻りイベントの結合', () => {
   it('wrongKpi 無しなら手戻りイベントはプールから除外される', () => {
     expect(sprint3DailyPoolIds([])).not.toContain('s3-daily-rework')
   })
+  it('aiOverreliance 立ちのときだけ AI退化イベントが抽選プールに含まれる', () => {
+    expect(sprint3DailyPoolIds(['aiOverreliance'])).toContain('s3-daily-ai-regression')
+  })
+  it('aiOverreliance 無しなら AI退化イベントはプールから除外される', () => {
+    expect(sprint3DailyPoolIds([])).not.toContain('s3-daily-ai-regression')
+  })
 })
 
 describe('spinCore — 想定外(unexpected)の分岐', () => {

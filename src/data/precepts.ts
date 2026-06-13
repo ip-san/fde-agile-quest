@@ -235,6 +235,18 @@ export const EVENT_PRECEPTS: Record<string, number[]> = {
   's3-daily-craft': [96, 100],
   's3-review': [53, 54],
   's3-retro': [98, 99],
+  's3-daily-ai-regression': [47, 49],
+  's3-daily-outcome': [20, 56],
+  's3-daily-3pl': [98, 99],
+  's3-daily-handover2': [29, 99],
+  's3-daily-retro-owner': [71, 74],
+  's3-daily-leadership': [30, 40],
+  's3-daily-prod': [16, 18],
+  's3-daily-handoff-trust': [75, 99],
+  's3-daily-numbers': [54, 55],
+  's3-daily-blame': [89, 90],
+  's3-daily-scope-creep': [82, 37],
+  's3-daily-mentor': [99, 100],
 }
 
 export function preceptsForEvent(eventId: string): number[] {
