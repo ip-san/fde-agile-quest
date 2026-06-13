@@ -1,5 +1,5 @@
 import { CEREMONY_LABELS, SEGMENT_COLORS, SEGMENT_LABELS } from '../data/chapters/chapter-01'
-import { hasImage, imageUrl, resultImageKey } from '../data/images'
+import { imageUrl, resultImage } from '../data/images'
 import { PRECEPT_BY_ID } from '../data/precepts'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 import type { Effects, ResultView } from '../types'
@@ -46,7 +46,7 @@ export function ResultModal({ result, onContinue }: Props) {
   // フォーカストラップ＋Escで次へ。Enter/Space は autoFocus した「次へ」ボタンが native に処理
   const ref = useFocusTrap<HTMLDivElement>(onContinue)
   const titleId = 'result-title'
-  const imgKey = resultImageKey(result.eventId, result.choiceId)
+  const imgKey = resultImage(result.eventId, result.choiceId, result.segment)
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
@@ -76,7 +76,7 @@ export function ResultModal({ result, onContinue }: Props) {
         </header>
 
         {/* 結果の実写ドキュメンタリー風画像（選択後・あれば） */}
-        {hasImage(imgKey) && (
+        {imgKey && (
           <img
             src={imageUrl(imgKey)}
             alt=""

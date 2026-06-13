@@ -1,5 +1,5 @@
 import { CEREMONY_LABELS, SEGMENT_COLORS, SEGMENT_LABELS } from '../data/chapters/chapter-01'
-import { choiceImageKey, hasImage, imageUrl } from '../data/images'
+import { choiceImage, imageUrl } from '../data/images'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 import type { Choice, Effects, GameEvent } from '../types'
 import { RichText } from './RichText'
@@ -83,7 +83,7 @@ export function EventModal({ event, unexpected, onChoose }: Props) {
           <div className="space-y-2">
             <p className="text-xs font-semibold text-slate-400">あなたの判断は？</p>
             {event.choices.map((c) => {
-              const imgKey = choiceImageKey(event.id, c.id)
+              const imgKey = choiceImage(event, c.id)
               return (
                 <button
                   key={c.id}
@@ -93,7 +93,7 @@ export function EventModal({ event, unexpected, onChoose }: Props) {
                     c.warn ? 'border-rose-500/40 bg-rose-950/20' : 'border-slate-700 bg-slate-800/40'
                   }`}
                 >
-                  {hasImage(imgKey) && (
+                  {imgKey && (
                     <img
                       src={imageUrl(imgKey)}
                       alt=""
