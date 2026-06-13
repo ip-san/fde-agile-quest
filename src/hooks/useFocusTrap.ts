@@ -46,6 +46,9 @@ export function useFocusTrap<T extends HTMLElement>(onEscape?: () => void) {
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        // 用語ツールチップが開いているときの Esc は、それを閉じるためのもの。
+        // ここで onEscape（次へ進む等）を奪わない（チップ側の Esc ハンドラに任せる）
+        if (document.querySelector('[role="tooltip"]')) return
         if (escapeRef.current) {
           e.preventDefault()
           escapeRef.current()

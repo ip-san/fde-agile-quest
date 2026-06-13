@@ -67,8 +67,16 @@ export function Board() {
   const ceremony: Ceremony = sprint.beats[Math.min(beatIndex, sprint.beats.length - 1)]
   const useRoulette = isRouletteCeremony(ceremony)
 
+  // モーダル表示中は背後を支援技術ツリー/操作から外す（aria-modal 任せにしない）
+  const modalOpen =
+    (status === 'event' && !!currentEvent && !result) || !!result || bookOpen || prologueOpen
+
   return (
-    <div className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-4 px-4 py-4">
+    <>
+      <div
+        className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-4 px-4 py-4"
+        inert={modalOpen || undefined}
+      >
       {/* ヘッダー：スプリント */}
       <header className="flex items-start justify-between gap-3">
         <div>
@@ -189,6 +197,7 @@ export function Board() {
           <EventLog log={log} />
         </div>
       </section>
+      </div>
 
       {/* イベント＝判断モーダル（選択するとミニゲームへ） */}
       {status === 'event' && currentEvent && !result && !pendingChoice && (
@@ -219,6 +228,6 @@ export function Board() {
 
       {/* プロローグ（初回自動・以降は「あらすじ」から） */}
       {prologueOpen && <Prologue onClose={closePrologue} />}
-    </div>
+    </>
   )
 }

@@ -1,10 +1,16 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { useFocusTrap } from './useFocusTrap'
 
-function Dialog({ initialFocusLast = false }: { initialFocusLast?: boolean }) {
-  const ref = useFocusTrap<HTMLDivElement>()
+function Dialog({
+  initialFocusLast = false,
+  onEscape,
+}: {
+  initialFocusLast?: boolean
+  onEscape?: () => void
+}) {
+  const ref = useFocusTrap<HTMLDivElement>(onEscape)
   return (
     <div ref={ref} role="dialog" aria-modal="true">
       <button type="button">first</button>
@@ -50,6 +56,22 @@ describe('useFocusTrap', () => {
     expect(document.activeElement).toBe(first)
     fireEvent.keyDown(first, { key: 'Tab', shiftKey: true })
     expect(document.activeElement).toBe(last)
+  })
+
+  it('用語ツールチップが開いている間は Esc で onEscape を発火しない（チップを閉じる Esc を奪わない）', () => {
+    const onEscape = vi.fn()
+    render(<Dialog onEscape={onEscape} />)
+    const dialog = screen.getByRole('dialog')
+    // ツールチップが開いている状態を再現（RichText は portal で role=tooltip を body に出す）
+    const tip = document.createElement('span')
+    tip.setAttribute('role', 'tooltip')
+    document.body.appendChild(tip)
+    fireEvent.keyDown(dialog, { key: 'Escape' })
+    expect(onEscape).not.toHaveBeenCalled()
+    // チップが閉じた後は Esc が通る
+    tip.remove()
+    fireEvent.keyDown(dialog, { key: 'Escape' })
+    expect(onEscape).toHaveBeenCalledTimes(1)
   })
 
   it('ダイアログ外（backdrop 余白）の mousedown は preventDefault され、フォーカスが body へ落ちない', () => {
