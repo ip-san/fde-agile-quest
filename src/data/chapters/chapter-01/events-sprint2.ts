@@ -546,4 +546,343 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       },
     ],
   },
+  {
+    id: 's2-daily-ai-handoff',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'chance',
+    title: '速すぎるAIエージェント',
+    narrative:
+      '受託部門が連れてきたAIエージェントは、とにかく速い。需要予測のコードも{{WMS}}の改修案も数分で吐き出す。橋本さんは「これ全部任せちゃえば?」と半分本気だ。',
+    choices: [
+      {
+        id: 'a',
+        label: 'レビューも{{完成の定義}}も省いて、エージェントに丸投げで一気に進める',
+        effects: { trust: 1, insight: -1 },
+        resultText:
+          '驚くほど速く形になった（進捗が見えて信頼+）。検証は後回し——「動いてるからヨシ」。便利さに、深く寄りかかり始めた。',
+        warn: true,
+        setsFlag: 'aiOverreliance',
+      },
+      {
+        id: 'b',
+        label: 'AIは下書きに使い、人のレビューと{{完成の定義}}を必ず通す',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '速さは活かしつつ、出力は人の目で受け入れる。{{ハルシネーション}}は、ここで食い止める。（“全部お任せ”の速さが持つ信頼+は取り逃す）',
+      },
+    ],
+  },
+  {
+    id: 's2-daily-dod',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'team',
+    title: '「完成」って、どこから?',
+    narrative:
+      'チームで{{完成の定義}}を決める。「テストもレビューもドキュメントも全部」を理想に掲げるか、続けられる現実解にするか。',
+    choices: [
+      {
+        id: 'a',
+        label: '理想を高く掲げ、フルの品質基準を一律で課す',
+        effects: { culture: -1 },
+        resultText:
+          '基準は立派だが重すぎて、誰も守れず形骸化した。守れない{{完成の定義}}は、無いのと同じだ。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: 'まず守れる最小の{{完成の定義}}を決め、回しながら厳しくする',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '小さく始めて、徐々に上げる。守れる基準だけが、品質を本当に支える。',
+      },
+    ],
+  },
+  {
+    id: 's2-daily-goalcreep',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'kokyaku',
+    title: '揺らぐスプリントゴール',
+    narrative:
+      '{{スプリント}}の途中、結城さんが「経営が別の機能も今期に、と。このスプリントに入れられませんか」と割り込んできた。{{スプリントゴール}}が揺らぐ。',
+    choices: [
+      {
+        id: 'a',
+        label: '断りきれず、ゴールに割り込み機能を足す',
+        effects: { trust: 1, culture: -1 },
+        resultText:
+          '結城さんは安堵した（要望に応えて信頼+）。だが焦点がぼやけ、元のゴールも割り込みも中途半端になった。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '{{スプリントゴール}}を守り、割り込みは次の{{バックログ}}最上位として形に残す',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '「次に必ずやる」と約束し、今の焦点を守った。守られたゴールが、予測可能性を生む。（即応の信頼+は取り逃す）',
+      },
+    ],
+  },
+  {
+    id: 's2-daily-fillrate',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'genba',
+    title: '回転率と充足率の板挟み',
+    narrative:
+      '経営は「{{在庫回転率}}を上げろ、在庫を減らせ」と言う。だが現場の評価軸は{{充足率}}——{{欠品}}を出すと叱られる。結城さんは板挟みだ。',
+    choices: [
+      {
+        id: 'a',
+        label: '経営の言う通り在庫を絞り、回転率の数字を作る',
+        effects: { trust: 1, insight: -1 },
+        resultText:
+          '回転率は上がった（経営に見せられて信頼+）。だが{{欠品}}が増え、現場は{{安全在庫}}を隠し持ち始めた。数字の裏で歪みが育つ。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '両KPIの綱引きを可視化し、品目ごとに{{安全在庫}}の置き方を現場と決める',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '一律でなく、動きの速い品と遅い品で分ける。{{充足率}}と{{在庫回転率}}の両立点を、現場の知で探した。',
+      },
+    ],
+  },
+  {
+    id: 's2-daily-crossdock',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'genba',
+    title: '「クロスドッキングで在庫ゼロだ」',
+    narrative:
+      '「{{クロスドッキング}}にすれば在庫ゼロで速くなる」と赤城部長が乗り気だ。だが入荷と出荷の時刻が日々ズレるこの現場で、本当に回るのか。',
+    choices: [
+      {
+        id: 'a',
+        label: '号令通り、全品クロスドッキングに切り替える',
+        effects: { insight: -1 },
+        resultText:
+          '同期が取れず、荷が通路に溢れた。理屈は正しくても、現場の{{動線}}とリズムを見ていなかった。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '入出荷の同期が取れる一部品目だけで小さく試す',
+        effects: { insight: 1 },
+        resultText:
+          '回る品と回らない品が見えた。{{クロスドッキング}}は、現場の時間が噛み合う所から始める。',
+      },
+    ],
+  },
+  {
+    id: 's2-daily-demofail',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'trouble',
+    title: 'レビュー前夜、機能が落ちた',
+    narrative:
+      '{{スプリントレビュー}}の前日、見せる予定だった機能が落ちた。郷田専務も来る。隠して別の見栄えで乗り切るか。',
+    choices: [
+      {
+        id: 'a',
+        label: '落ちた機能には触れず、見栄えのする別画面でデモを乗り切る',
+        effects: { trust: 1, insight: -1 },
+        resultText:
+          'その場は拍手で終わった（取り繕って信頼+）。だが「動く」と思わせた経営の判断が、事実とズレ始める。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '落ちた事実と原因、次の手を正直に共有する',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '気まずい沈黙のあと、郷田専務は「で、次どうする?」と前を向いた。隠さない者が、次の信頼を得る。（取り繕いの信頼+は取り逃す）',
+      },
+    ],
+  },
+  {
+    id: 's2-daily-flow',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'team',
+    title: '全員忙しいのに終わらない',
+    narrative:
+      'みんなが3つも4つも{{仕掛り}}を抱え、どれも終わらない。「並行した方が速い気がする」という空気。だが完了が一向に出ない。',
+    choices: [
+      {
+        id: 'a',
+        label: '各自が抱えるタスクを増やし、稼働率を上げる',
+        effects: { culture: -1 },
+        resultText:
+          '全員忙しいのに、完了は増えない。切り替えのムダが膨らみ、{{仕掛り}}の沼にはまった。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '{{仕掛り}}に上限を設け、終わらせてから次に着手する',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '一つずつ流したら、かえって早く片付いた。忙しさでなく、流れを見る。',
+      },
+    ],
+  },
+  {
+    id: 's2-daily-stakeholders',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'kokyaku',
+    title: 'それぞれの“成功”',
+    narrative:
+      '同じ機能でも、結城さん（情シス）は「保守が楽に」、田淵さん（現場）は「入力が減れば」、赤城部長は「コストが下がれば」と、求める成果がバラバラだ。',
+    choices: [
+      {
+        id: 'a',
+        label: '声の大きい赤城部長の要望に全部寄せる',
+        effects: { insight: -1 },
+        resultText:
+          'コスト目線だけで作ったら、現場には響かなかった。誰の成果かを絞らず、一番強い声に流された。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '各{{ステークホルダー}}の“成功”を並べ、今回優先する一人を明確に決める',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '全員は満たせない。だから誰の成果を今取りに行くかを選び、合意した。{{成果の定義}}は、相手によって違う。',
+      },
+    ],
+  },
+  {
+    id: 's2-daily-refine',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'team',
+    title: '曖昧なまま着手する?',
+    narrative:
+      'プランニング当日、{{バックログ}}の上位がまだ曖昧だ。「とりあえず着手しよう」という声と、「{{リファインメント}}が先だ」という声が割れる。',
+    choices: [
+      {
+        id: 'a',
+        label: '曖昧なまま着手して、走りながら考える',
+        effects: { insight: -1 },
+        resultText:
+          '途中で前提が崩れ、作ったものを捨てた。準備不足のまま走った代償だ。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '上位だけ手早く{{リファインメント}}し、入口の曖昧さを潰す',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '「何が出来たら終わりか」を先に決めた。曖昧さを入口で潰すと、後の手戻りが減る。',
+      },
+    ],
+  },
+  {
+    id: 's2-daily-leadtime',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'chance',
+    title: 'リードタイムを詰める好機',
+    narrative:
+      '受注から出荷までの{{リードタイム}}を、AIの{{需要予測}}で前倒しできるかもしれない。結城さんの目が輝く。だが予測を信じて先に動くリスクもある。',
+    choices: [
+      {
+        id: 'a',
+        label: '予測を全面的に信じ、先回りで在庫を積んでリードタイムを詰める',
+        effects: { trust: 1, insight: -1 },
+        resultText:
+          '一時は速くなった（数字が出て信頼+）。だが予測が外れた品で過剰在庫が膨らみ、{{在庫回転率}}が悪化した。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '予測の当たり外れを品目別に検証し、外しても痛くない範囲で先回りする',
+        effects: { insight: 1 },
+        resultText:
+          '当たる品から少しずつ。{{需要予測}}は、外れる前提で安全幅を設計する。',
+      },
+    ],
+  },
+  {
+    id: 's2-daily-handwork',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'genba',
+    title: '勘で保たれる流通加工',
+    narrative:
+      '{{流通加工}}——ギフトのセット組みは、パートの山田さんの“勘”で品質が保たれていた。標準化したいが、本人は「見て覚えるもんだ」と言う。',
+    choices: [
+      {
+        id: 'a',
+        label: 'マニュアル化は後回しにして、山田さん頼みで回し続ける',
+        effects: { culture: -1 },
+        resultText:
+          '今日も品質は保たれた。だが山田さんが休んだ日、セット組みは崩れる。現場の手作業は、未来のプロダクト仕様なのに。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '山田さんの手元を撮り、勘を手順とチェック表に翻訳する',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '「こんなん言葉にできんよ」と笑いつつ、コツが形になった。{{流通加工}}の暗黙知が、チームの資産になる。',
+      },
+    ],
+  },
+  {
+    id: 's2-daily-courage',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'team',
+    title: '言いにくい一言',
+    narrative:
+      '橋本さんへの一極集中は、誰の目にも限界だ。だが本人に「権限を分けましょう」と言うのは気が重い。彼のプライドもある。',
+    choices: [
+      {
+        id: 'a',
+        label: '波風を避け、当面は橋本さん体制のまま回す',
+        effects: { culture: -1 },
+        resultText:
+          '平穏は保たれた。だが詰まりの一点は太くなる一方で、いつか折れる。言うべきを言わない優しさは、未来を削る。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '橋本さんに敬意を払いつつ、権限と知識を分ける提案を切り出す',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '「正直、しんどかった」と橋本さんは漏らした。勇気を出した一言が、属人化をほどく糸口になった。',
+      },
+    ],
+  },
+  {
+    id: 's2-daily-aidata',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'kokyaku',
+    title: '使えるデータ、使っていいデータ',
+    narrative:
+      'AIの予測精度を上げるには、カルゴ物流の取引先の出荷データが効く。だがそれは取引先の機微情報だ。赤城部長は「使えるものは使え」と言う。',
+    choices: [
+      {
+        id: 'a',
+        label: '同意の確認を後回しに、手元のデータを全部学習に回す',
+        effects: { trust: 1, insight: -1 },
+        resultText:
+          '精度は上がった（成果が出て信頼+）。だが取引先の機微情報を無断で使った事実は、いつか火種になる。{{ガバナンス}}を飛ばした。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '使える範囲を{{ガバナンス}}と取引先の同意で線引きしてから使う',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '使えるデータは減った。だが境界を引いたうえでの精度は、後ろ暗くない。{{ガバナンス}}は敵でなく入場券だ。',
+      },
+    ],
+  },
 ]
