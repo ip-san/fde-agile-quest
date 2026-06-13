@@ -1,4 +1,5 @@
 import { Fragment, useId, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { GLOSSARY } from '../data/glossary'
 
 /** {{用語}} を含む文字列を、用語ホバー解説つきに変換して描画する */
@@ -17,59 +18,86 @@ export function RichText({ text }: { text: string }) {
   )
 }
 
+interface TipPos {
+  top: number
+  left: number
+  width: number
+  below: boolean
+}
+
+/** チップの位置から、ビューポート内に必ず収まる固定座標を計算する（スマホ端での見切れ回避）。
+ *  幅は画面幅-16px を上限にクランプし、左右は画面端から8pxの余白に収める。 */
+function computePos(rect: DOMRect): TipPos {
+  const margin = 8
+  const vw = window.innerWidth
+  const width = Math.min(288, vw - margin * 2)
+  const center = rect.left + rect.width / 2
+  const left = Math.min(Math.max(center - width / 2, margin), vw - width - margin)
+  const below = rect.top < window.innerHeight * 0.42
+  const top = below ? rect.bottom + 8 : rect.top - 8
+  return { top, left, width, below }
+}
+
 function TermChip({ termKey }: { termKey: string }) {
-  const [open, setOpen] = useState(false)
-  // 画面上部の用語は下向き、下部は上向きにツールチップを出す（モーダル端での見切れ回避）
-  const [below, setBelow] = useState(false)
+  const [pos, setPos] = useState<TipPos | null>(null)
   const btnRef = useRef<HTMLButtonElement>(null)
   const tipId = useId()
   const term = GLOSSARY[termKey]
+  const open = pos !== null
 
   const show = () => {
     const r = btnRef.current?.getBoundingClientRect()
-    if (r) setBelow(r.top < window.innerHeight * 0.42)
-    setOpen(true)
+    if (r) setPos(computePos(r))
   }
+  const hide = () => setPos(null)
 
   return (
-    <span className="relative inline-flex">
+    <span className="inline-flex">
       <button
         ref={btnRef}
         type="button"
         aria-expanded={open}
         aria-describedby={open ? tipId : undefined}
         className="inline-flex cursor-help items-center font-semibold text-sky-300 underline decoration-sky-400/50 decoration-dotted underline-offset-2"
-        onClick={() => (open ? setOpen(false) : show())}
+        onClick={() => (open ? hide() : show())}
         onMouseEnter={show}
-        onMouseLeave={() => setOpen(false)}
+        onMouseLeave={hide}
         onFocus={show}
-        onBlur={() => setOpen(false)}
+        onBlur={hide}
         onKeyDown={(e) => {
           if (e.key === 'Escape' && open) {
             e.stopPropagation()
-            setOpen(false)
+            hide()
           }
         }}
       >
         {term.label}
       </button>
-      {open && (
-        <span
-          id={tipId}
-          role="tooltip"
-          className={`absolute left-1/2 z-50 w-64 max-w-[80vw] -translate-x-1/2 rounded-lg border border-sky-500/40 bg-slate-900/98 p-3 text-left text-xs font-normal leading-relaxed text-slate-200 shadow-xl shadow-black/50 ${
-            below ? 'top-full mt-2' : 'bottom-full mb-2'
-          }`}
-        >
-          <span className="mb-1 block font-bold text-sky-300">
-            {term.label}
-            {term.reading && (
-              <span className="ml-1 text-[10px] text-slate-400">（{term.reading}）</span>
-            )}
-          </span>
-          {term.desc}
-        </span>
-      )}
+      {open &&
+        pos &&
+        createPortal(
+          <span
+            id={tipId}
+            role="tooltip"
+            style={{
+              position: 'fixed',
+              top: pos.top,
+              left: pos.left,
+              width: pos.width,
+              transform: pos.below ? undefined : 'translateY(-100%)',
+            }}
+            className="z-[60] rounded-lg border border-sky-500/40 bg-slate-900/98 p-3 text-left text-xs font-normal leading-relaxed text-slate-200 shadow-xl shadow-black/50"
+          >
+            <span className="mb-1 block font-bold text-sky-300">
+              {term.label}
+              {term.reading && (
+                <span className="ml-1 text-[10px] text-slate-400">（{term.reading}）</span>
+              )}
+            </span>
+            {term.desc}
+          </span>,
+          document.body,
+        )}
     </span>
   )
 }
