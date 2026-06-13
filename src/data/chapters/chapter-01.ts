@@ -346,6 +346,157 @@ export const EVENTS: GameEvent[] = [
     ],
   },
 
+  {
+    id: 's1-daily-translate',
+    sprint: 1,
+    ceremony: 'daily',
+    segment: 'genba',
+    title: '「見える化したい」',
+    narrative:
+      '情シスは「在庫を見える化したい」と言う。だが“見える化”が現場で何を意味するかは、人によって違う。',
+    choices: [
+      {
+        id: 'a',
+        label: '言葉のまま「在庫一覧画面」を作る',
+        effects: { insight: -1 },
+        resultText: '顧客の言葉を業務に翻訳しなかった。出来た画面は、誰の「見える化」でもなかった。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '「見える化」が現場で何を指すか、動作レベルまで細かく翻訳する',
+        effects: { insight: 2, culture: -1 },
+        resultText:
+          '顧客の言葉を業務に翻訳し、細かく潜る。「本当は“出荷ミスに気づける”ことだ」と分かった。',
+      },
+    ],
+  },
+  {
+    id: 's1-daily-excel',
+    sprint: 1,
+    ceremony: 'daily',
+    segment: 'genba',
+    title: '巨大なExcel',
+    narrative:
+      '現場は在庫をマクロだらけの巨大なExcelで管理していた。複雑だが、ちゃんと回ってはいる。',
+    choices: [
+      {
+        id: 'a',
+        label: '「Excel管理なんて」と一蹴し、無視して新システムを作る',
+        effects: { insight: -1 },
+        resultText:
+          'Excelを軽んじた。だがあのマクロには、例外処理に滲む業務の本質が詰まっていた。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: 'Excelの中身、特に例外処理の分岐を丁寧に読み解く',
+        effects: { insight: 2, culture: -1 },
+        resultText:
+          '現場のExcelは未来のプロダクト仕様。例外処理にこそ、業務の本質が出ていた。',
+      },
+    ],
+  },
+  {
+    id: 's1-daily-rough',
+    sprint: 1,
+    ceremony: 'daily',
+    segment: 'chance',
+    title: '手が止まる',
+    narrative:
+      'アイデアはある。だが「ちゃんとしたものを見せないと恥ずかしい」と、手が止まっている。',
+    choices: [
+      {
+        id: 'a',
+        label: '人に見せられる完成度まで、一人で磨いてから出す',
+        effects: { trust: 1, insight: -1 },
+        resultText:
+          '完成度は上がった。だが本番に出ないコードは、ただの仮説のまま。学びは得られない。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '最初の解は雑でいい。動く粗いものを今日、現場に当てる',
+        effects: { insight: 1, culture: 1, trust: -1 },
+        resultText:
+          '粗さに情シスは少し不安顔（信頼−）。だが本番に当てて初めて、仮説が学びに変わる。',
+      },
+    ],
+  },
+  {
+    id: 's1-daily-cando',
+    sprint: 1,
+    ceremony: 'daily',
+    segment: 'team',
+    title: '「それは無理です」',
+    narrative: '情シスが無理筋の要求。チームは「それは無理です」と即答しかけた。',
+    choices: [
+      {
+        id: 'a',
+        label: '「それはできません」とはっきり断る',
+        effects: { trust: -1, insight: -1 },
+        resultText:
+          '断るのは簡単。だが「できません」の前に最小版を、「難しい」の前に分解を試したか？',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '「できません」の前に最小版を作り、難所を分解して見せる',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          'できませんの前に最小版、難しいの前に分解。無理筋が、やれる形に変わった。',
+      },
+    ],
+  },
+  {
+    id: 's1-daily-practice',
+    sprint: 1,
+    ceremony: 'daily',
+    segment: 'team',
+    title: '尻込みするチーム',
+    narrative: '新しいツールを導入したいが、チームは「使い方が分からない」と尻込みしている。',
+    choices: [
+      {
+        id: 'a',
+        label: '誰かが教えてくれるまで待つ',
+        effects: { insight: -1, culture: -1 },
+        resultText: '独学を止めた組織は、置いていかれる。待っている間に、現場の課題は積もる。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: 'まず自分が量をこなして触り倒し、勘所を掴んでチームに渡す',
+        effects: { insight: 1, culture: 1 },
+        resultText: '独学を止めるな、量をこなせ。手を動かした分だけ、教えられることが増えた。',
+      },
+    ],
+  },
+  {
+    id: 's1-daily-feedback',
+    sprint: 1,
+    ceremony: 'daily',
+    segment: 'kokyaku',
+    title: '厳しいダメ出し',
+    narrative: 'レビューで現場から厳しいダメ出し。「これ、全然使えない」と。',
+    choices: [
+      {
+        id: 'a',
+        label: '「現場が分かってない」と内心で受け流す',
+        effects: { insight: -1, trust: -1 },
+        resultText:
+          'フィードバックを痛がって閉じた。痛い指摘ほど、見落としていた資産だったのに。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: 'わからない点を即メモし、痛い指摘を資産として持ち帰る',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          'わからないことは即メモ。フィードバックは痛いが資産。次の一手が具体的になった。',
+      },
+    ],
+  },
+
   // ── レビュー ──
   {
     id: 's1-review',
@@ -716,6 +867,182 @@ export const EVENTS: GameEvent[] = [
     ],
   },
 
+  {
+    id: 's2-daily-demo',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'kokyaku',
+    title: '進捗を説明しろ',
+    narrative: '経営会議で「進捗を説明しろ」と。立派な資料を作るか、動くデモを見せるか。',
+    choices: [
+      {
+        id: 'a',
+        label: '40枚の進捗スライドを作り込む',
+        effects: { trust: 1, insight: -1 },
+        resultText:
+          'スライドは綺麗。だがデモは会議資料より強い。動くものを見せた人に、場は持っていかれた。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '5分の動くデモを見せ、納品は“資料”でなく“業務の変化”だと示す',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          'デモは百枚の資料に勝つ。成果物でなく業務の変化を語ったことで、経営の目が変わった。',
+      },
+    ],
+  },
+  {
+    id: 's2-daily-exception',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'trouble',
+    title: '矛盾だらけの例外ルール',
+    narrative: '現場の運用には矛盾した例外が山ほどある。「火曜だけ手順が違う」等。',
+    choices: [
+      {
+        id: 'a',
+        label: '例外は邪魔なので、一律のルールに潰してしまう',
+        effects: { insight: -1, culture: -1 },
+        resultText:
+          '例外を潰したら現場が回らなくなった。例外は潰すな、分類しろ。矛盾は責めず設計で受け止める。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '例外を一つずつ分類し、顧客の矛盾は責めず設計で受け止める',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '例外は潰すな、分類しろ。矛盾を設計で吸収すると、現場の信頼が増した。',
+      },
+    ],
+  },
+  {
+    id: 's2-daily-anxiety',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'kokyaku',
+    title: 'どこか不安そうな顔',
+    narrative:
+      'リリース直前。情シスは表向き賛成だが、どこか不安そう。現場の一部も様子見だ。',
+    choices: [
+      {
+        id: 'a',
+        label: '賛成は得たので、不安は気にせず進める',
+        effects: { trust: 1, insight: -1 },
+        resultText:
+          '誰が怒るかを考えなかった。リリース後、様子見だった人たちから反発が噴き出した。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '誰が不安で誰が怒りうるかを先回りし、個別に話を通す',
+        effects: { insight: 1, culture: 1, trust: 1 },
+        resultText:
+          '{{ステークホルダー}}の不安を先回り。根回しが効き、リリースは静かに受け入れられた。',
+      },
+    ],
+  },
+  {
+    id: 's2-daily-return',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'genba',
+    title: '作り込みの沼',
+    narrative: '機能の作り込みに夢中になり、現場が実際に使っているかを見ていない自分に気づく。',
+    choices: [
+      {
+        id: 'a',
+        label: 'もっと高機能にすれば使われるはず、と作り込みを続ける',
+        effects: { trust: 1, insight: -1, culture: -1 },
+        resultText:
+          '迷ったときに戻る先を見失った。高機能の沼にはまり、現場の利用から遠ざかる。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '迷ったら本番利用と最短学習ループに戻る、と現場の利用を確かめる',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '迷ったら本番利用に戻れ、最短学習ループに戻れ。立ち返ると、次の一手が明確になった。',
+      },
+    ],
+  },
+  {
+    id: 's2-daily-hypothesis',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'team',
+    title: '「検討します」の誘惑',
+    narrative: '「この仕様で大丈夫か？」と聞かれ、つい「検討します」「確認します」と言いそうになる。',
+    choices: [
+      {
+        id: 'a',
+        label: '「検討します」「確認します」と持ち帰る',
+        effects: { insight: -1 },
+        resultText:
+          '検討と確認で時間が溶ける。検討の前に仮説を、確認の前に観測点を置くべきだった。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '「検討します」の前に仮説を出し、「確認します」の前に観測点を置く',
+        effects: { insight: 1, culture: 1 },
+        resultText: '検討の前に仮説、確認の前に観測点。その場が、止まらず前に進んだ。',
+      },
+    ],
+  },
+  {
+    id: 's2-daily-tolerance',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'trouble',
+    title: '精度の頭打ち',
+    narrative: 'AI予測の精度が92%で頭打ち。チームは「99%まで上げよう」と時間をかけたがる。',
+    choices: [
+      {
+        id: 'a',
+        label: '精度99%を目指して、ひたすらモデルを磨き続ける',
+        effects: { insight: -1, trust: -1 },
+        resultText:
+          '精度の数字に溺れた。業務上は95%で十分だったのに、納期だけが溶けた。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '業務上の許容誤差（誤出荷が許せる範囲）を現場と決め、そこで止める',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '精度より、業務上の許容誤差。「どこまでで現場が回るか」が、止め時を教えてくれた。',
+      },
+    ],
+  },
+  {
+    id: 's2-daily-depth',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'chance',
+    title: '「専門性なんて要る？」',
+    narrative: '「AIが何でもやってくれる時代に、専門性なんて要る？」と若手が漏らした。',
+    choices: [
+      {
+        id: 'a',
+        label: 'たしかに、と広く浅く色々なツールを触る方針にする',
+        effects: { insight: -1 },
+        resultText:
+          '浅い万能はAIに飲まれる。器用貧乏が量産され、誰も深い課題を解けなくなった。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '深く潜れと伝え、自分だけの専門性を現場で鍛える方針にする',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '深く潜れ。浅い万能はAIに飲まれる。現場で鍛えた専門性が、AIに代えがたい武器になった。',
+      },
+    ],
+  },
+
   // ── レビュー ──
   {
     id: 's2-review',
@@ -1075,6 +1402,158 @@ export const EVENTS: GameEvent[] = [
         effects: { insight: 1, culture: 1 },
         resultText:
           '事実と推測と願望を切り分けた報告は、地味だが信頼に足る。経営の意思決定の土台になった。',
+      },
+    ],
+  },
+
+  {
+    id: 's3-daily-boundary',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'team',
+    title: '宙に浮くデータ移行',
+    narrative:
+      'データ移行が必要だが、「それは情シスの仕事」「いや業者の仕事」と誰も手を付けない。',
+    choices: [
+      {
+        id: 'a',
+        label: '自分の担当でもないので、決まるまで待つ',
+        effects: { culture: -1, insight: -1 },
+        resultText:
+          '誰の仕事でもないものは、お前の仕事。境界線の上に立てず、移行は宙に浮いた。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '境界線の上に立ち、誰も拾わない移行を自分が引き取る',
+        effects: { insight: 1, culture: 1, trust: 1 },
+        resultText: '境界線の上に立つ。隙間のタスクを拾った人が、案件を前に進める。',
+      },
+    ],
+  },
+  {
+    id: 's3-daily-lastman',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'trouble',
+    title: '空いたままの椅子',
+    narrative: '本番切り替えの判断。「最終的に誰が責任を持つ？」と全員が顔を見合わせる。',
+    choices: [
+      {
+        id: 'a',
+        label: '責任が曖昧なので、誰かが決めるのを待つ',
+        effects: { trust: -1, culture: -1 },
+        resultText:
+          'ラストマンの椅子が空いたまま、切り替えは延期。その場で試す者がいなかった。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: 'ラストマンとして座り、小さく切り替えてその場で試す',
+        effects: { trust: 1, insight: 1 },
+        resultText:
+          'ラストマンとして座り、その場で試す。責任を引き受けた瞬間、場が動き出した。',
+      },
+    ],
+  },
+  {
+    id: 's3-daily-drive',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'kokyaku',
+    title: '紛糾する会議',
+    narrative: '関係者会議が紛糾。皆が様子を見て、誰も決めようとしない。',
+    choices: [
+      {
+        id: 'a',
+        label: '空気を読んで、結論は次回に持ち越す',
+        effects: { culture: -1 },
+        resultText:
+          'その場で動かす者が主導権を握る。動かなかったあなたから、主導権は静かに離れた。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '最後に責任を取る前提で、その場で決めて動かす',
+        effects: { trust: 1, insight: 1, culture: -1 },
+        resultText:
+          'その場で動かす者が主導権を握る。最後は自分が責任を取る、と決めた人に皆が従った。',
+      },
+    ],
+  },
+  {
+    id: 's3-daily-dissent',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'team',
+    title: '「それ、おかしくないですか」',
+    narrative:
+      'あなたの設計に、若手が「それ、おかしくないですか」と反論し、別の人が次々質問してくる。',
+    choices: [
+      {
+        id: 'a',
+        label: '面倒なので「決まったことだから」と議論を打ち切る',
+        effects: { culture: -1, insight: -1 },
+        resultText:
+          '反論と質問を歓迎しなかった。以後、誰も異論を言わなくなり、欠陥が放置された。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '反論を歓迎し、質問を喜んで、設計を一緒に鍛える',
+        effects: { culture: 1, insight: 1 },
+        resultText:
+          '反論を歓迎しろ、質問されたら喜べ。叩かれた設計は、一人で考えたものより強くなった。',
+      },
+    ],
+  },
+  {
+    id: 's3-daily-burn',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'trouble',
+    title: 'ぶっつけ本番',
+    narrative: '初めての大規模な本番切り替え。ぶっつけで行くか、手を動かして備えるか。',
+    choices: [
+      {
+        id: 'a',
+        label: '本番は初めてだが、その場で考えれば何とかなる',
+        effects: { trust: -1, insight: -1 },
+        resultText:
+          '練習しろ、本番で初めて考えるな。案の定、想定外で炎上した――が、授業料は払った。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: 'リハーサルで練習し、炎上を“授業料つきの実地訓練”として記録する',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '練習しろ。小さな炎上は授業料つきの実地訓練。記録した教訓が、次の現場で効く。',
+      },
+    ],
+  },
+  {
+    id: 's3-daily-craft',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'chance',
+    title: '次の現場へ',
+    narrative: '案件は終わりに近づいた。次に向けて、自分は何を磨くべきか。',
+    choices: [
+      {
+        id: 'a',
+        label: '案件が終われば一区切り。特に振り返らず次へ',
+        effects: { insight: -1 },
+        resultText:
+          '自分の道具を磨かなければ、次の現場では通用しない。FDEの旅はここで止まる。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '自分の道具（専門性・型）を磨き、次の現場へデプロイする準備をする',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '自分の道具を磨け。{{FDE}}とは、未来を現場にデプロイする仕事。次の現場が待っている。',
       },
     ],
   },

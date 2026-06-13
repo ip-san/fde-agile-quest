@@ -228,4 +228,9 @@ describe('FDE心得デッキの健全性', () => {
       expect((EVENT_PRECEPTS[e.id] ?? []).length, `${e.id} に心得タグが無い`).toBeGreaterThan(0)
     }
   })
+  it('100箇条すべてが最低1つのイベントで体現されている（全網羅）', () => {
+    const covered = new Set(Object.values(EVENT_PRECEPTS).flat())
+    const missing = PRECEPTS.map((p) => p.id).filter((id) => !covered.has(id))
+    expect(missing, `未カバーの心得: ${missing.join(', ')}`).toEqual([])
+  })
 })
