@@ -294,6 +294,58 @@ export const EVENTS: GameEvent[] = [
     ],
   },
 
+  {
+    id: 's1-daily-legacy',
+    sprint: 1,
+    ceremony: 'daily',
+    segment: 'trouble',
+    title: '笑えない古いシステム',
+    narrative:
+      'カルゴ物流の基幹は20年前の{{レガシー}}。承認フローには今も紙が混じる。エンジニア仲間は「こんな古いの捨てて作り直せばいい」と笑う。',
+    choices: [
+      {
+        id: 'a',
+        label: 'レガシーを切り捨て、最新構成で作り直す前提で動く',
+        effects: { insight: -1, trust: -1 },
+        resultText:
+          '「現場が回ってる仕組みを軽んじるな」と顧客の顔が曇る（信頼−）。{{レガシー}}には20年分の業務知識が埋まっている。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: 'レガシーと承認フローを“前提”として受け入れ、設計条件にする',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '{{ガバナンス}}は敵でなく入場券。古い仕組みを笑わず読み解くと、本当の制約と業務の理由が見えた。',
+      },
+    ],
+  },
+  {
+    id: 's1-daily-diagram',
+    sprint: 1,
+    ceremony: 'daily',
+    segment: 'genba',
+    title: '頭の中の在庫フロー',
+    narrative:
+      '入庫・出庫・返品が絡む在庫の流れは複雑で、口頭で説明すると毎回こんがらがる。',
+    choices: [
+      {
+        id: 'a',
+        label: '分かっているつもりなので、頭の中のまま実装に入る',
+        effects: { insight: -1 },
+        resultText: '図にできない構造は、まだ見えていない。実装の途中で抜け漏れが噴き出した。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: 'ホワイトボードに在庫フローを図解し、関係者と確かめる',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '書けない・図にできない設計は、考え切れていない証拠。図にした瞬間、例外パターンが3つあぶり出された。',
+      },
+    ],
+  },
+
   // ── レビュー ──
   {
     id: 's1-review',
@@ -558,6 +610,108 @@ export const EVENTS: GameEvent[] = [
         effects: { insight: 1, culture: 1, trust: -1 },
         resultText:
           '一時的に速度は落ちた（信頼−）。だが「AIが書いてもレビューは人」がチームの作法になった。',
+      },
+    ],
+  },
+
+  {
+    id: 's2-daily-security',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'trouble',
+    title: '後回しにされた制約',
+    narrative:
+      '情シスが「個人情報を含む配送データは社外に出すな」と言う。写真入力にAIを使う構成だと、ここに引っかかる。',
+    choices: [
+      {
+        id: 'a',
+        label: 'まず動かして、セキュリティは後から塞ぐ',
+        effects: { trust: 1, insight: -1 },
+        resultText:
+          '動きは速い。だがセキュリティは後付けするほど高くつく。終盤で構成のやり直しが待っている。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '社外にデータを出さない構成を、最初から設計条件にする',
+        effects: { insight: 1, culture: 1, trust: -1 },
+        resultText:
+          '制約に合わせる手間で着手は遅れた（信頼−）。だが顧客の制約を設計条件にすると、後の地雷が消える。',
+      },
+    ],
+  },
+  {
+    id: 's2-daily-pm',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'team',
+    title: '優先順位の綱引き',
+    narrative:
+      'チーム内で「予測機能が先だ」「いや写真入力が先だ」と割れた。あなたはエンジニアだが、誰も交通整理をしない。',
+    choices: [
+      {
+        id: 'a',
+        label: '自分の担当機能だけ進め、優先順位の対立は放っておく',
+        effects: { culture: -1, insight: -1 },
+        resultText:
+          '隙間に落ちた“交通整理”は、誰の仕事でもない＝お前の仕事だった。チームが空回りする。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: 'PMとして誤出荷KPIに照らし優先順位を裁き、決めたら自分も手を動かす',
+        effects: { culture: 1, insight: 1 },
+        resultText:
+          'FDEはPMでもあり、最後はエンジニア。決めて、自ら作る背中が、チームを前に動かした。',
+      },
+    ],
+  },
+  {
+    id: 's2-daily-record',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'kokyaku',
+    title: '口頭の「OK」',
+    narrative:
+      '情シスが廊下で「その仕様でいいよ」と口頭でOKをくれた。急いでいるし、このまま進めたい。',
+    choices: [
+      {
+        id: 'a',
+        label: '言質は取ったので、口頭合意のまま実装を進める',
+        effects: { trust: 1, insight: -1 },
+        resultText:
+          '後日「そんなつもりじゃなかった」と覆り、手戻りに。口頭合意は、形にしないと消える。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '決まったことを一行のメモにして共有し、合意を形に残す',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '文書は官僚仕事でなく外部記憶。一行の記録が、後の「言った・言わない」を未然に防いだ。',
+      },
+    ],
+  },
+  {
+    id: 's2-daily-close',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'team',
+    title: '結論の出ない打ち合わせ',
+    narrative: '30分の打ち合わせ。議論は盛り上がったが、結論が出ないまま終わりそうだ。',
+    choices: [
+      {
+        id: 'a',
+        label: '良い議論だったので、雰囲気よく解散する',
+        effects: { culture: -1 },
+        resultText: '次に誰が何をするか決まらず、来週また同じ議論を繰り返すことに。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '「次の一手」と担当・期限を一つ決めてから閉じる',
+        effects: { culture: 1, insight: 1 },
+        resultText: '会議は次の一手を決める場。議論を閉じたことで、チームが前に進み始めた。',
       },
     ],
   },
@@ -843,6 +997,84 @@ export const EVENTS: GameEvent[] = [
         effects: { insight: 1, culture: 1 },
         resultText:
           'AIを“使う”でなく“共に働く”。速度はAI、判断は人。これがFDEのAIとの距離感だ。',
+      },
+    ],
+  },
+
+  {
+    id: 's3-daily-sre',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'trouble',
+    title: '深夜の本番障害',
+    narrative:
+      '本番の写真入力が深夜に停止。在庫が更新されず、朝の出荷に間に合わない。運用担当はまだ育っていない。',
+    choices: [
+      {
+        id: 'a',
+        label: '「自分の担当範囲外」として、朝の出社まで待つ',
+        effects: { trust: -2, culture: -1 },
+        resultText:
+          '朝、出荷が止まり現場は混乱（信頼−−）。FDEはSREでもある。火が出たら、まず消すのが筋だ。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: 'SREとして即対応し、原因を直して再発防止まで入れる',
+        effects: { trust: 1, insight: 1 },
+        resultText: 'FDEはSREでもあり、最後はエンジニア。自ら火を消し、現場の朝を守った。',
+      },
+    ],
+  },
+  {
+    id: 's3-daily-sales',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'kokyaku',
+    title: '「で、いくらで売れる？」',
+    narrative:
+      '成果を見た経営が「これ、他社にも売れるんじゃないか？ いくらの価値がある？」と聞いてきた。エンジニアの自分には畑違いに感じる。',
+    choices: [
+      {
+        id: 'a',
+        label: '「営業の領域なので」と話を技術に戻す',
+        effects: { trust: -1 },
+        resultText:
+          '境界線の上に立てなかった（信頼−）。FDEは営業でもコンサルでもある。価値を語れる人が信頼を得る。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '誤出荷削減の効果額を試算し、営業・コンサルとして価値を言葉にする',
+        effects: { trust: 1, insight: 1 },
+        resultText:
+          'FDEは営業でもコンサルでもある。成果を“いくらの価値か”で語れたことが、次の案件を呼んだ。',
+      },
+    ],
+  },
+  {
+    id: 's3-daily-facts',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'kokyaku',
+    title: '混ざる事実と願望',
+    narrative:
+      '経営への報告前。「たぶん誤出荷は半減した（はず）」「来期はゼロにできる（といいな）」と、事実と願望が頭の中で混ざっている。',
+    choices: [
+      {
+        id: 'a',
+        label: '景気のいい見込みも交えて、力強く報告する',
+        effects: { trust: 1, insight: -1 },
+        resultText:
+          '威勢はいいが、願望を事実のように語った。後で数字がズレた時、信頼が揺らぐ火種になる。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '事実・推測・願望を分けて報告する（実績／見込み／目標）',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '事実と推測と願望を切り分けた報告は、地味だが信頼に足る。経営の意思決定の土台になった。',
       },
     ],
   },
