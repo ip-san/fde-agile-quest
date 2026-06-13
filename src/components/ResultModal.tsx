@@ -1,4 +1,5 @@
 import { CEREMONY_LABELS, SEGMENT_COLORS, SEGMENT_LABELS } from '../data/chapters/chapter-01'
+import { hasImage, imageUrl, resultImageKey } from '../data/images'
 import { PRECEPT_BY_ID } from '../data/precepts'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 import type { Effects, ResultView } from '../types'
@@ -45,6 +46,7 @@ export function ResultModal({ result, onContinue }: Props) {
   // フォーカストラップ＋Escで次へ。Enter/Space は autoFocus した「次へ」ボタンが native に処理
   const ref = useFocusTrap<HTMLDivElement>(onContinue)
   const titleId = 'result-title'
+  const imgKey = resultImageKey(result.eventId, result.choiceId)
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
@@ -53,7 +55,7 @@ export function ResultModal({ result, onContinue }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl"
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl"
       >
         <header
           className="flex flex-wrap items-center gap-2 px-5 py-3"
@@ -72,6 +74,18 @@ export function ResultModal({ result, onContinue }: Props) {
             {result.eventTitle}
           </h2>
         </header>
+
+        {/* 結果の実写ドキュメンタリー風画像（選択後・あれば） */}
+        {hasImage(imgKey) && (
+          <img
+            src={imageUrl(imgKey)}
+            alt=""
+            className="h-48 w-full object-cover"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none'
+            }}
+          />
+        )}
 
         <div className="space-y-4 px-5 py-4">
           {/* 選んだ判断 */}

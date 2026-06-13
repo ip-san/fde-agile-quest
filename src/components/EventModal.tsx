@@ -1,4 +1,5 @@
 import { CEREMONY_LABELS, SEGMENT_COLORS, SEGMENT_LABELS } from '../data/chapters/chapter-01'
+import { choiceImageKey, hasImage, imageUrl } from '../data/images'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 import type { Choice, Effects, GameEvent } from '../types'
 import { RichText } from './RichText'
@@ -81,24 +82,40 @@ export function EventModal({ event, unexpected, onChoose }: Props) {
 
           <div className="space-y-2">
             <p className="text-xs font-semibold text-slate-400">あなたの判断は？</p>
-            {event.choices.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => onChoose(c)}
-                className={`group block w-full rounded-xl border px-4 py-3 text-left transition hover:border-sky-400 hover:bg-slate-800 ${
-                  c.warn ? 'border-rose-500/40 bg-rose-950/20' : 'border-slate-700 bg-slate-800/40'
-                }`}
-              >
-                <span className="block text-sm font-medium text-slate-100">
-                  {c.warn && <span className="mr-1">⚠</span>}
-                  <RichText text={c.label} />
-                </span>
-                <span className="mt-1.5 block">
-                  <EffectBadge effects={c.effects} />
-                </span>
-              </button>
-            ))}
+            {event.choices.map((c) => {
+              const imgKey = choiceImageKey(event.id, c.id)
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => onChoose(c)}
+                  className={`group block w-full overflow-hidden rounded-xl border text-left transition hover:border-sky-400 hover:bg-slate-800 ${
+                    c.warn ? 'border-rose-500/40 bg-rose-950/20' : 'border-slate-700 bg-slate-800/40'
+                  }`}
+                >
+                  {hasImage(imgKey) && (
+                    <img
+                      src={imageUrl(imgKey)}
+                      alt=""
+                      loading="lazy"
+                      className="h-28 w-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none'
+                      }}
+                    />
+                  )}
+                  <span className="block px-4 py-3">
+                    <span className="block text-sm font-medium text-slate-100">
+                      {c.warn && <span className="mr-1">⚠</span>}
+                      <RichText text={c.label} />
+                    </span>
+                    <span className="mt-1.5 block">
+                      <EffectBadge effects={c.effects} />
+                    </span>
+                  </span>
+                </button>
+              )
+            })}
           </div>
           <p className="text-center text-[11px] text-slate-500">
             ※ 正解はない。すべてはトレードオフ。

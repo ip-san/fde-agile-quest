@@ -143,6 +143,8 @@ export function chooseCore(core: ProgressCore, choice: Choice): ProgressCore {
     },
   ]
   const result: ResultView = {
+    eventId: event.id,
+    choiceId: choice.id,
     eventTitle: event.title,
     ceremony: event.ceremony,
     segment: event.segment,

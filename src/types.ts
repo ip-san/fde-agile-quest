@@ -107,6 +107,9 @@ export interface LogEntry {
 
 /** 判断直後に「結果を一度ちゃんと見せる」ための結果ビュー */
 export interface ResultView {
+  /** 画像パス導出用 */
+  eventId: string
+  choiceId: string
   eventTitle: string
   ceremony: Ceremony
   segment: Segment
