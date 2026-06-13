@@ -17,8 +17,8 @@ export const AVAILABLE_IMAGES = new Set<string>([
   'theme__team',
   'theme__trouble',
   'theme__chance',
-  // 結果（顛末）の個別画像。public/img/{eventId}__{choiceId}__r.jpg
-  's1-daily-warehouse__b__r',
+  // 結果（顛末）の個別画像 public/img/{eventId}__{choiceId}__r.jpg は、
+  // 問題画像と必ず別の絵を用意できたものだけここに追加する（同一絵の流用は不可）。
 ])
 
 export function imageUrl(key: string): string {

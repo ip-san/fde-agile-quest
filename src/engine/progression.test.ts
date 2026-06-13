@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { SPRINTS, STARTING_METERS } from '../data/chapters/chapter-01'
+import { EVENTS, SPRINTS, STARTING_METERS } from '../data/chapters/chapter-01'
 import type { Choice, Effects, GameEvent, GameFlag, Meters, Status } from '../types'
+import { availableEvents } from './game'
 import {
   type Persisted,
   type ProgressCore,
@@ -170,19 +171,47 @@ describe('advanceCore — ビート/スプリント進行', () => {
 })
 
 describe('フラグ→Sprint3 手戻りイベントの結合', () => {
-  const sprint3DailyCore = (flags: GameFlag[]): ProgressCore => ({
-    ...freshCore(STARTING_METERS),
-    sprintIndex: 2, // Sprint 3
-    beatIndex: 1, // 最初の daily
-    flags: new Set(flags),
+  // 配列順に依存せず「フラグで手戻りがプールに出入りする」不変条件そのものを検証する
+  const sprint3DailyPoolIds = (flags: GameFlag[]) =>
+    availableEvents(EVENTS, 3, 'daily', new Set<string>(), new Set(flags)).map((e) => e.id)
+
+  it('wrongKpi 立ちのときだけ手戻りイベントが抽選プールに含まれる', () => {
+    expect(sprint3DailyPoolIds(['wrongKpi'])).toContain('s3-daily-rework')
   })
-  it('wrongKpi 立ちなら trouble セグメントで手戻りが引ける', () => {
-    const next = spinCore(sprint3DailyCore(['wrongKpi']), 'trouble', 0)
-    expect(next.currentEvent?.id).toBe('s3-daily-rework')
+  it('wrongKpi 無しなら手戻りイベントはプールから除外される', () => {
+    expect(sprint3DailyPoolIds([])).not.toContain('s3-daily-rework')
   })
-  it('wrongKpi 無しなら手戻りは出ない', () => {
-    const next = spinCore(sprint3DailyCore([]), 'trouble', 0)
-    expect(next.currentEvent?.id).not.toBe('s3-daily-rework')
+})
+
+describe('spinCore — 想定外(unexpected)の分岐', () => {
+  // sprint1 daily で、要求セグメント以外の1セグメントだけ残るよう他を解決済みにする。
+  // 実IDをデータから動的に取るので、イベントの並び替え・増減に影響されない。
+  const sprint1DailyAll = availableEvents(EVENTS, 1, 'daily', new Set<string>(), new Set<GameFlag>())
+  const keepSeg = 'team' as const
+  const requestSeg = 'genba' as const
+  const resolvedExceptTeam = new Set(
+    sprint1DailyAll.filter((e) => e.segment !== keepSeg).map((e) => e.id),
+  )
+
+  it('デイリーで該当セグメントが尽きていれば、別イベントを unexpected=true で出す', () => {
+    const core: ProgressCore = {
+      ...freshCore(STARTING_METERS),
+      beatIndex: 1, // 最初の daily
+      resolvedIds: resolvedExceptTeam,
+    }
+    const next = spinCore(core, requestSeg, 0)
+    expect(next.status).toBe('event')
+    expect(next.currentEvent?.segment).toBe(keepSeg) // 想定外＝別セグメントが出る
+    expect(next.unexpected).toBe(true)
+  })
+
+  it('デイリー以外（プランニング）では unexpected を抑制して false にする', () => {
+    // sprint1 planning はイベント1件のみ。非該当セグメントを要求すると drawEvent は
+    // unexpected=true を返すが、spinCore はデイリー以外なので false へ抑制する
+    const next = spinCore(freshCore(STARTING_METERS), 'genba', 0)
+    expect(next.status).toBe('event')
+    expect(next.currentEvent?.id).toBe('s1-plan-goal')
+    expect(next.unexpected).toBe(false)
   })
 })
 

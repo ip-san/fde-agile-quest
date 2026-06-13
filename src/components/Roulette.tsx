@@ -84,13 +84,15 @@ export function Roulette({ disabled, onResult }: Props) {
     timeoutRef.current = setTimeout(finishSpin, reduceMotion ? 80 : SPIN_MS + 300)
   }, [disabled, spinning, rotation, finishSpin, reduceMotion])
 
-  // SPACE で回す
+  // SPACE で回す。ただしボタン等のフォーカス可能な要素に居る間は native の挙動
+  //（ボタン活性化・スクロール）を奪わない——「回す」ボタン自身も onClick が Space で発火する
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.code === 'Space' && !disabled && !spinning) {
-        e.preventDefault()
-        spin()
-      }
+      if (e.code !== 'Space' || disabled || spinning) return
+      const el = e.target as HTMLElement | null
+      if (el && el.closest('button, a, input, textarea, select, [tabindex], [contenteditable]')) return
+      e.preventDefault()
+      spin()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
