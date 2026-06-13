@@ -43,7 +43,8 @@ interface Props {
 }
 
 export function ResultModal({ result, onContinue }: Props) {
-  // フォーカストラップ＋Escで次へ。Enter/Space は autoFocus した「次へ」ボタンが native に処理
+  // フォーカストラップ＋Escで次へ。Enter/Space は data-initial-focus を当てた
+  // 「次へ」ボタンへ初期フォーカスが乗るので native に処理される
   const ref = useFocusTrap<HTMLDivElement>(onContinue)
   const titleId = 'result-title'
   const imgKey = resultImage(result.eventId, result.choiceId, result.segment)
@@ -139,7 +140,7 @@ export function ResultModal({ result, onContinue }: Props) {
           <button
             type="button"
             onClick={onContinue}
-            autoFocus
+            data-initial-focus
             className="w-full rounded-xl bg-sky-500 py-3 font-bold text-slate-950 transition hover:bg-sky-400 active:scale-95"
           >
             次へ（Enter）

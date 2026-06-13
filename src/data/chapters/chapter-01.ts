@@ -937,9 +937,9 @@ export const EVENTS: GameEvent[] = [
       {
         id: 'b',
         label: '誰が不安で誰が怒りうるかを先回りし、個別に話を通す',
-        effects: { insight: 1, culture: 1, trust: 1 },
+        effects: { insight: 1, culture: 1 },
         resultText:
-          '{{ステークホルダー}}の不安を先回り。根回しが効き、リリースは静かに受け入れられた。',
+          '{{ステークホルダー}}の不安を先回り。根回しが効き、リリースは静かに受け入れられた。（押し切れば得られた“その場の信頼+”は取り逃す）',
       },
     ],
   },
@@ -1581,8 +1581,9 @@ export const EVENTS: GameEvent[] = [
       {
         id: 'b',
         label: '成果も残課題も正直に共有する',
-        effects: { trust: 1, insight: 1 },
-        resultText: '誠実な報告が、次の一手への確かな信頼を生んだ（信頼+）。',
+        effects: { insight: 1 },
+        resultText:
+          '経営は実態を掴み、次の一手の精度が上がった。誠実さは長い信頼の土台になる。（数字を盛れば得られた“その場の信頼+”は取り逃す）',
       },
     ],
   },

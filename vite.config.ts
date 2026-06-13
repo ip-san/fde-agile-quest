@@ -59,8 +59,10 @@ export default defineConfig({
     alias: { '@': resolve(__dirname, 'src') },
   },
   test: {
+    // 既定は node（純粋エンジン用）。DOM が要るテストはファイル先頭の
+    // `// @vitest-environment jsdom` で個別に上書きする
     environment: 'node',
     globals: true,
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.{ts,tsx}'],
   },
 })

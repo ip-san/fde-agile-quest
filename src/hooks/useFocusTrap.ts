@@ -33,14 +33,15 @@ export function useFocusTrap<T extends HTMLElement>(onEscape?: () => void) {
     const prevFocus = document.activeElement as HTMLElement | null
 
     const items = () => Array.from(node.querySelectorAll<HTMLElement>(FOCUSABLE))
-    // 明示的に autoFocus 指定された要素があればそれを優先（例: ResultModal の「次へ（Enter）」）。
-    // React の autoFocus は commit 時に当たるが、この effect の node.focus() が後勝ちで奪うため、
-    // ここで拾い直して Enter/Space が native に効くようにする。
+    // 初期フォーカスを明示指定した要素（[data-initial-focus]）があればそれを優先する。
+    // 例: ResultModal の「次へ（Enter）」。React の autoFocus 属性は DOM に出ず
+    //（React が imperative に focus を当てるだけ）querySelector で拾えないため data 属性で示す。
+    // この effect の node.focus() が後勝ちで奪うのを防ぎ、Enter/Space を native に効かせる。
     // 無ければダイアログ本体にフォーカス（SR がタイトルを読み上げる。本文中の用語チップに
     // 直接フォーカスしてツールチップが勝手に開くのを避ける）
     if (node.tabIndex < 0) node.tabIndex = -1
-    const auto = node.querySelector<HTMLElement>('[autofocus]')
-    if (canFocus(auto)) auto.focus()
+    const want = node.querySelector<HTMLElement>('[data-initial-focus]')
+    if (canFocus(want)) want.focus()
     else node.focus()
 
     const onKey = (e: KeyboardEvent) => {
@@ -55,17 +56,25 @@ export function useFocusTrap<T extends HTMLElement>(onEscape?: () => void) {
       const list = items()
       if (list.length === 0) {
         e.preventDefault()
+        node.focus()
         return
       }
       const firstEl = list[0]
       const lastEl = list[list.length - 1]
-      const active = document.activeElement
-      if (e.shiftKey && active === firstEl) {
-        e.preventDefault()
-        lastEl.focus()
-      } else if (!e.shiftKey && active === lastEl) {
-        e.preventDefault()
-        firstEl.focus()
+      const active = document.activeElement as HTMLElement | null
+      // active がダイアログ本体(node)やリスト外のとき、最初の Tab で背後へ抜けるのを防ぐ。
+      // 端からのラップだけでなく「リスト外→端へ」も捕捉する（初期フォーカスが node のケース）
+      const inList = !!active && list.includes(active)
+      if (e.shiftKey) {
+        if (!inList || active === firstEl) {
+          e.preventDefault()
+          lastEl.focus()
+        }
+      } else {
+        if (!inList || active === lastEl) {
+          e.preventDefault()
+          firstEl.focus()
+        }
       }
     }
 
