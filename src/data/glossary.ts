@@ -10,7 +10,7 @@ export const GLOSSARY: Record<string, Term> = {
     key: 'FDE',
     label: 'FDE',
     reading: 'エフディーイー',
-    desc: 'Forward Deployed Engineer。顧客の現場に入り込み、開発・PM・営業・SRE などの境界を越えて、動くものを最短で届けて成果(顧客の変化)を出すエンジニア。',
+    desc: 'Forward Deployed Engineer。顧客の現場に入り込み、開発・PM・営業・SRE などの境界を越えて、動くものを最短で届けて成果（顧客の変化）を出すエンジニア。',
   },
   現場主義: {
     key: '現場主義',
@@ -48,6 +48,11 @@ export const GLOSSARY: Record<string, Term> = {
     key: 'バックログ',
     label: 'バックログ',
     desc: 'やるべきこと（要求）の優先順位付きリスト。上から順に着手する。',
+  },
+  リファインメント: {
+    key: 'リファインメント',
+    label: 'リファインメント',
+    desc: 'バックログの項目を見直し、詳細化・分割・並べ替え・見積りを行う継続的な活動。開発者とプロダクトオーナーが一緒に行い、デイリースクラムとは別に時間を取る。（バックログの優先順位付け自体はプロダクトオーナーの責任）',
   },
   MVP: {
     key: 'MVP',
