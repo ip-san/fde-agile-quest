@@ -34,16 +34,20 @@ export interface HearingOption {
   good: boolean
 }
 
-/** 開発（reduced-motion フォールバック）の実装の進め方。tier 付き。 */
-export interface DevStep {
-  text: string
-  tier: ExecTier
-}
-const DEV_STEPS: DevStep[] = [
-  { text: '小さく動く版をまず出し、現場の反応で直す', tier: 'great' },
-  { text: 'ひと通り設計してから、まとめて実装する', tier: 'good' },
-  { text: '完璧を目指して作り込み、最後にまとめて見せる', tier: 'poor' },
+/** 開発パズル：正しい順に組み直す“開発の手順”フロー（FDEらしい進め方の型）。 */
+const DEV_FLOWS: string[][] = [
+  ['要件を掴む', '小さく設計する', '実装する', '現場で試す'],
+  ['不具合を再現する', '原因を特定する', '修正する', '再発防止を残す'],
+  ['仮説を立てる', '最小版を出す', '反応を見る', '学んで直す'],
+  ['ログを見る', 'ボトルネックを特定', '一点を直す', '効果を測る'],
 ]
+
+export interface DevFlow {
+  /** シャッフル済みの提示タイル */
+  steps: string[]
+  /** 正解の並び */
+  correct: string[]
+}
 
 // 小さなシード付き乱数（UI専用。エンジンの純粋性とは無関係だが、決定的でテスト可能）
 function rng(seed: number) {
@@ -81,9 +85,22 @@ export function scoreHearing(picked: HearingOption[]): ExecTier {
   return good >= 2 ? 'great' : good === 1 ? 'good' : 'poor'
 }
 
-/** 開発フォールバックの3択をシードでシャッフル（tier 付き）。 */
-export function dealDevSteps(seed: number): DevStep[] {
-  return shuffle(DEV_STEPS, seed)
+/** 開発パズルの1ラウンド＝正解フローをシードで選び、提示はシャッフル（正解と一致しないよう保証）。 */
+export function dealDevFlow(seed: number): DevFlow {
+  const correct = DEV_FLOWS[((seed % DEV_FLOWS.length) + DEV_FLOWS.length) % DEV_FLOWS.length]
+  let steps = shuffle(correct, seed + 1)
+  let salt = 2
+  while (steps.every((s, i) => s === correct[i])) steps = shuffle(correct, seed + salt++) // 最初から正解は避ける
+  return { steps, correct }
+}
+
+/** 並べ替えの採点：正しい位置の数で great/good/poor。 */
+export function scoreSequence(answer: string[], correct: string[]): ExecTier {
+  const n = correct.length
+  let hit = 0
+  for (let i = 0; i < n; i++) if (answer[i] === correct[i]) hit++
+  if (hit === n) return 'great'
+  return hit >= Math.ceil(n / 2) ? 'good' : 'poor'
 }
 
 /** タイミング型：マーカー位置(0..100)と的中心(50)からティア判定。 */

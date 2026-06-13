@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dealDevSteps, dealHearing, scoreHearing, scoreTiming } from './minigames'
+import { dealDevFlow, dealHearing, scoreHearing, scoreSequence, scoreTiming } from './minigames'
 
 describe('dealHearing', () => {
   it('良2・悪3 の5択を返し、同じ seed で決定的', () => {
@@ -37,11 +37,21 @@ describe('scoreTiming', () => {
   })
 })
 
-describe('dealDevSteps', () => {
-  it('great/good/poor を1つずつ含む3択を返す（決定的）', () => {
-    const s = dealDevSteps(5)
-    expect(s).toHaveLength(3)
-    expect(new Set(s.map((x) => x.tier))).toEqual(new Set(['great', 'good', 'poor']))
-    expect(dealDevSteps(5)).toEqual(s)
+describe('dealDevFlow', () => {
+  it('正解フローと、それを並べ替えた提示を返す（最初から正解ではない・決定的）', () => {
+    const f = dealDevFlow(5)
+    expect([...f.steps].sort()).toEqual([...f.correct].sort()) // 同じ要素集合
+    expect(f.steps).not.toEqual(f.correct) // 最初から正解の並びにはしない
+    expect(dealDevFlow(5)).toEqual(f) // 決定的
+  })
+})
+
+describe('scoreSequence', () => {
+  const correct = ['a', 'b', 'c', 'd']
+  it('正しい位置の数で great/good/poor', () => {
+    expect(scoreSequence(['a', 'b', 'c', 'd'], correct)).toBe('great') // 4/4
+    expect(scoreSequence(['a', 'b', 'd', 'c'], correct)).toBe('good') // 2/4
+    expect(scoreSequence(['b', 'a', 'd', 'c'], correct)).toBe('poor') // 0/4
+    expect(scoreSequence(['a', 'c', 'b', 'd'], correct)).toBe('good') // 2/4（境界 ceil(4/2)=2）
   })
 })

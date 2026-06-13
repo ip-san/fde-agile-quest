@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { type DevStep, dealDevSteps, scoreTiming } from '../../data/minigames'
+import { scoreTiming } from '../../data/minigames'
 import type { ExecTier } from '../../types'
+import { MiniGameDevPuzzle } from './MiniGameDevPuzzle'
 
 interface Props {
   seed: number
@@ -10,11 +11,13 @@ interface Props {
 const prefersReducedMotion = () =>
   typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
-/** 開発ミニゲーム：タイミング型（マーカーを的で止める）。reduced-motion 時は選択型へ。 */
+/** 開発ミニゲーム：タイミング型（マーカーを的で止める）とパズル型（手順の並べ替え）を
+ *  シードで出し分ける。reduced-motion 時は動きの無いパズル型に固定。 */
 export function MiniGameDev({ seed, onResolve }: Props) {
   const [reduced] = useState(prefersReducedMotion)
-  return reduced ? (
-    <DevFallback seed={seed} onResolve={onResolve} />
+  const usePuzzle = reduced || seed % 2 === 0
+  return usePuzzle ? (
+    <MiniGameDevPuzzle seed={seed} onResolve={onResolve} />
   ) : (
     <DevTiming onResolve={onResolve} />
   )
@@ -86,32 +89,6 @@ function DevTiming({ onResolve }: { onResolve: (tier: ExecTier) => void }) {
       <span className="sr-only" role="status" aria-live="assertive">
         {stopped ? '実装のタイミングを確定しました' : ''}
       </span>
-    </div>
-  )
-}
-
-/** reduced-motion 用：実装の進め方を1つ選ぶ（tier で採点）。 */
-function DevFallback({ seed, onResolve }: { seed: number; onResolve: (tier: ExecTier) => void }) {
-  const [steps] = useState<DevStep[]>(() => dealDevSteps(seed))
-  return (
-    <div className="space-y-3">
-      <p className="text-sm text-slate-300">
-        どう実装を進める？ <span className="text-slate-400">FDEらしい進め方を選ぶ</span>
-      </p>
-      <ul className="space-y-2">
-        {steps.map((s, i) => (
-          <li key={s.text}>
-            <button
-              type="button"
-              onClick={() => onResolve(s.tier)}
-              data-initial-focus={i === 0 ? true : undefined}
-              className="block w-full rounded-xl border border-slate-700 bg-slate-800/40 px-4 py-2.5 text-left text-sm text-slate-200 transition hover:border-sky-500/50 hover:bg-slate-800"
-            >
-              {s.text}
-            </button>
-          </li>
-        ))}
-      </ul>
     </div>
   )
 }
