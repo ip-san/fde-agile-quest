@@ -249,6 +249,32 @@ describe('フラグ→Sprint3 手戻りイベントの結合', () => {
   })
 })
 
+describe('主軸の分岐：背骨バリアント（topDown / genbaTrust）', () => {
+  // proceedCore は単発セレモニーで availableEvents の先頭(配列順)を出す。
+  // フラグ一致のバリアントを既定の前に置いているので、先頭IDが経路で変わる。
+  const firstOf = (ceremony: 'review' | 'retro', flags: GameFlag[]) =>
+    availableEvents(EVENTS, 3, ceremony, new Set<string>(), new Set(flags))[0]?.id
+
+  it('Sprint3 レビューは topDown→topdown版 / genbaTrust→trust版 / 無フラグ→既定', () => {
+    expect(firstOf('review', ['topDown'])).toBe('s3-review-topdown')
+    expect(firstOf('review', ['genbaTrust'])).toBe('s3-review-trust')
+    expect(firstOf('review', [])).toBe('s3-review')
+  })
+  it('Sprint3 レトロも経路で分岐する', () => {
+    expect(firstOf('retro', ['topDown'])).toBe('s3-retro-topdown')
+    expect(firstOf('retro', ['genbaTrust'])).toBe('s3-retro-trust')
+    expect(firstOf('retro', [])).toBe('s3-retro')
+  })
+  it('分岐点 s2-retro の選択で genbaTrust / topDown が立つ', () => {
+    const s2retro = EVENTS.find((e) => e.id === 's2-retro')
+    if (!s2retro) throw new Error('s2-retro not found')
+    const top = chooseCore(eventCore({ currentEvent: s2retro }), s2retro.choices[0])
+    expect(top.flags.has('topDown')).toBe(true)
+    const trust = chooseCore(eventCore({ currentEvent: s2retro }), s2retro.choices[1])
+    expect(trust.flags.has('genbaTrust')).toBe(true)
+  })
+})
+
 describe('spinCore — 想定外(unexpected)の分岐', () => {
   // sprint1 daily で、要求セグメント以外の1セグメントだけ残るよう他を解決済みにする。
   // 実IDをデータから動的に取るので、イベントの並び替え・増減に影響されない。

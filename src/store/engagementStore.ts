@@ -81,7 +81,12 @@ function coreOf(s: EngagementState): ProgressCore {
 
 const CEREMONY_SET = new Set<string>(CEREMONY_ORDER)
 // GameFlag を増やすと satisfies が未網羅をコンパイルエラーで知らせる（検証セットの取りこぼし防止）
-const VALID_FLAGS = { wrongKpi: true, aiOverreliance: true } satisfies Record<GameFlag, true>
+const VALID_FLAGS = {
+  wrongKpi: true,
+  aiOverreliance: true,
+  genbaTrust: true,
+  topDown: true,
+} satisfies Record<GameFlag, true>
 const FLAG_SET = new Set<string>(Object.keys(VALID_FLAGS))
 
 /** log の各要素が LogEntry の形（描画が前提とする string/number フィールド）を満たすか。

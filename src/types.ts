@@ -19,7 +19,7 @@ export interface Meters {
 export type MeterKey = keyof Meters
 
 /** ゲーム内フラグ（選択で立ち、後のイベント出現条件になる）。生stringだとタイポを検知できないためユニオンで縛る */
-export type GameFlag = 'wrongKpi' | 'aiOverreliance'
+export type GameFlag = 'wrongKpi' | 'aiOverreliance' | 'genbaTrust' | 'topDown'
 
 /** 進行状態 */
 export type Status = 'playing' | 'event' | 'ended'
