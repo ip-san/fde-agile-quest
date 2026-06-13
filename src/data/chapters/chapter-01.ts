@@ -243,6 +243,56 @@ export const EVENTS: GameEvent[] = [
       },
     ],
   },
+  {
+    id: 's1-daily-ai-chores',
+    sprint: 1,
+    ceremony: 'daily',
+    segment: 'chance',
+    title: 'AIで空いた時間',
+    narrative:
+      '定型の集計レポート作成をAIに任せたら、毎日1時間が浮いた。この時間をどう使う？',
+    choices: [
+      {
+        id: 'a',
+        label: '浮いた時間で、別の機能を作り込む',
+        effects: { trust: 1, insight: -1 },
+        resultText: '機能は増えた。だがAIが生んだ余白を、また机上の開発に使ってしまった。',
+      },
+      {
+        id: 'b',
+        label: '浮いた時間で、もう一度倉庫の現場に立つ',
+        effects: { insight: 2, culture: -1 },
+        resultText:
+          'AIで雑務を消した分、現場を見る時間が増えた。これがAIと働く本来の使い方だ。',
+      },
+    ],
+  },
+  {
+    id: 's1-daily-ai-context',
+    sprint: 1,
+    ceremony: 'daily',
+    segment: 'genba',
+    title: 'AIが現場用語を取り違える',
+    narrative:
+      'AIに在庫手順を説明させたら「ピッキング」を別の意味に解釈し、的外れな出力。{{プロンプト}}を何度こね回しても直らない。',
+    choices: [
+      {
+        id: 'a',
+        label: '{{プロンプト}}に言葉を足し、呪文のように調整し続ける',
+        effects: { insight: -1 },
+        resultText:
+          'プロンプトは呪文ではない。前提知識が無いまま言い回しをいじっても、的は外れたまま。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '現場の用語と業務ルールを整理し、知識としてAIに渡す',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '{{RAG}}の前に、まず知識を整理する。AIの出力が一気に現場に噛み合い始めた。',
+      },
+    ],
+  },
 
   // ── レビュー ──
   {
@@ -456,6 +506,58 @@ export const EVENTS: GameEvent[] = [
         effects: { culture: 1 },
         resultText:
           '速度は落ち着いたが、チームが燃え尽きずに学び合っている。（数字を見せる信頼+は取り逃す）',
+      },
+    ],
+  },
+  {
+    id: 's2-daily-ai-eval',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'trouble',
+    title: '評価基準を書く前に',
+    narrative:
+      '「誤出荷チェック」をAIに作らせたい。チームは「とりあえず生成して、動いたら採用しよう」と言う。',
+    choices: [
+      {
+        id: 'a',
+        label: 'まず生成させ、動いたものを採用する',
+        effects: { trust: 1, insight: -1 },
+        resultText:
+          '動いて見えた。だが“何をもって正しいか”が無い。評価なき生成は、ただの祈りだ。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '先に合否の{{評価基準}}（許容できる誤出荷率）を書いてから生成させる',
+        effects: { insight: 1, trust: -1 },
+        resultText:
+          '着手は遅れ情シスは渋い顔（信頼−）。だが生成の前に{{評価基準}}を決めたから、出力の良し悪しを判断できる。',
+      },
+    ],
+  },
+  {
+    id: 's2-daily-ai-code',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'team',
+    title: 'AIが書いたコードのバグ',
+    narrative:
+      'AIに量産させたコードを、レビューせず本番に出していた。現場から「在庫数が時々ずれる」と苦情が来た。',
+    choices: [
+      {
+        id: 'a',
+        label: '「AIが書いたものなので」と原因をAIに帰す',
+        effects: { trust: -1, culture: -1 },
+        resultText:
+          'AIは速度をくれるが、責任はくれない。AIが書いたコードも、本番に出した以上はお前のコードだ。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '自分の責任とし、AI生成コードのレビュー体制を敷く',
+        effects: { insight: 1, culture: 1, trust: -1 },
+        resultText:
+          '一時的に速度は落ちた（信頼−）。だが「AIが書いてもレビューは人」がチームの作法になった。',
       },
     ],
   },
@@ -690,6 +792,57 @@ export const EVENTS: GameEvent[] = [
         effects: { culture: 1, insight: 1 },
         resultText:
           '数字が現場の手に渡った。{{フィードバックループ}}が自走し始める。（毎朝報告の信頼+は取り逃す）',
+      },
+    ],
+  },
+  {
+    id: 's3-daily-ai-agent',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'trouble',
+    title: 'AIエージェントに権限を渡すか',
+    narrative:
+      '在庫の補正を{{エージェント}}に自動でやらせれば運用はぐっと楽になる。だが在庫データへの書き込み権限を渡すことになる。',
+    choices: [
+      {
+        id: 'a',
+        label: '全権限を与え、丸ごと自動化して一気に楽にする',
+        effects: { trust: 1, culture: -1 },
+        resultText:
+          '楽にはなった。だが暴走時に戻せない。{{エージェント}}より先に、権限の境界を設計すべきだった。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '権限を最小に絞り、失敗時の{{ロールバック}}を先に用意する',
+        effects: { insight: 1, culture: 1, trust: -1 },
+        resultText:
+          '導入は慎重になった（信頼−）。だが自動化より先に“戻し方”がある安心は、本番運用の土台になる。',
+      },
+    ],
+  },
+  {
+    id: 's3-daily-ai-partner',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'chance',
+    title: 'AIに任せきるか',
+    narrative: '横展開の設計を、AIにほぼ丸投げすれば、自分は別案件に動ける。',
+    choices: [
+      {
+        id: 'a',
+        label: 'AIに丸投げして、自分は次の案件へ',
+        effects: { trust: 1, insight: -1 },
+        resultText:
+          '速い。だが現場差をAIは知らない。「AIを使う」だけでは、また別の沈黙を生む。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: 'AIと協働し、現場知の部分は自分が判断して仕上げる',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          'AIを“使う”でなく“共に働く”。速度はAI、判断は人。これがFDEのAIとの距離感だ。',
       },
     ],
   },
