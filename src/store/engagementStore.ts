@@ -15,11 +15,15 @@ import {
 import type { Ceremony, Choice, Segment } from '../types'
 
 const STORAGE_KEY = 'fde-agile-quest:chapter-01-v2'
+// 心得手帳は「周回をまたいで集める」コレクションなので別キーで保存し、reset では消さない
+const PRECEPTS_KEY = 'fde-agile-quest:precepts-seen'
 
 interface EngagementState extends ProgressCore {
   chapterTitle: string
   /** reset のたびに +1。Roulette を key 付け替えで再マウントし、回転中の取りこぼし発火を断つ */
   generation: number
+  /** これまでに出会った心得ID（周回をまたいで永続。reset では消えない） */
+  seenPrecepts: Set<number>
 
   /** 現在のセレモニー（位置から導出）。終了後は null */
   currentCeremony: () => Ceremony | null
@@ -29,6 +33,25 @@ interface EngagementState extends ProgressCore {
   choose: (choice: Choice) => void
   dismissResult: () => void
   reset: () => void
+}
+
+function loadSeenPrecepts(): Set<number> {
+  try {
+    const raw = localStorage.getItem(PRECEPTS_KEY)
+    if (!raw) return new Set()
+    const arr = JSON.parse(raw)
+    return Array.isArray(arr) ? new Set(arr.filter((n) => typeof n === 'number')) : new Set()
+  } catch {
+    return new Set()
+  }
+}
+
+function persistSeenPrecepts(seen: Set<number>) {
+  try {
+    localStorage.setItem(PRECEPTS_KEY, JSON.stringify([...seen]))
+  } catch {
+    /* noop */
+  }
 }
 
 /** ProgressCore 部分だけを抜き出す（純粋関数へ渡す用） */
@@ -92,6 +115,7 @@ const initialCore: ProgressCore = saved ? restoreCore(saved) : freshCore(STARTIN
 export const useEngagement = create<EngagementState>((set, get) => ({
   chapterTitle: CHAPTER_TITLE,
   generation: 0,
+  seenPrecepts: loadSeenPrecepts(),
   ...initialCore,
 
   currentCeremony: () => ceremonyAt(get().sprintIndex, get().beatIndex),
@@ -110,9 +134,18 @@ export const useEngagement = create<EngagementState>((set, get) => ({
   },
 
   choose: (choice) => {
+    const seen = get().seenPrecepts
     const next = chooseCore(coreOf(get()), choice)
-    set(next)
+
+    // 心得手帳の更新: このイベントの心得のうち、初めて出会ったものを記録
+    const eventPrecepts = next.result?.precepts ?? []
+    const newPreceptIds = eventPrecepts.filter((id) => !seen.has(id))
+    const seenPrecepts = newPreceptIds.length ? new Set([...seen, ...newPreceptIds]) : seen
+    const result = next.result ? { ...next.result, newPreceptIds } : next.result
+
+    set({ ...next, result, seenPrecepts })
     persistCore(next)
+    if (newPreceptIds.length) persistSeenPrecepts(seenPrecepts)
   },
 
   dismissResult: () => set(dismissResultCore(coreOf(get()))),

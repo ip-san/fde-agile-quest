@@ -115,4 +115,8 @@ export interface ResultView {
   /** 選んだ選択肢のメーター増減（差分表示用） */
   effects: Effects
   warn?: boolean
+  /** このイベントが体現するFDE心得のID（手帳に集まる） */
+  precepts: number[]
+  /** このうち、今回はじめて出会った心得のID（「NEW」表示用）。store が埋める */
+  newPreceptIds: number[]
 }

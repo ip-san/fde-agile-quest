@@ -3,6 +3,7 @@
 // store はこれらを呼ぶ薄いラッパに徹し、ここを game.test と同様に単体テストする。
 // ───────────────────────────────────────────────────────────
 import { ENDINGS, EVENTS, FAILURE_EPILOGUES, SPRINTS } from '../data/chapters/chapter-01'
+import { preceptsForEvent } from '../data/precepts'
 import { availableEvents, drawEvent, evaluateEnding, resolveChoice } from './game'
 import type {
   Ceremony,
@@ -149,6 +150,8 @@ export function chooseCore(core: ProgressCore, choice: Choice): ProgressCore {
     resultText: choice.resultText,
     effects: choice.effects,
     warn: choice.warn,
+    precepts: preceptsForEvent(event.id),
+    newPreceptIds: [], // 新規判定は store が seenPrecepts と突き合わせて埋める
   }
 
   const base = { ...core, meters, flags, resolvedIds, log }

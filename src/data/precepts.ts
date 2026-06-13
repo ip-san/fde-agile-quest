@@ -1,0 +1,187 @@
+// ───────────────────────────────────────────────────────────
+// FDE心得100箇条（学習用に要約）。
+// 出典: Zenn「FDE心得100箇条」 https://zenn.dev/acntechjp/articles/da7ee421bb05fd
+// ※原文の逐語ではなく、ゲーム内学習のために短く言い換えたもの。
+//
+// これがゲームの「心得デッキ」。各イベントは1〜数個の心得を体現し、プレイヤーは
+// 出会った心得を周回をまたいで「心得手帳」に集めていく（X/100）。
+// ───────────────────────────────────────────────────────────
+
+export interface Precept {
+  id: number
+  cluster: string
+  text: string
+}
+
+/** クラスタ（テーマ群）の表示順とラベル */
+export const PRECEPT_CLUSTERS: { key: string; label: string }[] = [
+  { key: 'genba', label: '現場を知る' },
+  { key: 'proto', label: '小さく作り反復する' },
+  { key: 'roles', label: '役割を越える' },
+  { key: 'responsibility', label: '責任を引き受ける' },
+  { key: 'control', label: '場を動かす' },
+  { key: 'ai', label: 'AIと働く' },
+  { key: 'metrics', label: '数字で語る' },
+  { key: 'governance', label: '制約を味方にする' },
+  { key: 'depth', label: '業務の深みに潜る' },
+  { key: 'comms', label: '言葉と記録' },
+  { key: 'people', label: '人と向き合う' },
+  { key: 'learning', label: '失敗から学ぶ' },
+  { key: 'legacy', label: '太く残す' },
+]
+
+export const PRECEPTS: Precept[] = [
+  // 現場を知る
+  { id: 1, cluster: 'genba', text: '現場に行け。答えは資料の外にある' },
+  { id: 2, cluster: 'genba', text: '顧客の言葉を業務に翻訳しろ' },
+  { id: 3, cluster: 'genba', text: '要件を聞く前に業務を観察しろ' },
+  { id: 4, cluster: 'genba', text: '困っている人を直接見ろ' },
+  { id: 5, cluster: 'genba', text: '細かいところまで潜れ' },
+  { id: 6, cluster: 'genba', text: '沈黙は、まだ見つかっていない要件' },
+  { id: 7, cluster: 'genba', text: '一次情報に触れろ' },
+  { id: 8, cluster: 'genba', text: '議事録よりログを見ろ' },
+  { id: 9, cluster: 'genba', text: 'ログより手元の操作を見ろ' },
+  { id: 10, cluster: 'genba', text: '課題は与えられるものでなく、掘り当てるもの' },
+  // 小さく作り反復する
+  { id: 11, cluster: 'proto', text: '最初の解は雑でいい' },
+  { id: 12, cluster: 'proto', text: '叩かれるプロトタイプを出せ' },
+  { id: 13, cluster: 'proto', text: '完璧な正解を待つな' },
+  { id: 14, cluster: 'proto', text: 'デモは会議資料より強い' },
+  { id: 15, cluster: 'proto', text: '動くものは百枚のスライドに勝つ' },
+  { id: 16, cluster: 'proto', text: 'PoCで終わるな、本番に出せ' },
+  { id: 17, cluster: 'proto', text: '本番に出ないコードは、ただの仮説' },
+  { id: 18, cluster: 'proto', text: 'ユーザーが使って初めて設計が始まる' },
+  { id: 19, cluster: 'proto', text: '使われない高機能より、毎日使われる小機能' },
+  { id: 20, cluster: 'proto', text: '成果物でなく、業務の変化を納品しろ' },
+  // 役割を越える
+  { id: 21, cluster: 'roles', text: 'FDEはまずプロダクトエンジニア' },
+  { id: 22, cluster: 'roles', text: 'FDEは営業でもある' },
+  { id: 23, cluster: 'roles', text: 'FDEはPMでもある' },
+  { id: 24, cluster: 'roles', text: 'FDEはSREでもある' },
+  { id: 25, cluster: 'roles', text: 'FDEはコンサルでもある' },
+  { id: 26, cluster: 'roles', text: 'それでも最後はエンジニアであれ' },
+  // 責任を引き受ける
+  { id: 27, cluster: 'responsibility', text: '境界線の上に立て' },
+  { id: 28, cluster: 'responsibility', text: '隙間に落ちた仕事を拾え' },
+  { id: 29, cluster: 'responsibility', text: '誰の仕事でもないものは、お前の仕事' },
+  { id: 30, cluster: 'responsibility', text: 'ラストマンとして座れ' },
+  { id: 31, cluster: 'responsibility', text: '「できません」の前に最小版を作れ' },
+  { id: 32, cluster: 'responsibility', text: '「難しい」の前に分解しろ' },
+  { id: 33, cluster: 'responsibility', text: '「検討します」の前に仮説を出せ' },
+  { id: 34, cluster: 'responsibility', text: '「確認します」の前に観測点を置け' },
+  { id: 35, cluster: 'responsibility', text: 'その場で試せ' },
+  // 場を動かす
+  { id: 36, cluster: 'control', text: 'その場で動かす者が主導権を握る' },
+  { id: 37, cluster: 'control', text: '迷ったら顧客価値に戻れ' },
+  { id: 38, cluster: 'control', text: '迷ったら本番利用に戻れ' },
+  { id: 39, cluster: 'control', text: '迷ったら最短学習ループに戻れ' },
+  { id: 40, cluster: 'control', text: '最後に責任を取る前提で決めろ' },
+  // AIと働く
+  { id: 41, cluster: 'ai', text: 'AIを使うな、AIと働け' },
+  { id: 42, cluster: 'ai', text: 'プロンプトは呪文ではない' },
+  { id: 43, cluster: 'ai', text: '生成の前に評価基準を書け' },
+  { id: 44, cluster: 'ai', text: '評価なき生成は、ただの祈り' },
+  { id: 45, cluster: 'ai', text: 'RAGの前に知識を整理しろ' },
+  { id: 46, cluster: 'ai', text: 'エージェントより権限の境界を設計しろ' },
+  { id: 47, cluster: 'ai', text: '自動化より、失敗時の戻し方を用意しろ' },
+  { id: 48, cluster: 'ai', text: 'AIは速度をくれるが、責任はくれない' },
+  { id: 49, cluster: 'ai', text: 'AIが書いたコードも、お前のコード' },
+  { id: 50, cluster: 'ai', text: 'AIで雑務を消し、現場を見る時間を増やせ' },
+  // 数字で語る
+  { id: 51, cluster: 'metrics', text: '顧客のKPIを、自分のデバッグ指標にしろ' },
+  { id: 52, cluster: 'metrics', text: 'メトリクスは飾るな、意思決定に使え' },
+  { id: 53, cluster: 'metrics', text: '数字で語れ' },
+  { id: 54, cluster: 'metrics', text: '数字だけで終わるな' },
+  { id: 55, cluster: 'metrics', text: '定量は方向、定性は理由' },
+  { id: 56, cluster: 'metrics', text: '使われたかどうかを見ろ' },
+  { id: 57, cluster: 'metrics', text: '導入数より、習慣化' },
+  { id: 58, cluster: 'metrics', text: '精度より、業務上の許容誤差' },
+  // 制約を味方にする
+  { id: 59, cluster: 'governance', text: 'セキュリティは後付けするな' },
+  { id: 60, cluster: 'governance', text: 'ガバナンスは敵でなく、入場券' },
+  { id: 61, cluster: 'governance', text: '顧客の制約を、設計条件にしろ' },
+  { id: 62, cluster: 'governance', text: 'レガシーを笑うな' },
+  // 業務の深みに潜る
+  { id: 63, cluster: 'depth', text: 'Excelを軽んじるな' },
+  { id: 64, cluster: 'depth', text: '現場の手作業は、未来のプロダクト仕様' },
+  { id: 65, cluster: 'depth', text: '例外処理に、業務の本質が出る' },
+  { id: 66, cluster: 'depth', text: '例外は潰すな、分類しろ' },
+  { id: 67, cluster: 'depth', text: '手戻りより、学びの浅さを恐れろ' },
+  { id: 68, cluster: 'depth', text: '仕様変更は裏切りでなく、フィードバック' },
+  { id: 69, cluster: 'depth', text: '顧客の矛盾を責めず、設計で受け止めろ' },
+  { id: 70, cluster: 'depth', text: '複雑さに名前を付けろ' },
+  // 言葉と記録
+  { id: 71, cluster: 'comms', text: '会議では、次の一手を必ず決めろ' },
+  { id: 72, cluster: 'comms', text: '議論を閉じろ' },
+  { id: 73, cluster: 'comms', text: '事実・推測・願望を分けろ' },
+  { id: 74, cluster: 'comms', text: '誰が・いつ・何を・なぜ を残せ' },
+  { id: 75, cluster: 'comms', text: '文書は官僚仕事でなく、外部記憶' },
+  { id: 76, cluster: 'comms', text: '書けない設計は、考え切れていない' },
+  { id: 77, cluster: 'comms', text: '図にできない構造は、まだ見えていない' },
+  { id: 78, cluster: 'comms', text: '口頭合意を信じるな、形にしろ' },
+  // 人と向き合う
+  { id: 79, cluster: 'people', text: 'ステークホルダーの不安を先回りしろ' },
+  { id: 80, cluster: 'people', text: '誰が怒るかを考えろ' },
+  { id: 81, cluster: 'people', text: '顧客の味方であれ、迎合するな' },
+  { id: 82, cluster: 'people', text: '顧客の要望でなく、成功に従え' },
+  { id: 83, cluster: 'people', text: 'ノーと言うなら、代案を持て' },
+  { id: 84, cluster: 'people', text: '反論を歓迎しろ' },
+  { id: 85, cluster: 'people', text: '質問されたら喜べ' },
+  { id: 86, cluster: 'people', text: 'わからないことは、即メモしろ' },
+  { id: 87, cluster: 'people', text: 'フィードバックは痛いが、資産' },
+  // 失敗から学ぶ
+  { id: 88, cluster: 'learning', text: '炎上は、授業料つきの実地訓練' },
+  { id: 89, cluster: 'learning', text: '失敗を隠すな' },
+  { id: 90, cluster: 'learning', text: '失敗を語れる者だけが、再現性を持つ' },
+  { id: 91, cluster: 'learning', text: '独学を止めるな' },
+  { id: 92, cluster: 'learning', text: '深く潜れ。浅い万能はAIに飲まれる' },
+  { id: 93, cluster: 'learning', text: '自分だけの専門性を、現場で鍛えろ' },
+  { id: 94, cluster: 'learning', text: '量をこなせ' },
+  { id: 95, cluster: 'learning', text: '練習しろ。本番で初めて考えるな' },
+  // 太く残す
+  { id: 96, cluster: 'legacy', text: '自分の道具を磨け' },
+  { id: 97, cluster: 'legacy', text: '速さは礼儀、品質は責任' },
+  { id: 98, cluster: 'legacy', text: '小さく作り、大きく学び、太く残せ' },
+  { id: 99, cluster: 'legacy', text: '現場を変え、プロダクトに戻し、組織を賢くしろ' },
+  { id: 100, cluster: 'legacy', text: 'FDEとは、未来を現場にデプロイする仕事' },
+]
+
+export const PRECEPT_BY_ID: Record<number, Precept> = Object.fromEntries(
+  PRECEPTS.map((p) => [p.id, p]),
+)
+
+/**
+ * イベント → そのイベントが体現する心得ID。
+ * イベント定義から切り離して一覧管理（カバレッジの可視化・回帰テストがしやすい）。
+ */
+export const EVENT_PRECEPTS: Record<string, number[]> = {
+  's1-plan-goal': [10, 37],
+  's1-daily-warehouse': [1, 3, 9],
+  's1-daily-logs': [6, 8],
+  's1-daily-standup': [74, 99],
+  's1-daily-scope': [82, 83],
+  's1-daily-ally': [4, 7],
+  's1-review': [15, 89],
+  's1-retro': [67, 90],
+  's2-plan-kpi': [19, 51, 82],
+  's2-daily-mvp': [12, 13, 18],
+  's2-daily-debt': [16, 97],
+  's2-daily-idea': [64, 68],
+  's2-daily-pressure': [81, 83],
+  's2-daily-pair': [52, 97],
+  's2-review': [55, 56],
+  's2-retro': [90, 99],
+  's3-plan-handoff': [16, 99],
+  's3-daily-rework': [67, 68],
+  's3-daily-onboard': [99],
+  's3-daily-genba': [56, 57],
+  's3-daily-scale': [70],
+  's3-daily-referral': [28, 81],
+  's3-daily-metrics': [52, 56, 99],
+  's3-review': [53, 54],
+  's3-retro': [98, 99],
+}
+
+export function preceptsForEvent(eventId: string): number[] {
+  return EVENT_PRECEPTS[eventId] ?? []
+}

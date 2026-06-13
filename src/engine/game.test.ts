@@ -8,6 +8,7 @@ import {
   STARTING_METERS,
 } from '../data/chapters/chapter-01'
 import { GLOSSARY } from '../data/glossary'
+import { EVENT_PRECEPTS, PRECEPTS } from '../data/precepts'
 import type { GameFlag, MeterKey } from '../types'
 import type { Ceremony, Choice, GameEvent, Meters } from '../types'
 import {
@@ -200,6 +201,31 @@ describe('用語マーカーの健全性', () => {
           `${e.id}/${c.id} は warn なのに即時の負効果も将来の手戻りも無い`,
         ).toBe(true)
       }
+    }
+  })
+})
+
+describe('FDE心得デッキの健全性', () => {
+  it('心得は100箇条で、IDは1..100で重複なし', () => {
+    expect(PRECEPTS).toHaveLength(100)
+    const ids = PRECEPTS.map((p) => p.id)
+    expect(new Set(ids).size).toBe(100)
+    expect(Math.min(...ids)).toBe(1)
+    expect(Math.max(...ids)).toBe(100)
+  })
+  it('EVENT_PRECEPTS のキーは実在イベント、値は 1..100 の有効な心得ID', () => {
+    const eventIds = new Set(EVENTS.map((e) => e.id))
+    const preceptIds = new Set(PRECEPTS.map((p) => p.id))
+    for (const [eventId, ids] of Object.entries(EVENT_PRECEPTS)) {
+      expect(eventIds.has(eventId), `未知のイベントID: ${eventId}`).toBe(true)
+      for (const id of ids) {
+        expect(preceptIds.has(id), `${eventId} が未定義の心得 #${id} を参照`).toBe(true)
+      }
+    }
+  })
+  it('全イベントが最低1つの心得を体現している', () => {
+    for (const e of EVENTS) {
+      expect((EVENT_PRECEPTS[e.id] ?? []).length, `${e.id} に心得タグが無い`).toBeGreaterThan(0)
     }
   })
 })

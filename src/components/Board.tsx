@@ -1,10 +1,13 @@
+import { useState } from 'react'
 import { CEREMONY_LABELS, CEREMONY_SHORT, SPRINTS } from '../data/chapters/chapter-01'
+import { PRECEPTS } from '../data/precepts'
 import { isRouletteCeremony } from '../engine/progression'
 import { useEngagement } from '../store/engagementStore'
 import type { Ceremony } from '../types'
 import { EventLog } from './EventLog'
 import { EventModal } from './EventModal'
 import { MeterHUD } from './MeterHUD'
+import { PreceptBook } from './PreceptBook'
 import { ResultModal } from './ResultModal'
 import { Roulette } from './Roulette'
 
@@ -20,12 +23,14 @@ export function Board() {
     unexpected,
     result,
     generation,
+    seenPrecepts,
     spin,
     proceed,
     choose,
     dismissResult,
     reset,
   } = useEngagement()
+  const [bookOpen, setBookOpen] = useState(false)
 
   const sprint = SPRINTS[Math.min(sprintIndex, SPRINTS.length - 1)]
   const ceremony: Ceremony = sprint.beats[Math.min(beatIndex, sprint.beats.length - 1)]
@@ -42,13 +47,22 @@ export function Board() {
             🎯 スプリントゴール：<span className="text-sky-300">{sprint.goal}</span>
           </p>
         </div>
-        <button
-          type="button"
-          onClick={reset}
-          className="shrink-0 rounded-lg border border-slate-700 px-2.5 py-1 text-xs text-slate-400 transition hover:bg-slate-800"
-        >
-          最初から
-        </button>
+        <div className="flex shrink-0 flex-col items-end gap-1.5">
+          <button
+            type="button"
+            onClick={() => setBookOpen(true)}
+            className="rounded-lg border border-sky-700/60 bg-sky-900/30 px-2.5 py-1 text-xs font-semibold text-sky-200 transition hover:bg-sky-900/60"
+          >
+            <span aria-hidden="true">📖</span> 心得 {seenPrecepts.size}/{PRECEPTS.length}
+          </button>
+          <button
+            type="button"
+            onClick={reset}
+            className="rounded-lg border border-slate-700 px-2.5 py-1 text-xs text-slate-400 transition hover:bg-slate-800"
+          >
+            最初から
+          </button>
+        </div>
       </header>
 
       {/* メーターHUD */}
@@ -142,6 +156,9 @@ export function Board() {
 
       {/* 結果オーバーレイ（判断直後に一度ちゃんと見せる） */}
       {result && <ResultModal result={result} onContinue={dismissResult} />}
+
+      {/* 心得手帳 */}
+      {bookOpen && <PreceptBook seen={seenPrecepts} onClose={() => setBookOpen(false)} />}
     </div>
   )
 }

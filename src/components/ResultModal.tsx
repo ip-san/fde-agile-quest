@@ -1,4 +1,5 @@
 import { CEREMONY_LABELS, SEGMENT_COLORS, SEGMENT_LABELS } from '../data/chapters/chapter-01'
+import { PRECEPT_BY_ID } from '../data/precepts'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 import type { Effects, ResultView } from '../types'
 import { RichText } from './RichText'
@@ -95,6 +96,31 @@ export function ResultModal({ result, onContinue }: Props) {
             <span className="text-[11px] font-semibold text-slate-500">メーター</span>
             <EffectDeltas effects={result.effects} />
           </div>
+
+          {/* この場面のFDE心得（手帳に集まる） */}
+          {result.precepts.length > 0 && (
+            <div className="space-y-1.5 border-t border-slate-800 pt-3">
+              <span className="text-[11px] font-semibold text-slate-500">この場面の心得</span>
+              {result.precepts.map((id) => {
+                const p = PRECEPT_BY_ID[id]
+                if (!p) return null
+                const isNew = result.newPreceptIds.includes(id)
+                return (
+                  <div key={id} className="flex items-start gap-2 text-sm">
+                    <span className="mt-0.5 shrink-0 tabular-nums text-[11px] text-slate-500">
+                      <span aria-hidden="true">🧭</span> #{id}
+                    </span>
+                    <span className="text-slate-100">{p.text}</span>
+                    {isNew && (
+                      <span className="shrink-0 rounded bg-amber-400/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-300">
+                        NEW
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
 
           <button
             type="button"
