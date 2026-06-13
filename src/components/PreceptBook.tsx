@@ -26,7 +26,7 @@ export function PreceptBook({ seen, onClose }: Props) {
           </h2>
           <span className="text-sm font-bold tabular-nums text-sky-300">
             {got}
-            <span className="text-slate-500"> / {total}</span>
+            <span className="text-slate-400"> / {total}</span>
           </span>
         </header>
 
@@ -42,7 +42,7 @@ export function PreceptBook({ seen, onClose }: Props) {
               <section key={cluster.key}>
                 <h3 className="mb-1.5 flex items-center justify-between text-xs font-bold text-slate-300">
                   <span>{cluster.label}</span>
-                  <span className="tabular-nums text-slate-500">
+                  <span className="tabular-nums text-slate-400">
                     {clusterGot}/{items.length}
                   </span>
                 </h3>
@@ -56,7 +56,7 @@ export function PreceptBook({ seen, onClose }: Props) {
                           has ? 'bg-slate-800/40 text-slate-100' : 'text-slate-600'
                         }`}
                       >
-                        <span className="mt-px shrink-0 tabular-nums text-[10px] text-slate-500">
+                        <span className="mt-px shrink-0 tabular-nums text-[10px] text-slate-400">
                           #{p.id}
                         </span>
                         <span>{has ? p.text : '？？？（まだ出会っていない）'}</span>

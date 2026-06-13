@@ -110,6 +110,18 @@ describe('chooseCore — 効果適用と結果ビュー', () => {
     expect(next.beatIndex).toBe(1)
     expect(next.status).toBe('playing')
   })
+  it('選択ごとに log エントリが1件追記され、選んだ event/choice の内容を保持する', () => {
+    const before = eventCore({ meters: m() })
+    const next = chooseCore(before, choice({ trust: 1 }))
+    expect(next.log).toHaveLength(before.log.length + 1)
+    expect(next.log.at(-1)).toEqual({
+      sprint: 1,
+      ceremony: 'daily',
+      eventTitle: 'T',
+      choiceLabel: 'L',
+      resultText: 'R',
+    })
+  })
   it('setsFlag でフラグが立つ', () => {
     const next = chooseCore(eventCore(), choice({}, { setsFlag: 'wrongKpi' }))
     expect(next.flags.has('wrongKpi')).toBe(true)
@@ -275,6 +287,10 @@ describe('toPersisted / restoreCore のラウンドトリップ', () => {
       meters: m({ trust: 7 }),
       flags: new Set<GameFlag>(['wrongKpi']),
       resolvedIds: new Set(['a', 'b']),
+      log: [
+        { sprint: 1, ceremony: 'planning', eventTitle: 'ゴール', choiceLabel: '置く', resultText: '前進' },
+        { sprint: 1, ceremony: 'daily', eventTitle: '現場', choiceLabel: '見る', resultText: '発見' },
+      ],
       sprintIndex: 1,
       beatIndex: 3,
     }
@@ -282,6 +298,7 @@ describe('toPersisted / restoreCore のラウンドトリップ', () => {
     expect(restored.meters).toEqual(core.meters)
     expect([...restored.flags]).toEqual(['wrongKpi'])
     expect([...restored.resolvedIds]).toEqual(['a', 'b'])
+    expect(restored.log).toEqual(core.log) // 非空 log が順序ごと往復で保たれる
     expect(restored.sprintIndex).toBe(1)
     expect(restored.beatIndex).toBe(3)
   })

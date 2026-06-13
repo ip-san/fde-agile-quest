@@ -16,7 +16,7 @@ export function EndingScreen({ ending, meters, log, onReset }: Props) {
       <div className="text-center">
         <p
           className={`text-xs font-semibold uppercase tracking-widest ${
-            failed ? 'text-rose-400' : 'text-slate-500'
+            failed ? 'text-rose-400' : 'text-slate-400'
           }`}
         >
           {failed ? 'BAD END — 案件終了' : 'Ending'}
@@ -50,7 +50,7 @@ export function EndingScreen({ ending, meters, log, onReset }: Props) {
         <MeterHUD meters={meters} />
       </div>
 
-      <p className="text-center text-xs text-slate-500">
+      <p className="text-center text-xs text-slate-400">
         この案件であなたは {log.length} の判断を下した。
         <br />
         別の判断は、別の結末へ続く。

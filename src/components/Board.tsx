@@ -61,7 +61,7 @@ export function Board() {
       {/* ヘッダー：スプリント */}
       <header className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs text-slate-500">{chapterTitle}</p>
+          <p className="text-xs text-slate-400">{chapterTitle}</p>
           <h1 className="mt-0.5 text-lg font-bold text-slate-100">{sprint.title}</h1>
           <p className="mt-0.5 text-xs text-slate-400">
             🎯 スプリントゴール：<span className="text-sky-300">{sprint.goal}</span>
@@ -96,7 +96,7 @@ export function Board() {
 
       {/* メーターHUD */}
       <MeterHUD meters={meters} />
-      <p className="-mt-2 text-center text-[11px] text-slate-500">
+      <p className="-mt-2 text-center text-[11px] text-slate-400">
         ⚠ 3つのゲージは、どれか1つでも <span className="text-rose-400">0</span> になると案件は終了。
         差し引きプラスでも、削りすぎは命取り。
       </p>
@@ -112,13 +112,13 @@ export function Board() {
                 ? 'bg-sky-500 text-slate-950'
                 : i === sprintIndex
                   ? 'bg-sky-400/30 text-sky-200 ring-2 ring-sky-400'
-                  : 'bg-slate-800 text-slate-500'
+                  : 'bg-slate-800 text-slate-400'
             }`}
           >
             {sp.n}
           </span>
         ))}
-        <span className="text-slate-500">/ 全{SPRINTS.length}</span>
+        <span className="text-slate-400">/ 全{SPRINTS.length}</span>
       </div>
 
       {/* セレモニー・トラック（現スプリント内の進行） */}
@@ -137,7 +137,7 @@ export function Board() {
                   ? 'bg-slate-700/60 text-slate-400'
                   : state === 'current'
                     ? 'bg-sky-500/20 text-sky-200 ring-1 ring-sky-400'
-                    : 'bg-slate-800/40 text-slate-500'
+                    : 'bg-slate-800/40 text-slate-400'
               }`}
               title={b === 'daily' ? `${CEREMONY_LABELS[b]} ${dailyNo}日目` : CEREMONY_LABELS[b]}
             >
@@ -152,7 +152,7 @@ export function Board() {
       <div className="flex flex-1 flex-col items-center justify-center gap-3 py-2">
         <p className="text-sm text-slate-300">
           いまは <span className="font-bold text-sky-300">{CEREMONY_LABELS[ceremony]}</span>
-          <span className="ml-1 text-xs text-slate-500">
+          <span className="ml-1 text-xs text-slate-400">
             {useRoulette ? '— 回して、その日の出来事を見る' : '— 進めて始める'}
           </span>
         </p>

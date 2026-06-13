@@ -5,7 +5,7 @@ import { RichText } from './RichText'
 export function EventLog({ log }: { log: LogEntry[] }) {
   if (log.length === 0) {
     return (
-      <p className="px-1 text-xs text-slate-500">
+      <p className="px-1 text-xs text-slate-400">
         💬 セレモニーでルーレットを回すと、起きた出来事がここに残ります。
       </p>
     )
@@ -20,7 +20,7 @@ export function EventLog({ log }: { log: LogEntry[] }) {
               S{e.sprint}·{CEREMONY_SHORT[e.ceremony]}
             </span>
             {e.eventTitle}{' '}
-            <span className="text-slate-500">
+            <span className="text-slate-400">
               → <RichText text={e.choiceLabel} />
             </span>
           </div>
