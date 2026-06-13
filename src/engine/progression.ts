@@ -85,7 +85,11 @@ export function finalEndingFor(
   meters: Meters,
   flags: Set<GameFlag>,
 ): { ending: Epilogue | null; finalePending: boolean } {
-  if (flags.has('exposed')) return { ending: FINALE_EPILOGUES.expose, finalePending: false }
+  // 暴くを選んだ場合、動かぬ証拠(fraudCase)を固めていれば告発が通り、無ければ握り潰される
+  if (flags.has('exposed')) {
+    const ending = flags.has('fraudCase') ? FINALE_EPILOGUES.expose : FINALE_EPILOGUES.exposeWeak
+    return { ending, finalePending: false }
+  }
   if (flags.has('complicit')) return { ending: FINALE_EPILOGUES.complicit, finalePending: false }
   if (flags.has('coopted')) return { ending: FINALE_EPILOGUES.coopted, finalePending: false }
   if (flags.has('fraudClue')) return { ending: null, finalePending: true }

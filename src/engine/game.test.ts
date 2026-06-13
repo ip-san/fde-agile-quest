@@ -73,7 +73,9 @@ describe('primaryPositive / amplifyEffects（実行ミニゲームの倍率）',
     expect(r.delta).toBe(0)
   })
   it('poor は主正-1。0未満にはしない＝新たな負を足さない', () => {
-    expect(amplifyEffects({ insight: 1, culture: 1 }, 'poor').effects).toEqual({ insight: 0, culture: 1 })
+    const r = amplifyEffects({ insight: 1, culture: 1 }, 'poor')
+    expect(r.effects).toEqual({ insight: 0, culture: 1 })
+    expect(r.delta).toBe(-1) // 結果バッジ「伸びを -1 取り逃した」表示に使う負の delta を固定
     expect(amplifyEffects({ trust: 2 }, 'poor').effects).toEqual({ trust: 1 })
     // 負効果は poor でも不変（0ルールを壊さない）
     expect(amplifyEffects({ trust: 1, culture: -1 }, 'poor').effects).toEqual({ trust: 0, culture: -1 })
