@@ -1,5 +1,5 @@
 import { CEREMONY_LABELS, SEGMENT_COLORS, SEGMENT_LABELS } from '../data/chapters/chapter-01'
-import { choiceImage, imageUrl } from '../data/images'
+import { eventImage, imageUrl } from '../data/images'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 import type { Choice, Effects, GameEvent } from '../types'
 import { RichText } from './RichText'
@@ -43,6 +43,7 @@ interface Props {
 export function EventModal({ event, unexpected, onChoose }: Props) {
   const ref = useFocusTrap<HTMLDivElement>()
   const titleId = `event-title-${event.id}`
+  const eventImgKey = eventImage(event)
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
       <div
@@ -70,6 +71,18 @@ export function EventModal({ event, unexpected, onChoose }: Props) {
           </h2>
         </header>
 
+        {/* 状況の実写ドキュメンタリー風画像（問題に1枚・あれば） */}
+        {eventImgKey && (
+          <img
+            src={imageUrl(eventImgKey)}
+            alt=""
+            className="h-44 w-full object-cover"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none'
+            }}
+          />
+        )}
+
         <div className="space-y-4 px-5 py-4">
           {unexpected && (
             <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
@@ -82,40 +95,24 @@ export function EventModal({ event, unexpected, onChoose }: Props) {
 
           <div className="space-y-2">
             <p className="text-xs font-semibold text-slate-400">あなたの判断は？</p>
-            {event.choices.map((c) => {
-              const imgKey = choiceImage(event, c.id)
-              return (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => onChoose(c)}
-                  className={`group block w-full overflow-hidden rounded-xl border text-left transition hover:border-sky-400 hover:bg-slate-800 ${
-                    c.warn ? 'border-rose-500/40 bg-rose-950/20' : 'border-slate-700 bg-slate-800/40'
-                  }`}
-                >
-                  {imgKey && (
-                    <img
-                      src={imageUrl(imgKey)}
-                      alt=""
-                      loading="lazy"
-                      className="h-28 w-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none'
-                      }}
-                    />
-                  )}
-                  <span className="block px-4 py-3">
-                    <span className="block text-sm font-medium text-slate-100">
-                      {c.warn && <span className="mr-1">⚠</span>}
-                      <RichText text={c.label} />
-                    </span>
-                    <span className="mt-1.5 block">
-                      <EffectBadge effects={c.effects} />
-                    </span>
-                  </span>
-                </button>
-              )
-            })}
+            {event.choices.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => onChoose(c)}
+                className={`group block w-full rounded-xl border px-4 py-3 text-left transition hover:border-sky-400 hover:bg-slate-800 ${
+                  c.warn ? 'border-rose-500/40 bg-rose-950/20' : 'border-slate-700 bg-slate-800/40'
+                }`}
+              >
+                <span className="block text-sm font-medium text-slate-100">
+                  {c.warn && <span className="mr-1">⚠</span>}
+                  <RichText text={c.label} />
+                </span>
+                <span className="mt-1.5 block">
+                  <EffectBadge effects={c.effects} />
+                </span>
+              </button>
+            ))}
           </div>
           <p className="text-center text-[11px] text-slate-500">
             ※ 正解はない。すべてはトレードオフ。
