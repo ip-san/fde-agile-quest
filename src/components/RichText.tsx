@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react'
+import { Fragment, useId, useState } from 'react'
 import { GLOSSARY } from '../data/glossary'
 
 /** {{用語}} を含む文字列を、用語ホバー解説つきに変換して描画する */
@@ -19,21 +19,34 @@ export function RichText({ text }: { text: string }) {
 
 function TermChip({ termKey }: { termKey: string }) {
   const [open, setOpen] = useState(false)
+  const tipId = useId()
   const term = GLOSSARY[termKey]
   return (
-    <span
-      className="relative inline-flex cursor-help items-center font-semibold text-sky-300 underline decoration-sky-400/50 decoration-dotted underline-offset-2"
-      tabIndex={0}
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
-      onFocus={() => setOpen(true)}
-      onBlur={() => setOpen(false)}
-    >
-      {term.label}
+    <span className="relative inline-flex">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-describedby={open ? tipId : undefined}
+        className="inline-flex cursor-help items-center font-semibold text-sky-300 underline decoration-sky-400/50 decoration-dotted underline-offset-2"
+        onClick={() => setOpen((v) => !v)}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape' && open) {
+            e.stopPropagation()
+            setOpen(false)
+          }
+        }}
+      >
+        {term.label}
+      </button>
       {open && (
         <span
+          id={tipId}
           role="tooltip"
-          className="absolute bottom-full left-1/2 z-50 mb-2 w-64 -translate-x-1/2 rounded-lg border border-sky-500/40 bg-slate-900/98 p-3 text-left text-xs font-normal leading-relaxed text-slate-200 shadow-xl shadow-black/50"
+          className="absolute bottom-full left-1/2 z-50 mb-2 w-64 max-w-[80vw] -translate-x-1/2 rounded-lg border border-sky-500/40 bg-slate-900/98 p-3 text-left text-xs font-normal leading-relaxed text-slate-200 shadow-xl shadow-black/50"
         >
           <span className="mb-1 block font-bold text-sky-300">
             {term.label}

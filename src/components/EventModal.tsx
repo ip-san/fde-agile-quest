@@ -1,4 +1,5 @@
 import { CEREMONY_LABELS, SEGMENT_COLORS, SEGMENT_LABELS } from '../data/chapters/chapter-01'
+import { useFocusTrap } from '../hooks/useFocusTrap'
 import type { Choice, Effects, GameEvent } from '../types'
 import { RichText } from './RichText'
 
@@ -39,9 +40,17 @@ interface Props {
 }
 
 export function EventModal({ event, unexpected, onChoose }: Props) {
+  const ref = useFocusTrap<HTMLDivElement>()
+  const titleId = `event-title-${event.id}`
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+      <div
+        ref={ref}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl"
+      >
         <header
           className="flex flex-wrap items-center gap-2 rounded-t-2xl px-5 py-3"
           style={{ backgroundColor: `${SEGMENT_COLORS[event.segment]}22` }}
@@ -55,7 +64,9 @@ export function EventModal({ event, unexpected, onChoose }: Props) {
           >
             {SEGMENT_LABELS[event.segment]}
           </span>
-          <h2 className="w-full text-base font-bold text-slate-100">{event.title}</h2>
+          <h2 id={titleId} className="w-full text-base font-bold text-slate-100">
+            {event.title}
+          </h2>
         </header>
 
         <div className="space-y-4 px-5 py-4">

@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
 import { CEREMONY_LABELS, SEGMENT_COLORS, SEGMENT_LABELS } from '../data/chapters/chapter-01'
+import { useFocusTrap } from '../hooks/useFocusTrap'
 import type { Effects, ResultView } from '../types'
 import { RichText } from './RichText'
 
@@ -41,21 +41,19 @@ interface Props {
 }
 
 export function ResultModal({ result, onContinue }: Props) {
-  // Enter / Space で次へ
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.code === 'Enter' || e.code === 'Space') {
-        e.preventDefault()
-        onContinue()
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onContinue])
+  // フォーカストラップ＋Escで次へ。Enter/Space は autoFocus した「次へ」ボタンが native に処理
+  const ref = useFocusTrap<HTMLDivElement>(onContinue)
+  const titleId = 'result-title'
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+      <div
+        ref={ref}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl"
+      >
         <header
           className="flex flex-wrap items-center gap-2 px-5 py-3"
           style={{ backgroundColor: `${SEGMENT_COLORS[result.segment]}22` }}
@@ -69,7 +67,9 @@ export function ResultModal({ result, onContinue }: Props) {
           >
             {SEGMENT_LABELS[result.segment]}
           </span>
-          <h2 className="w-full text-base font-bold text-slate-100">{result.eventTitle}</h2>
+          <h2 id={titleId} className="w-full text-base font-bold text-slate-100">
+            {result.eventTitle}
+          </h2>
         </header>
 
         <div className="space-y-4 px-5 py-4">

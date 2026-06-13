@@ -1,11 +1,24 @@
 /// <reference types="vitest/config" />
-import react from '@vitejs/plugin-react'
+import { copyFileSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import { type Plugin, defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // GitHub Pages のサブパス配信用。リポジトリ名に合わせる。
 const BASE = '/fde-agile-quest/'
+
+/** GitHub Pages の SPA フォールバック: dist/index.html を 404.html へコピー */
+function spaFallback(): Plugin {
+  return {
+    name: 'spa-404-fallback',
+    apply: 'build',
+    closeBundle() {
+      const index = resolve(__dirname, 'dist/index.html')
+      if (existsSync(index)) copyFileSync(index, resolve(__dirname, 'dist/404.html'))
+    },
+  }
+}
 
 export default defineConfig({
   base: BASE,
@@ -13,7 +26,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg'],
+      includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
         cleanupOutdatedCaches: true,
@@ -24,6 +37,8 @@ export default defineConfig({
         name: 'FDE Agile Quest',
         short_name: 'FDE Quest',
         description: 'プログラマーをFDEへリスキリングする、ルーレット駆動の判断キャンペーン',
+        lang: 'ja',
+        dir: 'ltr',
         theme_color: '#0f172a',
         background_color: '#0f172a',
         display: 'standalone',
@@ -31,11 +46,14 @@ export default defineConfig({
         scope: BASE,
         start_url: BASE,
         icons: [
+          { src: 'pwa-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: 'pwa-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
           { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
-          { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
         ],
       },
     }),
+    spaFallback(),
   ],
   resolve: {
     alias: { '@': resolve(__dirname, 'src') },

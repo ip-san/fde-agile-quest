@@ -34,6 +34,12 @@ const SPIN_MS = 3600
 export function Roulette({ disabled, onResult }: Props) {
   const [rotation, setRotation] = useState(0)
   const [spinning, setSpinning] = useState(false)
+  // スクリーンリーダー向けの結果アナウンス
+  const [announce, setAnnounce] = useState('')
+  // 前庭障害対策: prefers-reduced-motion なら回転アニメを省く
+  const [reduceMotion] = useState(
+    () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
+  )
   const pendingSegment = useRef<Segment | null>(null)
   const pendingPick = useRef(0)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -50,7 +56,10 @@ export function Roulette({ disabled, onResult }: Props) {
     }
     setSpinning(false)
     const seg = pendingSegment.current
-    if (seg) onResult(seg, pendingPick.current)
+    if (seg) {
+      setAnnounce(`ルーレットは「${SEGMENT_LABELS[seg]}」に止まりました`)
+      onResult(seg, pendingPick.current)
+    }
   }, [onResult])
 
   const spin = useCallback(() => {
@@ -67,11 +76,13 @@ export function Roulette({ disabled, onResult }: Props) {
     const spins = 5 + Math.floor(Math.random() * 3)
     setRotation(base + spins * 360 + landing)
     setSpinning(true)
+    setAnnounce('ルーレットを回しています…')
 
-    // transitionend 取りこぼし（タブ非アクティブ・reduced-motion 等）の保険
+    // transitionend 取りこぼし（タブ非アクティブ・reduced-motion 等）の保険。
+    // reduced-motion 時はアニメ無しなので短時間で解決する
     if (timeoutRef.current) clearTimeout(timeoutRef.current)
-    timeoutRef.current = setTimeout(finishSpin, SPIN_MS + 300)
-  }, [disabled, spinning, rotation, finishSpin])
+    timeoutRef.current = setTimeout(finishSpin, reduceMotion ? 80 : SPIN_MS + 300)
+  }, [disabled, spinning, rotation, finishSpin, reduceMotion])
 
   // SPACE で回す
   useEffect(() => {
@@ -108,10 +119,13 @@ export function Roulette({ disabled, onResult }: Props) {
           className="h-64 w-64 sm:h-72 sm:w-72"
           style={{
             transform: `rotate(${rotation}deg)`,
-            transition: spinning ? 'transform 3.6s cubic-bezier(0.17, 0.67, 0.12, 0.99)' : 'none',
+            transition:
+              spinning && !reduceMotion
+                ? 'transform 3.6s cubic-bezier(0.17, 0.67, 0.12, 0.99)'
+                : 'none',
           }}
           onTransitionEnd={handleTransitionEnd}
-          aria-label="イベントルーレット"
+          aria-hidden="true"
         >
           {SEGMENTS.map((seg, i) => {
             const mid = i * SLICE + SLICE / 2
@@ -142,10 +156,16 @@ export function Roulette({ disabled, onResult }: Props) {
         type="button"
         onClick={spin}
         disabled={disabled || spinning}
+        aria-label="ルーレットを回して、その日の出来事を引く"
         className="rounded-xl bg-sky-500 px-8 py-3 text-lg font-bold text-slate-950 shadow-lg shadow-sky-500/30 transition hover:bg-sky-400 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-600 disabled:text-slate-400 disabled:shadow-none"
       >
         {spinning ? '回転中…' : '回す（SPACE）'}
       </button>
+
+      {/* スクリーンリーダー向けの状態通知 */}
+      <span className="sr-only" role="status" aria-live="assertive">
+        {announce}
+      </span>
     </div>
   )
 }
