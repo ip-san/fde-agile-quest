@@ -1,0 +1,30 @@
+@import 'tailwindcss';
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family:
+    'Hiragino Kaku Gothic ProN', 'Noto Sans JP', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ルーレット回転 */
+@keyframes spin-deceleration {
+  from {
+    transform: rotate(var(--spin-from));
+  }
+  to {
+    transform: rotate(var(--spin-to));
+  }
+}
