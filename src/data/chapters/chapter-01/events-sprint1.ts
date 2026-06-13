@@ -470,4 +470,212 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       },
     ],
   },
+  {
+    id: 's1-daily-bottleneck',
+    sprint: 1,
+    ceremony: 'daily',
+    segment: 'trouble',
+    title: '何でも屋の橋本さん',
+    narrative:
+      'WMSの不具合も、棚番の変更も、配車の調整も——気づけば全部「橋本さんに聞いて」で回っている。{{制約理論}}でいう詰まりの一点が、彼一人に集中していた。今日も彼の前に小さな行列ができている。',
+    choices: [
+      {
+        id: 'a',
+        label: '今日を回すため、橋本さんにまとめて捌いてもらう',
+        effects: { trust: 1, culture: -1 },
+        resultText:
+          '出荷は今日も無事に出た（進捗が見えて信頼+）。だが橋本さん頼みの構造はより固まり、彼が倒れたら全部止まる。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '橋本さんの頭の中の手順を聞き取り、ホワイトボードに見える化する',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '「これ、俺しか知らんかったのか」。詰まりの一点が言葉になり、他の人も手を出せる糸口が見えた。（今日の“早さ”が持つ信頼+は取り逃す）',
+      },
+    ],
+  },
+  {
+    id: 's1-daily-tanaoroshi',
+    sprint: 1,
+    ceremony: 'daily',
+    segment: 'genba',
+    title: '毎月ズレる棚',
+    narrative:
+      '月次の{{棚卸}}で、また帳簿在庫と実在庫がズレた。経理は「数字だけ合わせて」と急かす。だが田淵さんは「毎月この棚だけズレるんだよな」とつぶやいた。',
+    choices: [
+      {
+        id: 'a',
+        label: '帳簿を実数に上書きし、辻褄を合わせて先へ進む',
+        effects: { insight: -1 },
+        resultText:
+          '数字は合った。だが原因は闇のまま、来月もまた同じ棚がズレる。「答えは資料の外」を素通りした。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '田淵さんの言う“いつもズレる棚”に張り付いて原因を観察する',
+        effects: { insight: 1 },
+        resultText:
+          '入庫の置き場と棚番の振り方が、現場の運用とズレていた。差異の正体は、現場の動きの中にあった。',
+      },
+    ],
+  },
+  {
+    id: 's1-daily-standup-zombie',
+    sprint: 1,
+    ceremony: 'daily',
+    segment: 'team',
+    title: '報告会になったデイリー',
+    narrative:
+      '{{デイリースクラム}}が、いつのまにか「昨日やったこと・今日やること」の報告会になっていた。誰も困りごとを出さず、{{タイムボックス}}だけが過ぎていく。上に見せる進捗表は、綺麗だ。',
+    choices: [
+      {
+        id: 'a',
+        label: '波風を立てず、報告会のまま上向きの進捗を整える',
+        effects: { trust: 1, culture: -1 },
+        resultText:
+          '経営への見栄えは保たれた（進捗が見えて信頼+）。だが本当の障害は、水面下に沈んだままだ。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '「今日いちばんの詰まりは何か」を問う場に変え、{{自己組織化}}を促す',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          'ぽつりと「実は…」が出始めた。報告から、助け合いの場へ。（見栄えの信頼+は取り逃す）',
+      },
+    ],
+  },
+  {
+    id: 's1-daily-cynefin',
+    sprint: 1,
+    ceremony: 'daily',
+    segment: 'chance',
+    title: '「ただの画面追加でしょ?」',
+    narrative:
+      '結城さんは「この改修、ただの画面追加でしょ?」と軽く言う。だが触ってみると、在庫引当のロジックが部署ごとに違う。{{複雑系}}の匂いがした。簡単と決めて突っ込むか。',
+    choices: [
+      {
+        id: 'a',
+        label: 'Simpleな改修と決めて、見積もり通り一気に作り込む',
+        effects: { insight: -1 },
+        resultText:
+          '「ただの画面追加」は、引当ルールの沼だった。読み違えたぶん、手戻りが出た。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '複雑系と見て、まず一部署で小さく試し、反応で学ぶ',
+        effects: { insight: 1 },
+        resultText:
+          '小さく出したら、想定外の例外がすぐ見つかった。{{複雑系}}は、計画よりも実験で解く。',
+      },
+    ],
+  },
+  {
+    id: 's1-daily-5s',
+    sprint: 1,
+    ceremony: 'daily',
+    segment: 'genba',
+    title: '交差する動線',
+    narrative:
+      '{{誤出荷率}}が下がらない。情シスは「入力チェックを足そう」と言う。だが倉庫を歩くと、よく出る品が遠い棚にあり、{{動線}}が交差して取り違えが起きていた。',
+    choices: [
+      {
+        id: 'a',
+        label: 'システム側の入力チェックだけ足して、画面で防ぐ',
+        effects: { trust: 1, insight: -1 },
+        resultText:
+          '情シスは「対応してくれた」と一旦安心（信頼+）。だが取り違えの現物は、現場で起き続ける。原因は{{5S}}と棚配置にあった。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '現場と一緒に{{5S}}と棚番・{{動線}}を見直す',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          'よく出る品を手前へ、交差をほどく。誤りの芽を、現場の手で摘み始めた。（画面で“やってる感”を出す信頼+は取り逃す）',
+      },
+    ],
+  },
+  {
+    id: 's1-daily-estimate',
+    sprint: 1,
+    ceremony: 'daily',
+    segment: 'team',
+    title: '「もう2つ、足せませんか」',
+    narrative:
+      '結城さんが「次のスプリント、もう2つ機能を足せませんか。経営に見せたいんです」と詰めてくる。チームの{{ベロシティ}}の実績からすると、明らかに積みすぎだ。',
+    choices: [
+      {
+        id: 'a',
+        label: '結城さんの顔を立て、できると約束して多めに積む',
+        effects: { trust: 1, culture: -1 },
+        resultText:
+          '「やってくれる」と結城さんは喜んだ（期待に応えて信頼+）。だが無理な約束がチームを締め上げ、品質が軋み始める。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '{{ベロシティ}}の実績を見せ、入る量を正直に伝えて代案を出す',
+        effects: { culture: 1 },
+        resultText:
+          '「それなら優先順位を決めましょう」。{{経験主義}}で、守れる約束に絞った。（顔を立てる信頼+は取り逃す）',
+      },
+    ],
+  },
+  {
+    id: 's1-daily-incident',
+    sprint: 1,
+    ceremony: 'daily',
+    segment: 'trouble',
+    title: '出荷直前のフリーズ',
+    narrative:
+      '夕方、出荷直前にWMSが固まった。橋本さんは外出中。現場がざわつく。自分が飛び込めば、たぶん今日は間に合う。',
+    choices: [
+      {
+        id: 'a',
+        label: '自分が全部巻き取って、とにかく今日の出荷を通す',
+        effects: { trust: 1, culture: -1 },
+        resultText:
+          '出荷は間に合った（その場の信頼+）。だが復旧手順は自分の頭の中だけ。属人化の主が、橋本さんから自分に移っただけだった。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '復旧しながら手順と原因を記録に残し、結城さんと共有する',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '間に合わなかったぶんもあった。だが次に誰かが直せる手順が残った。失敗は、語れる形にして初めて資産になる。（即復旧の信頼+は取り逃す）',
+      },
+    ],
+  },
+  {
+    id: 's1-daily-silentui',
+    sprint: 1,
+    ceremony: 'daily',
+    segment: 'chance',
+    title: '「どうせ紙に書き写すんだ」',
+    narrative:
+      '田淵さんがぽつり。「あの在庫画面な、入れてもどうせ紙に書き写すんだ。二度手間だろ」。StockPilot が使われない理由の、芯に触れた気がした。',
+    choices: [
+      {
+        id: 'a',
+        label: '「仕様通りなので、運用でカバーしてください」と返す',
+        effects: { insight: -1 },
+        resultText:
+          '正論で田淵さんは口を閉じた。沈黙の奥にあった本当の要件を、自分の手で閉じてしまった。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '二度手間の正体——WMSと手書きの二重入力を、田淵さんと再現してみる',
+        effects: { insight: 1 },
+        resultText:
+          'システムが、現場の最後の一歩に届いていなかった。沈黙は、まだ見つかっていない要件だった。',
+      },
+    ],
+  },
 ]
