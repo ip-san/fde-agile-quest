@@ -110,7 +110,8 @@ export function EventModal({ event, unexpected, onChoose }: Props) {
               >
                 <span className="block text-sm font-medium text-slate-100">
                   {c.warn && <span className="mr-1">⚠</span>}
-                  <RichText text={c.label} />
+                  {/* 選択肢ラベルは外側が button なので、用語チップ(button)を入れ子にしない */}
+                  <RichText text={c.label} interactive={false} />
                 </span>
                 <span className="mt-1.5 block">
                   <EffectBadge effects={c.effects} />

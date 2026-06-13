@@ -2,8 +2,10 @@ import { Fragment, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { GLOSSARY } from '../data/glossary'
 
-/** {{用語}} を含む文字列を、用語ホバー解説つきに変換して描画する */
-export function RichText({ text }: { text: string }) {
+/** {{用語}} を含む文字列を、用語ホバー解説つきに変換して描画する。
+ *  interactive=false のときは button を作らず（＝ボタン内に置いても入れ子にならない）、
+ *  native の title 属性つき span で軽い解説だけ出す（選択肢ラベル等で使う） */
+export function RichText({ text, interactive = true }: { text: string; interactive?: boolean }) {
   const parts = text.split(/(\{\{.+?\}\})/g)
   return (
     <>
@@ -12,6 +14,18 @@ export function RichText({ text }: { text: string }) {
         if (!m) return <Fragment key={i}>{part}</Fragment>
         const term = GLOSSARY[m[1]]
         if (!term) return <Fragment key={i}>{m[1]}</Fragment>
+        if (!interactive) {
+          const tip = `${term.label}${term.reading ? `（${term.reading}）` : ''}：${term.desc}`
+          return (
+            <span
+              key={i}
+              title={tip}
+              className="font-semibold text-sky-300 underline decoration-sky-400/50 decoration-dotted underline-offset-2"
+            >
+              {term.label}
+            </span>
+          )
+        }
         return <TermChip key={i} termKey={m[1]} />
       })}
     </>

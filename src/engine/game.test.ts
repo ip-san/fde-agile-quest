@@ -141,6 +141,10 @@ describe('evaluateEnding', () => {
       expect(evaluateEnding(ENDINGS, meters({ trust: 4, insight: 7, culture: 2 })).id).toBe('hero')
       expect(evaluateEnding(ENDINGS, meters({ trust: 3, insight: 7, culture: 2 })).id).toBe('decent')
     })
+    it('disliked と orderTaker が同時成立なら、配列順で先の disliked を優先する', () => {
+      // trust<=2 かつ insight<=3 の複合失敗。順序不変条件（disliked が先）を固定する
+      expect(evaluateEnding(ENDINGS, meters({ trust: 1, insight: 1 })).id).toBe('disliked')
+    })
   })
 })
 

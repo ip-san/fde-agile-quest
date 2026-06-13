@@ -73,6 +73,11 @@ describe('isValidPersisted', () => {
     expect(isValidPersisted({ ...valid, sprintIndex: -1 })).toBe(false)
     expect(isValidPersisted({ ...valid, beatIndex: 999 })).toBe(false)
   })
+  it('sprintIndex / beatIndex の非整数（小数・NaN）を弾く（ソフトロック防止）', () => {
+    expect(isValidPersisted({ ...valid, beatIndex: 2.5 })).toBe(false)
+    expect(isValidPersisted({ ...valid, sprintIndex: 1.5 })).toBe(false)
+    expect(isValidPersisted({ ...valid, beatIndex: Number.NaN })).toBe(false)
+  })
 })
 
 describe('sanitizeSeenPrecepts', () => {

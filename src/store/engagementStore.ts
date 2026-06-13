@@ -112,7 +112,10 @@ export function isValidPersisted(x: unknown): x is Persisted {
     const v = m[k]
     if (typeof v !== 'number' || !Number.isInteger(v) || v < 0 || v > 10) return false
   }
-  if (typeof o.sprintIndex !== 'number' || typeof o.beatIndex !== 'number') return false
+  // 配列インデックスなので非負整数のみ許可（NaN/小数/負値は破損とみなして破棄。
+  // 小数 beatIndex は範囲チェックをすり抜け sprint.beats[2.5]=undefined のソフトロックを生む）
+  if (!Number.isInteger(o.sprintIndex) || (o.sprintIndex as number) < 0) return false
+  if (!Number.isInteger(o.beatIndex) || (o.beatIndex as number) < 0) return false
   if (!Array.isArray(o.resolvedIds) || !Array.isArray(o.flags) || !Array.isArray(o.log)) return false
   if (!o.resolvedIds.every((id) => typeof id === 'string')) return false
   if (!o.flags.every((f) => typeof f === 'string' && FLAG_SET.has(f))) return false
