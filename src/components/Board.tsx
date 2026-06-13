@@ -8,8 +8,18 @@ import { EventLog } from './EventLog'
 import { EventModal } from './EventModal'
 import { MeterHUD } from './MeterHUD'
 import { PreceptBook } from './PreceptBook'
+import { Prologue } from './Prologue'
 import { ResultModal } from './ResultModal'
 import { Roulette } from './Roulette'
+
+const PROLOGUE_SEEN_KEY = 'fde-agile-quest:prologue-seen'
+function prologueSeen(): boolean {
+  try {
+    return !!localStorage.getItem(PROLOGUE_SEEN_KEY)
+  } catch {
+    return false
+  }
+}
 
 export function Board() {
   const {
@@ -31,6 +41,16 @@ export function Board() {
     reset,
   } = useEngagement()
   const [bookOpen, setBookOpen] = useState(false)
+  // 初回はプロローグを自動表示。以降は「あらすじ」から再生できる
+  const [prologueOpen, setPrologueOpen] = useState(prologueSeen() === false)
+  const closePrologue = () => {
+    try {
+      localStorage.setItem(PROLOGUE_SEEN_KEY, '1')
+    } catch {
+      /* noop */
+    }
+    setPrologueOpen(false)
+  }
 
   const sprint = SPRINTS[Math.min(sprintIndex, SPRINTS.length - 1)]
   const ceremony: Ceremony = sprint.beats[Math.min(beatIndex, sprint.beats.length - 1)]
@@ -55,13 +75,22 @@ export function Board() {
           >
             <span aria-hidden="true">📖</span> 心得 {seenPrecepts.size}/{PRECEPTS.length}
           </button>
-          <button
-            type="button"
-            onClick={reset}
-            className="rounded-lg border border-slate-700 px-2.5 py-1 text-xs text-slate-400 transition hover:bg-slate-800"
-          >
-            最初から
-          </button>
+          <div className="flex gap-1.5">
+            <button
+              type="button"
+              onClick={() => setPrologueOpen(true)}
+              className="rounded-lg border border-slate-700 px-2.5 py-1 text-xs text-slate-400 transition hover:bg-slate-800"
+            >
+              あらすじ
+            </button>
+            <button
+              type="button"
+              onClick={reset}
+              className="rounded-lg border border-slate-700 px-2.5 py-1 text-xs text-slate-400 transition hover:bg-slate-800"
+            >
+              最初から
+            </button>
+          </div>
         </div>
       </header>
 
@@ -160,6 +189,9 @@ export function Board() {
 
       {/* 心得手帳 */}
       {bookOpen && <PreceptBook seen={seenPrecepts} onClose={() => setBookOpen(false)} />}
+
+      {/* プロローグ（初回自動・以降は「あらすじ」から） */}
+      {prologueOpen && <Prologue onClose={closePrologue} />}
     </div>
   )
 }
