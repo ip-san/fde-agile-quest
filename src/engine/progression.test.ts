@@ -8,6 +8,8 @@ import {
   chooseCore,
   dismissResultCore,
   freshCore,
+  isRouletteCeremony,
+  proceedCore,
   restoreCore,
   spinCore,
   toPersisted,
@@ -63,7 +65,7 @@ describe('spinCore', () => {
   it('出せるイベントが尽きたビートは素通りで次へ進む', () => {
     const core: ProgressCore = {
       ...freshCore(STARTING_METERS),
-      resolvedIds: new Set(['s1-plan-goal', 's1-plan-invite']),
+      resolvedIds: new Set(['s1-plan-goal']),
     }
     const next = spinCore(core, 'kokyaku', 0)
     expect(next.status).toBe('playing')
@@ -72,9 +74,36 @@ describe('spinCore', () => {
   })
 })
 
+describe('proceedCore / isRouletteCeremony（単発セレモニーの「進める」）', () => {
+  it('デイリーだけルーレットを回す', () => {
+    expect(isRouletteCeremony('daily')).toBe(true)
+    expect(isRouletteCeremony('planning')).toBe(false)
+    expect(isRouletteCeremony('review')).toBe(false)
+    expect(isRouletteCeremony('retro')).toBe(false)
+  })
+  it('プランニングで進めると最初の出せるイベント（KPI/ゴール）が必ず出る', () => {
+    const next = proceedCore(freshCore(STARTING_METERS))
+    expect(next.status).toBe('event')
+    expect(next.currentEvent?.id).toBe('s1-plan-goal')
+    expect(next.unexpected).toBe(false)
+  })
+  it('playing 以外では何もしない', () => {
+    const core = eventCore()
+    expect(proceedCore(core)).toBe(core)
+  })
+  it('出せるイベントが尽きていれば素通りで次へ', () => {
+    const next = proceedCore({
+      ...freshCore(STARTING_METERS),
+      resolvedIds: new Set(['s1-plan-goal']),
+    })
+    expect(next.status).toBe('playing')
+    expect(next.beatIndex).toBe(1)
+  })
+})
+
 describe('chooseCore — 効果適用と結果ビュー', () => {
   it('効果が反映され、結果ビューが付き、次ビートへ進む', () => {
-    const next = chooseCore(eventCore(), choice({ trust: 1, culture: -1 }))
+    const next = chooseCore(eventCore({ meters: m() }), choice({ trust: 1, culture: -1 }))
     expect(next.meters).toEqual(m({ trust: 6, culture: 2 }))
     expect(next.result?.resultText).toBe('R')
     expect(next.beatIndex).toBe(1)
@@ -136,7 +165,7 @@ describe('advanceCore — ビート/スプリント進行', () => {
       beatIndex: lastBeat,
     })
     expect(next.status).toBe('ended')
-    expect(next.ending?.id).toBe('orderTaker') // 開始3/3のまま終わると insight<=3
+    expect(next.ending?.id).toBe('decent') // 開始5/4/4 のまま終わると及第点
   })
 })
 

@@ -90,6 +90,24 @@ export function advanceCore(core: ProgressCore, result: ResultView | null = null
   return { ...base, status: 'playing', ending: null }
 }
 
+/** ルーレットを回すセレモニーか（デイリーのみ＝開発中の不確実性）。
+ *  単発の Planning/Review/Retro はルーレットを回さず「進める」で直接イベントを出す */
+export function isRouletteCeremony(ceremony: Ceremony): boolean {
+  return ceremony === 'daily'
+}
+
+/** 「進める」: セグメント不問で、現セレモニーの最初の出せるイベントを引く（重要分岐を必ず出す） */
+export function proceedCore(core: ProgressCore): ProgressCore {
+  if (core.status !== 'playing') return core
+  const ceremony = ceremonyAt(core.sprintIndex, core.beatIndex)
+  if (!ceremony) return core
+  const sprintNo = SPRINTS[core.sprintIndex].n
+  const avail = availableEvents(EVENTS, sprintNo, ceremony, core.resolvedIds, core.flags)
+  const event = avail[0] ?? null
+  if (!event) return advanceCore(core)
+  return { ...core, currentEvent: event, unexpected: false, status: 'event' }
+}
+
 /** ルーレット結果セグメントから現セレモニーのイベントを引く */
 export function spinCore(core: ProgressCore, segment: Segment, pickRandom: number): ProgressCore {
   if (core.status !== 'playing') return core

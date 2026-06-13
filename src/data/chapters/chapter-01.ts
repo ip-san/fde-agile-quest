@@ -26,8 +26,8 @@ export const CHAPTER_TITLE = '第1章「沈黙する基幹システム」'
 
 export const STARTING_METERS: Meters = {
   trust: 5,
-  insight: 3,
-  culture: 3,
+  insight: 4,
+  culture: 4,
 }
 
 /** キャンペーンを構成するスプリント群。各スプリントはセレモニーを順に巡る */
@@ -110,30 +110,6 @@ export const EVENTS: GameEvent[] = [
       },
     ],
   },
-  {
-    id: 's1-plan-invite',
-    sprint: 1,
-    ceremony: 'planning',
-    segment: 'team',
-    title: '計画に誰を呼ぶか',
-    narrative: 'スプリント計画の場をどう作る？ 会議室に閉じるか、現場を巻き込むか。',
-    choices: [
-      {
-        id: 'a',
-        label: '社内会議室で素早く決め、情シスに報告する',
-        effects: { trust: 1, insight: -1 },
-        resultText:
-          '段取りの良さに情シスは安心（信頼+）。ただし会議室の机上で決めた分、現場の肌感は薄い。',
-      },
-      {
-        id: 'b',
-        label: '倉庫のベテランを計画に招く',
-        effects: { insight: 1, culture: 1 },
-        resultText:
-          '現場の声が計画に入った。手間は増えたが的が定まる。（“速く決めて見せる”信頼+は今回は取らない＝機会コスト）',
-      },
-    ],
-  },
 
   // ── デイリー ──
   {
@@ -211,7 +187,7 @@ export const EVENTS: GameEvent[] = [
       {
         id: 'b',
         label: '掴んだ現場の文脈ごと共有し、一緒に並べ替える',
-        effects: { culture: 2 },
+        effects: { culture: 1 },
         resultText:
           '段取りに半日かけたが、チームが「なぜ」を理解して自走し始めた。（速く見せる信頼+は取り逃す＝機会コスト）',
       },
@@ -355,31 +331,6 @@ export const EVENTS: GameEvent[] = [
       },
     ],
   },
-  {
-    id: 's2-plan-backlog',
-    sprint: 2,
-    ceremony: 'planning',
-    segment: 'team',
-    title: 'バックログの優先順位',
-    narrative: '{{バックログ}}の上位を誰が決める？',
-    choices: [
-      {
-        id: 'a',
-        label: '自分が全部決めて、すぐ着手させる',
-        effects: { trust: 1, culture: -1 },
-        resultText:
-          '判断が速く、情シスへの初動が見える（信頼+）。だがオーナーシップはチームに渡らない。',
-      },
-      {
-        id: 'b',
-        label: '仮説の背景を共有し、チームと一緒に決める',
-        effects: { culture: 2 },
-        resultText:
-          'チームが「自分たちのバックログ」として扱い始めた。（速く見せる信頼+は取り逃す）',
-      },
-    ],
-  },
-
   // ── デイリー ──
   {
     id: 's2-daily-mvp',
@@ -499,7 +450,7 @@ export const EVENTS: GameEvent[] = [
       {
         id: 'b',
         label: 'ペアで難所を潰し、持続可能なペースを守る',
-        effects: { culture: 2 },
+        effects: { culture: 1 },
         resultText:
           '速度は落ち着いたが、チームが燃え尽きずに学び合っている。（数字を見せる信頼+は取り逃す）',
       },
@@ -579,7 +530,7 @@ export const EVENTS: GameEvent[] = [
       {
         id: 'b',
         label: '社内メンバーへの{{オンボーディング}}と移譲をゴールにする',
-        effects: { culture: 2 },
+        effects: { culture: 1 },
         resultText:
           '「太く残す」に舵を切った。自分の見せ場は減るが、組織に根づく形へ。（頼られる信頼+は取り逃す）',
       },
@@ -633,7 +584,7 @@ export const EVENTS: GameEvent[] = [
       {
         id: 'b',
         label: '任せて、詰まったところだけ支える',
-        effects: { culture: 2 },
+        effects: { culture: 1 },
         resultText:
           '若手が運用を語れるようになった。文化が人に宿る。（自分が握る安心の信頼+は取り逃す）',
       },
@@ -733,7 +684,7 @@ export const EVENTS: GameEvent[] = [
       {
         id: 'b',
         label: '現場のリーダーが見て動ける運用に組み替える',
-        effects: { culture: 2, insight: 1 },
+        effects: { culture: 1, insight: 1 },
         resultText:
           '数字が現場の手に渡った。{{フィードバックループ}}が自走し始める。（毎朝報告の信頼+は取り逃す）',
       },

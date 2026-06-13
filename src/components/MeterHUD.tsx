@@ -35,8 +35,8 @@ function Pips({
   value: number
   color: string
 }) {
-  const critical = value <= 1 // あと1で終了
-  const low = value <= 2
+  const critical = value <= 2 // 残りわずか
+  const low = value <= 3
   return (
     <div
       className={`rounded-lg px-3 py-2 ${

@@ -7,6 +7,7 @@ import {
   chooseCore,
   dismissResultCore,
   freshCore,
+  proceedCore,
   restoreCore,
   spinCore,
   toPersisted,
@@ -23,6 +24,8 @@ interface EngagementState extends ProgressCore {
   /** 現在のセレモニー（位置から導出）。終了後は null */
   currentCeremony: () => Ceremony | null
   spin: (segment: Segment, pickRandom: number) => void
+  /** 単発セレモニーで「進める」。ルーレットを介さず直接イベントを出す */
+  proceed: () => void
   choose: (choice: Choice) => void
   dismissResult: () => void
   reset: () => void
@@ -97,6 +100,12 @@ export const useEngagement = create<EngagementState>((set, get) => ({
     const next = spinCore(coreOf(get()), segment, pickRandom)
     set(next)
     // イベント提示は一時状態なので保存しない。素通り前進（=durableな進行）した時だけ保存
+    if (next.status !== 'event') persistCore(next)
+  },
+
+  proceed: () => {
+    const next = proceedCore(coreOf(get()))
+    set(next)
     if (next.status !== 'event') persistCore(next)
   },
 

@@ -1,4 +1,5 @@
 import { CEREMONY_LABELS, CEREMONY_SHORT, SPRINTS } from '../data/chapters/chapter-01'
+import { isRouletteCeremony } from '../engine/progression'
 import { useEngagement } from '../store/engagementStore'
 import type { Ceremony } from '../types'
 import { EventLog } from './EventLog'
@@ -20,6 +21,7 @@ export function Board() {
     result,
     generation,
     spin,
+    proceed,
     choose,
     dismissResult,
     reset,
@@ -27,6 +29,7 @@ export function Board() {
 
   const sprint = SPRINTS[Math.min(sprintIndex, SPRINTS.length - 1)]
   const ceremony: Ceremony = sprint.beats[Math.min(beatIndex, sprint.beats.length - 1)]
+  const useRoulette = isRouletteCeremony(ceremony)
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-4 px-4 py-4">
@@ -102,13 +105,26 @@ export function Board() {
         })}
       </div>
 
-      {/* 現在のセレモニー + ルーレット */}
+      {/* 現在のセレモニー + ルーレット/進める */}
       <div className="flex flex-1 flex-col items-center justify-center gap-3 py-2">
         <p className="text-sm text-slate-300">
           いまは <span className="font-bold text-sky-300">{CEREMONY_LABELS[ceremony]}</span>
-          <span className="ml-1 text-xs text-slate-500">— 回して始める</span>
+          <span className="ml-1 text-xs text-slate-500">
+            {useRoulette ? '— 回して、その日の出来事を見る' : '— 進めて始める'}
+          </span>
         </p>
-        <Roulette key={generation} disabled={status !== 'playing' || !!result} onResult={spin} />
+        {useRoulette ? (
+          <Roulette key={generation} disabled={status !== 'playing' || !!result} onResult={spin} />
+        ) : (
+          <button
+            type="button"
+            onClick={proceed}
+            disabled={status !== 'playing' || !!result}
+            className="rounded-xl bg-sky-500 px-10 py-3 text-lg font-bold text-slate-950 shadow-lg shadow-sky-500/30 transition hover:bg-sky-400 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-600 disabled:text-slate-400 disabled:shadow-none"
+          >
+            ▶ 進める
+          </button>
+        )}
       </div>
 
       {/* イベントログ */}
