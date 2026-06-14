@@ -19,7 +19,7 @@ export function EventModal({ event, unexpected, aiTokens, onChoose }: Props) {
   const segId = `event-seg-${event.id}`
   const eventImgKey = eventImage(event)
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 px-safe pt-safe pb-safe backdrop-blur-sm">
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:px-safe sm:pt-safe sm:pb-safe">
       <div
         ref={ref}
         role="dialog"
@@ -27,7 +27,8 @@ export function EventModal({ event, unexpected, aiTokens, onChoose }: Props) {
         // 止まったセグメント名をアクセシブルネームに含め、フォーカス移動時に必ず読み上げる。
         // ルーレットの結果通知は背景の aria-live にあり aria-modal 下で取りこぼれ得るため
         aria-labelledby={`${segId} ${titleId}`}
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl"
+        // スマホ＝下から立ち上がるボトムシート（親指の届く下部に内容を寄せる）／デスクトップ＝中央ダイアログ
+        className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-slate-700 bg-slate-900 shadow-2xl sm:max-h-[90vh] sm:rounded-2xl"
       >
         <header
           className="flex flex-wrap items-center gap-2 rounded-t-2xl px-5 py-3"
@@ -60,7 +61,7 @@ export function EventModal({ event, unexpected, aiTokens, onChoose }: Props) {
           />
         )}
 
-        <div className="space-y-4 px-5 py-4">
+        <div className="space-y-4 px-5 pt-4 pb-safe">
           {unexpected && (
             <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
               ⚡ 想定外の展開——現場は狙い通りには動かない。

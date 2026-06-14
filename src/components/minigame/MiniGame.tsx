@@ -24,13 +24,13 @@ export function MiniGame({ kind, seed, theme, onDone, onSkip }: Props) {
   const h = HEADING[kind]
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 px-safe pt-safe pb-safe backdrop-blur-sm">
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:px-safe sm:pt-safe sm:pb-safe">
       <div
         ref={ref}
         role="dialog"
         aria-modal="true"
         aria-label={`${h.tag}：${h.title}`}
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl"
+        className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-slate-700 bg-slate-900 shadow-2xl sm:max-h-[90vh] sm:rounded-2xl"
       >
         <header className="flex items-center justify-between gap-2 border-b border-slate-800 px-5 py-3">
           <div>
@@ -46,7 +46,7 @@ export function MiniGame({ kind, seed, theme, onDone, onSkip }: Props) {
           </button>
         </header>
 
-        <div className="px-5 py-4">
+        <div className="px-5 pt-4 pb-safe">
           {kind === 'dev' ? (
             <MiniGameDev seed={seed} onResolve={onDone} />
           ) : (
