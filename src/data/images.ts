@@ -19,6 +19,9 @@ export const AVAILABLE_IMAGES = new Set<string>([
   'theme__chance',
   // 結果（顛末）の個別画像 public/img/{eventId}__{choiceId}__r.jpg は、
   // 問題画像と必ず別の絵を用意できたものだけここに追加する（同一絵の流用は不可）。
+  's1-daily-warehouse__b__r', // 田淵さんの手書き台帳を一緒に覗く（信頼の入口）
+  // 状況（問題）の個別画像 public/img/{eventId}.jpg
+  's2-daily-ghost-stock', // 空の棚＝在るはずの機材が無い（不正暴露の入口）
 ])
 
 export function imageUrl(key: string): string {
