@@ -45,8 +45,10 @@ export interface ProgressCore {
   aiTokens: number
 }
 
-/** 生成AIトークンの初期予算（キャンペーンを通じた有限資源・自然回復なし） */
-export const AI_TOKENS_MAX = 2000
+/** 生成AIトークンの初期予算（キャンペーンを通じた有限資源・自然回復なし）。
+ *  消費源: 丸投げ s2-ai-handoff(700)/s2-repo-aicode(500)＝過信フラグ付き、賢い協働＝フラグ無しで小さく消費。
+ *  終盤 s3-ai-regression の“AIで素早く立て直す”はトークンゲート＝使い切っていると選べない（過信のツケ）。 */
+export const AI_TOKENS_MAX = 1200
 
 /** localStorage に保存する最小形 */
 export interface Persisted {

@@ -436,8 +436,8 @@ describe('生成AIトークン（消費型リソース）', () => {
       log: [],
     }
     expect(restoreCore(p).aiTokens).toBe(AI_TOKENS_MAX)
-    const core = { ...freshCore(STARTING_METERS), aiTokens: 1234 }
-    expect(restoreCore(toPersisted(core)).aiTokens).toBe(1234)
+    const core = { ...freshCore(STARTING_METERS), aiTokens: 800 }
+    expect(restoreCore(toPersisted(core)).aiTokens).toBe(800)
     // 上限超過セーブは破棄でなく clamp して復元（検証層と救済層の整合）
     expect(restoreCore({ ...p, aiTokens: 999999 }).aiTokens).toBe(AI_TOKENS_MAX)
   })

@@ -166,15 +166,17 @@
 
 ### 4.2 生成AIトークン（消費型リソース）＋コードリポジトリ（状態パネル）
 
-- **生成AIトークン**: キャンペーンを通じた**有限予算**（初期 `AI_TOKENS_MAX=2000`・自然回復なし）。AIに頼る選択
+- **生成AIトークン**: キャンペーンを通じた**有限予算**（初期 `AI_TOKENS_MAX=1200`・自然回復なし）。AIに頼る選択
   （`Choice.tokenCost`）で消費する。**3ゲージ(trust/insight/culture)とは別枠＝0でも即失敗ではない**（0ルールはメーター専用）。
   だが**残量が tokenCost に満たない選択は UI で封印**（`EventModal` が disabled）＝「AIショートカットが使えず、手で作るしかない」。
-  AIに丸投げするほど速いが（信頼+の“見える進捗”）、トークンが溶け、技術的負債が積もり、終盤の **AIモデル退化(s3-ai-regression)** が
-  効いてくる——という資源管理がAI過信アークと噛み合う。代表: `s2-repo-aicode`（AI丸投げ −500・setsFlag aiOverreliance）／
-  `s2-ai-handoff`（丸投げ −700）。
+  - **消費マップ**（合計 1850 ＞ 予算 1200 ＝全部はAIに頼れない／賢く配分する設計）:
+    丸投げ＝`s2-ai-handoff`(−700) / `s2-repo-aicode`(−500)（warn・setsFlag aiOverreliance、速いが過信のツケ）。
+    賢い協働＝`s2-ai-code`(−250、フラグ無し・品質を固める良い使い方)。
+    **終盤ゲート**＝`s3-ai-regression` の“AIで素早く立て直す”(−400)。**使い切っていると選べず**、手作業の復旧に回るしかない
+    ＝過信して予算を溶かした者ほど、いざという時にAIを使えない（テーマの体現）。
 - **コードリポジトリ**: ロケーション（🗂️＝開発の現場）＋**状態パネル**（ヘッダの「🗂️リポジトリ」ボタン）。パネルは新しい永続
-  フィールドを増やさず `repoStats()` が既存状態から導出：マージ済みPR（解決した team/trouble/repo/devroom イベント数）・
-  AIトークン残量・技術的負債（aiOverreliance→高／wrongKpi or AI多用→中／else 低）。
+  フィールドを増やさず `repoStats()` が既存状態から導出：マージ済みPR（解決した team/trouble/repo/devroom かつ非chance イベント数）・
+  AIトークン残量・技術的負債（aiOverreliance→高／wrongKpi→中／else 低）。
 - 永続化: `aiTokens` のみ Persisted に追加（旧セーブは欠落 → `restoreCore` が満タンで補完。範囲外は `clampTokens` で丸め）。
 
 | Sprint | タイトル | ゴール |

@@ -22,6 +22,7 @@ import {
   primaryPositive,
   resolveChoice,
 } from './game'
+import { AI_TOKENS_MAX } from './progression'
 
 const meters = (p: Partial<Meters> = {}): Meters => ({ trust: 5, insight: 2, culture: 2, ...p })
 
@@ -344,5 +345,44 @@ describe('FDE心得デッキの健全性', () => {
     const covered = new Set(Object.values(EVENT_PRECEPTS).flat())
     const missing = PRECEPTS.map((p) => p.id).filter((id) => !covered.has(id))
     expect(missing, `未カバーの心得: ${missing.join(', ')}`).toEqual([])
+  })
+})
+
+describe('生成AIトークン経済のバランス（資源として意味を持つ）', () => {
+  const tokenChoices = EVENTS.flatMap((e) =>
+    e.choices.filter((c) => (c.tokenCost ?? 0) > 0).map((c) => ({ e, c })),
+  )
+
+  it('tokenCost は正の整数で、単発でも予算内（必ず最初は選べる）', () => {
+    for (const { e, c } of tokenChoices) {
+      const cost = c.tokenCost as number
+      expect(Number.isInteger(cost) && cost > 0, `${e.id}/${c.id}`).toBe(true)
+      expect(cost, `${e.id}/${c.id} が単発で予算超過`).toBeLessThanOrEqual(AI_TOKENS_MAX)
+    }
+  })
+
+  it('AI消費の総量 > 予算 ＝「全部はAIに頼れない」配分ゲームになっている', () => {
+    const total = tokenChoices.reduce((s, { c }) => s + (c.tokenCost as number), 0)
+    expect(total, `総消費 ${total} は予算 ${AI_TOKENS_MAX} を超えるべき`).toBeGreaterThan(AI_TOKENS_MAX)
+  })
+
+  it('終盤 s3-daily-ai-regression に“トークンゲートの良い選択”がある（過信＝枯渇のツケ）', () => {
+    const reg = EVENTS.find((e) => e.id === 's3-daily-ai-regression')
+    expect(reg, 'ai-regression が見つからない').toBeDefined()
+    const gated = reg?.choices.find((c) => (c.tokenCost ?? 0) > 0)
+    expect(gated, 'トークン消費の選択が無い').toBeDefined()
+    // 良い選択（warn でなく、負メーターを持たない）であること＝枯渇すると“良い手”を失う
+    expect(gated?.warn ?? false).toBe(false)
+    for (const v of Object.values(gated?.effects ?? {})) expect(v).toBeGreaterThanOrEqual(0)
+  })
+
+  it('丸投げ（aiOverreliance を立てる選択）は必ずトークンを消費する', () => {
+    for (const e of EVENTS) {
+      for (const c of e.choices) {
+        if (c.setsFlag === 'aiOverreliance') {
+          expect((c.tokenCost ?? 0) > 0, `${e.id}/${c.id} 丸投げなのに無消費`).toBe(true)
+        }
+      }
+    }
   })
 })
