@@ -20,7 +20,9 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         sprintGoal: '予測機能の着手（約束を守る）',
         effects: { trust: 1, insight: -1 },
         resultText:
-          '“約束を守ってくれる人”として結城さんは安心し、信頼が増した。だが背景を確かめないまま手が動き出す。',
+          '“約束を守ってくれる人”として結城さんは安心し、信頼が増した。だが背景を確かめないまま手が動き出す。このゴールの置き方は、後で響くかもしれない。',
+        setsFlag: 'chasedPromise',
+        warn: true,
       },
       {
         id: 'b',

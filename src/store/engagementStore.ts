@@ -108,6 +108,8 @@ const VALID_FLAGS = {
   missedHearing: true,
   missedUpgrade: true,
   showcasePressure: true,
+  chasedPromise: true,
+  soloHero: true,
 } satisfies Record<GameFlag, true>
 const FLAG_SET = new Set<string>(Object.keys(VALID_FLAGS))
 

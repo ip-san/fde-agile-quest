@@ -251,7 +251,13 @@
 | `fraudClue` | s2-daily-ghost-stock b（現場）／ s2-daily-keiri-odd b（会計） | s3 の証拠イベント群／フィナーレ（§6.5） | 不正暴露アークの“手がかり”（2ルート） |
 | `fraudCase` | s3-daily-circular b（データ）／ s3-daily-soumu-paper b（紙）／ s3-daily-keiri-closing b（会計）（いずれも要fraudClue） | フィナーレ（§6.5） | “動かぬ証拠”（3ルートのいずれかで成立） |
 | `showcasePressure` | s1-daily-showcase-order（a/b 両方で立つ） | s2-daily-showcase-visit／s3-daily-showcase-report（要showcasePressure） | 買収の皮肉アーク（§6.6・親会社の登場） |
+| `chasedPromise` | s1-plan-goal a（背景を確かめず“予測機能”をゴールに） | s2-daily-promise-gap（要chasedPromise） | プランニング→分岐: 約束を追ったゴールが空回り→立て直す |
+| `soloHero` | s3-plan-handoff a（移譲せず“自分が窓口”をゴールに） | s3-daily-bottleneck（要soloHero） | プランニング→分岐: 属人化のボトルネック→終盤でも移譲に転じられる |
 
+> プランニングの決定が後で響く分岐（プランニング→ストーリー展開）。プレイヤーがプランニングで選んだ
+> 「ゴール／KPI」が、表示ゴール（ヘッダ）になると同時に、誤った置き方なら後スプリントの回収イベントを誘発する。
+> 既存の `wrongKpi`(S2)→`s3-daily-rework` に、`chasedPromise`(S1)・`soloHero`(S3) を加え、全3スプリントの
+> プランニングがストーリーを分岐させる。
 > いずれも「立てる側より配列で後ろ」に回収イベントを置く。デイリー回収は引けた周回のみ／背骨回収は確実。
 > 補足: `drawCandidates` がフラグ解放イベントを朝会候補に最優先するため、フラグが立った後の回収は実質確実に提示される。
 
