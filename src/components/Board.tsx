@@ -95,8 +95,15 @@ export function Board() {
       <header>
         <p className="text-xs text-slate-400">{chapterTitle}</p>
         <h1 className="mt-0.5 text-lg font-bold text-slate-100">{sprint.title}</h1>
+        {/* スプリントゴールはプランニングの“成果”。プランニング中はまだ伏せ、終えてから現す
+            （Scrum: ゴールはプランニングで決まる。最初から提示しない）。 */}
         <p className="mt-0.5 text-xs text-slate-400">
-          🎯 スプリントゴール：<span className="text-sky-300">{sprint.goal}</span>
+          🎯 スプリントゴール：
+          {ceremony === 'planning' ? (
+            <span className="text-slate-500">プランニングで決める…</span>
+          ) : (
+            <span className="text-sky-300">{sprint.goal}</span>
+          )}
         </p>
       </header>
 
