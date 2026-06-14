@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { CAST, PROLOGUE_PANELS } from '../data/chapters/chapter-01/cast'
+import { displayName } from '../data/chapters/chapter-01/names'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 
 interface Props {
@@ -7,8 +8,8 @@ interface Props {
 }
 
 const SIDE_LABEL: Record<string, string> = {
-  lumen: 'ルーメン（主人公の会社）',
-  cargo: 'カルゴ物流（顧客）',
+  lumen: `${displayName('lumen')}（主人公の会社）`,
+  cargo: `${displayName('cargo')}（顧客）`,
   mentor: '導き手',
 }
 

@@ -1,12 +1,15 @@
 import { Fragment, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { GLOSSARY } from '../data/glossary'
+import { localizeNames } from '../data/chapters/chapter-01/names'
 
 /** {{用語}} を含む文字列を、用語ホバー解説つきに変換して描画する。
+ *  社名・人名は names.ts を定義元として、描画直前に現在の表示名へ置換する
+ *  （実行時に組み立てられる口上など、データ層を通らない文字列もここで拾える）。
  *  interactive=false のときは button を作らず（＝ボタン内に置いても入れ子にならない）、
  *  native の title 属性つき span で軽い解説だけ出す（選択肢ラベル等で使う） */
 export function RichText({ text, interactive = true }: { text: string; interactive?: boolean }) {
-  const parts = text.split(/(\{\{.+?\}\})/g)
+  const parts = localizeNames(text).split(/(\{\{.+?\}\})/g)
   return (
     <>
       {parts.map((part, i) => {

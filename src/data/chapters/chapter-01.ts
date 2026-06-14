@@ -12,6 +12,7 @@ import type {
 import { SPRINT1_EVENTS } from './chapter-01/events-sprint1'
 import { SPRINT2_EVENTS } from './chapter-01/events-sprint2'
 import { SPRINT3_EVENTS } from './chapter-01/events-sprint3'
+import { localizeDeep } from './chapter-01/names'
 
 // ───────────────────────────────────────────────────────────
 // 第1章「沈黙する基幹システム」
@@ -102,7 +103,13 @@ export const SEGMENT_COLORS: Record<Segment, string> = {
   chance: '#fbbf24',
 }
 
-export const EVENTS: GameEvent[] = [...SPRINT1_EVENTS, ...SPRINT2_EVENTS, ...SPRINT3_EVENTS]
+// 固有名詞（社名・人名）は names.ts を唯一の定義元として、表示時に現在の表示名へ置換する。
+// リネームが無ければ localizeDeep は元の値をそのまま返す（恒等・ゼロコスト）。
+export const EVENTS: GameEvent[] = localizeDeep([
+  ...SPRINT1_EVENTS,
+  ...SPRINT2_EVENTS,
+  ...SPRINT3_EVENTS,
+])
 
 export const ENDINGS: Ending[] = [
   {
@@ -171,7 +178,7 @@ export const FAILURE_EPILOGUES: Record<MeterKey, Epilogue> = {
 // 不正暴露アークのフィナーレ。手がかり(fraudClue)を掴んでキャンペーンを完走すると、
 // 通常エンディングの前に「暴露の決断」が出る（App/store が finalePending で制御）。
 // ───────────────────────────────────────────────────────────
-export const FINALE_EPILOGUES: Record<'expose' | 'exposeWeak' | 'complicit' | 'coopted', Epilogue> = {
+export const FINALE_EPILOGUES: Record<'expose' | 'exposeWeak' | 'complicit' | 'coopted', Epilogue> = localizeDeep({
   expose: {
     id: 'finale-expose',
     title: '告発したFDE',
@@ -196,7 +203,7 @@ export const FINALE_EPILOGUES: Record<'expose' | 'exposeWeak' | 'complicit' | 'c
     reflection:
       '口止めに応じ、昇進と報酬を受け取った。肩書きは増え、財布は厚くなる。だが、現場の信頼も、自分の手で出した成果も、保身と引き換えに静かに腐っていく。あなたはもう、現場の側の人間ではない。——FDEが守るべきだったものを、自分で売った。',
   },
-}
+})
 
 export interface FinaleChoice {
   id: string
@@ -209,7 +216,7 @@ export interface FinaleChoice {
 }
 
 /** 「暴露の決断」。fraudClue を掴んだ周回でのみ、完走後に提示される */
-export const FINALE: { prompt: string; choices: FinaleChoice[] } = {
+export const FINALE: { prompt: string; choices: FinaleChoice[] } = localizeDeep({
   prompt:
     '現場をIT化して実数を可視化したら、“導入済み”のはずの{{フィジカルAI}}機材が、倉庫のどこにも無かった。掘るほどに、グループの数字の裏に影が差す——カルゴ物流を踏み台に、同じ機材を書類の上だけで巡らせる、架空の循環取引の影。本物の成果を出そうとして、本物でない数字にたどり着いてしまった。さあ、どうする。（“動かぬ証拠”を固めていれば、告発は通る。）',
   choices: [
@@ -229,7 +236,7 @@ export const FINALE: { prompt: string; choices: FinaleChoice[] } = {
       warn: true,
     },
   ],
-}
+})
 
 // テスト/型補助用に Ceremony の並びを公開
 export const CEREMONY_ORDER: Ceremony[] = ['planning', 'daily', 'review', 'retro']

@@ -8,6 +8,7 @@
 // リモート接続で“訪れる”。ルーレットで決まった今日のイベントの場所へ着くと話が始まる。
 // ───────────────────────────────────────────────────────────
 import type { DailyRole, GameEvent, LocationId, Segment } from '../types'
+import { localizeDeep } from './chapters/chapter-01/names'
 
 export interface LocationDef {
   id: LocationId
@@ -22,7 +23,8 @@ export interface LocationDef {
   desc: string
 }
 
-export const LOCATIONS: Record<LocationId, LocationDef> = {
+// 社名（カルゴ物流/ルーメン）や人名（結城）は names.ts を定義元として表示時に置換する。
+export const LOCATIONS: Record<LocationId, LocationDef> = localizeDeep({
   warehouse: {
     id: 'warehouse',
     label: 'カルゴ物流 倉庫（現場）',
@@ -80,7 +82,7 @@ export const LOCATIONS: Record<LocationId, LocationDef> = {
     remote: true,
     desc: '本社の開発室。受託部門の仲間とAIエージェント。画面越しに繋いで“訪ねる”。',
   },
-}
+})
 
 /** セグメントから既定の場所。イベントに location があればそちらが優先される */
 export const LOCATION_BY_SEGMENT: Record<Segment, LocationId> = {
@@ -125,7 +127,7 @@ export interface DailyRoleDef {
   lens: string
 }
 
-export const DAILY_ROLES: Record<DailyRole, DailyRoleDef> = {
+export const DAILY_ROLES: Record<DailyRole, DailyRoleDef> = localizeDeep({
   po: {
     role: 'po',
     label: 'PO（プロダクトオーナー）',
@@ -150,7 +152,7 @@ export const DAILY_ROLES: Record<DailyRole, DailyRoleDef> = {
     tone: 'emerald',
     lens: '技術・事実',
   },
-}
+})
 
 export const DAILY_ROLE_ORDER: DailyRole[] = ['po', 'sm', 'dev']
 

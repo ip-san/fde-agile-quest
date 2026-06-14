@@ -38,6 +38,8 @@
 //   （信頼=ノウハウ開示→定着／トップダウン=隠れた例外が漏れ大障害→挽回の余地）。
 // ───────────────────────────────────────────────────────────
 
+import { localizeDeep, nameWithReading, NAMES, type NameId } from './names'
+
 export interface Character {
   id: string
   name: string
@@ -51,7 +53,7 @@ export interface Character {
   blurb: string
 }
 
-export const CAST: Character[] = [
+const RAW_CAST: Character[] = [
   {
     id: 'hero',
     name: 'あなた',
@@ -167,12 +169,18 @@ export const CAST: Character[] = [
   },
 ]
 
+// 表示名・ふりがなは names.ts から解決し、リネーム時に人物カードも追従させる。
+// role/blurb の地の文に出てくる社名・人名も localizeDeep で現在の表示名へ置換。
+export const CAST: Character[] = localizeDeep(RAW_CAST).map((c) =>
+  c.id in NAMES ? { ...c, name: nameWithReading(c.id as NameId) } : c,
+)
+
 export const CAST_BY_ID: Record<string, Character> = Object.fromEntries(
   CAST.map((c) => [c.id, c]),
 )
 
 /** Prologue（オープニング）のパネル。難しい用語は避け、短い文で情景から掴む */
-export const PROLOGUE_PANELS: { heading: string; body: string }[] = [
+export const PROLOGUE_PANELS: { heading: string; body: string }[] = localizeDeep([
   {
     heading: 'ある日の役員会議',
     body: '大きなスクリーンに、会社の売上のグラフが映っていた。半年前から、ぴたりと平らに寝ている。右肩上がりが、止まっていた。\n資料の隅に、誰かが赤で書いた一行。「“月額でソフトを貸す商売”は、もう終わりだ」。\n解約の連絡が、毎週のように届く。AIで似たようなソフトは誰でも作れる時代になった。\nあなたは末席で、自社サービスの画面をぼんやり眺めていた。在庫をうまく管理するシステム「StockPilot」——その裏側のプログラムを、5年間ずっと書いてきた。でも、それを使う“お客さんの現場”を、一度も見たことがない。',
@@ -189,4 +197,4 @@ export const PROLOGUE_PANELS: { heading: string; body: string }[] = [
     heading: '最初の一日',
     body: '早朝。あなたは私服に入館証を一枚だけ首から提げて、カルゴ物流の大きな倉庫の通用口に立っていた。\nフォークリフトの警告音。台車のきしむ音。点呼の声。\nここに、「StockPilot」が黙り込んでいる理由がある。\n——三つのスプリント。火の中の現場を、もう一度、現場の言葉で動かせるか。\nたった一人の、潜入が始まる。',
   },
-]
+])
