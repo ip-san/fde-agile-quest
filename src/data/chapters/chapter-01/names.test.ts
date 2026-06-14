@@ -26,7 +26,7 @@ describe('localizeNames — 既定（リネーム無し）は恒等', () => {
     expect(displayName('cargo')).toBe('カルゴ物流')
     expect(displayName('yuki')).toBe('結城')
     expect(nameWithReading('yuki')).toBe('結城（ゆうき）')
-    expect(nameWithReading('lumen')).toBe('ルーメン') // reading 無しは name のみ
+    expect(nameWithReading('product')).toBe('StockPilot') // reading 無しは name のみ
   })
 })
 
@@ -52,6 +52,9 @@ describe('localizeNames — リネームすると本文が追従する', () => {
 
 describe('localizeDeep — 入れ子データの全文字列に適用', () => {
   it('リネーム無しなら同一参照を返す（ゼロコスト短絡）', () => {
+    // 既定で一部の名前がリネーム済み（例: ルーメン→ルミクラウド）なので、
+    // 「全くリネームが無い」状態を作って短絡を検証する（afterEach で復元）。
+    for (const k of Object.keys(NAMES) as (keyof typeof NAMES)[]) NAMES[k].name = NAMES[k].canonical
     const data = { a: 'カルゴ物流', list: ['結城', { b: 'ルーメン' }] }
     expect(localizeDeep(data)).toBe(data)
   })
