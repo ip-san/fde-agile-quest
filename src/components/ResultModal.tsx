@@ -1,4 +1,4 @@
-import { CEREMONY_LABELS, SEGMENT_COLORS, SEGMENT_LABELS } from '../data/chapters/chapter-01'
+import { ACTION_LABELS, SEGMENT_COLORS, SEGMENT_LABELS } from '../data/chapters/chapter-01'
 import { imageUrl, resultImage } from '../data/images'
 import { PRECEPT_BY_ID } from '../data/precepts'
 import { useFocusTrap } from '../hooks/useFocusTrap'
@@ -104,7 +104,7 @@ export function ResultModal({ result, onContinue }: Props) {
           style={{ backgroundColor: `${SEGMENT_COLORS[result.segment]}22` }}
         >
           <span className="rounded-full bg-slate-950/60 px-2.5 py-0.5 text-xs font-bold text-slate-200">
-            {CEREMONY_LABELS[result.ceremony]}
+            {ACTION_LABELS[result.ceremony]}
           </span>
           <span
             className="rounded-full px-2.5 py-0.5 text-xs font-bold text-slate-950"

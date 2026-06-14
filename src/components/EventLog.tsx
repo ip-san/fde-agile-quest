@@ -1,4 +1,4 @@
-import { CEREMONY_SHORT } from '../data/chapters/chapter-01'
+import { ACTION_SHORT } from '../data/chapters/chapter-01'
 import type { LogEntry } from '../types'
 import { RichText } from './RichText'
 
@@ -17,7 +17,7 @@ export function EventLog({ log }: { log: LogEntry[] }) {
         <li key={log.length - i} className="rounded-lg bg-slate-800/40 px-3 py-2 text-xs">
           <div className="font-semibold text-slate-300">
             <span className="mr-1.5 rounded bg-slate-700/70 px-1.5 py-0.5 text-[10px] text-slate-400">
-              S{e.sprint}·{CEREMONY_SHORT[e.ceremony]}
+              S{e.sprint}·{ACTION_SHORT[e.ceremony]}
             </span>
             {e.eventTitle}{' '}
             <span className="text-slate-400">

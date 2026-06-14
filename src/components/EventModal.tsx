@@ -1,4 +1,4 @@
-import { CEREMONY_LABELS, SEGMENT_COLORS, SEGMENT_LABELS } from '../data/chapters/chapter-01'
+import { ACTION_LABELS, SEGMENT_COLORS, SEGMENT_LABELS } from '../data/chapters/chapter-01'
 import { eventImage, imageUrl } from '../data/images'
 import { canAfford } from '../engine/progression'
 import { useFocusTrap } from '../hooks/useFocusTrap'
@@ -64,7 +64,7 @@ export function EventModal({ event, unexpected, aiTokens, onChoose }: Props) {
           style={{ backgroundColor: `${SEGMENT_COLORS[event.segment]}22` }}
         >
           <span className="rounded-full bg-slate-950/60 px-2.5 py-0.5 text-xs font-bold text-slate-200">
-            {CEREMONY_LABELS[event.ceremony]}
+            {ACTION_LABELS[event.ceremony]}
           </span>
           <span
             id={segId}

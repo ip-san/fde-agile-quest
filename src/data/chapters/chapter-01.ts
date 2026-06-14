@@ -70,6 +70,22 @@ export const CEREMONY_SHORT: Record<Ceremony, string> = {
   retro: 'Retro',
 }
 
+/** イベント/結果/ログでの“場面”ラベル。デイリーは朝会の後の現地対応なので「業務中」と出す
+ *  （モーダルに「デイリースクラム」と出して朝会と混同させない）。単発セレモニーは会議そのものなのでそのまま。 */
+export const ACTION_LABELS: Record<Ceremony, string> = {
+  planning: 'スプリントプランニング',
+  daily: '業務中',
+  review: 'スプリントレビュー',
+  retro: 'レトロスペクティブ',
+}
+
+export const ACTION_SHORT: Record<Ceremony, string> = {
+  planning: 'Planning',
+  daily: '業務',
+  review: 'Review',
+  retro: 'Retro',
+}
+
 export const SEGMENT_LABELS: Record<Segment, string> = {
   genba: '現場',
   kokyaku: '顧客',
