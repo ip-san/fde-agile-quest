@@ -24,6 +24,7 @@ export const AVAILABLE_IMAGES = new Set<string>([
   's2-daily-ghost-stock', // 空の棚＝在るはずの機材が無い（不正暴露の入口）
   's2-daily-repo-aicode', // AI生成コードを前に思案するFDE（AIに書かせるか自分で書くか）
   's3-daily-ai-regression', // 夜のオフィスで集中して原因を探るエンジニア（AIモデル退化の立て直し）
+  's1-daily-soumu-access', // 総務部の受付カウンターで入館証の手続きを待つFDE（保守的な総務との折衝）
 ])
 
 export function imageUrl(key: string): string {
