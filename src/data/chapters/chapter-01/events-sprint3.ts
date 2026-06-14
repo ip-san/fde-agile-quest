@@ -18,7 +18,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       {
         id: 'a',
         label: '自分が運用も握り、頼れる窓口であり続ける',
-        effects: { trust: 1, culture: -2 },
+        effects: { trust: 1, culture: -1 },
         resultText:
           '「あなたがいれば安心」と結城さんは頼り切る（信頼+）。だが自分が抜けたら止まる仕組みになっていく。',
         warn: true,
@@ -74,7 +74,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       {
         id: 'a',
         label: '自分でやった方が速いので巻き取る',
-        effects: { trust: 1, culture: -2 },
+        effects: { trust: 1, culture: -1 },
         resultText:
           '今日は速く回り、結城さんも安心（信頼+）。だが運用が自分に依存し、組織は賢くならない。',
         warn: true,
@@ -174,7 +174,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       {
         id: 'a',
         label: '自分が毎朝チェックして結城さんに報告し続ける',
-        effects: { trust: 1, culture: -2 },
+        effects: { trust: 1, culture: -1 },
         resultText:
           '毎朝の報告に結城さんは安心（信頼+）。だが数字を読む役が自分から離れず、現場が自分で意思決定する習慣が育たない。',
         warn: true,
@@ -603,7 +603,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       {
         id: 'a',
         label: '「現場が非協力的だった」と総括し、自分の責任は回避する',
-        effects: { culture: -2 },
+        effects: { culture: -1 },
         resultText:
           '報告書はきれいに整った。だが現場は完全に心を閉ざし、橋本さん頼みの属人化に逆戻り。あなたが去れば、すべては元の沈黙に戻る。',
         warn: true,
@@ -656,7 +656,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       {
         id: 'a',
         label: '成功を自分の手柄としてまとめ、経営に売り込む',
-        effects: { trust: 1, culture: -2 },
+        effects: { trust: 1, culture: -1 },
         resultText:
           '個人の評価は上がった（信頼+）。だが学びは自分に閉じ、チームには残らない。',
         warn: true,
