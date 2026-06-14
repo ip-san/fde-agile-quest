@@ -2,38 +2,8 @@ import { ACTION_LABELS, SEGMENT_COLORS, SEGMENT_LABELS } from '../data/chapters/
 import { eventImage, imageUrl } from '../data/images'
 import { canAfford } from '../engine/progression'
 import { useFocusTrap } from '../hooks/useFocusTrap'
-import type { Choice, Effects, GameEvent } from '../types'
+import type { Choice, GameEvent } from '../types'
 import { RichText } from './RichText'
-
-const EFFECT_LABEL: Record<keyof Effects, string> = {
-  trust: '信頼',
-  insight: '理解',
-  culture: '巻込',
-}
-
-function EffectBadge({ effects }: { effects: Effects }) {
-  const entries = (Object.keys(effects) as (keyof Effects)[]).filter((k) => effects[k] !== 0)
-  if (entries.length === 0) return <span className="text-xs text-slate-400">変化なし</span>
-  return (
-    <span className="flex flex-wrap gap-1.5">
-      {entries.map((k) => {
-        const v = effects[k] as number
-        const positive = v > 0
-        return (
-          <span
-            key={k}
-            className={`rounded px-1.5 py-0.5 text-xs font-semibold tabular-nums ${
-              positive ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'
-            }`}
-          >
-            {EFFECT_LABEL[k]} {positive ? '+' : ''}
-            {v}
-          </span>
-        )
-      })}
-    </span>
-  )
-}
 
 interface Props {
   event: GameEvent
@@ -118,19 +88,17 @@ export function EventModal({ event, unexpected, aiTokens, onChoose }: Props) {
                   className={`group block w-full rounded-xl border px-4 py-3 text-left transition ${
                     locked
                       ? 'cursor-not-allowed border-slate-800 bg-slate-900/40 opacity-50'
-                      : c.warn
-                        ? 'border-rose-500/40 bg-rose-950/20 hover:border-sky-400 hover:bg-slate-800'
-                        : 'border-slate-700 bg-slate-800/40 hover:border-sky-400 hover:bg-slate-800'
+                      : 'border-slate-700 bg-slate-800/40 hover:border-sky-400 hover:bg-slate-800'
                   }`}
                 >
                   <span className="block text-sm font-medium text-slate-100">
-                    {c.warn && <span className="mr-1">⚠</span>}
-                    {/* 選択肢ラベルは外側が button なので、用語チップ(button)を入れ子にしない */}
+                    {/* メーター増減と⚠は選択前は伏せ、結果画面で初めて見せる（判断＝賭けにする）。
+                        選択肢ラベルは外側が button なので、用語チップ(button)を入れ子にしない */}
                     <RichText text={c.label} interactive={false} />
                   </span>
-                  <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                    <EffectBadge effects={c.effects} />
-                    {cost > 0 && (
+                  {/* AIトークンの“価格”だけは残す（残量不足の封印を成立させる資源コスト） */}
+                  {cost > 0 && (
+                    <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
                       <span
                         className={`rounded px-1.5 py-0.5 text-xs font-semibold tabular-nums ${
                           locked ? 'bg-rose-500/15 text-rose-300' : 'bg-cyan-500/15 text-cyan-300'
@@ -139,14 +107,14 @@ export function EventModal({ event, unexpected, aiTokens, onChoose }: Props) {
                         🔋 AI −{cost}
                         {locked && '（残量不足）'}
                       </span>
-                    )}
-                  </span>
+                    </span>
+                  )}
                 </button>
               )
             })}
           </div>
           <p className="text-center text-[11px] text-slate-400">
-            ※ 正解はない。すべてはトレードオフ。
+            ※ 正解はない。選んだ結果は、決めてから分かる。
           </p>
         </div>
       </div>
