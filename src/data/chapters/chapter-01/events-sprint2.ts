@@ -983,7 +983,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       {
         id: 'b',
         label: '間宮さんの違和感をメモし、現場の実数と突き合わせる約束をする',
-        effects: { insight: 1, culture: 1 },
+        effects: { insight: 1 },
         resultText:
           '事実・推測・願望を分けて書き留めた。会計の側に、一人の味方ができた。数字と現場が、繋がり始める。',
         setsFlag: 'fraudClue',
@@ -1029,9 +1029,9 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     segment: 'kokyaku',
     location: 'soumu',
     hints: {
-      po: '橋本さんの評価が不当に下げられそうだ。総務部で評価の動きを確かめて。',
-      sm: 'キーパーソンが冷遇されるとチームが崩れる。総務部で背景を見てきて。',
-      dev: '人事評価の話が総務部で動いてるみたいです。事実を確かめてください。',
+      po: '橋本さんの評価が不当に下げられそうだ。回付書類を握る総務部で動きを確かめて。',
+      sm: 'キーパーソンが冷遇されるとチームが崩れる。総務部の守屋さんに背景を聞いてきて。',
+      dev: '人事評価の起案が、総務経由で漏れてきてるみたいです。総務部で事実を確かめて。',
     },
     title: '下げられる評価',
     narrative:

@@ -2,7 +2,6 @@ import { create } from 'zustand'
 import { CEREMONY_ORDER, CHAPTER_TITLE, SPRINTS, STARTING_METERS } from '../data/chapters/chapter-01'
 import { PRECEPT_BY_ID } from '../data/precepts'
 import {
-  AI_TOKENS_MAX,
   type Persisted,
   type ProgressCore,
   arriveCore,
@@ -142,10 +141,10 @@ export function isValidPersisted(x: unknown): x is Persisted {
   if (!o.resolvedIds.every((id) => typeof id === 'string')) return false
   if (!o.flags.every((f) => typeof f === 'string' && FLAG_SET.has(f))) return false
   if (!o.log.every(isValidLogEntry)) return false
-  // aiTokens は任意（旧セーブは無く restore 時に補完）。あるなら 0..MAX の整数のみ許可
+  // aiTokens は任意（旧セーブは無く restore 時に補完）。負値/非整数/NaN は破損として弾くが、
+  // 上限超過は破棄せず restoreCore の clampTokens に委ねる（MAX 引き下げ等で旧セーブを全消ししない）
   if (o.aiTokens !== undefined) {
-    if (typeof o.aiTokens !== 'number' || !Number.isInteger(o.aiTokens) || o.aiTokens < 0 || o.aiTokens > AI_TOKENS_MAX)
-      return false
+    if (typeof o.aiTokens !== 'number' || !Number.isInteger(o.aiTokens) || o.aiTokens < 0) return false
   }
   const si = o.sprintIndex as number
   const bi = o.beatIndex as number

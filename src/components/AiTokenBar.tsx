@@ -29,6 +29,7 @@ export function AiTokenBar({ aiTokens }: { aiTokens: number }) {
         aria-valuenow={aiTokens}
         aria-valuemin={0}
         aria-valuemax={AI_TOKENS_MAX}
+        aria-valuetext={`${aiTokens}/${AI_TOKENS_MAX}（${depleted ? '枯渇・AI封印' : low ? '残りわずか' : '十分'}）`}
       >
         <div
           className={`h-full rounded-full transition-all duration-500 ${barColor}`}

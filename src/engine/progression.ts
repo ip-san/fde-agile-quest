@@ -94,9 +94,10 @@ export function freshCore(starting: Meters): ProgressCore {
 }
 
 /** リポジトリ・パネル用の派生状態（純粋）。新規の永続フィールドを増やさず、既存状態から導出する。
- *  - mergedPrs: 解決済みの“技術イベント”（team/trouble セグメント or repo/devroom）の数
+ *  - mergedPrs: 解決済みの“技術イベント”（team/trouble セグメント、または repo/devroom かつ非チャンス）の数
  *  - tokensUsed: 消費した生成AIトークン
- *  - debt: 技術的負債の質的レベル（AI過信や誤KPIのツケ、AI多用で上がる） */
+ *  - debt: 技術的負債の質的レベル（AI過信=高 / 誤KPIのツケ=中 / それ以外=低）。
+ *    ※AIに頼る選択は必ず aiOverreliance を立てる設計なので、トークン量ではなくフラグで判定する */
 export function repoStats(core: Pick<ProgressCore, 'resolvedIds' | 'flags' | 'aiTokens'>): {
   mergedPrs: number
   tokensUsed: number
@@ -106,13 +107,17 @@ export function repoStats(core: Pick<ProgressCore, 'resolvedIds' | 'flags' | 'ai
   let mergedPrs = 0
   for (const ev of EVENTS) {
     if (!core.resolvedIds.has(ev.id)) continue
-    const tech = ev.segment === 'team' || ev.segment === 'trouble' || ev.location === 'repo' || ev.location === 'devroom'
+    // 技術イベント＝team/trouble、または repo/devroom ロケーション（ただし“チャンス”は開発PRに数えない）
+    const tech =
+      ev.segment === 'team' ||
+      ev.segment === 'trouble' ||
+      ((ev.location === 'repo' || ev.location === 'devroom') && ev.segment !== 'chance')
     if (tech) mergedPrs++
   }
   const tokensUsed = AI_TOKENS_MAX - core.aiTokens
   const debt: 'low' | 'mid' | 'high' = core.flags.has('aiOverreliance')
     ? 'high'
-    : core.flags.has('wrongKpi') || tokensUsed >= AI_TOKENS_MAX * 0.5
+    : core.flags.has('wrongKpi')
       ? 'mid'
       : 'low'
   return { mergedPrs, tokensUsed, tokensLeft: core.aiTokens, debt }

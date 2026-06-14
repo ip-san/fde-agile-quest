@@ -15,7 +15,7 @@ interface Props {
 
 const DEBT_VIEW: Record<RepoStats['debt'], { label: string; tone: string; note: string }> = {
   low: { label: '低（管理下）', tone: 'text-emerald-300', note: '今のところ、手の届く範囲。小さく作り、こまめに直せている。' },
-  mid: { label: '中（要注意）', tone: 'text-amber-300', note: '急いだツケや、誤ったKPI/AI多用の影が見え始めた。早めに返したい。' },
+  mid: { label: '中（要注意）', tone: 'text-amber-300', note: '誤ったKPIのツケが、コードの形をして見え始めた。早めに返したい。' },
   high: { label: '高（AI過信のツケ）', tone: 'text-rose-300', note: 'AIに頼り切ったコードが溜まり、中身を誰も把握しきれていない。退化に弱い。' },
 }
 

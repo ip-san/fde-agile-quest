@@ -78,6 +78,14 @@ describe('isValidPersisted', () => {
     expect(isValidPersisted({ ...valid, sprintIndex: 1.5 })).toBe(false)
     expect(isValidPersisted({ ...valid, beatIndex: Number.NaN })).toBe(false)
   })
+  it('aiTokens は任意。負値/非整数/NaN は弾くが、上限超過は破棄せず通す（restore で clamp）', () => {
+    expect(isValidPersisted({ ...valid, aiTokens: 1500 })).toBe(true)
+    expect(isValidPersisted({ ...valid })).toBe(true) // 旧セーブ（aiTokens 無し）
+    expect(isValidPersisted({ ...valid, aiTokens: 999999 })).toBe(true) // 上限超過は全消しせず clamp に委ねる
+    expect(isValidPersisted({ ...valid, aiTokens: -1 })).toBe(false)
+    expect(isValidPersisted({ ...valid, aiTokens: 12.5 })).toBe(false)
+    expect(isValidPersisted({ ...valid, aiTokens: Number.NaN })).toBe(false)
+  })
 })
 
 describe('sanitizeSeenPrecepts', () => {
