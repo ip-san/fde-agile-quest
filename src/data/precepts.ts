@@ -162,6 +162,7 @@ export const EVENT_PRECEPTS: Record<string, number[]> = {
   's1-daily-scope': [82, 83],
   's1-daily-ally': [4, 7],
   's1-daily-soumu-access': [60, 80],
+  's1-daily-jinji-roster': [4, 70],
   's1-daily-ai-chores': [50],
   's1-daily-ai-context': [42, 45],
   's1-daily-legacy': [60, 62],

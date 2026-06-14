@@ -140,12 +140,14 @@
    - **PO（鷹野）** … 価値・優先度の観点
    - **スクラムマスター（久遠）** … プロセス・障害の観点
    - **開発メンバー（瀬川）** … 技術・事実の観点（※瀬川＝本社で支える新キャスト）
-3. **現地マップ**で行き先を選ぶ。場所は5つ：📦倉庫(genba)／🖥️電算室(trouble)／🏢情シス会議室(kokyaku)／
-   🗄️総務部（人事・庶務・契約／社内政治）／💻ルーメン開発室【リモート接続】(team)。
-   chanceは既定で倉庫、総務部はセグメント既定が無く `location` 明示のイベント専用
-   （入館証/ガバナンス s1-soumu-access・入館証失効 s2-soumu-badge・稟議/承認 s2-soumu-ringi・
-   人事評価 s2-soumu-hyoka・人員/政治 costcut/faction・内部統制 s3-soumu-expense・不正の紙の裏取り
-   s3-soumu-paper）、山場イベントは `location` で明示。
+3. **現地マップ**で行き先を選ぶ。場所は6つ：📦倉庫(genba)／🖥️電算室(trouble)／🏢情シス会議室(kokyaku)／
+   🗄️総務部（庶務・入館証・稟議・契約／手続き）／🧑‍💼人事部（採用・評価・異動・人員）／
+   💻ルーメン開発室【リモート接続】(team)。chanceは既定で倉庫、総務部/人事部はセグメント既定が無く
+   `location` 明示のイベント専用：
+   - 総務部: 入館証/ガバナンス s1-soumu-access・入館証失効 s2-soumu-badge・稟議/承認 s2-soumu-ringi・
+     人事評価の警告 s2-soumu-hyoka（守屋が総務から知らせる）・内部統制 s3-soumu-expense・不正の紙の裏取り s3-soumu-paper
+   - 人事部: 偏る残業/勤怠 s1-jinji-roster・人員削減 s2-daily-costcut・出向の脅し s3-daily-faction
+   - 山場イベント（ghost-stock 等）は `location` で明示。
    ヒントが指す場所＝今日のイベントの場所へ着くと話が始まる。**外しても「今日は静か」の小景だけでペナルティ無し**
    （ヒント読みを促す）。
 

@@ -34,9 +34,9 @@ export type GameFlag =
 /** 進行状態。travel＝デイリーでルーレット後、リモート朝会＋現地マップ移動の最中 */
 export type Status = 'playing' | 'travel' | 'event' | 'ended'
 
-/** 主人公が動き回る場所。現地4箇所（倉庫/電算室/会議室/総務部）＋リモート接続の開発室。
+/** 主人公が動き回る場所。現地5箇所（倉庫/電算室/会議室/総務部/人事部）＋リモート接続の開発室。
  *  デイリーのマップ移動で選ぶ */
-export type LocationId = 'warehouse' | 'serverroom' | 'client' | 'soumu' | 'devroom'
+export type LocationId = 'warehouse' | 'serverroom' | 'client' | 'soumu' | 'jinji' | 'devroom'
 
 /** リモート・デイリースクラムで話す役割（画面の向こうのルーメンのチーム）。
  *  役割ごとに「ヒントの観点」が違う＝スクラムの役割を自然に学ぶ */

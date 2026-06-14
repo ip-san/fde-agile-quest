@@ -172,6 +172,38 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     ],
   },
   {
+    id: 's1-daily-jinji-roster',
+    sprint: 1,
+    ceremony: 'daily',
+    segment: 'kokyaku',
+    location: 'jinji',
+    hints: {
+      po: '人手不足の正体を知りたい。人事部で勤怠と配置のデータを見てきて。',
+      sm: '負荷の偏りがボトルネックかも。人事部で残業の集中を確かめて。',
+      dev: '誰にどれだけ仕事が乗ってるか、人事部の勤怠データで分かります。確かめて。',
+    },
+    title: '偏る残業',
+    narrative:
+      '人事部で勤怠データを見せてもらう。すると、ある一人——橋本さんに、残業が異常に偏っていた。人が足りないのではない。仕事が一人に集まっているのだ。{{制約理論}}でいう詰まりの一点が、数字にも出ていた。',
+    choices: [
+      {
+        id: 'a',
+        label: '人事の数字は人事の領分。深入りせず、現場の改善に集中する',
+        effects: { insight: -1 },
+        resultText:
+          '横断のサインを一つ見送った。部署の壁の内側だけを見ていては、詰まりの全体像は掴めない。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '偏りの事実を持ち帰り、“属人化＝ボトルネック”の仮説に繋げる',
+        effects: { insight: 2 },
+        resultText:
+          '勤怠という人事の数字が、現場の構造を照らした。橋本さんへの一極集中——{{制約理論}}の詰まりに、名前がついた。',
+      },
+    ],
+  },
+  {
     id: 's1-daily-ally',
     sprint: 1,
     ceremony: 'daily',
