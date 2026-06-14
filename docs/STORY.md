@@ -137,14 +137,17 @@
    - **PO（鷹野）** … 価値・優先度の観点
    - **スクラムマスター（久遠）** … プロセス・障害の観点
    - **開発メンバー（瀬川）** … 技術・事実の観点（※瀬川＝本社で支える新キャスト）
-3. **現地マップ**で行き先を選ぶ。場所は4つ：📦倉庫(genba)／🖥️電算室(trouble)／🏢情シス会議室(kokyaku)／
-   💻ルーメン開発室【リモート接続】(team)。chanceは既定で倉庫、山場イベントは `location` で明示。
+3. **現地マップ**で行き先を選ぶ。場所は5つ：📦倉庫(genba)／🖥️電算室(trouble)／🏢情シス会議室(kokyaku)／
+   🗄️総務部（人事・庶務・契約／社内政治）／💻ルーメン開発室【リモート接続】(team)。
+   chanceは既定で倉庫、総務部はセグメント既定が無く `location` 明示のイベント（人事・政治系）専用、
+   山場イベントは `location` で明示。
    ヒントが指す場所＝今日のイベントの場所へ着くと話が始まる。**外しても「今日は静か」の小景だけでペナルティ無し**
    （ヒント読みを促す）。
 
 - **単発セレモニー（プランニング/レビュー/レトロ＝会議）はマップ無し**。従来どおり「進める」で直接イベントへ。
 - 場所⇄セグメントの既定写像と役割ヒントは `src/data/locations.ts`（`LOCATION_BY_SEGMENT` / `hintsFor`）。
-  山場（ghost-stock=倉庫・circular=電算室・AI handoff/regression=開発室）は `location`＋手書き `hints` で印象づけ。
+  山場（ghost-stock=倉庫・circular=電算室・AI handoff/regression=開発室）と人事・政治系（costcut/faction=総務部）は
+  `location`＋手書き `hints` で印象づけ。
 - エンジンは `status:'travel'` と `arriveCore`（正しい場所→event／外し→peekLocation のみ）。**travel は一時状態で
   非永続**（リロードすると再びルーレットから。0ルール失敗時はそもそも travel に入らない）。
 

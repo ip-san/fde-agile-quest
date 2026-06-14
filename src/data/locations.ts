@@ -44,6 +44,13 @@ export const LOCATIONS: Record<LocationId, LocationDef> = {
     emoji: '🏢',
     desc: '結城係長や経営層と向き合う場。要望と政治、約束と数字がぶつかる。',
   },
+  soumu: {
+    id: 'soumu',
+    label: 'カルゴ物流 総務部',
+    short: '総務部',
+    emoji: '🗄️',
+    desc: '人事・庶務・契約と請求の紙が集まる管理部門。社内政治と手続きが渦巻く場。',
+  },
   devroom: {
     id: 'devroom',
     label: 'ルーメン 開発室',
@@ -70,7 +77,7 @@ export function locationOf(event: GameEvent): LocationId {
 }
 
 /** マップ表示順（現地→リモート） */
-export const LOCATION_ORDER: LocationId[] = ['warehouse', 'serverroom', 'client', 'devroom']
+export const LOCATION_ORDER: LocationId[] = ['warehouse', 'serverroom', 'client', 'soumu', 'devroom']
 
 // ───────────────────────────────────────────────────────────
 // リモート朝会の役割（ルーメンのチーム）。役割ごとに「観点（レンズ）」が違う。
@@ -165,6 +172,20 @@ const LOCATION_HINTS: Record<LocationId, Record<DailyRole, string[]>> = {
       '会議室で出てくる数字、根拠が曖昧かも。前提を確かめて。',
     ],
   },
+  soumu: {
+    po: [
+      '今日の焦点は“人とコスト”だ。総務部で利害と背景を確かめてきて。',
+      '数字の裏に人事と政治が絡んでる。総務部で誰の都合かを押さえよう。',
+    ],
+    sm: [
+      '部門間の力学がチームを揺らしてる。総務部で誰が何を握ってるか見てきて。',
+      '社内の手続きが障害になってるかも。総務部で根回しの線を確かめて。',
+    ],
+    dev: [
+      '人や予算の話はこっちじゃ分かりません。総務部で事実を確かめてください。',
+      '契約や請求の書類に当たる必要があります。総務部で現物を見てきて。',
+    ],
+  },
   devroom: {
     po: [
       'こっち（開発室）の手も借りよう。リモートで繋いで段取りを決めたい。',
@@ -186,6 +207,7 @@ export const QUIET_BY_LOCATION: Record<LocationId, string> = {
   warehouse: '倉庫は今日は落ち着いている。フォークリフトが行き交うだけで、今日はここに用は無さそうだ。',
   serverroom: '電算室のサーバは静かに回っている。ランプの点滅を眺めても、今日はここで起きることは無さそうだ。',
   client: '会議室は無人だった。今日は誰も呼んでいない。ここで待っていても話は進まなさそうだ。',
+  soumu: '総務部は今日は穏やかだ。書類のやり取りが淡々と進むだけで、今日はここに用は無さそうだ。',
   devroom: '開発室にリモートで繋いだが、みな別の作業中。今日はここで動くことは無さそうだ。',
 }
 
