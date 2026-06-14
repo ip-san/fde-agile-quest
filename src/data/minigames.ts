@@ -6,28 +6,71 @@ import type { ExecTier } from '../types'
 // 採点ロジックは純粋関数で、乱数はシード注入してテスト可能にする。
 // ───────────────────────────────────────────────────────────
 
-/** 良い深掘り質問（観察・一次情報・現場主義）。 */
-const HEARING_GOOD = [
+// ───────────────────────────────────────────────────────────
+// ヒアリングの問いは「相手・場面」で変える（ワンパターン回避）。テーマ別の良問/悪問＋汎用を
+// 混ぜて出す。テーマはイベントのセグメントから決まる（現場/顧客/機会）。
+// 良問＝観察・一次情報・現場主義／悪問＝誘導・クローズド・迎合・「答えは資料の中」前提。
+// ───────────────────────────────────────────────────────────
+export type HearingTheme = 'genba' | 'kokyaku' | 'chance'
+
+const GENERAL_GOOD = [
   '実際にその作業、見せてもらえますか？',
   '具体的に、どの場面でいちばん困りますか？',
   '前回それが起きたのは、いつ・どんな時でした？',
   '今は、その代わりにどうやって回していますか？',
   'それで、誰がいちばん困っていますか？',
-  'そのメモ、なぜ必要なんでしょう？',
-  '肌感覚だと、どのくらいの頻度で起きますか？',
-  'もし今のやり方が無くなったら、何が一番こまりますか？',
 ]
-
-/** 悪い質問（誘導・クローズド・表面的・「答えは資料の中」前提）。 */
-const HEARING_BAD = [
-  'やっぱり予測機能、要りますよね？',
-  'これで満足いただけましたよね？',
+const GENERAL_BAD = [
   'だいたい問題ない感じ、ですよね？',
-  '要するに、全部自動化したいんですよね？',
-  '他社さんもこうしているので、これでいいですか？',
   '細かい話は置いといて、結論どうします？',
   '資料のここに書いてある通りで合ってますか？',
+  '他社さんもこうしているので、これでいいですか？',
 ]
+
+const THEME_GOOD: Record<HearingTheme, string[]> = {
+  genba: [
+    'そのメモ、何を書いているか見せてもらえますか？',
+    'この棚、なぜこの並びなんでしょう？',
+    'イレギュラーな品が来たら、どう捌いていますか？',
+    '一番ミスが起きやすいのは、どの工程ですか？',
+    '繁忙期と通常で、やり方は変わりますか？',
+    'その“勘”、どこで見分けているんですか？',
+  ],
+  kokyaku: [
+    '経営には、何を約束されたんですか？',
+    'この画面、最後に開いたのはいつですか？',
+    '“成功”って、具体的にどうなった状態ですか？',
+    'いま一番、誰の目を気にされていますか？',
+    'それを入れて、現場は何が楽になりますか？',
+    'いちばん怖いのは、どの数字ですか？',
+  ],
+  chance: [
+    'それ、誰の役にいちばん立ちますか？',
+    '今やる価値は、どこにありますか？',
+    'これを逃すと、何が起きますか？',
+    '小さく試すなら、どこから始めますか？',
+  ],
+}
+
+const THEME_BAD: Record<HearingTheme, string[]> = {
+  genba: [
+    'システム入れれば全部解決しますよね？',
+    '手書きはもう要らないですよね？',
+    'マニュアル通りにやれば問題ないですよね？',
+    '結局、人手が足りないだけですよね？',
+  ],
+  kokyaku: [
+    'やっぱり予測機能、要りますよね？',
+    'これで満足いただけましたよね？',
+    '要するに、全部自動化したいんですよね？',
+    '予算は気にせず理想を、でいいですか？',
+  ],
+  chance: [
+    'とりあえず全部やっちゃいましょうか？',
+    '良さそうなので、すぐ本番でいいですよね？',
+    '流行ってるし、入れとけば間違いないですよね？',
+  ],
+}
 
 export interface HearingOption {
   text: string
@@ -72,11 +115,26 @@ function take<T>(arr: T[], start: number, n: number): T[] {
   return out
 }
 
-/** ヒアリングの1ラウンド＝良2・悪3 をシードで選んでシャッフル。プレイヤーは2つ選ぶ。 */
-export function dealHearing(seed: number): HearingOption[] {
-  const goods = take(HEARING_GOOD, seed, 2).map((text) => ({ text, good: true }))
-  const bads = take(HEARING_BAD, seed * 3 + 1, 3).map((text) => ({ text, good: false }))
+/** ヒアリングの1ラウンド＝良2・悪3 をシードで選んでシャッフル。プレイヤーは2つ選ぶ。
+ *  theme（相手・場面）でテーマ別の問いを混ぜ、毎回同じにならないようにする。 */
+export function dealHearing(seed: number, theme?: HearingTheme): HearingOption[] {
+  const goodPool = theme ? [...THEME_GOOD[theme], ...GENERAL_GOOD] : allGood()
+  const badPool = theme ? [...THEME_BAD[theme], ...GENERAL_BAD] : allBad()
+  const goods = take(goodPool, seed, 2).map((text) => ({ text, good: true }))
+  const bads = take(badPool, seed * 3 + 1, 3).map((text) => ({ text, good: false }))
   return shuffle([...goods, ...bads], seed)
+}
+
+function allGood(): string[] {
+  return [...GENERAL_GOOD, ...THEME_GOOD.genba, ...THEME_GOOD.kokyaku, ...THEME_GOOD.chance]
+}
+function allBad(): string[] {
+  return [...GENERAL_BAD, ...THEME_BAD.genba, ...THEME_BAD.kokyaku, ...THEME_BAD.chance]
+}
+
+/** イベントのセグメントからヒアリングのテーマを決める（hearing は genba/kokyaku/chance で発火） */
+export function hearingThemeFor(segment: string): HearingTheme {
+  return segment === 'genba' || segment === 'kokyaku' || segment === 'chance' ? segment : 'kokyaku'
 }
 
 /** ヒアリングの採点：選んだ2問のうち良問の数で great/good/poor。 */

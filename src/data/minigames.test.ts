@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { dealDevFlow, dealHearing, scoreHearing, scoreSequence, scoreTiming } from './minigames'
+import {
+  type HearingTheme,
+  dealDevFlow,
+  dealHearing,
+  hearingThemeFor,
+  scoreHearing,
+  scoreSequence,
+  scoreTiming,
+} from './minigames'
 
 describe('dealHearing', () => {
   it('良2・悪3 の5択を返し、同じ seed で決定的', () => {
@@ -10,9 +18,25 @@ describe('dealHearing', () => {
     expect(dealHearing(7)).toEqual(a) // 決定的
   })
   it('seed が違えば内容/並びが変わりうる', () => {
-    // 少なくともいくつかの seed で並びが一致しないこと（固定化していない）
     const same = [1, 2, 3, 4].every((s) => JSON.stringify(dealHearing(s)) === JSON.stringify(dealHearing(0)))
     expect(same).toBe(false)
+  })
+  it('テーマ指定でも良2・悪3を保ち、テーマが違えば問いが変わる（ワンパターン回避）', () => {
+    const themes: HearingTheme[] = ['genba', 'kokyaku', 'chance']
+    for (const t of themes) {
+      const r = dealHearing(7, t)
+      expect(r.filter((o) => o.good)).toHaveLength(2)
+      expect(r.filter((o) => !o.good)).toHaveLength(3)
+    }
+    // 同 seed でもテーマが違えば顔ぶれが変わる（少なくとも1ペアで不一致）
+    const sets = themes.map((t) => dealHearing(7, t).map((o) => o.text).sort().join('|'))
+    expect(new Set(sets).size).toBeGreaterThan(1)
+  })
+  it('hearingThemeFor: hearing 系セグメントを themed に、その他は kokyaku に寄せる', () => {
+    expect(hearingThemeFor('genba')).toBe('genba')
+    expect(hearingThemeFor('kokyaku')).toBe('kokyaku')
+    expect(hearingThemeFor('chance')).toBe('chance')
+    expect(hearingThemeFor('trouble')).toBe('kokyaku')
   })
 })
 

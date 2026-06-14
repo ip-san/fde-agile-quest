@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CEREMONY_LABELS, CEREMONY_SHORT, SPRINTS } from '../data/chapters/chapter-01'
 import { PRECEPTS } from '../data/precepts'
+import { hearingThemeFor } from '../data/minigames'
 import { miniGameKindFor } from '../engine/game'
 import { isRouletteCeremony, repoStats } from '../engine/progression'
 import { useEngagement } from '../store/engagementStore'
@@ -246,6 +247,7 @@ export function Board() {
         <MiniGame
           kind={miniGameKindFor(currentEvent)}
           seed={seedFor(currentEvent.id)}
+          theme={hearingThemeFor(currentEvent.segment)}
           onDone={(tier) => {
             choose(pendingChoice, tier)
             setPendingChoice(null)

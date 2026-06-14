@@ -1,15 +1,17 @@
 import { useState } from 'react'
-import { type HearingOption, dealHearing, scoreHearing } from '../../data/minigames'
+import { type HearingOption, type HearingTheme, dealHearing, scoreHearing } from '../../data/minigames'
 import type { ExecTier } from '../../types'
 
 interface Props {
   seed: number
+  theme?: HearingTheme
   onResolve: (tier: ExecTier) => void
 }
 
-/** ヒアリング・ミニゲーム：5つの問いから「深掘りになる質問」を2つ選ぶ（現場主義）。 */
-export function MiniGameHearing({ seed, onResolve }: Props) {
-  const [options] = useState<HearingOption[]>(() => dealHearing(seed))
+/** ヒアリング・ミニゲーム：5つの問いから「深掘りになる質問」を2つ選ぶ（現場主義）。
+ *  theme で相手・場面に応じた問いを出す（毎回同じにならないように）。 */
+export function MiniGameHearing({ seed, theme, onResolve }: Props) {
+  const [options] = useState<HearingOption[]>(() => dealHearing(seed, theme))
   const [picked, setPicked] = useState<number[]>([])
   const ready = picked.length === 2
 

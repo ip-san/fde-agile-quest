@@ -1,3 +1,4 @@
+import type { HearingTheme } from '../../data/minigames'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
 import type { ExecTier, MiniGameKind } from '../../types'
 import { MiniGameDev } from './MiniGameDev'
@@ -6,6 +7,8 @@ import { MiniGameHearing } from './MiniGameHearing'
 interface Props {
   kind: MiniGameKind
   seed: number
+  /** ヒアリングの問いを相手・場面で変えるテーマ（hearing のみ使用） */
+  theme?: HearingTheme
   onDone: (tier: ExecTier) => void
   onSkip: () => void
 }
@@ -16,7 +19,7 @@ const HEADING: Record<MiniGameKind, { tag: string; title: string }> = {
 }
 
 /** 選択後に挟む「実行」ミニゲーム。出来が選択の主正メーターを倍率調整する。Esc/スキップで標準(good)。 */
-export function MiniGame({ kind, seed, onDone, onSkip }: Props) {
+export function MiniGame({ kind, seed, theme, onDone, onSkip }: Props) {
   const ref = useFocusTrap<HTMLDivElement>(onSkip)
   const h = HEADING[kind]
 
@@ -47,7 +50,7 @@ export function MiniGame({ kind, seed, onDone, onSkip }: Props) {
           {kind === 'dev' ? (
             <MiniGameDev seed={seed} onResolve={onDone} />
           ) : (
-            <MiniGameHearing seed={seed} onResolve={onDone} />
+            <MiniGameHearing seed={seed} theme={theme} onResolve={onDone} />
           )}
           <p className="mt-3 text-center text-[11px] text-slate-400">
             ※ 出来が、選んだ判断の伸びを上下させる（スキップ＝標準）
