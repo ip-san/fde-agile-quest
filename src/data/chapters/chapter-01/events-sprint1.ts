@@ -140,6 +140,38 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     ],
   },
   {
+    id: 's1-daily-soumu-access',
+    sprint: 1,
+    ceremony: 'daily',
+    segment: 'kokyaku',
+    location: 'soumu',
+    hints: {
+      po: '現場に入る前に総務の関所がある。総務部で立ち入りの話を通してきて。',
+      sm: '手続きで初動が止まりそう。総務部で何が要るのか確かめてきて。',
+      dev: '入館証や立ち入り範囲は総務部の管轄です。まず総務部で話を。',
+    },
+    title: '総務という関所',
+    narrative:
+      '常駐初日。倉庫の奥に入るには総務部の承認が要ると言われた。総務の担当は「規程ですので」と杓子定規だ。ここを敵に回すと、この先ずっとやりにくい。{{ガバナンス}}は、越えるべき壁か、それとも——。',
+    choices: [
+      {
+        id: 'a',
+        label: '最低限の手続きだけ済ませ、とにかく早く現場へ入る',
+        effects: { trust: 1, insight: -1 },
+        resultText:
+          '早く現場に立てた（動きが見えて信頼+）。だが総務の担当の表情は固いまま。社内の事情や力学を聞きそびれた。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '総務の担当に目的を説明し、規程の範囲で協力を取りつける',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '「そういうことなら」と担当が動いてくれた。{{ガバナンス}}は敵でなく入場券。社内に一人、味方ができた。（すぐ動く“見える進捗”の信頼+は取り逃す）',
+      },
+    ],
+  },
+  {
     id: 's1-daily-ally',
     sprint: 1,
     ceremony: 'daily',

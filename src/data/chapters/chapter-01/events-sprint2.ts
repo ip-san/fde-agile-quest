@@ -923,6 +923,38 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     ],
   },
   {
+    id: 's2-daily-soumu-ringi',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'kokyaku',
+    location: 'soumu',
+    hints: {
+      po: '改善ツールを入れるのに総務の稟議で止まってる。総務部で承認の筋を通して。',
+      sm: '承認フローがボトルネックだ。総務部で詰まりの一点を見てきて。',
+      dev: '勝手に入れると後で揉めます。総務部で稟議の通し方を確かめて。',
+    },
+    title: '稟議という名の関門',
+    narrative:
+      '現場に小さな改善ツールを一つ入れる。それだけのことに、総務部の稟議と押印が要る。「前例がない」と書類が止まった。スピードを取るか、筋を通すか。',
+    choices: [
+      {
+        id: 'a',
+        label: '口頭OKだけもらって先に動かし、書類は後で出す',
+        effects: { trust: 1, culture: -1 },
+        resultText:
+          'すぐ動いて成果が見えた（信頼+）。だが手順を飛ばされた総務はへそを曲げ、次から風当たりが強くなった。口頭合意は、形にしておくべきだった。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '正規の稟議を通し、承認の記録を残してから進める',
+        effects: { culture: 1, insight: 1 },
+        resultText:
+          '一手間かけて承認を取った。記録が残り、組織の後ろ盾ができた。{{ガバナンス}}を入場券に変えた。（先に動いて見せる信頼+は取り逃す）',
+      },
+    ],
+  },
+  {
     id: 's2-daily-costcut',
     sprint: 2,
     ceremony: 'daily',

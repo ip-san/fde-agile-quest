@@ -1008,6 +1008,40 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ],
   },
   {
+    id: 's3-daily-soumu-paper',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'trouble',
+    location: 'soumu',
+    requiresFlag: 'fraudClue',
+    hints: {
+      po: '幽霊設備の件、紙の裏取りが要る。総務部で契約書と請求書に当たって。',
+      sm: '電算室のデータと紙が符合するか確かめたい。総務部で書類を突き合わせて。',
+      dev: '請求書の控えに同じ機材が何度も出る気がします。総務部で原本を確認して。',
+    },
+    title: '書類の裏取り',
+    narrative:
+      '幽霊設備の件を追い、総務部の契約書と請求書の控えに当たった。すると——同じ{{フィジカルAI}}機材が、グループ各社の間で書類の上だけ売り買いされた痕跡。電算室で見た取引データと、紙が符合する。',
+    choices: [
+      {
+        id: 'a',
+        label: '波風を立てず、書類はそっと元の棚に戻す',
+        effects: { trust: 1, insight: -1 },
+        resultText:
+          '面倒を避け、見なかったことにした（角が立たず信頼+）。だが——真実から目を逸らした手応えだけが残る。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '日付と相手先まで、契約書と請求書の符合を突き合わせて記録する',
+        effects: { insight: 1 },
+        resultText:
+          '事実・推測・願望を分け、誰が・いつ・何を・なぜまで控えた。紙とデータ、二つの“動かぬ証拠”が固まった。（波風を立てない信頼+は取り逃す）',
+        setsFlag: 'fraudCase',
+      },
+    ],
+  },
+  {
     id: 's3-daily-faction',
     sprint: 3,
     ceremony: 'daily',

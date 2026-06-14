@@ -161,6 +161,7 @@ export const EVENT_PRECEPTS: Record<string, number[]> = {
   's1-daily-standup': [99],
   's1-daily-scope': [82, 83],
   's1-daily-ally': [4, 7],
+  's1-daily-soumu-access': [60, 80],
   's1-daily-ai-chores': [50],
   's1-daily-ai-context': [42, 45],
   's1-daily-legacy': [60, 62],
@@ -217,6 +218,7 @@ export const EVENT_PRECEPTS: Record<string, number[]> = {
   's2-daily-courage': [27, 84],
   's2-daily-aidata': [59, 60],
   's2-daily-blamewar': [73, 27],
+  's2-daily-soumu-ringi': [60, 78],
   's2-daily-costcut': [81, 83],
   's2-daily-hqorder': [52, 55],
   's2-daily-ghost-stock': [8, 73],
@@ -258,6 +260,7 @@ export const EVENT_PRECEPTS: Record<string, number[]> = {
   's3-daily-mentor': [99, 100],
   's3-daily-credit': [73, 40],
   's3-daily-subcon': [69, 82],
+  's3-daily-soumu-paper': [73, 74],
   's3-daily-faction': [84, 30],
   's3-daily-circular': [73, 89],
 }

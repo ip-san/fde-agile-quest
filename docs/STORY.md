@@ -139,8 +139,9 @@
    - **開発メンバー（瀬川）** … 技術・事実の観点（※瀬川＝本社で支える新キャスト）
 3. **現地マップ**で行き先を選ぶ。場所は5つ：📦倉庫(genba)／🖥️電算室(trouble)／🏢情シス会議室(kokyaku)／
    🗄️総務部（人事・庶務・契約／社内政治）／💻ルーメン開発室【リモート接続】(team)。
-   chanceは既定で倉庫、総務部はセグメント既定が無く `location` 明示のイベント（人事・政治系）専用、
-   山場イベントは `location` で明示。
+   chanceは既定で倉庫、総務部はセグメント既定が無く `location` 明示のイベント専用
+   （入館証/ガバナンス s1-soumu-access・稟議/承認 s2-soumu-ringi・人事/政治 costcut/faction・
+   不正の紙の裏取り s3-soumu-paper）、山場イベントは `location` で明示。
    ヒントが指す場所＝今日のイベントの場所へ着くと話が始まる。**外しても「今日は静か」の小景だけでペナルティ無し**
    （ヒント読みを促す）。
 
@@ -194,7 +195,7 @@
 | `wrongKpi` | s2-plan-kpi a（機能数をKPIに） | s3-daily-rework（要wrongKpi） | 誤ったWhy→後で全部やり直す手戻り |
 | `aiOverreliance` | s2-daily-ai-handoff a（AIに丸投げ） | s3-daily-ai-regression（要aiOverreliance） | AI過信→モデル更新で突然壊れる退化 |
 | `genbaTrust`/`topDown` | s2-retro（排他） | s3 review/retro バリアント | 主軸の分岐（§5） |
-| `fraudClue`/`fraudCase` | s2-daily-ghost-stock b ／ s3-daily-circular b | フィナーレ（§6.5） | 不正暴露アーク（粉飾が露見） |
+| `fraudClue`/`fraudCase` | s2-daily-ghost-stock b ／ s3-daily-circular b・s3-daily-soumu-paper b（要fraudClue） | フィナーレ（§6.5） | 不正暴露アーク（粉飾が露見） |
 
 > いずれも「立てる側より配列で後ろ」に回収イベントを置く。デイリー回収は引けた周回のみ／背骨回収は確実。
 
@@ -211,6 +212,8 @@
             b 出所を追う → flag fraudClue
 [Sprint3] s3-daily-circular（要 fraudClue）  壁を壊し取引データを繋ぐ→同じ機材が書類上だけ巡る循環取引
             b 証拠を固める → flag fraudCase（“動かぬ証拠”。暴く結末を左右する）
+[Sprint3] s3-daily-soumu-paper（要 fraudClue）  総務部で契約書と請求書を裏取り＝循環取引の“紙の側”
+            b 符合を突き合わせ記録 → flag fraudCase（電算室のデータ側と並ぶもう一つの証拠ルート）
         ↓ Sprint3 完走（0ルール失敗時はフィナーレ無し＝通常バッドエンド）
 [フィナーレ] fraudClue があれば「暴露の決断」（3択は常に提示）
    a 暴く（内部告発） → flag exposed   → fraudCase あり=ED「告発したFDE」（成立・ほろ苦い）／
@@ -218,7 +221,8 @@
    b 黙認（共犯）     → flag complicit → ED「見て見ぬふりのFDE」（成果が粉飾の化粧に使われる）
    c 取り込まれる     → flag coopted   → ED「取り込まれたFDE」（口止めに応じ保身と引き換えに腐る）
 ```
-※ fraudCase は s3-daily-circular で「証拠を固める」を選んだ周回のみ立つ＝**circular の選択が暴露の成否を分ける**。
+※ fraudCase は s3-daily-circular または s3-daily-soumu-paper で「証拠を固める」を選んだ周回のみ立つ
+＝**データ側／紙側いずれかの裏取りの選択が、暴露の成否を分ける**（どちらか一方でも固めれば成立）。
 
 - 実装: `progression.ts` の純粋ヘルパ `finalEndingFor(meters, flags)`（advanceCore/restoreCore 共用）で
   完走時のED/finalePending を決定。決断は exposed/complicit/coopted を**永続化**し、リロードでも結末が保たれる。
