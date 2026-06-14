@@ -334,7 +334,7 @@ const SEGMENT_LEAD: Record<Segment, DailyRole> = {
 //   開発（瀬川）= DoD遵守で品質を作り込む → 技術的負債・テスト・壊れやすさ等“技術の事実”から推す（砕けた相棒）
 // 口調と切り口だけ変え、毎朝同じ読み上げに感じさせない。seed（イベントid由来）で1つ選ぶ＝
 // 同じ場面は同じ、場面が変われば言い回しも変わる。出典: The Scrum Guide 2020（REFERENCES.md §3）。
-const ADVOCACY_VARIANTS: Record<DailyRole, ((title: string, loc: string) => string)[]> = {
+const ADVOCACY_VARIANTS: Record<'po' | 'sm', ((title: string, loc: string) => string)[]> = {
   po: [
     (t, l) => `「${t}」——これは顧客の価値に直結する。${l}を最優先で、価値の大きい順に取ろう。`,
     (t, l) => `お客さんの成果から逆算しよう。${l}の「${t}」が、いちばんKPIに効く。`,
@@ -345,15 +345,35 @@ const ADVOCACY_VARIANTS: Record<DailyRole, ((title: string, loc: string) => stri
     (t, l) => `…焦らなくていい。だが${l}の「${t}」は、放置するほどスプリントゴールを塞ぐ障害になる。`,
     (t, l) => `チームの足を止めている石はどれか。${l}の「${t}」を片づければ、流れが通る。`,
   ],
-  dev: [
-    (t, l) => `先輩、${l}の「${t}」、テストが無いまま放置すると本番で崩れます。先に手を入れましょう。`,
-    (t, l) => `${l}の「${t}」、AIに書かせた所が雑で技術的負債になってます。早めにリファクタしときましょ。`,
-    (t, l) => `正直「${t}」がいちばん壊れやすいです。${l}、計測を仕込んで事実で確かめません？`,
-  ],
 }
 
-/** 役割ごとの“主張”（行き先＝候補の場所を、その役割の観点と人格で押す）。seed でバリアント選択。 */
-function advocacyLine(role: DailyRole, title: string, locShort: string, seed: number): string {
+// 開発（瀬川）は“コードの人”。観点は常に技術／データ／実装で、最後はリポジトリに手を入れる方へ誘導する。
+// 物理拠点（倉庫・会議室など）でも「技術的負債／壊れやすい」と断じず、データ・システムの食い違いを“現地で
+// 確かめてコードに反映する”という、技術者として自然な動機で推す。リポジトリ／開発室ではコードそのものに向かう。
+const DEV_REPO_LINES: ((title: string, loc: string) => string)[] = [
+  (t, l) => `${l}の「${t}」、コードに手を入れに行きましょう。技術的負債になる前に、テストごと固めたいです。`,
+  (t, l) => `「${t}」は実装で片がつきます。${l}でリファクタして、DoD（完成の定義）まで通しましょう。`,
+  (t, l) => `「${t}」、AIに書かせた所が雑かもしれません。${l}でコードを読み直して、計測を仕込みましょう。`,
+]
+const DEV_FIELD_LINES: ((title: string, loc: string) => string)[] = [
+  (t, l) => `「${t}」、たぶんデータか実装の問題です。${l}で現物を確かめたら、リポジトリで直しましょう。`,
+  (t, l) => `${l}の「${t}」、数字がシステムと噛み合ってない気がします。事実を掴んで、コードに反映を。`,
+  (t, l) => `「${t}」は結局コードに跳ね返ってきます。${l}で要件を固めて、リポジトリで形にしましょう。`,
+]
+
+/** 役割ごとの“主張”（行き先＝候補の場所を、その役割の観点と人格で押す）。seed でバリアント選択。
+ *  開発（瀬川）はコード視点で、リポジトリ／開発室なら直接コードへ、それ以外なら“確かめてコードに反映”へ誘導。 */
+function advocacyLine(
+  role: DailyRole,
+  title: string,
+  locShort: string,
+  seed: number,
+  location: LocationId,
+): string {
+  if (role === 'dev') {
+    const bank = location === 'repo' || location === 'devroom' ? DEV_REPO_LINES : DEV_FIELD_LINES
+    return bank[Math.floor(frac(seed) * bank.length) % bank.length](title, locShort)
+  }
   const variants = ADVOCACY_VARIANTS[role]
   return variants[Math.floor(frac(seed) * variants.length) % variants.length](title, locShort)
 }
@@ -384,9 +404,11 @@ export function standupFor(candidates: GameEvent[]): StandupVoice[] {
   const cands = candidates.slice(0, 3)
   const used = new Set<DailyRole>()
   const assigned: { c: GameEvent; role: DailyRole | null }[] = []
-  // 1巡目: セグメント親和の役割が空いていれば割り当て
+  // 1巡目: 役割を割り当て。リポジトリ／開発室の候補は“コードの人”＝開発（瀬川）を優先（リポジトリへ誘導）、
+  //         それ以外はセグメント親和（PO=価値/SM=プロセス/開発=技術）。
   for (const c of cands) {
-    const want = SEGMENT_LEAD[c.segment]
+    const loc = locationOf(c)
+    const want: DailyRole = loc === 'repo' || loc === 'devroom' ? 'dev' : SEGMENT_LEAD[c.segment]
     if (!used.has(want)) {
       used.add(want)
       assigned.push({ c, role: want })
@@ -409,7 +431,7 @@ export function standupFor(candidates: GameEvent[]): StandupVoice[] {
       const def = DAILY_ROLES[role]
       const loc = locationOf(c)
       const short = LOCATIONS[loc].short
-      const line = c.advocacy?.[role] ?? advocacyLine(role, c.title, short, idSeed(c.id))
+      const line = c.advocacy?.[role] ?? advocacyLine(role, c.title, short, idSeed(c.id), loc)
       return {
         role,
         name: def.name,
