@@ -9,9 +9,9 @@ interface MeterDef {
 }
 
 const METER_DEFS: MeterDef[] = [
-  { key: 'trust', label: '顧客の信頼', icon: '🤝', color: 'bg-violet-400' },
-  { key: 'insight', label: '現場理解', icon: '🔍', color: 'bg-sky-400' },
-  { key: 'culture', label: '巻き込み', icon: '🌱', color: 'bg-emerald-400' },
+  { key: 'trust', label: '信頼', icon: '🤝', color: 'bg-violet-400' },
+  { key: 'insight', label: '現場', icon: '🔍', color: 'bg-sky-400' },
+  { key: 'culture', label: '巻込', icon: '🌱', color: 'bg-emerald-400' },
 ]
 
 export function MeterHUD({ meters }: { meters: Meters }) {

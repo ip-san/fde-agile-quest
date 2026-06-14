@@ -185,7 +185,7 @@ export function Board() {
           return (
             <div
               key={`${b}-${i}`}
-              className={`min-w-0 flex-1 rounded-lg px-1.5 py-1.5 text-center text-[11px] font-semibold ${
+              className={`flex-1 shrink-0 whitespace-nowrap rounded-lg px-1.5 py-1.5 text-center text-[11px] font-semibold min-w-[2.75rem] ${
                 state === 'done'
                   ? 'bg-slate-700/60 text-slate-400'
                   : state === 'current'

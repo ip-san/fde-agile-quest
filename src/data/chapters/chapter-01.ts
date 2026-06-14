@@ -64,7 +64,7 @@ export const CEREMONY_LABELS: Record<Ceremony, string> = {
 }
 
 export const CEREMONY_SHORT: Record<Ceremony, string> = {
-  planning: 'Planning',
+  planning: 'Plan',
   daily: 'Daily',
   review: 'Review',
   retro: 'Retro',
