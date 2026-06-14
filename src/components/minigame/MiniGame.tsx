@@ -24,13 +24,13 @@ export function MiniGame({ kind, seed, theme, onDone, onSkip }: Props) {
   const h = HEADING[kind]
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 px-safe pt-safe pb-safe backdrop-blur-sm">
       <div
         ref={ref}
         role="dialog"
         aria-modal="true"
         aria-label={`${h.tag}：${h.title}`}
-        className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl"
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl"
       >
         <header className="flex items-center justify-between gap-2 border-b border-slate-800 px-5 py-3">
           <div>
@@ -40,7 +40,7 @@ export function MiniGame({ kind, seed, theme, onDone, onSkip }: Props) {
           <button
             type="button"
             onClick={onSkip}
-            className="shrink-0 rounded-lg border border-slate-700 px-2.5 py-1 text-xs text-slate-400 transition hover:bg-slate-800"
+            className="inline-flex min-h-[44px] shrink-0 items-center rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-400 transition hover:bg-slate-800"
           >
             スキップ
           </button>
@@ -52,7 +52,7 @@ export function MiniGame({ kind, seed, theme, onDone, onSkip }: Props) {
           ) : (
             <MiniGameHearing seed={seed} theme={theme} onResolve={onDone} />
           )}
-          <p className="mt-3 text-center text-[11px] text-slate-400">
+          <p className="mt-3 text-center text-xs text-slate-400">
             ※ 出来が、選んだ判断の伸びを上下させる（スキップ＝標準）
           </p>
         </div>

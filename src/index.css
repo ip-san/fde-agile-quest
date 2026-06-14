@@ -4,6 +4,20 @@
   color-scheme: dark;
 }
 
+/* Safe Area（ノッチ／ホームインジケータ）を尊重するパディング・ユーティリティ。
+ *  standalone PWA で viewport-fit=cover のとき、端の inset を最低 1rem として確保する。
+ *  非対応端末では env() が 0 を返すので 1rem（=px-4/py-4 相当）にフォールバックする。 */
+@utility pt-safe {
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+@utility pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+@utility px-safe {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+
 html,
 body,
 #root {

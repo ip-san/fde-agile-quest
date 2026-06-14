@@ -33,7 +33,7 @@ export function MiniGameHearing({ seed, theme, onResolve }: Props) {
                 aria-pressed={on}
                 onClick={() => toggle(i)}
                 data-initial-focus={i === 0 ? true : undefined}
-                className={`block w-full rounded-xl border px-4 py-2.5 text-left text-sm transition ${
+                className={`block w-full rounded-xl border px-4 py-3 text-left text-sm transition ${
                   on
                     ? 'border-sky-400 bg-sky-500/15 text-slate-100'
                     : 'border-slate-700 bg-slate-800/40 text-slate-200 hover:border-sky-500/50 hover:bg-slate-800'
@@ -52,7 +52,7 @@ export function MiniGameHearing({ seed, theme, onResolve }: Props) {
         type="button"
         disabled={!ready}
         onClick={() => onResolve(scoreHearing(picked.map((i) => options[i])))}
-        className="w-full rounded-xl bg-sky-500 py-2.5 font-bold text-slate-950 transition hover:bg-sky-400 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-600 disabled:text-slate-400"
+        className="min-h-[44px] w-full rounded-xl bg-sky-500 py-3 font-bold text-slate-950 transition hover:bg-sky-400 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-600 disabled:text-slate-400"
       >
         {ready ? 'この2つで掘る' : `あと ${2 - picked.length} つ選ぶ`}
       </button>

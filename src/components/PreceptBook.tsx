@@ -12,7 +12,7 @@ export function PreceptBook({ seen, onClose }: Props) {
   const got = PRECEPTS.filter((p) => seen.has(p.id)).length
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 px-safe pt-safe pb-safe backdrop-blur-sm">
       <div
         ref={ref}
         role="dialog"
@@ -73,7 +73,7 @@ export function PreceptBook({ seen, onClose }: Props) {
           <button
             type="button"
             onClick={onClose}
-            className="w-full rounded-xl bg-slate-700 py-2.5 font-bold text-slate-100 transition hover:bg-slate-600 active:scale-95"
+            className="min-h-[44px] w-full rounded-xl bg-slate-700 py-3 font-bold text-slate-100 transition hover:bg-slate-600 active:scale-95"
           >
             閉じる
           </button>

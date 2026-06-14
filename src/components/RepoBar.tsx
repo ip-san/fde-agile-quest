@@ -21,7 +21,7 @@ export function RepoBar({ coverage, debt, debtScore }: Props) {
       <div className="rounded-lg bg-slate-800/40 px-3 py-2">
         <div className="mb-1 flex items-center justify-between text-xs">
           <span className="text-slate-300">
-            <span aria-hidden="true">🗂️</span> コード（カバレッジ）
+            <span aria-hidden="true">🗂️</span> コード
           </span>
           <span className="tabular-nums text-slate-400">{coverage}%</span>
         </div>
@@ -60,7 +60,7 @@ export function RepoBar({ coverage, debt, debtScore }: Props) {
             aria-valuemax={8}
           />
         </div>
-        <p className="mt-1 text-[10px] text-slate-500">高いほどコードが積み上がりにくい</p>
+        <p className="mt-1 text-xs leading-snug text-slate-500">高いほどコードが積み上がりにくい</p>
       </div>
     </div>
   )

@@ -91,7 +91,7 @@ export function ResultModal({ result, onContinue }: Props) {
   const imgKey = resultImage(result.eventId, result.choiceId, result.segment)
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 px-safe pt-safe pb-safe backdrop-blur-sm">
       <div
         ref={ref}
         role="dialog"
@@ -122,7 +122,7 @@ export function ResultModal({ result, onContinue }: Props) {
           <img
             src={imageUrl(imgKey)}
             alt=""
-            className="h-48 w-full object-cover"
+            className="h-32 w-full object-cover sm:h-48"
             onError={(e) => {
               e.currentTarget.style.display = 'none'
             }}
@@ -237,14 +237,17 @@ export function ResultModal({ result, onContinue }: Props) {
               )
             })()}
 
-          <button
-            type="button"
-            onClick={onContinue}
-            data-initial-focus
-            className="w-full rounded-xl bg-sky-500 py-3 font-bold text-slate-950 transition hover:bg-sky-400 active:scale-95"
-          >
-            次へ（Enter）
-          </button>
+          {/* 主CTAはスクロール内容の最下部に sticky 固定し、常に親指の届く位置に置く（HIG） */}
+          <div className="sticky bottom-0 -mx-5 -mb-4 border-t border-slate-800 bg-slate-900/95 px-5 py-3 pb-safe backdrop-blur">
+            <button
+              type="button"
+              onClick={onContinue}
+              data-initial-focus
+              className="w-full rounded-xl bg-sky-500 py-3 font-bold text-slate-950 transition hover:bg-sky-400 active:scale-95"
+            >
+              次へ（Enter）
+            </button>
+          </div>
         </div>
       </div>
     </div>

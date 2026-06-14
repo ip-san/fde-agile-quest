@@ -19,7 +19,7 @@ export function EventModal({ event, unexpected, aiTokens, onChoose }: Props) {
   const segId = `event-seg-${event.id}`
   const eventImgKey = eventImage(event)
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 px-safe pt-safe pb-safe backdrop-blur-sm">
       <div
         ref={ref}
         role="dialog"
@@ -53,7 +53,7 @@ export function EventModal({ event, unexpected, aiTokens, onChoose }: Props) {
           <img
             src={imageUrl(eventImgKey)}
             alt=""
-            className="h-44 w-full object-cover"
+            className="h-32 w-full object-cover sm:h-44"
             onError={(e) => {
               e.currentTarget.style.display = 'none'
             }}
@@ -71,7 +71,11 @@ export function EventModal({ event, unexpected, aiTokens, onChoose }: Props) {
           </p>
 
           <div className="space-y-2">
-            <p className="text-xs font-semibold text-slate-400">あなたの判断は？</p>
+            {/* 注記は選択肢の“上”に置き、選択肢を親指の届く最下段に配置（HIG: 主操作を下部に） */}
+            <div className="flex flex-wrap items-baseline justify-between gap-x-2">
+              <p className="text-xs font-semibold text-slate-400">あなたの判断は？</p>
+              <p className="text-xs text-slate-500">※ 正解はない。結果は決めてから分かる</p>
+            </div>
             {event.choices.map((c) => {
               const cost = c.tokenCost ?? 0
               // 生成AIに頼る選択は、残量が足りなければ封印（engine の canAfford と同一述語）
@@ -113,9 +117,6 @@ export function EventModal({ event, unexpected, aiTokens, onChoose }: Props) {
               )
             })}
           </div>
-          <p className="text-center text-[11px] text-slate-400">
-            ※ 正解はない。選んだ結果は、決めてから分かる。
-          </p>
         </div>
       </div>
     </div>

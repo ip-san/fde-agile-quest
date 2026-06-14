@@ -27,7 +27,7 @@ export function Prologue({ onClose }: Props) {
   const next = () => setStep((s) => Math.min(s + 1, PROLOGUE_PANELS.length))
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 px-safe pt-safe pb-safe backdrop-blur-sm">
       <div
         ref={ref}
         role="dialog"
@@ -44,7 +44,7 @@ export function Prologue({ onClose }: Props) {
               <button
                 type="button"
                 onClick={onClose}
-                className="shrink-0 rounded-lg border border-slate-700 px-2.5 py-1 text-xs text-slate-400 transition hover:bg-slate-800"
+                className="inline-flex min-h-[44px] shrink-0 items-center rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-400 transition hover:bg-slate-800"
               >
                 スキップ
               </button>
@@ -107,7 +107,7 @@ export function Prologue({ onClose }: Props) {
                 type="button"
                 onClick={onClose}
                 data-initial-focus
-                className="rounded-xl bg-sky-500 px-6 py-2.5 font-bold text-slate-950 transition hover:bg-sky-400 active:scale-95"
+                className="min-h-[44px] rounded-xl bg-sky-500 px-6 py-3 font-bold text-slate-950 transition hover:bg-sky-400 active:scale-95"
               >
                 現場に立つ（はじめる）
               </button>
@@ -116,7 +116,7 @@ export function Prologue({ onClose }: Props) {
                 type="button"
                 onClick={next}
                 data-initial-focus
-                className="rounded-xl bg-sky-500 px-6 py-2.5 font-bold text-slate-950 transition hover:bg-sky-400 active:scale-95"
+                className="min-h-[44px] rounded-xl bg-sky-500 px-6 py-3 font-bold text-slate-950 transition hover:bg-sky-400 active:scale-95"
               >
                 {step === lastPanel ? '登場人物を見る' : '次へ（Enter）'}
               </button>

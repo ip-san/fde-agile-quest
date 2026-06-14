@@ -89,7 +89,7 @@ export function Board() {
   return (
     <>
       <div
-        className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-4 px-4 py-4"
+        className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-4 px-safe pt-safe pb-safe"
         inert={modalOpen || undefined}
       >
       {/* ヘッダー：スプリント */}
@@ -106,14 +106,14 @@ export function Board() {
             <button
               type="button"
               onClick={() => setRepoOpen(true)}
-              className="rounded-lg border border-cyan-700/60 bg-cyan-900/30 px-2.5 py-1 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-900/60"
+              className="rounded-lg border border-cyan-700/60 bg-cyan-900/30 inline-flex min-h-[44px] items-center px-3 py-2 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-900/60"
             >
               <span aria-hidden="true">🗂️</span> リポジトリ
             </button>
             <button
               type="button"
               onClick={() => setBookOpen(true)}
-              className="rounded-lg border border-sky-700/60 bg-sky-900/30 px-2.5 py-1 text-xs font-semibold text-sky-200 transition hover:bg-sky-900/60"
+              className="rounded-lg border border-sky-700/60 bg-sky-900/30 inline-flex min-h-[44px] items-center px-3 py-2 text-xs font-semibold text-sky-200 transition hover:bg-sky-900/60"
             >
               <span aria-hidden="true">📖</span> 心得 {seenPrecepts.size}/{PRECEPTS.length}
             </button>
@@ -122,14 +122,14 @@ export function Board() {
             <button
               type="button"
               onClick={() => setPrologueOpen(true)}
-              className="rounded-lg border border-slate-700 px-2.5 py-1 text-xs text-slate-400 transition hover:bg-slate-800"
+              className="rounded-lg border border-slate-700 inline-flex min-h-[44px] items-center px-3 py-2 text-xs text-slate-400 transition hover:bg-slate-800"
             >
               あらすじ
             </button>
             <button
               type="button"
               onClick={reset}
-              className="rounded-lg border border-slate-700 px-2.5 py-1 text-xs text-slate-400 transition hover:bg-slate-800"
+              className="rounded-lg border border-slate-700 inline-flex min-h-[44px] items-center px-3 py-2 text-xs text-slate-400 transition hover:bg-slate-800"
             >
               最初から
             </button>
@@ -149,7 +149,7 @@ export function Board() {
           </>
         )
       })()}
-      <p className="-mt-2 text-center text-[11px] text-slate-400">
+      <p className="-mt-2 text-center text-xs leading-snug text-slate-400">
         ⚠ 3つのゲージは、どれか1つでも <span className="text-rose-400">0</span> になると案件は終了。
         差し引きプラスでも、削りすぎは命取り。
       </p>

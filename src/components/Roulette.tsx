@@ -118,7 +118,7 @@ export function Roulette({ disabled, onResult }: Props) {
         </div>
         <svg
           viewBox="0 0 200 200"
-          className="h-64 w-64 sm:h-72 sm:w-72"
+          className="h-56 w-56 min-[400px]:h-64 min-[400px]:w-64 sm:h-72 sm:w-72"
           style={{
             transform: `rotate(${rotation}deg)`,
             transition:

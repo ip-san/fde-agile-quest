@@ -34,7 +34,7 @@ export function MiniGameDevPuzzle({ seed, onResolve }: Props) {
                 <button
                   type="button"
                   onClick={() => remove(s)}
-                  className="flex-1 rounded-lg border border-sky-400/60 bg-sky-500/15 px-3 py-2 text-left text-sm text-slate-100 transition hover:bg-sky-500/25"
+                  className="min-h-[44px] flex-1 rounded-lg border border-sky-400/60 bg-sky-500/15 px-3 py-2.5 text-left text-sm text-slate-100 transition hover:bg-sky-500/25"
                 >
                   {s}
                   <span className="ml-1 text-[10px] text-slate-400" aria-hidden="true">
@@ -53,14 +53,14 @@ export function MiniGameDevPuzzle({ seed, onResolve }: Props) {
 
       {/* 未配置のタイル */}
       {remaining.length > 0 && (
-        <div className="flex flex-wrap gap-2 border-t border-slate-800 pt-3">
+        <div className="flex flex-wrap gap-2.5 border-t border-slate-800 pt-3">
           {remaining.map((s, i) => (
             <button
               key={s}
               type="button"
               onClick={() => place(s)}
               data-initial-focus={i === 0 ? true : undefined}
-              className="rounded-lg border border-slate-700 bg-slate-800/40 px-3 py-2 text-sm text-slate-200 transition hover:border-sky-500/50 hover:bg-slate-800"
+              className="min-h-[44px] rounded-lg border border-slate-700 bg-slate-800/40 px-3.5 py-2.5 text-sm text-slate-200 transition hover:border-sky-500/50 hover:bg-slate-800"
             >
               {s}
             </button>
@@ -73,7 +73,7 @@ export function MiniGameDevPuzzle({ seed, onResolve }: Props) {
         disabled={!full}
         onClick={() => onResolve(scoreSequence(answer, flow.correct))}
         data-initial-focus={full ? true : undefined}
-        className="w-full rounded-xl bg-sky-500 py-2.5 font-bold text-slate-950 transition hover:bg-sky-400 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-600 disabled:text-slate-400"
+        className="min-h-[44px] w-full rounded-xl bg-sky-500 py-3 font-bold text-slate-950 transition hover:bg-sky-400 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-600 disabled:text-slate-400"
       >
         {full ? 'この手順で組み上げる' : `あと ${flow.steps.length - answer.length} つ`}
       </button>

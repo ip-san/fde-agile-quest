@@ -39,7 +39,7 @@ export function CustomerValueBar({ value }: Props) {
           style={{ width: `${ratio * 100}%` }}
         />
       </div>
-      <p className="mt-1.5 text-[10px] text-amber-200/60">
+      <p className="mt-1.5 text-xs leading-snug text-amber-200/70">
         信頼を築き・現場を理解し・文化を残し・良いコードを積むほど高まる。これを上げるのが基本目標。
       </p>
     </div>

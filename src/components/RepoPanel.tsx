@@ -29,7 +29,7 @@ export function RepoPanel({ stats, onClose }: Props) {
   const tokenRatio = stats.tokensLeft / AI_TOKENS_MAX
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 px-safe pt-safe pb-safe backdrop-blur-sm">
       <div
         ref={ref}
         role="dialog"
@@ -45,7 +45,7 @@ export function RepoPanel({ stats, onClose }: Props) {
         </header>
 
         <div className="space-y-3 overflow-y-auto px-5 py-4">
-          <p className="text-[11px] leading-relaxed text-slate-400">
+          <p className="text-xs leading-relaxed text-slate-400">
             開発の“量”と“質”。PRが増え、カバレッジが上がり、負債が低いほど——健全に開発が進んでいる。
           </p>
 
@@ -65,7 +65,7 @@ export function RepoPanel({ stats, onClose }: Props) {
                 style={{ width: `${stats.coverage}%` }}
               />
             </div>
-            <p className="mt-1 text-[11px] text-slate-500">
+            <p className="mt-1 text-xs text-slate-500">
               レビュー・完成の定義・検証・リファクタの良い選択で上がる。
             </p>
           </div>
@@ -83,7 +83,7 @@ export function RepoPanel({ stats, onClose }: Props) {
                 style={{ width: `${Math.max(0, tokenRatio) * 100}%` }}
               />
             </div>
-            <p className="mt-1 text-[11px] text-slate-500">
+            <p className="mt-1 text-xs text-slate-500">
               使用 {stats.tokensUsed}。尽きるとAIショートカットは選べなくなる（手で作るしかない）。
             </p>
           </div>
@@ -92,11 +92,11 @@ export function RepoPanel({ stats, onClose }: Props) {
             <span className={`font-semibold ${debt.tone}`}>
               {debt.label}
               {stats.debtScore > 0 && (
-                <span className="ml-1 text-[11px] font-normal text-slate-500">（{stats.debtScore}pt）</span>
+                <span className="ml-1 text-xs font-normal text-slate-500">（{stats.debtScore}pt）</span>
               )}
             </span>
           </Row>
-          <p className="rounded-lg bg-slate-800/30 px-3 py-2 text-[11px] leading-relaxed text-slate-400">
+          <p className="rounded-lg bg-slate-800/30 px-3 py-2 text-xs leading-relaxed text-slate-400">
             {debt.note}
           </p>
         </div>
@@ -105,7 +105,7 @@ export function RepoPanel({ stats, onClose }: Props) {
           <button
             type="button"
             onClick={onClose}
-            className="w-full rounded-xl bg-slate-700 py-2.5 font-bold text-slate-100 transition hover:bg-slate-600 active:scale-95"
+            className="min-h-[44px] w-full rounded-xl bg-slate-700 py-3 font-bold text-slate-100 transition hover:bg-slate-600 active:scale-95"
           >
             閉じる
           </button>
