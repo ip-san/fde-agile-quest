@@ -29,11 +29,14 @@ export default function App() {
     screen = <Finale onResolve={resolveFinale} />
   } else if (status === 'ended' && ending && !result) {
     const rs = repoStats({ resolvedIds, flags, aiTokens, repoCoverage, repoDebt })
+    // 第1章は不正を“伏線”として残す。掴んだ深さに応じて次章への引きを出す
+    const fraudHint = flags.has('fraudCase') ? 'case' : flags.has('fraudClue') ? 'clue' : 'none'
     screen = (
       <EndingScreen
         ending={ending}
         meters={meters}
         customerValue={customerValue(meters, rs.coverage, rs.debtScore)}
+        fraudHint={fraudHint}
         log={log}
         onReset={reset}
       />

@@ -481,7 +481,7 @@
 
 - **連結の帳尻** `s3-daily-keiri-closing`（トラブル _[要 fraudClue]_） 心得:53,73
     - ⚠ 深入りは身の危険だ。資料は見なかったことにする `{ trust: 1, insight: -1 }`
-    - 間宮さんと、決算と現場実数の食い違いを証拠として固める `{ insight: 1 }` →fraudCase
+    - 間宮さんと、決算と現場実数の食い違いを記録に残す `{ insight: 1 }` →fraudCase
 
 - **経費の綻び** `s3-daily-soumu-expense`（トラブル） 心得:59,60
     - ⚠ 自分の領分じゃない。言われた通り処理して返す `{ trust: 1, insight: -1 }`
@@ -489,7 +489,7 @@
 
 - **書類の裏取り** `s3-daily-soumu-paper`（トラブル _[要 fraudClue]_） 心得:73,74
     - ⚠ 波風を立てず、書類はそっと元の棚に戻す `{ trust: 1, insight: -1 }`
-    - 日付と相手先まで、契約書と請求書の符合を突き合わせて記録する `{ insight: 1 }` →fraudCase
+    - 日付と相手先まで、契約書と請求書の符合を控えに残す `{ insight: 1 }` →fraudCase
 
 - **「君の代わりはいくらでもいる」** `s3-daily-faction`（チーム） 心得:84,30
     - ⚠ 角を立てないよう正論を引っ込め、現場にも合わせるよう促す `{ trust: 1, culture: -1 }`
@@ -497,7 +497,7 @@
 
 - **書類の上だけ、ぐるぐる回る** `s3-daily-circular`（トラブル _[要 fraudClue]_） 心得:73,89
     - ⚠ これは触れてはいけない領域だ。気づかなかったことにして蓋をする `{ insight: -1 }`
-    - 取引データを突き合わせ、循環取引の証拠を一本につなげて固める `{ insight: 1 }` →fraudCase
+    - 取引データを突き合わせ、循環取引の輪郭を記録に残す `{ insight: 1 }` →fraudCase
 
 - **夢と現実の落差を、どう報告するか** `s3-daily-showcase-report`（顧客 _[要 showcasePressure]_） 心得:52,89
     - ⚠ 「実証は順調」と話を合わせ、見栄えの数字で報告を盛る `{ trust: 1, insight: -1 }`

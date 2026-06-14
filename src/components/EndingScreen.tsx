@@ -6,8 +6,16 @@ interface Props {
   ending: Epilogue
   meters: Meters
   customerValue: number
+  /** 第1章で掴んだ不正の“伏線”の深さ（次章への引き）。none=気づかず / clue=違和感 / case=輪郭 */
+  fraudHint?: 'none' | 'clue' | 'case'
   log: LogEntry[]
   onReset: () => void
+}
+
+/** 第1章で掴んだ不正の伏線に応じた“次章への引き”。告発の決着は次章へ繰り延べる。 */
+const FRAUD_TEASER: Record<'clue' | 'case', string> = {
+  clue: '——本物の仕事を進めるほどに、グループの数字の裏に、説明のつかない違和感が一つ、残った。それが何なのか、今はまだ分からない。だが、見なかったことには、できない。',
+  case: '——あなたは見てしまった。同じ機材が書類の上だけを巡る、架空の循環取引の輪郭を。一介のFDEが今この場で動かせる話ではない。だがその記録は、静かに胸に刻まれた。いつか、決着をつける日のために。',
 }
 
 /** 顧客価値（北極星）の最終ランク。案件の“スコア”として結果に意味を与える。 */
@@ -19,9 +27,10 @@ function valueRank(v: number): { grade: string; label: string; cls: string } {
   return { grade: 'D', label: '価値を残せなかった', cls: 'text-rose-300 border-rose-400/40 bg-rose-400/10' }
 }
 
-export function EndingScreen({ ending, meters, customerValue, log, onReset }: Props) {
+export function EndingScreen({ ending, meters, customerValue, fraudHint = 'none', log, onReset }: Props) {
   const failed = ending.id.startsWith('fail-')
   const rank = valueRank(customerValue)
+  const teaser = fraudHint === 'none' ? null : FRAUD_TEASER[fraudHint]
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center gap-6 px-4 py-10">
@@ -56,6 +65,16 @@ export function EndingScreen({ ending, meters, customerValue, log, onReset }: Pr
       >
         {ending.reflection}
       </p>
+
+      {/* 不正の伏線を掴んだ周回だけ出す“次章への引き”（告発の決着は第1章ではつけない） */}
+      {teaser && !failed && (
+        <div className="rounded-2xl border border-amber-600/40 bg-amber-950/20 p-5">
+          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-widest text-amber-400/80">
+            To be continued — 次章へ
+          </p>
+          <p className="text-sm leading-relaxed text-amber-100/90">{teaser}</p>
+        </div>
+      )}
 
       <div className="space-y-2">
         <p className="mb-2 text-xs font-semibold text-slate-400">最終評価</p>

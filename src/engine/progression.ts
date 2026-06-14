@@ -149,13 +149,15 @@ export function repoStats(
 }
 
 /** キャンペーン完走時のエンディング決定（純粋）。advanceCore と restoreCore で共用。
- *  - 暴露の決断済み(exposed/complicit/coopted) → 対応するフィナーレED
- *  - 未決断だが手がかり(fraudClue)あり → ending=null・finalePending=true（決断待ち）
- *  - それ以外 → 従来のメーター駆動エンディング */
+ *  ■ 第1章は不正の“伏線”を撒くだけ。告発の決断（暴く/黙認/取り込まれる）は次章へ繰り延べる
+ *    ＝ fraudClue/fraudCase を掴んでも finalePending にはせず、通常のメーター駆動EDで終える
+ *    （掴んだ伏線は EndingScreen の“次章への引き”で示し、フラグは永続化されて次章が受け取る）。
+ *  ■ exposed/complicit/coopted の分岐は将来章のためのドーマント（第1章では立たない）。 */
 export function finalEndingFor(
   meters: Meters,
   flags: Set<GameFlag>,
 ): { ending: Epilogue | null; finalePending: boolean } {
+  // ── 将来章用のドーマント分岐（第1章ではこれらのフラグは立たない）──
   // 暴くを選んだ場合、動かぬ証拠(fraudCase)を固めていれば告発が通り、無ければ握り潰される
   if (flags.has('exposed')) {
     const ending = flags.has('fraudCase') ? FINALE_EPILOGUES.expose : FINALE_EPILOGUES.exposeWeak
@@ -163,7 +165,7 @@ export function finalEndingFor(
   }
   if (flags.has('complicit')) return { ending: FINALE_EPILOGUES.complicit, finalePending: false }
   if (flags.has('coopted')) return { ending: FINALE_EPILOGUES.coopted, finalePending: false }
-  if (flags.has('fraudClue')) return { ending: null, finalePending: true }
+  // 第1章: 手がかり/証拠の有無に関わらず、決着させず通常EDで締める（伏線は次章へ）
   return { ending: evaluateEnding(ENDINGS, meters), finalePending: false }
 }
 
