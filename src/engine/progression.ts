@@ -3,7 +3,7 @@
 // store はこれらを呼ぶ薄いラッパに徹し、ここを game.test と同様に単体テストする。
 // ───────────────────────────────────────────────────────────
 import { ENDINGS, EVENTS, FAILURE_EPILOGUES, FINALE_EPILOGUES, SPRINTS } from '../data/chapters/chapter-01'
-import { locationOf } from '../data/locations'
+import { LOCATION_ORDER, locationOf } from '../data/locations'
 import { preceptsForEvent } from '../data/precepts'
 import { amplifyEffects, availableEvents, drawEvent, evaluateEnding, miniGameKindFor, resolveChoice } from './game'
 import type {
@@ -41,6 +41,8 @@ export interface ProgressCore {
   pendingLocation: LocationId | null
   /** travel 中：直前に「外した」場所（＝今日は静か。小景を出すだけでペナルティ無し） */
   peekLocation: LocationId | null
+  /** travel 中：朝会で“競合する”今日の候補イベント（別々の場所・最大3）。1つ選ぶと他は見送り */
+  dailyCandidates: string[]
   /** 生成AIの残りトークン（消費型リソース。0でも即失敗ではないが、AIショートカットが封印される） */
   aiTokens: number
   /** リポジトリのテストカバレッジ(0..100)。良い開発の選択で上がる＝健全な拡充の指標 */
@@ -100,6 +102,7 @@ export function freshCore(starting: Meters): ProgressCore {
     finalePending: false,
     pendingLocation: null,
     peekLocation: null,
+    dailyCandidates: [],
     aiTokens: AI_TOKENS_MAX,
     repoCoverage: 0,
     repoDebt: 0,
@@ -183,6 +186,7 @@ export function advanceCore(core: ProgressCore, result: ResultView | null = null
     result,
     pendingLocation: null,
     peekLocation: null,
+    dailyCandidates: [],
   }
 
   if (sprintIndex >= SPRINTS.length) {
@@ -208,43 +212,110 @@ export function proceedCore(core: ProgressCore): ProgressCore {
   const avail = availableEvents(EVENTS, sprintNo, ceremony, core.resolvedIds, core.flags)
   const event = avail[0] ?? null
   if (!event) return advanceCore(core)
-  return { ...core, currentEvent: event, unexpected: false, status: 'event', pendingLocation: null, peekLocation: null }
+  return {
+    ...core,
+    currentEvent: event,
+    unexpected: false,
+    status: 'event',
+    pendingLocation: null,
+    peekLocation: null,
+    dailyCandidates: [],
+  }
 }
 
-/** ルーレット結果セグメントから現セレモニーのイベントを引く。
- *  引けたら travel（リモート朝会＋現地マップ移動）へ。着いてから event になる */
+/** 朝会の“競合する今日の候補”を引く（別々の場所・最大3）。セグメント一致を必ず1つ含め、
+ *  残りは他の場所から1つずつ（場所順を seed で回す）。1場所につき代表1つ。 */
+export function drawCandidates(available: GameEvent[], segment: Segment, pickRandom: number): GameEvent[] {
+  if (available.length === 0) return []
+  const repByLoc = new Map<LocationId, GameEvent>()
+  for (const e of available) {
+    const l = locationOf(e)
+    if (!repByLoc.has(l)) repByLoc.set(l, e)
+  }
+  // セグメント一致イベント（あればその場所を先頭に据える）
+  const matchIdx = Math.max(0, Math.floor(pickRandom * available.length))
+  const matching =
+    available.filter((e) => e.segment === segment)[0] ?? available[Math.min(available.length - 1, matchIdx)]
+  const order: LocationId[] = [locationOf(matching)]
+  const others = LOCATION_ORDER.filter((l) => repByLoc.has(l) && !order.includes(l))
+  const start = others.length ? Math.floor(pickRandom * others.length) % others.length : 0
+  for (let k = 0; k < others.length; k++) order.push(others[(start + k) % others.length])
+
+  const out: GameEvent[] = []
+  for (const l of order) {
+    if (out.length >= 3) break
+    const e = locationOf(matching) === l ? matching : (repByLoc.get(l) as GameEvent)
+    if (e && !out.some((x) => x.id === e.id)) out.push(e)
+  }
+  return out
+}
+
+/** ルーレット結果から現セレモニーのイベントを引く。
+ *  デイリー＝“競合する3候補”を立てて travel（朝会＋マップ）へ。単発＝従来どおり直接 event。 */
 export function spinCore(core: ProgressCore, segment: Segment, pickRandom: number): ProgressCore {
   if (core.status !== 'playing') return core
   const ceremony = ceremonyAt(core.sprintIndex, core.beatIndex)
   if (!ceremony) return core
   const sprintNo = SPRINTS[core.sprintIndex].n
   const avail = availableEvents(EVENTS, sprintNo, ceremony, core.resolvedIds, core.flags)
-  const { event, unexpected } = drawEvent(avail, segment, pickRandom)
-  if (!event) {
-    // このビートに出せるイベントが無い → 何事もなく次へ
-    return advanceCore(core)
+
+  if (ceremony === 'daily') {
+    const cands = drawCandidates(avail, segment, pickRandom)
+    if (cands.length === 0) return advanceCore(core)
+    return {
+      ...core,
+      currentEvent: null,
+      unexpected: false,
+      status: 'travel',
+      pendingLocation: null,
+      peekLocation: null,
+      dailyCandidates: cands.map((c) => c.id),
+    }
   }
-  // デイリー（現場を回る日）だけ travel＝リモート朝会＋マップ移動を挟む。
-  // 想定外バナーもデイリー（不確実な開発中）でのみ意味を持たせる
-  const isDaily = ceremony === 'daily'
+  // 単発セレモニー（テスト等で spin される場合）＝1つ引いて直接 event
+  const { event } = drawEvent(avail, segment, pickRandom)
+  if (!event) return advanceCore(core)
   return {
     ...core,
     currentEvent: event,
-    unexpected: unexpected && isDaily,
-    status: isDaily ? 'travel' : 'event',
-    pendingLocation: isDaily ? locationOf(event) : null,
+    unexpected: false,
+    status: 'event',
+    pendingLocation: null,
     peekLocation: null,
+    dailyCandidates: [],
   }
 }
 
-/** マップで行き先を選ぶ。今日のイベントの場所なら話が始まる（event）。
- *  外したら peekLocation を立てるだけ＝「今日は静か」の小景を出し、travel のまま留まる */
+/** マップで行き先を選ぶ。候補（競合する優先）の場所なら、その案件が始まる。
+ *  選ばなかった候補は“見送り”——missedFlag を持つ重要事を見送ると機会損失フラグが立ち、後で響く。
+ *  候補でない場所＝「今日は静か」（peekLocation を立てるだけ）。 */
 export function arriveCore(core: ProgressCore, location: LocationId): ProgressCore {
-  if (core.status !== 'travel' || !core.currentEvent) return core
-  if (location === core.pendingLocation) {
-    return { ...core, status: 'event', peekLocation: null }
+  if (core.status !== 'travel') return core
+  const cands = core.dailyCandidates
+    .map((id) => EVENTS.find((e) => e.id === id))
+    .filter((e): e is GameEvent => !!e)
+  const chosen = cands.find((e) => locationOf(e) === location)
+  if (!chosen) return { ...core, peekLocation: location } // 今日は静か（候補でない場所）
+
+  const flags = new Set(core.flags)
+  const resolvedIds = new Set(core.resolvedIds)
+  for (const e of cands) {
+    if (e.id === chosen.id) continue
+    // 見送り：missedFlag 付きは機会損失（フラグを立て、もう出さない）。無印は pool に残す（後日また候補に）
+    if (e.missedFlag) {
+      flags.add(e.missedFlag)
+      resolvedIds.add(e.id)
+    }
   }
-  return { ...core, peekLocation: location }
+  return {
+    ...core,
+    flags,
+    resolvedIds,
+    currentEvent: chosen,
+    status: 'event',
+    peekLocation: null,
+    dailyCandidates: [],
+  }
 }
 
 /** 進行中イベントの選択を解決し、結果ビューを添えて次状態を返す。
@@ -308,6 +379,7 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
       result,
       pendingLocation: null,
       peekLocation: null,
+      dailyCandidates: [],
     }
   }
 
@@ -346,6 +418,7 @@ export function restoreCore(p: Persisted): ProgressCore {
     finalePending: fin.finalePending,
     pendingLocation: null,
     peekLocation: null,
+    dailyCandidates: [],
     // 旧セーブは aiTokens を持たない → 満タンで補完。範囲外は丸める
     aiTokens: clampTokens(p.aiTokens ?? AI_TOKENS_MAX),
     repoCoverage: clamp01(p.repoCoverage ?? 0, REPO_COVERAGE_MAX),

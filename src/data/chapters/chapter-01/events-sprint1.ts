@@ -37,6 +37,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     sprint: 1,
     ceremony: 'daily',
     segment: 'genba',
+    missedFlag: 'missedHearing',
     title: '倉庫の片隅',
     narrative:
       '倉庫に入ると、20年勤めるベテランの田淵さんが手書きのメモで在庫を数えていた。「システム？ あの画面な。使ってないよ」。',
@@ -208,6 +209,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     sprint: 1,
     ceremony: 'daily',
     segment: 'chance',
+    missedFlag: 'missedHearing',
     title: '思わぬ味方',
     narrative:
       '現場のパートさんが「私、前から不便だと思ってたんです」と声をかけてきた。改善のヒントの宝庫だ。',
@@ -285,6 +287,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     sprint: 1,
     ceremony: 'daily',
     segment: 'trouble',
+    missedFlag: 'missedUpgrade',
     title: '笑えない古いシステム',
     narrative:
       'カルゴ物流の基幹は20年前の{{レガシー}}。承認フローには今も紙が混じる。エンジニア仲間は「こんな古いの捨てて作り直せばいい」と笑う。',

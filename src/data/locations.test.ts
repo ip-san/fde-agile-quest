@@ -10,6 +10,7 @@ import {
   LOCATIONS,
   locationOf,
   QUIET_BY_LOCATION,
+  standupFor,
 } from './locations'
 
 const ALL_LOCATIONS = Object.keys(LOCATIONS) as LocationId[]
@@ -82,5 +83,31 @@ describe('リモート朝会のヒント（hintsFor）', () => {
       }
     }
     expect([...missing]).toEqual([])
+  })
+})
+
+describe('standupFor（朝会＝競合する主張）', () => {
+  it('複数候補に distinct な役割を割り当て、各声が自分の候補の場所を推す', () => {
+    const cs: GameEvent[] = [
+      synth({ id: 'a', segment: 'kokyaku', location: 'client' }),
+      synth({ id: 'b', segment: 'trouble', location: 'serverroom' }),
+      synth({ id: 'c', segment: 'team', location: 'repo' }),
+    ]
+    const voices = standupFor(cs)
+    expect(voices).toHaveLength(3)
+    expect(new Set(voices.map((v) => v.role)).size).toBe(3) // 役割は重複しない
+    for (const v of voices) {
+      const c = cs.find((e) => e.id === v.eventId)!
+      expect(v.location).toBe(locationOf(c)) // 自分の候補の場所を推す
+      expect(v.line.length).toBeGreaterThan(0)
+    }
+    // 推す場所も互いに異なる（別々の論点）
+    expect(new Set(voices.map((v) => v.location)).size).toBe(3)
+  })
+
+  it('候補1つなら声も1つ。advocacy 上書きが効く', () => {
+    expect(standupFor([synth({ id: 'x' })])).toHaveLength(1)
+    const v = standupFor([synth({ id: 'y', segment: 'kokyaku', advocacy: { po: '上書きの主張' } })])
+    expect(v[0].line).toBe('上書きの主張')
   })
 })

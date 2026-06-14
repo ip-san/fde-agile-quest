@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CEREMONY_LABELS, CEREMONY_SHORT, SPRINTS } from '../data/chapters/chapter-01'
+import { CEREMONY_LABELS, CEREMONY_SHORT, EVENTS, SPRINTS } from '../data/chapters/chapter-01'
 import { PRECEPTS } from '../data/precepts'
 import { hearingThemeFor } from '../data/minigames'
 import { miniGameKindFor } from '../engine/game'
@@ -48,6 +48,7 @@ export function Board() {
     generation,
     seenPrecepts,
     peekLocation,
+    dailyCandidates,
     aiTokens,
     resolvedIds,
     flags,
@@ -191,10 +192,11 @@ export function Board() {
 
       {/* 現在のセレモニー + ルーレット/マップ/進める */}
       <div className="flex flex-1 flex-col items-center justify-center gap-3 py-2">
-        {status === 'travel' && currentEvent ? (
+        {status === 'travel' ? (
           <Travel
-            event={currentEvent}
-            seed={seedFor(currentEvent.id)}
+            candidates={dailyCandidates
+              .map((id) => EVENTS.find((e) => e.id === id))
+              .filter((e): e is (typeof EVENTS)[number] => !!e)}
             peekLocation={peekLocation}
             onTravel={arrive}
           />

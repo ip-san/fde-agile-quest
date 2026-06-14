@@ -951,6 +951,34 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     ],
   },
   {
+    id: 's2-daily-missed-context',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'genba',
+    location: 'warehouse',
+    requiresFlag: 'missedHearing',
+    title: '的外れな最小版',
+    narrative:
+      '出した最小版が、現場で空振りした。「これ、うちの流れと違うんだよな」と田淵さん。朝会で現場の聞き取りを後回しにしたツケが、ここで出た。資料の外を見ないまま作ると、こうなる。',
+    choices: [
+      {
+        id: 'a',
+        label: '「仕様通りです」と押し通し、現場に合わせてもらう',
+        effects: { trust: -1, culture: -1 },
+        resultText: '現場は黙って手書きに戻った（押し付けで信頼−）。作ったものが、また一つ沈黙する。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '今からでも現場に立ち、ズレを聞き取って作り直す',
+        effects: { insight: 2, trust: -1 },
+        repo: { coverage: 5, debt: -1 },
+        resultText:
+          '手戻りは痛い（やり直しで信頼−）。だが遅れて拾った一次情報で、ようやく現場に噛み合い始めた。答えは、やはり資料の外にあった。',
+      },
+    ],
+  },
+  {
     id: 's2-daily-blamewar',
     sprint: 2,
     ceremony: 'daily',

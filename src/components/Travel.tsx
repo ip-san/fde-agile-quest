@@ -1,43 +1,42 @@
 import { useState } from 'react'
 import {
-  type DailyHint,
-  hintsFor,
   LOCATION_ORDER,
   LOCATIONS,
   QUIET_BY_LOCATION,
+  type StandupVoice,
+  standupFor,
 } from '../data/locations'
 import type { GameEvent, LocationId } from '../types'
 import { RichText } from './RichText'
 
 interface Props {
-  /** 今日のイベント（ヒント生成に使う。場所はプレイヤーには伏せる） */
-  event: GameEvent
-  /** ヒントの variant 選択用シード */
-  seed: number
-  /** 直前に外した場所（「今日は静か」の小景を出す）。無ければ null */
+  /** 今日の“競合する候補”（別々の場所・最大3）。3役がそれぞれ別の候補を推す */
+  candidates: GameEvent[]
+  /** 直前に外した場所（「今日は静か」の小景）。無ければ null */
   peekLocation: LocationId | null
   /** マップで行き先を選んだ */
   onTravel: (location: LocationId) => void
 }
 
 // Tailwind は動的クラス名を解析できないので、役割の色は静的に引く
-const TONE: Record<DailyHint['tone'], { ring: string; badge: string; name: string }> = {
+const TONE: Record<StandupVoice['tone'], { ring: string; badge: string; name: string }> = {
   amber: { ring: 'border-amber-500/40', badge: 'bg-amber-500/15 text-amber-300', name: 'text-amber-200' },
   violet: { ring: 'border-violet-500/40', badge: 'bg-violet-500/15 text-violet-300', name: 'text-violet-200' },
   emerald: { ring: 'border-emerald-500/40', badge: 'bg-emerald-500/15 text-emerald-300', name: 'text-emerald-200' },
 }
 
-/** リモート・デイリースクラム（役割別ヒント）＋現地マップ移動。
- *  主人公は一人カルゴ物流に常駐。画面の向こうのルーメンのチームが行き先を示す。 */
-export function Travel({ event, seed, peekLocation, onTravel }: Props) {
-  const hints = hintsFor(event, seed)
+/** リモート・デイリースクラム（競合する主張）＋現地マップ。
+ *  3役がそれぞれ別の場所のイベントを推す。1つだけ選べる——見送った重要事は後で響く。 */
+export function Travel({ candidates, peekLocation, onTravel }: Props) {
+  const voices = standupFor(candidates)
+  const liveLocations = new Set(voices.map((v) => v.location))
   const [reduceMotion] = useState(
     () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
   )
 
   return (
     <div className="flex w-full flex-col gap-4">
-      {/* リモート朝会パネル（ビデオ会議の演出） */}
+      {/* リモート朝会パネル（競合する主張） */}
       <section className="rounded-2xl border border-slate-700 bg-slate-900/60 p-3">
         <div className="mb-2 flex items-center justify-between px-1">
           <h2 className="text-sm font-bold text-slate-100">
@@ -52,27 +51,26 @@ export function Travel({ event, seed, peekLocation, onTravel }: Props) {
           </span>
         </div>
         <p className="mb-2.5 px-1 text-[11px] text-slate-400">
-          あなたは一人、カルゴ物流に。画面の向こうは本社ルーメンのチーム。今日の行き先を相談しよう。
+          本社ルーメンのチームが、今日それぞれ別の優先を推す。<span className="text-slate-300">あなたが動けるのは1箇所だけ</span>
+          ——どの声に賭ける？（選ばなかった方は見送りになる）
         </p>
 
-        {/* 役割タイル（ビデオ会議グリッド） */}
+        {/* 役割タイル（それぞれ別の候補を主張） */}
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {hints.map((h) => {
-            const tone = TONE[h.tone]
+          {voices.map((v) => {
+            const tone = TONE[v.tone]
             return (
-              <div
-                key={h.role}
-                className={`rounded-xl border ${tone.ring} bg-slate-950/40 p-2.5`}
-              >
+              <div key={v.role} className={`rounded-xl border ${tone.ring} bg-slate-950/40 p-2.5`}>
                 <div className="mb-1 flex items-center gap-1.5">
-                  <span className={`text-sm font-bold ${tone.name}`}>{h.name}</span>
-                  <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${tone.badge}`}>
-                    {h.label}
-                  </span>
-                  <span className="ml-auto text-[10px] text-slate-500">👀 {h.lens}</span>
+                  <span className={`text-sm font-bold ${tone.name}`}>{v.name}</span>
+                  <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${tone.badge}`}>{v.label}</span>
+                  <span className="ml-auto text-[10px] text-slate-500">👀 {v.lens}</span>
                 </div>
                 <p className="text-xs leading-relaxed text-slate-200">
-                  <RichText text={h.line} />
+                  <RichText text={v.line} />
+                </p>
+                <p className="mt-1 text-[10px] text-slate-500">
+                  {LOCATIONS[v.location].emoji} 推す行き先：{v.locationShort}
                 </p>
               </div>
             )
@@ -86,9 +84,7 @@ export function Travel({ event, seed, peekLocation, onTravel }: Props) {
               </span>
               <span className="ml-auto text-[10px] text-slate-500">📍 カルゴ物流</span>
             </div>
-            <p className="text-xs leading-relaxed text-slate-400">
-              （ヒントを手がかりに、今日はどこへ向かう？）
-            </p>
+            <p className="text-xs leading-relaxed text-slate-400">（どれが今日の“本当の火種”か。1つに賭ける）</p>
           </div>
         </div>
       </section>
@@ -103,23 +99,29 @@ export function Travel({ event, seed, peekLocation, onTravel }: Props) {
         </p>
       )}
 
-      {/* 現地マップ：行き先を選ぶ */}
+      {/* 現地マップ：論点（候補）から1つ選ぶ */}
       <section>
         <h2 className="mb-2 px-1 text-xs font-semibold text-slate-400">
-          🗺️ どこへ向かう？（行き先を選ぶ）
+          🗺️ どこへ向かう？（★＝今日の論点。1つ選ぶと他は見送り）
         </h2>
         <div className="grid grid-cols-2 gap-2">
           {LOCATION_ORDER.map((id, i) => {
             const loc = LOCATIONS[id]
+            const live = liveLocations.has(id)
             return (
               <button
                 key={id}
                 type="button"
                 onClick={() => onTravel(id)}
                 data-initial-focus={i === 0 ? '' : undefined}
-                className="flex flex-col gap-1 rounded-xl border border-slate-700 bg-slate-900/50 p-3 text-left transition hover:border-sky-400 hover:bg-slate-800/60 active:scale-95"
+                className={`flex flex-col gap-1 rounded-xl border p-3 text-left transition active:scale-95 ${
+                  live
+                    ? 'border-amber-500/50 bg-amber-950/20 hover:border-amber-300 hover:bg-amber-900/30'
+                    : 'border-slate-700 bg-slate-900/50 hover:border-sky-400 hover:bg-slate-800/60'
+                }`}
               >
                 <span className="flex items-center gap-1.5 text-sm font-bold text-slate-100">
+                  {live && <span aria-hidden="true">★</span>}
                   <span aria-hidden="true">{loc.emoji}</span>
                   {loc.short}
                   {loc.remote && (

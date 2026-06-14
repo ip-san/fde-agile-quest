@@ -30,6 +30,9 @@ export type GameFlag =
   | 'exposed'
   | 'complicit'
   | 'coopted'
+  // 機会損失アーク: 朝会で“競合する優先”の1つを選ぶと、見送った重要事が後で響く
+  | 'missedHearing' // 現場の聞き取りを見送った＝理解不足の手戻り
+  | 'missedUpgrade' // 基盤の更新/対応を見送った＝後で詰まる
 
 /** 進行状態。travel＝デイリーでルーレット後、リモート朝会＋現地マップ移動の最中 */
 export type Status = 'playing' | 'travel' | 'event' | 'ended'
@@ -105,6 +108,10 @@ export interface GameEvent {
   /** リモート朝会の役割別ヒント（任意）。未指定の役割は場所テンプレから自動生成。
    *  山場のイベントだけ手書きして印象づける */
   hints?: Partial<Record<DailyRole, string>>
+  /** この候補を“見送った”時に立つ機会損失フラグ（任意）。朝会で別の優先を選ぶと後で響く */
+  missedFlag?: GameFlag
+  /** 朝会で各役割がこの候補を推す“主張”（任意）。未指定なら役割×場所テンプレから自動生成 */
+  advocacy?: Partial<Record<DailyRole, string>>
 }
 
 /** スプリント定義 */

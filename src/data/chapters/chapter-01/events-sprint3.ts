@@ -243,6 +243,36 @@ export const SPRINT3_EVENTS: GameEvent[] = [
   },
 
   {
+    id: 's3-daily-stuck-base',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'trouble',
+    location: 'serverroom',
+    requiresFlag: 'missedUpgrade',
+    title: '放置した基盤が、詰まる',
+    narrative:
+      '本番が伸びてきた途端、20年もののレガシー基盤が悲鳴を上げた。朝会で「基盤の更新」を後回しにし続けたツケだ。今、土台から軋み始めている。',
+    choices: [
+      {
+        id: 'a',
+        label: 'その場しのぎのパッチで、とりあえず動かし続ける',
+        effects: { trust: 1, insight: -1 },
+        repo: { debt: 2 },
+        resultText:
+          '今日は止まらなかった（応急処置で信頼+）。だが負債の上に負債を重ねた。基盤はいつか必ず折れる。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '痛みを認め、基盤の更新を正面から計画に組み込む',
+        effects: { insight: 1, culture: 1 },
+        repo: { coverage: 5, debt: -1 },
+        resultText:
+          'レガシーを笑わず、設計条件として向き合った。遅れて始めた更新が、本番を支える土台になり始めた。',
+      },
+    ],
+  },
+  {
     id: 's3-daily-sre',
     sprint: 3,
     ceremony: 'daily',

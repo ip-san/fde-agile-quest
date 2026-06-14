@@ -85,6 +85,7 @@ function coreOf(s: EngagementState): ProgressCore {
     finalePending: s.finalePending,
     pendingLocation: s.pendingLocation,
     peekLocation: s.peekLocation,
+    dailyCandidates: s.dailyCandidates,
     aiTokens: s.aiTokens,
     repoCoverage: s.repoCoverage,
     repoDebt: s.repoDebt,
@@ -103,6 +104,8 @@ const VALID_FLAGS = {
   exposed: true,
   complicit: true,
   coopted: true,
+  missedHearing: true,
+  missedUpgrade: true,
 } satisfies Record<GameFlag, true>
 const FLAG_SET = new Set<string>(Object.keys(VALID_FLAGS))
 

@@ -313,3 +313,86 @@ export function hintsFor(event: GameEvent, seed: number): DailyHint[] {
     return { role, label: def.label, name: def.name, tone: def.tone, lens: def.lens, line }
   })
 }
+
+// ───────────────────────────────────────────────────────────
+// 朝会の“競合する主張”。3役がそれぞれ別の候補（別の場所）を推す。プレイヤーはどれに従うか選ぶ。
+// 役割は候補のセグメントへの親和で割り当て（PO=価値/顧客、SM=プロセス/障害、開発=技術/事実）。
+// ───────────────────────────────────────────────────────────
+const SEGMENT_LEAD: Record<Segment, DailyRole> = {
+  genba: 'dev',
+  kokyaku: 'po',
+  trouble: 'sm',
+  team: 'dev',
+  chance: 'po',
+}
+
+/** 役割ごとの“主張”テンプレ（行き先＝候補の場所を、その役割の観点で押す） */
+function advocacyLine(role: DailyRole, title: string, locShort: string): string {
+  switch (role) {
+    case 'po':
+      return `「${title}」——お客さんに効くのはこれだ。${locShort}を優先して、早く価値を出そう。`
+    case 'sm':
+      return `「${title}」を放っておくと、流れが詰まる。先に${locShort}の障害を片づけたい。`
+    default:
+      return `技術的には「${title}」が要だ。${locShort}を今やらないと、後で負債になる。`
+  }
+}
+
+export interface StandupVoice {
+  role: DailyRole
+  name: string
+  label: string
+  tone: DailyRoleDef['tone']
+  lens: string
+  line: string
+  /** この声が推す候補イベントの場所 */
+  location: LocationId
+  locationShort: string
+  eventId: string
+}
+
+/** 朝会で表示する“競合する主張”。各候補に distinct な役割を割り当て、その役割の観点で推す。
+ *  candidates は drawCandidates の結果（別々の場所・最大3）。 */
+export function standupFor(candidates: GameEvent[]): StandupVoice[] {
+  const cands = candidates.slice(0, 3)
+  const used = new Set<DailyRole>()
+  const assigned: { c: GameEvent; role: DailyRole | null }[] = []
+  // 1巡目: セグメント親和の役割が空いていれば割り当て
+  for (const c of cands) {
+    const want = SEGMENT_LEAD[c.segment]
+    if (!used.has(want)) {
+      used.add(want)
+      assigned.push({ c, role: want })
+    } else {
+      assigned.push({ c, role: null })
+    }
+  }
+  // 2巡目: 残りの役割を埋める
+  for (const a of assigned) {
+    if (a.role) continue
+    const free = DAILY_ROLE_ORDER.find((r) => !used.has(r))
+    if (free) {
+      used.add(free)
+      a.role = free
+    }
+  }
+  return assigned
+    .filter((a): a is { c: GameEvent; role: DailyRole } => a.role !== null)
+    .map(({ c, role }) => {
+      const def = DAILY_ROLES[role]
+      const loc = locationOf(c)
+      const short = LOCATIONS[loc].short
+      const line = c.advocacy?.[role] ?? advocacyLine(role, c.title, short)
+      return {
+        role,
+        name: def.name,
+        label: def.label,
+        tone: def.tone,
+        lens: def.lens,
+        line,
+        location: loc,
+        locationShort: short,
+        eventId: c.id,
+      }
+    })
+}
