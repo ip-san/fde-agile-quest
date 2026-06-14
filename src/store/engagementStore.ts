@@ -89,6 +89,7 @@ function coreOf(s: EngagementState): ProgressCore {
     aiTokens: s.aiTokens,
     repoCoverage: s.repoCoverage,
     repoDebt: s.repoDebt,
+    sprintGoals: s.sprintGoals,
   }
 }
 

@@ -18,6 +18,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       {
         id: 'a',
         label: '自分が運用も握り、頼れる窓口であり続ける',
+        sprintGoal: '自分が運用の頼れる窓口であり続ける',
         effects: { trust: 1, culture: -1 },
         resultText:
           '「あなたがいれば安心」と結城さんは頼り切る（信頼+）。だが自分が抜けたら止まる仕組みになっていく。',
@@ -26,6 +27,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       {
         id: 'b',
         label: '社内メンバーへの{{オンボーディング}}と移譲をゴールにする',
+        sprintGoal: '社内へのオンボーディングと移譲',
         effects: { culture: 1 },
         resultText:
           '「太く残す」に舵を切った。自分の見せ場は減るが、組織に根付く形へ。（頼られる信頼+は取り逃す）',

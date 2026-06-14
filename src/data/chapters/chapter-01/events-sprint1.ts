@@ -17,6 +17,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       {
         id: 'a',
         label: '約束通り「予測機能の着手」をゴールにする',
+        sprintGoal: '予測機能の着手（約束を守る）',
         effects: { trust: 1, insight: -1 },
         resultText:
           '“約束を守ってくれる人”として結城さんは安心し、信頼が増した。だが背景を確かめないまま手が動き出す。',
@@ -24,6 +25,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       {
         id: 'b',
         label: '「なぜ画面が使われないかを突き止める」をゴールにする',
+        sprintGoal: '画面が使われない理由を突き止める',
         effects: { insight: 1, culture: 1, trust: -1 },
         resultText:
           '「予測機能は後回しか…」と結城さんは不安げ。約束した手前、信頼は少し揺らいだ。だが正しい問いを立てた。',

@@ -18,6 +18,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       {
         id: 'a',
         label: '結城さんの約束に沿って「画面の機能数を増やす」をKPIにする',
+        sprintGoal: '画面の機能数を増やす',
         effects: { trust: 1 },
         resultText:
           '約束通りで結城さんは満足（信頼+）。だが機能を足しても誰も使わなければ意味がない…危うい仮説だ。',
@@ -27,6 +28,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       {
         id: 'b',
         label: '「誤出荷率を下げる」を真のKPIにする',
+        sprintGoal: '誤出荷率を下げる',
         effects: { insight: 1, culture: 1 },
         resultText:
           '現場も経営も頷く成果指標。上位の{{KPI}}が定まれば下位の打ち手は自ずと決まる。',
@@ -34,6 +36,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       {
         id: 'c',
         label: '無難に「在庫画面のアクセス数」をKPIにする',
+        sprintGoal: '在庫画面のアクセス数を増やす',
         effects: {},
         resultText: '測りやすいが、アクセスが増えても誤出荷が減るとは限らない。',
       },

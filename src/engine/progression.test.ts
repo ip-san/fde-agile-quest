@@ -631,6 +631,22 @@ describe('toPersisted / restoreCore のラウンドトリップ', () => {
   })
 })
 
+describe('スプリントゴールをプランニングで決める（sprintGoal）', () => {
+  it('choice.sprintGoal があると、その周回(sprintIndex)の表示ゴールに採用される', () => {
+    const next = chooseCore(eventCore({ sprintIndex: 1 }), choice({ trust: 1 }, { sprintGoal: '誤出荷率を下げる' }))
+    expect(next.sprintGoals[1]).toBe('誤出荷率を下げる')
+    expect(next.sprintGoals[0]).toBeUndefined() // 他スプリント枠は触らない
+  })
+  it('sprintGoal の無い選択ではゴールは変わらない', () => {
+    const next = chooseCore(eventCore({ sprintIndex: 0, sprintGoals: ['既存ゴール'] }), choice({ insight: 1 }))
+    expect(next.sprintGoals[0]).toBe('既存ゴール')
+  })
+  it('永続化のラウンドトリップで保たれる', () => {
+    const core = eventCore({ sprintIndex: 1, sprintGoals: ['A', 'B'] })
+    expect(restoreCore(toPersisted(core)).sprintGoals).toEqual(['A', 'B'])
+  })
+})
+
 describe('dismissResultCore', () => {
   it('結果ビューを消す', () => {
     const core = chooseCore(eventCore(), choice({ trust: 1 }))

@@ -81,6 +81,8 @@ export interface Choice {
   resultText: string
   /** この選択で立つフラグ（例: 'wrongKpi'）。後スプリントの手戻りイベントを誘発 */
   setsFlag?: GameFlag
+  /** プランニングの選択肢のみ：この狙いを選ぶと、その周回のスプリントゴール表示になる */
+  sprintGoal?: string
   /** 危険な選択（UIで警告表示） */
   warn?: boolean
   /** 生成AIに頼る選択が消費するトークン量（消費型リソース）。残量が足りないと選べない＝AIショートカット封印 */

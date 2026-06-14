@@ -49,6 +49,9 @@ export interface ProgressCore {
   repoCoverage: number
   /** リポジトリの技術的負債（0..）。雑な開発で積もり、リファクタ/検証で減る */
   repoDebt: number
+  /** スプリントごとに“プランニングで決めた”ゴール（index=sprintIndex）。未決定の枠は undefined。
+   *  プランニングの選択肢が choice.sprintGoal を持つと、その周回で選んだ狙いが表示ゴールになる。 */
+  sprintGoals: string[]
 }
 
 export const REPO_COVERAGE_MAX = 100
@@ -71,6 +74,8 @@ export interface Persisted {
   /** リポジトリのテストカバレッジ/技術的負債（旧セーブには無いので 0 で補完） */
   repoCoverage?: number
   repoDebt?: number
+  /** プランニングで決めたスプリントゴール（旧セーブには無いので [] で補完） */
+  sprintGoals?: string[]
 }
 
 const METER_KEYS: MeterKey[] = ['trust', 'insight', 'culture']
@@ -106,6 +111,7 @@ export function freshCore(starting: Meters): ProgressCore {
     aiTokens: AI_TOKENS_MAX,
     repoCoverage: 0,
     repoDebt: 0,
+    sprintGoals: [],
   }
 }
 
@@ -353,6 +359,12 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
   const repoCoverage = clamp01(core.repoCoverage + covDelta, REPO_COVERAGE_MAX)
   const debtRaw = choice.repo?.debt ?? 0
   const repoDebt = Math.max(0, core.repoDebt + debtRaw)
+  // プランニングでゴールを“決める”: choice.sprintGoal があれば、その周回の表示ゴールに採用する
+  let sprintGoals = core.sprintGoals
+  if (choice.sprintGoal) {
+    sprintGoals = [...core.sprintGoals]
+    sprintGoals[core.sprintIndex] = choice.sprintGoal
+  }
   const resolvedIds = new Set(core.resolvedIds).add(event.id)
   const log: LogEntry[] = [
     ...core.log,
@@ -385,7 +397,7 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
     debtDelta: debtRaw || undefined,
   }
 
-  const base = { ...core, meters, flags, resolvedIds, log, aiTokens, repoCoverage, repoDebt }
+  const base = { ...core, meters, flags, resolvedIds, log, aiTokens, repoCoverage, repoDebt, sprintGoals }
 
   // ★0ルール: どれか1つでもゲージが0になったら、その場で失敗エピローグ
   const zeroed = zeroedMeter(meters)
@@ -443,6 +455,8 @@ export function restoreCore(p: Persisted): ProgressCore {
     aiTokens: clampTokens(p.aiTokens ?? AI_TOKENS_MAX),
     repoCoverage: clamp01(p.repoCoverage ?? 0, REPO_COVERAGE_MAX),
     repoDebt: Math.max(0, Math.floor(p.repoDebt ?? 0)),
+    // index=sprintIndex を保つため filter で詰めず、各枠を文字列か空文字に正規化（空＝未決定）
+    sprintGoals: Array.isArray(p.sprintGoals) ? p.sprintGoals.map((g) => (typeof g === 'string' ? g : '')) : [],
   }
 }
 
@@ -493,5 +507,6 @@ export function toPersisted(core: ProgressCore): Persisted {
     aiTokens: core.aiTokens,
     repoCoverage: core.repoCoverage,
     repoDebt: core.repoDebt,
+    sprintGoals: core.sprintGoals,
   }
 }

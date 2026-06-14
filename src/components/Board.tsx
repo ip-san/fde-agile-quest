@@ -55,6 +55,7 @@ export function Board() {
     flags,
     repoCoverage,
     repoDebt,
+    sprintGoals,
     spin,
     arrive,
     proceed,
@@ -95,15 +96,17 @@ export function Board() {
       <header>
         <p className="text-xs text-slate-400">{chapterTitle}</p>
         <h1 className="mt-0.5 text-lg font-bold text-slate-100">{sprint.title}</h1>
-        {/* スプリントゴールはプランニングの“成果”。プランニング中はまだ伏せ、終えてから現す
-            （Scrum: ゴールはプランニングで決まる。最初から提示しない）。 */}
+        {/* スプリントゴールはプランニングの“成果”。プレイヤーがプランニングで選んだ狙いを表示する。
+            未決定（プランニング中）は伏せ、選んだら現す（Scrum: ゴールはプランニングで決まる）。 */}
         <p className="mt-0.5 text-xs text-slate-400">
           🎯 スプリントゴール：
-          {ceremony === 'planning' ? (
-            <span className="text-slate-500">プランニングで決める…</span>
-          ) : (
-            <span className="text-sky-300">{sprint.goal}</span>
-          )}
+          {(() => {
+            const chosen = sprintGoals[sprintIndex]
+            if (chosen) return <span className="text-sky-300">{chosen}</span>
+            if (ceremony === 'planning')
+              return <span className="text-slate-500">プランニングで決める…</span>
+            return <span className="text-sky-300">{sprint.goal}</span>
+          })()}
         </p>
       </header>
 
