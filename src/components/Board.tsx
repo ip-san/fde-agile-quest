@@ -88,52 +88,16 @@ export function Board() {
   return (
     <>
       <div
-        className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-4 px-safe pt-safe pb-safe"
+        className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-4 px-safe pt-safe pb-[calc(5rem+env(safe-area-inset-bottom))]"
         inert={modalOpen || undefined}
       >
-      {/* ヘッダー：スプリント */}
-      <header className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs text-slate-400">{chapterTitle}</p>
-          <h1 className="mt-0.5 text-lg font-bold text-slate-100">{sprint.title}</h1>
-          <p className="mt-0.5 text-xs text-slate-400">
-            🎯 スプリントゴール：<span className="text-sky-300">{sprint.goal}</span>
-          </p>
-        </div>
-        <div className="flex shrink-0 flex-col items-end gap-1.5">
-          <div className="flex gap-1.5">
-            <button
-              type="button"
-              onClick={() => setRepoOpen(true)}
-              className="rounded-lg border border-cyan-700/60 bg-cyan-900/30 inline-flex min-h-[44px] items-center px-3 py-2 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-900/60"
-            >
-              <span aria-hidden="true">🗂️</span> リポジトリ
-            </button>
-            <button
-              type="button"
-              onClick={() => setBookOpen(true)}
-              className="rounded-lg border border-sky-700/60 bg-sky-900/30 inline-flex min-h-[44px] items-center px-3 py-2 text-xs font-semibold text-sky-200 transition hover:bg-sky-900/60"
-            >
-              <span aria-hidden="true">📖</span> 心得 {seenPrecepts.size}/{PRECEPTS.length}
-            </button>
-          </div>
-          <div className="flex gap-1.5">
-            <button
-              type="button"
-              onClick={() => setPrologueOpen(true)}
-              className="rounded-lg border border-slate-700 inline-flex min-h-[44px] items-center px-3 py-2 text-xs text-slate-400 transition hover:bg-slate-800"
-            >
-              あらすじ
-            </button>
-            <button
-              type="button"
-              onClick={reset}
-              className="rounded-lg border border-slate-700 inline-flex min-h-[44px] items-center px-3 py-2 text-xs text-slate-400 transition hover:bg-slate-800"
-            >
-              最初から
-            </button>
-          </div>
-        </div>
+      {/* ヘッダー：スプリント（見出しだけの1カラム。ユーティリティは下部タブバーへ移動） */}
+      <header>
+        <p className="text-xs text-slate-400">{chapterTitle}</p>
+        <h1 className="mt-0.5 text-lg font-bold text-slate-100">{sprint.title}</h1>
+        <p className="mt-0.5 text-xs text-slate-400">
+          🎯 スプリントゴール：<span className="text-sky-300">{sprint.goal}</span>
+        </p>
       </header>
 
       {/* HUD：北極星＝顧客価値（目標・大）→ 3メーター（手段・0ルール対象）→ 従ゲージは1行に圧縮 */}
@@ -246,6 +210,48 @@ export function Board() {
           <EventLog log={log} />
         </div>
       </section>
+
+      {/* 下部タブバー：ユーティリティをヘッダから移してヘッダの過密を解消。Safe Area 対応。
+          モーダル表示中は親が inert になるため無効化される（z は modal=40 の下）。 */}
+      <nav
+        aria-label="ツール"
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-800 bg-slate-900/95 px-safe pb-safe pt-1.5 backdrop-blur"
+      >
+        <div className="mx-auto flex max-w-2xl items-stretch gap-1">
+          <button
+            type="button"
+            onClick={() => setRepoOpen(true)}
+            className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-cyan-200 transition hover:bg-slate-800 active:scale-95"
+          >
+            <span className="text-base" aria-hidden="true">🗂️</span>
+            リポジトリ
+          </button>
+          <button
+            type="button"
+            onClick={() => setBookOpen(true)}
+            className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-sky-200 transition hover:bg-slate-800 active:scale-95"
+          >
+            <span className="text-base" aria-hidden="true">📖</span>
+            心得 {seenPrecepts.size}/{PRECEPTS.length}
+          </button>
+          <button
+            type="button"
+            onClick={() => setPrologueOpen(true)}
+            className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-slate-300 transition hover:bg-slate-800 active:scale-95"
+          >
+            <span className="text-base" aria-hidden="true">📜</span>
+            あらすじ
+          </button>
+          <button
+            type="button"
+            onClick={reset}
+            className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-slate-300 transition hover:bg-slate-800 active:scale-95"
+          >
+            <span className="text-base" aria-hidden="true">↻</span>
+            最初から
+          </button>
+        </div>
+      </nav>
       </div>
 
       {/* イベント＝判断モーダル（選択するとミニゲームへ） */}
