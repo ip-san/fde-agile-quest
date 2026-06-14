@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CAST, PROLOGUE_PANELS } from '../data/chapters/chapter-01/cast'
 import { displayName } from '../data/chapters/chapter-01/names'
+import { AVAILABLE_IMAGES, imageUrl } from '../data/images'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 
 interface Props {
@@ -21,6 +22,7 @@ export function Prologue({ onClose }: Props) {
   const ref = useFocusTrap<HTMLDivElement>(onClose)
   const lastPanel = PROLOGUE_PANELS.length - 1
   const onCast = step === PROLOGUE_PANELS.length
+  const panel = PROLOGUE_PANELS[Math.min(step, lastPanel)]
 
   const next = () => setStep((s) => Math.min(s + 1, PROLOGUE_PANELS.length))
 
@@ -51,9 +53,19 @@ export function Prologue({ onClose }: Props) {
 
           {!onCast ? (
             <article className="space-y-3">
-              <h1 className="text-lg font-bold text-slate-100">{PROLOGUE_PANELS[step].heading}</h1>
+              {panel.image && AVAILABLE_IMAGES.has(panel.image) && (
+                <img
+                  src={imageUrl(panel.image)}
+                  alt=""
+                  className="h-44 w-full rounded-xl object-cover sm:h-52"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none'
+                  }}
+                />
+              )}
+              <h1 className="text-lg font-bold text-slate-100">{panel.heading}</h1>
               <p className="whitespace-pre-line text-[15px] leading-relaxed text-slate-200">
-                {PROLOGUE_PANELS[step].body}
+                {panel.body}
               </p>
               <div className="flex items-center gap-1.5 pt-1" aria-hidden="true">
                 {PROLOGUE_PANELS.map((p, i) => (
