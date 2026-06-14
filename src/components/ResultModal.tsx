@@ -189,30 +189,53 @@ export function ResultModal({ result, onContinue }: Props) {
             </div>
           ) : null}
 
-          {/* この場面のFDE心得（手帳に集まる） */}
-          {result.precepts.length > 0 && (
-            <div className="space-y-1.5 border-t border-slate-800 pt-3">
-              <span className="text-[11px] font-semibold text-slate-400">この場面の心得</span>
-              {result.precepts.map((id) => {
-                const p = PRECEPT_BY_ID[id]
-                if (!p) return null
-                const isNew = result.newPreceptIds.includes(id)
-                return (
-                  <div key={id} className="flex items-start gap-2 text-sm">
-                    <span className="mt-0.5 shrink-0 tabular-nums text-[11px] text-slate-400">
-                      <span aria-hidden="true">🧭</span> #{id}
-                    </span>
-                    <span className="text-slate-100">{p.text}</span>
-                    {isNew && (
-                      <span className="shrink-0 rounded bg-amber-400/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-300">
-                        NEW
+          {/* この場面のFDE心得（手帳に集まる）。新規だけ全文で“獲得”を演出し、
+              既出は手帳に集約済みなので小さなチップに畳む（説教の二重化を避ける）。 */}
+          {result.precepts.length > 0 &&
+            (() => {
+              const newIds = result.precepts.filter((id) => result.newPreceptIds.includes(id))
+              const seenIds = result.precepts.filter((id) => !result.newPreceptIds.includes(id))
+              return (
+                <div className="space-y-2 border-t border-slate-800 pt-3">
+                  {newIds.length > 0 && (
+                    <div className="space-y-1.5">
+                      <span className="text-[11px] font-semibold text-amber-300">
+                        ✨ 心得を獲得
                       </span>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
+                      {newIds.map((id) => {
+                        const p = PRECEPT_BY_ID[id]
+                        if (!p) return null
+                        return (
+                          <div
+                            key={id}
+                            className="flex items-start gap-2 rounded-lg bg-amber-400/10 px-2.5 py-1.5 text-sm ring-1 ring-amber-400/30"
+                          >
+                            <span className="mt-0.5 shrink-0 tabular-nums text-[11px] text-amber-300/80">
+                              <span aria-hidden="true">🧭</span> #{id}
+                            </span>
+                            <span className="text-slate-100">{p.text}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                  {seenIds.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-[11px] text-slate-500">この場面の心得</span>
+                      {seenIds.map((id) => (
+                        <span
+                          key={id}
+                          title={PRECEPT_BY_ID[id]?.text}
+                          className="rounded bg-slate-800/60 px-1.5 py-0.5 text-[11px] tabular-nums text-slate-400"
+                        >
+                          🧭 #{id}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
 
           <button
             type="button"

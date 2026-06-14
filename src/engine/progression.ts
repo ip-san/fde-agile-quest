@@ -223,28 +223,40 @@ export function proceedCore(core: ProgressCore): ProgressCore {
   }
 }
 
-/** 朝会の“競合する今日の候補”を引く（別々の場所・最大3）。セグメント一致を必ず1つ含め、
- *  残りは他の場所から1つずつ（場所順を seed で回す）。1場所につき代表1つ。 */
+/** 朝会の“競合する今日の候補”を引く（別々の場所・最大3。1場所につき代表1つ）。
+ *  優先順位: ①フラグで解放された“回収/不正暴露”イベント（苦労して立てたフラグの帰結は必ず出す）
+ *  → ②セグメント一致 → ③残りは場所順を seed で回す。これで「見送り」の機会損失や不正暴露アークが
+ *  確実に響く（available は requiresFlag を満たした物だけなので、requiresFlag 付き＝“掴んだ報酬”）。 */
 export function drawCandidates(available: GameEvent[], segment: Segment, pickRandom: number): GameEvent[] {
   if (available.length === 0) return []
+  // 場所ごとの代表。フラグ解放イベントを最優先で代表に据える（同じ場所に通常イベントがあっても勝つ）。
   const repByLoc = new Map<LocationId, GameEvent>()
+  for (const e of available) {
+    if (!e.requiresFlag) continue
+    const l = locationOf(e)
+    if (!repByLoc.has(l)) repByLoc.set(l, e)
+  }
   for (const e of available) {
     const l = locationOf(e)
     if (!repByLoc.has(l)) repByLoc.set(l, e)
   }
-  // セグメント一致イベント（あればその場所を先頭に据える）
-  const matchIdx = Math.max(0, Math.floor(pickRandom * available.length))
-  const matching =
-    available.filter((e) => e.segment === segment)[0] ?? available[Math.min(available.length - 1, matchIdx)]
-  const order: LocationId[] = [locationOf(matching)]
-  const others = LOCATION_ORDER.filter((l) => repByLoc.has(l) && !order.includes(l))
-  const start = others.length ? Math.floor(pickRandom * others.length) % others.length : 0
-  for (let k = 0; k < others.length; k++) order.push(others[(start + k) % others.length])
+
+  const order: LocationId[] = []
+  // ① フラグ解放イベントの場所を先頭に（複数あれば全部、最大3で頭打ち）
+  for (const [l, e] of repByLoc) if (e.requiresFlag && !order.includes(l)) order.push(l)
+  // ② セグメント一致の場所
+  const matching = available.find((e) => e.segment === segment)
+  const matchLoc = matching ? locationOf(matching) : null
+  if (matchLoc && repByLoc.has(matchLoc) && !order.includes(matchLoc)) order.push(matchLoc)
+  // ③ 残りの場所を seed で回して追加
+  const rest = LOCATION_ORDER.filter((l) => repByLoc.has(l) && !order.includes(l))
+  const start = rest.length ? Math.floor(pickRandom * rest.length) % rest.length : 0
+  for (let k = 0; k < rest.length; k++) order.push(rest[(start + k) % rest.length])
 
   const out: GameEvent[] = []
   for (const l of order) {
     if (out.length >= 3) break
-    const e = locationOf(matching) === l ? matching : (repByLoc.get(l) as GameEvent)
+    const e = repByLoc.get(l)
     if (e && !out.some((x) => x.id === e.id)) out.push(e)
   }
   return out

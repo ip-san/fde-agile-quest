@@ -328,16 +328,38 @@ const SEGMENT_LEAD: Record<Segment, DailyRole> = {
   chance: 'po',
 }
 
-/** 役割ごとの“主張”テンプレ（行き先＝候補の場所を、その役割の観点で押す） */
-function advocacyLine(role: DailyRole, title: string, locShort: string): string {
-  switch (role) {
-    case 'po':
-      return `「${title}」——お客さんに効くのはこれだ。${locShort}を優先して、早く価値を出そう。`
-    case 'sm':
-      return `「${title}」を放っておくと、流れが詰まる。先に${locShort}の障害を片づけたい。`
-    default:
-      return `技術的には「${title}」が要だ。${locShort}を今やらないと、後で負債になる。`
-  }
+// 役割＝人格ごとの“主張”バリアント。観点は固定（PO=価値/久遠=プロセスの問い/瀬川=技術の事実）だが
+// 口調と切り口を変え、毎朝同じ読み上げに感じさせない。鷹野=確信の経営者／久遠=問いを置くメンター／
+// 瀬川=砕けた相棒。seed（イベントid由来）で1つ選ぶ＝同じ場面は同じ、場面が変われば言い回しも変わる。
+const ADVOCACY_VARIANTS: Record<DailyRole, ((title: string, loc: string) => string)[]> = {
+  po: [
+    (t, l) => `「${t}」——これは数字に出る。${l}を最優先で、価値から逆算しよう。`,
+    (t, l) => `迷ったら価値の大きい方だ。${l}の「${t}」、今日はここを取りに行こう。`,
+    (t, l) => `お客さんが本当に欲しいのはこれだよ。${l}で「${t}」に賭ける価値がある。`,
+  ],
+  sm: [
+    (t, l) => `「${t}」を放っておくと、流れが詰まる。先に${l}の滞りを解いておきたい。`,
+    (t, l) => `…焦らなくていい。だが${l}の「${t}」は、放置するほど重くなる種だ。`,
+    (t, l) => `答えは資料の外にある。${l}へ行って、「${t}」の現物を確かめてきなさい。`,
+  ],
+  dev: [
+    (t, l) => `先輩、技術的には「${t}」が要ですよ。${l}、今やらないと後で僕が泣きます。`,
+    (t, l) => `${l}の「${t}」、放っとくと負債になります。早めに潰しときましょう。`,
+    (t, l) => `正直「${t}」がいちばん地雷っぽいです。${l}、先に見ときません？`,
+  ],
+}
+
+/** 役割ごとの“主張”（行き先＝候補の場所を、その役割の観点と人格で押す）。seed でバリアント選択。 */
+function advocacyLine(role: DailyRole, title: string, locShort: string, seed: number): string {
+  const variants = ADVOCACY_VARIANTS[role]
+  return variants[Math.floor(frac(seed) * variants.length) % variants.length](title, locShort)
+}
+
+/** イベントidから決定的なseed（バリアント選択用） */
+function idSeed(id: string): number {
+  let s = 0
+  for (let i = 0; i < id.length; i++) s = (s * 31 + id.charCodeAt(i)) % 100000
+  return s
 }
 
 export interface StandupVoice {
@@ -384,7 +406,7 @@ export function standupFor(candidates: GameEvent[]): StandupVoice[] {
       const def = DAILY_ROLES[role]
       const loc = locationOf(c)
       const short = LOCATIONS[loc].short
-      const line = c.advocacy?.[role] ?? advocacyLine(role, c.title, short)
+      const line = c.advocacy?.[role] ?? advocacyLine(role, c.title, short, idSeed(c.id))
       return {
         role,
         name: def.name,

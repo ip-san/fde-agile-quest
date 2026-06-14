@@ -360,6 +360,17 @@ describe('drawCandidates / spinCore — 朝会の“競合する候補”', () =
     expect(next.currentEvent?.id).toBe('s1-plan-goal')
     expect(next.dailyCandidates).toEqual([])
   })
+
+  it('フラグで解放された回収イベントは seed によらず候補に必ず含まれる（機会損失が響く）', () => {
+    // wrongKpi を立てた周回では、その帰結 s3-daily-rework が確実に提示される
+    const avail = availableEvents(EVENTS, 3, 'daily', new Set<string>(), new Set<GameFlag>(['wrongKpi']))
+    const gated = avail.filter((e) => e.requiresFlag === 'wrongKpi')
+    expect(gated.length).toBeGreaterThan(0)
+    for (const seed of [0, 0.25, 0.5, 0.75, 0.99]) {
+      const cands = drawCandidates(avail, 'genba', seed)
+      expect(cands.some((c) => c.requiresFlag === 'wrongKpi')).toBe(true)
+    }
+  })
 })
 
 describe('arriveCore — 競合する候補から1つ選ぶ（見送り＝機会損失）', () => {

@@ -10,8 +10,18 @@ interface Props {
   onReset: () => void
 }
 
+/** 顧客価値（北極星）の最終ランク。案件の“スコア”として結果に意味を与える。 */
+function valueRank(v: number): { grade: string; label: string; cls: string } {
+  if (v >= 90) return { grade: 'S', label: '圧倒的な価値を届けた', cls: 'text-amber-300 border-amber-400/50 bg-amber-400/10' }
+  if (v >= 75) return { grade: 'A', label: '確かな価値を届けた', cls: 'text-emerald-300 border-emerald-400/40 bg-emerald-400/10' }
+  if (v >= 60) return { grade: 'B', label: '価値は届いた', cls: 'text-sky-300 border-sky-400/40 bg-sky-400/10' }
+  if (v >= 40) return { grade: 'C', label: '価値は道半ば', cls: 'text-slate-300 border-slate-500/40 bg-slate-500/10' }
+  return { grade: 'D', label: '価値を残せなかった', cls: 'text-rose-300 border-rose-400/40 bg-rose-400/10' }
+}
+
 export function EndingScreen({ ending, meters, customerValue, log, onReset }: Props) {
   const failed = ending.id.startsWith('fail-')
+  const rank = valueRank(customerValue)
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center gap-6 px-4 py-10">
@@ -48,7 +58,15 @@ export function EndingScreen({ ending, meters, customerValue, log, onReset }: Pr
       </p>
 
       <div className="space-y-2">
-        <p className="mb-2 text-xs font-semibold text-slate-400">最終状態</p>
+        <p className="mb-2 text-xs font-semibold text-slate-400">最終評価</p>
+        {/* 顧客価値ランク＝この案件で届けた価値の総合スコア（北極星の結実） */}
+        <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${rank.cls}`}>
+          <span className="text-3xl font-black tabular-nums">{rank.grade}</span>
+          <div className="min-w-0">
+            <p className="text-sm font-bold">🎯 顧客価値ランク：{rank.label}</p>
+            <p className="text-xs opacity-80">最終顧客価値 {customerValue} / 100</p>
+          </div>
+        </div>
         <CustomerValueBar value={customerValue} />
         <MeterHUD meters={meters} />
       </div>
