@@ -283,6 +283,33 @@ export const SPRINT1_EVENTS: GameEvent[] = [
   },
 
   {
+    id: 's1-daily-jousys-gate',
+    sprint: 1,
+    ceremony: 'daily',
+    segment: 'kokyaku',
+    location: 'serverroom',
+    title: '開かない城門',
+    narrative:
+      '現場改善の小さなツールを一つ入れたい。だが電算室は情シスの城だ。結城係長は「セキュリティ上、許可できません」「前例がありません」と、にべもない。古い情シスの“守り”——変えないことが、いつしか彼の仕事になっている。',
+    choices: [
+      {
+        id: 'a',
+        label: '情シスを通さず、現場にこっそり入れて回す',
+        effects: { culture: 1, trust: -1 },
+        resultText:
+          '現場はすぐ楽になった（巻き込み+）。だが後で発覚し、結城さんは「話が違う」と態度を硬化させた（顔を潰して信頼−）。野良ツールは、いつか必ず刺さる。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '「壊したくない」という結城さんの不安に向き合い、最小構成＋戻し方を添えて一緒に通す',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '{{ガバナンス}}は敵でなく入場券。リスクを下げた提案に、結城さんも「それなら」と城門を半分開けた。（即提供の信頼+は取り逃す）',
+      },
+    ],
+  },
+  {
     id: 's1-daily-legacy',
     sprint: 1,
     ceremony: 'daily',

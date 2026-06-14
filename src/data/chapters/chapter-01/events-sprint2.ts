@@ -951,6 +951,60 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     ],
   },
   {
+    id: 's2-daily-jousys-perm',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'kokyaku',
+    location: 'serverroom',
+    title: '本番は、渡さない',
+    narrative:
+      '{{誤出荷率}}を直すには本番の在庫データに触る必要がある。だが情シスは「本番は私たちしか触りません」と権限を出さない。何かあれば責任を負わされる——古い情シスの“囲い込み”の裏には、その恐れがある。',
+    choices: [
+      {
+        id: 'a',
+        label: '権限が無いなら、と閲覧用の古いコピーだけで推測で進める',
+        effects: { insight: -1 },
+        resultText:
+          '実データに触れないまま、勘で進めた。精度は上がらず、見当外れの修正に時間を溶かした。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '監査ログ付きの最小権限を一緒に設計し、結城さんが安心して任せられる形にする',
+        effects: { trust: 1, insight: 1 },
+        resultText:
+          '“責任を負いたくない”不安に、仕組みで応えた。結城さんは初めて本番の鍵を半分預けてくれた（安心して任せられて信頼+）。実データが、ようやく手の中に。',
+      },
+    ],
+  },
+  {
+    id: 's2-daily-shadow-it',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'trouble',
+    location: 'serverroom',
+    title: '見つかった野良ツール',
+    narrative:
+      '現場が無料ツールとExcelマクロで勝手に回していたのが、情シスにバレた。結城係長は「ルール違反だ、全部止めろ」と締めにかかる。現場は「これが無いと回らない」と反発。電算室で、攻防が始まる。',
+    choices: [
+      {
+        id: 'a',
+        label: '情シスの言う通り、野良ツールを一律で禁止して回収する',
+        effects: { insight: -1, culture: -1 },
+        resultText:
+          '秩序は戻った。だが現場が苦労して育てた工夫ごと潰し、「どうせ取り上げられる」と改善の芽が枯れた。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '野良ツールの“なぜ必要か”を、情シスと現場の間で翻訳して正規ルートに乗せる',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          '隙間に落ちた仕事を拾った。現場の工夫を情シスの{{ガバナンス}}に繋ぎ、禁止でなく“昇格”させた。両者の壁が、少し低くなった。',
+      },
+    ],
+  },
+  {
     id: 's2-daily-missed-context',
     sprint: 2,
     ceremony: 'daily',
