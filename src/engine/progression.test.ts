@@ -9,6 +9,7 @@ import {
   type ProgressCore,
   advanceCore,
   arriveCore,
+  canAfford,
   repoStats,
   chooseCore,
   dismissResultCore,
@@ -412,12 +413,13 @@ describe('生成AIトークン（消費型リソース）', () => {
     expect(next.result?.tokenSpent).toBe(700)
   })
 
-  it('残量より大きい tokenCost でも 0 で下げ止まる（即失敗にはしない）', () => {
+  it('残量不足の tokenCost 選択は engine が拒否（no-op＝効果も消費も無し。UI封印と同じ述語）', () => {
     const core = eventCore({ aiTokens: 300 })
     const next = chooseCore(core, choice({ insight: 1 }, { tokenCost: 700 }))
-    expect(next.aiTokens).toBe(0)
-    expect(next.result?.tokenSpent).toBe(300)
-    expect(next.status).not.toBe('ended') // 0ルールはメーターのみ。トークン0は失敗ではない
+    expect(next).toBe(core) // 何も起きない（view層の封印を素通りした呼び出しも安全）
+    expect(canAfford(300, choice({ insight: 1 }, { tokenCost: 700 }))).toBe(false)
+    expect(canAfford(700, choice({ insight: 1 }, { tokenCost: 700 }))).toBe(true) // ちょうどは選べる
+    expect(canAfford(0, choice({ insight: 1 }))).toBe(true) // 無コストは常に可
   })
 
   it('tokenCost が無い選択はトークンを消費しない', () => {
@@ -456,8 +458,8 @@ describe('repoStats（リポジトリ＝開発の量と質を映す）', () => {
     expect(stats.tokensLeft).toBe(800)
     expect(stats.tokensUsed).toBe(AI_TOKENS_MAX - 800)
     expect(stats.coverage).toBe(45)
-    expect(stats.debtPoints).toBe(2)
-    expect(stats.debt).toBe('high') // 累積2 + 過信4 = 6 >= 5
+    expect(stats.debtScore).toBe(6) // 累積2 + 過信4 ＝ 表示ptと判定の算出元が一致
+    expect(stats.debt).toBe('high') // 6 >= 5
   })
 
   it('良い開発（過信なし・負債0）は low、カバレッジ0', () => {

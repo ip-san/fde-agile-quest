@@ -56,6 +56,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'b',
         label: '引き返せず、機能をさらに足して押し切る',
         effects: { trust: -2, insight: -1 },
+        repo: { debt: 2 },
         resultText:
           '使われない機能を重ねるうち、成果の出なさに結城さんの失望が深まる（信頼−−）。沈黙する画面に沈黙する機能が積み上がる。',
         warn: true,
@@ -234,6 +235,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'b',
         label: 'AIと協働し、現場知の部分は自分が判断して仕上げる',
         effects: { insight: 1, culture: 1 },
+        repo: { coverage: 10 },
         resultText:
           'AIを“使う”でなく“共に働く”。速度はAI、判断は人。これがFDEのAIとの距離感だ。',
       },

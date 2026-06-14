@@ -116,7 +116,7 @@ export function repoStats(
 ): {
   mergedPrs: number
   coverage: number
-  debtPoints: number
+  debtScore: number
   tokensUsed: number
   tokensLeft: number
   debt: 'low' | 'mid' | 'high'
@@ -138,7 +138,7 @@ export function repoStats(
   return {
     mergedPrs,
     coverage: core.repoCoverage,
-    debtPoints: core.repoDebt,
+    debtScore: score, // ラベル(debt)と同じ算出元＝表示ptと判定レベルが一致する
     tokensUsed: AI_TOKENS_MAX - core.aiTokens,
     tokensLeft: core.aiTokens,
     debt,
@@ -252,6 +252,8 @@ export function arriveCore(core: ProgressCore, location: LocationId): ProgressCo
 export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 'good'): ProgressCore {
   const event = core.currentEvent
   if (!event || core.status !== 'event') return core
+  // 残量不足のAIショートカットは engine 層でも拒否（UI封印と同じ述語）。効果を満額付与する取りこぼしを防ぐ
+  if (!canAfford(core.aiTokens, choice)) return core
 
   // ミニゲームの出来で「意図した正の効果」だけ倍率調整（負効果は不変＝代償と0ルールを守る）
   const amp = amplifyEffects(choice.effects, tier)
@@ -349,6 +351,12 @@ export function restoreCore(p: Persisted): ProgressCore {
     repoCoverage: clamp01(p.repoCoverage ?? 0, REPO_COVERAGE_MAX),
     repoDebt: Math.max(0, Math.floor(p.repoDebt ?? 0)),
   }
+}
+
+/** その選択が生成AIトークン残量で「選べる」か（tokenCost が残量以下）。
+ *  view(EventModal の封印) と engine(chooseCore の拒否) が同じ述語を参照し、層をまたいで一致させる */
+export function canAfford(aiTokens: number, choice: Choice): boolean {
+  return !choice.tokenCost || choice.tokenCost <= 0 || aiTokens >= choice.tokenCost
 }
 
 /** AIトークンを 0..MAX の整数に丸める */

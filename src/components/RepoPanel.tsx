@@ -4,7 +4,7 @@ import { useFocusTrap } from '../hooks/useFocusTrap'
 interface RepoStats {
   mergedPrs: number
   coverage: number
-  debtPoints: number
+  debtScore: number
   tokensUsed: number
   tokensLeft: number
   debt: 'low' | 'mid' | 'high'
@@ -91,8 +91,8 @@ export function RepoPanel({ stats, onClose }: Props) {
           <Row icon="▲" label="技術的負債">
             <span className={`font-semibold ${debt.tone}`}>
               {debt.label}
-              {stats.debtPoints > 0 && (
-                <span className="ml-1 text-[11px] font-normal text-slate-500">（{stats.debtPoints}pt）</span>
+              {stats.debtScore > 0 && (
+                <span className="ml-1 text-[11px] font-normal text-slate-500">（{stats.debtScore}pt）</span>
               )}
             </span>
           </Row>

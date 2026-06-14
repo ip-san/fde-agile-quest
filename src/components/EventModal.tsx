@@ -1,5 +1,6 @@
 import { CEREMONY_LABELS, SEGMENT_COLORS, SEGMENT_LABELS } from '../data/chapters/chapter-01'
 import { eventImage, imageUrl } from '../data/images'
+import { canAfford } from '../engine/progression'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 import type { Choice, Effects, GameEvent } from '../types'
 import { RichText } from './RichText'
@@ -103,8 +104,8 @@ export function EventModal({ event, unexpected, aiTokens, onChoose }: Props) {
             <p className="text-xs font-semibold text-slate-400">あなたの判断は？</p>
             {event.choices.map((c) => {
               const cost = c.tokenCost ?? 0
-              // 生成AIに頼る選択は、残量が足りなければ封印（手で作るしかない）
-              const locked = cost > 0 && aiTokens < cost
+              // 生成AIに頼る選択は、残量が足りなければ封印（engine の canAfford と同一述語）
+              const locked = !canAfford(aiTokens, c)
               return (
                 <button
                   key={c.id}
