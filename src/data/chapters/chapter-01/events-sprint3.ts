@@ -1008,6 +1008,40 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ],
   },
   {
+    id: 's3-daily-keiri-closing',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'trouble',
+    location: 'keiri',
+    requiresFlag: 'fraudClue',
+    hints: {
+      po: '決算の数字の裏を詰めたい。経理部で連結の計上を確かめてきて。',
+      sm: '現場実数と決算の食い違いを詰めよう。経理部で間宮さんと突き合わせて。',
+      dev: '同じ機材が期末ごとに売買されてる気がします。経理部で原票を追ってください。',
+    },
+    title: '連結の帳尻',
+    narrative:
+      '間宮さんが連結決算の資料を広げた。「グループの間で、この機材が期末ごとに売り買いされて、そのたび利益が乗っています」。現場の実数は在庫ゼロ。なのに経理の数字には売上が立つ。会計の帳尻が、循環取引を指していた。',
+    choices: [
+      {
+        id: 'a',
+        label: '深入りは身の危険だ。資料は見なかったことにする',
+        effects: { trust: 1, insight: -1 },
+        resultText:
+          '波風を立てず、その場をやり過ごした（角が立たず信頼+）。だが、会計が示した“動かぬ証拠”から、自分の手で目を逸らした。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '間宮さんと、決算と現場実数の食い違いを証拠として固める',
+        effects: { insight: 1 },
+        resultText:
+          '数字で語れ——会計の帳尻と現場の実数を突き合わせ、逃げ場のない証拠にした。紙・データに続く、三つ目の裏付けが揃った。（波風を立てない信頼+は取り逃す）',
+        setsFlag: 'fraudCase',
+      },
+    ],
+  },
+  {
     id: 's3-daily-soumu-expense',
     sprint: 3,
     ceremony: 'daily',
@@ -1086,7 +1120,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     },
     title: '「地方に飛ばされたいのか」',
     narrative:
-      '正論で押し返すFDEに、赤城派の課長が耳打ちする。「あんまり波風立てると、君も地方倉庫に出向だぞ」。それを聞いたチームが、目に見えて萎縮し始めた。',
+      '正論で押し返すFDEに、赤城派の課長が耳打ちする。「あんまり波風立てると、君も地方倉庫に出向だぞ」。それを聞いたチームが、目に見えて萎縮し始めた。隅で、人事の新田さんが気まずそうに目を伏せた。',
     choices: [
       {
         id: 'a',

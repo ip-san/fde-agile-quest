@@ -97,10 +97,14 @@
 | **郷田（ごうだ）** | カルゴ物流 物流本部長(専務) | 顧客・スポンサー | — | 大型投資の当人。成果を急ぐ圧力 |
 | **赤城（あかぎ）** | カルゴ物流 販売管理部長 | 顧客・対立軸 | — | コスト削減/3PL移管を推す社内政治(Sarah型) |
 | **守屋（もりや）** | カルゴ物流 総務部の担当 | 顧客・総務 | **巻き込み(culture)** | 規程の番人＝総務の「関所」。筋を通すと味方化し、契約・請求・経費に通じた“紙の証人”に |
+| **新田（にった）** | カルゴ物流 人事部の中堅 | 顧客・人事 | **巻き込み(culture)** | 赤城の指示で評価・異動・削減を通す板挟みの実行役。本心は現場想い＝結城の人事版 |
+| **間宮（まみや）** | カルゴ物流 経理部の担当 | 顧客・経理 | **現場理解(insight)** | 数字の良心。辻褄の合わない売上に違和感を募らせ、会計の側から不正を照らす“もう一人の証人” |
 
 - 「情シス」は基本 **結城さん**（部署を指す時のみ“情シス”）。倉庫のベテラン＝**田淵さん**。総務の窓口＝**守屋さん**。
 - **守屋さんの弧**（総務部イベントを貫く連続性）: 関所（s1-access/s2-badge/s2-ringi）→ 味方化（s2-hyoka でそっと教える）→
   信頼（s3-expense で代理入力を頼む）→ 紙の証人（s3-paper で迷いつつ契約・請求の控えを出す＝不正暴露アークの紙側）。
+- **新田さん**（人事部）: 板挟みの実行役。s1-roster で勤怠を見せる／s2-costcut で削減を告げる／s3-faction で目を伏せる。
+- **間宮さん**（経理部）: 数字の良心。s2-keiri-odd で違和感を漏らす（手がかり）→ s3-keiri-closing で連結の循環を示す（証拠＝会計ルート）。
 
 ---
 
@@ -140,13 +144,14 @@
    - **PO（鷹野）** … 価値・優先度の観点
    - **スクラムマスター（久遠）** … プロセス・障害の観点
    - **開発メンバー（瀬川）** … 技術・事実の観点（※瀬川＝本社で支える新キャスト）
-3. **現地マップ**で行き先を選ぶ。場所は6つ：📦倉庫(genba)／🖥️電算室(trouble)／🏢情シス会議室(kokyaku)／
-   🗄️総務部（庶務・入館証・稟議・契約／手続き）／🧑‍💼人事部（採用・評価・異動・人員）／
-   💻ルーメン開発室【リモート接続】(team)。chanceは既定で倉庫、総務部/人事部はセグメント既定が無く
+3. **現地マップ**で行き先を選ぶ。場所は7つ：📦倉庫(genba)／🖥️電算室(trouble)／🏢情シス会議室(kokyaku)／
+   🗄️総務部（庶務・入館証・稟議・契約）／🧑‍💼人事部（採用・評価・異動・人員）／🧮経理部（仕訳・決算・連結）／
+   💻ルーメン開発室【リモート接続】(team)。chanceは既定で倉庫、総務部/人事部/経理部はセグメント既定が無く
    `location` 明示のイベント専用：
    - 総務部: 入館証/ガバナンス s1-soumu-access・入館証失効 s2-soumu-badge・稟議/承認 s2-soumu-ringi・
      人事評価の警告 s2-soumu-hyoka（守屋が総務から知らせる）・内部統制 s3-soumu-expense・不正の紙の裏取り s3-soumu-paper
-   - 人事部: 偏る残業/勤怠 s1-jinji-roster・人員削減 s2-daily-costcut・出向の脅し s3-daily-faction
+   - 人事部: 偏る残業/勤怠 s1-jinji-roster・人員削減 s2-daily-costcut・出向の脅し s3-daily-faction（顔＝新田）
+   - 経理部: 実体の見えない売上 s2-keiri-odd（手がかり）・連結の帳尻 s3-keiri-closing（証拠）（顔＝間宮）
    - 山場イベント（ghost-stock 等）は `location` で明示。
    ヒントが指す場所＝今日のイベントの場所へ着くと話が始まる。**外しても「今日は静か」の小景だけでペナルティ無し**
    （ヒント読みを促す）。
@@ -201,7 +206,8 @@
 | `wrongKpi` | s2-plan-kpi a（機能数をKPIに） | s3-daily-rework（要wrongKpi） | 誤ったWhy→後で全部やり直す手戻り |
 | `aiOverreliance` | s2-daily-ai-handoff a（AIに丸投げ） | s3-daily-ai-regression（要aiOverreliance） | AI過信→モデル更新で突然壊れる退化 |
 | `genbaTrust`/`topDown` | s2-retro（排他） | s3 review/retro バリアント | 主軸の分岐（§5） |
-| `fraudClue`/`fraudCase` | s2-daily-ghost-stock b ／ s3-daily-circular b・s3-daily-soumu-paper b（要fraudClue） | フィナーレ（§6.5） | 不正暴露アーク（粉飾が露見） |
+| `fraudClue` | s2-daily-ghost-stock b（現場）／ s2-daily-keiri-odd b（会計） | s3 の証拠イベント群／フィナーレ（§6.5） | 不正暴露アークの“手がかり”（2ルート） |
+| `fraudCase` | s3-daily-circular b（データ）／ s3-daily-soumu-paper b（紙）／ s3-daily-keiri-closing b（会計）（いずれも要fraudClue） | フィナーレ（§6.5） | “動かぬ証拠”（3ルートのいずれかで成立） |
 
 > いずれも「立てる側より配列で後ろ」に回収イベントを置く。デイリー回収は引けた周回のみ／背骨回収は確実。
 
@@ -214,12 +220,13 @@
 周回でのみ・確実に発火。手がかり無しの周回は従来のメーター駆動エンディング（§8）。
 
 ```
-[Sprint2] s2-daily-ghost-stock  IT化で実数化→“導入済み”のはずの機材が実在しない（幽霊設備）
-            b 出所を追う → flag fraudClue
-[Sprint3] s3-daily-circular（要 fraudClue）  壁を壊し取引データを繋ぐ→同じ機材が書類上だけ巡る循環取引
-            b 証拠を固める → flag fraudCase（“動かぬ証拠”。暴く結末を左右する）
-[Sprint3] s3-daily-soumu-paper（要 fraudClue）  総務部で契約書と請求書を裏取り＝循環取引の“紙の側”
-            b 符合を突き合わせ記録 → flag fraudCase（電算室のデータ側と並ぶもう一つの証拠ルート）
+[Sprint2] 手がかり fraudClue（2ルート・どちらでも開始）
+   s2-daily-ghost-stock（現場）  実数化→“導入済み”の機材が実在しない（幽霊設備）  b 出所を追う → fraudClue
+   s2-daily-keiri-odd（会計）    間宮が実体の見えない売上に違和感           b 違和感を記録 → fraudClue
+[Sprint3] “動かぬ証拠” fraudCase（要 fraudClue・3ルートのいずれかで成立）
+   s3-daily-circular（データ）    取引データで同じ機材が書類上だけ巡る循環取引   b 突き合わせ → fraudCase
+   s3-daily-soumu-paper（紙）     総務部で契約書×請求書の符合（守屋が出す）       b 記録     → fraudCase
+   s3-daily-keiri-closing（会計） 経理部で連結決算の帳尻＝循環（間宮と固める）     b 固める   → fraudCase
         ↓ Sprint3 完走（0ルール失敗時はフィナーレ無し＝通常バッドエンド）
 [フィナーレ] fraudClue があれば「暴露の決断」（3択は常に提示）
    a 暴く（内部告発） → flag exposed   → fraudCase あり=ED「告発したFDE」（成立・ほろ苦い）／
@@ -227,8 +234,9 @@
    b 黙認（共犯）     → flag complicit → ED「見て見ぬふりのFDE」（成果が粉飾の化粧に使われる）
    c 取り込まれる     → flag coopted   → ED「取り込まれたFDE」（口止めに応じ保身と引き換えに腐る）
 ```
-※ fraudCase は s3-daily-circular または s3-daily-soumu-paper で「証拠を固める」を選んだ周回のみ立つ
-＝**データ側／紙側いずれかの裏取りの選択が、暴露の成否を分ける**（どちらか一方でも固めれば成立）。
+※ fraudCase は circular（データ）／soumu-paper（紙）／keiri-closing（会計）のいずれかで「証拠を固める」を
+選んだ周回のみ立つ＝**3つの裏取りルートのどれか一つでも固めれば、暴露が成立する**（守屋＝紙・間宮＝会計の
+協力が“もう一人の証人”として効く）。手がかり fraudClue 自体も現場(ghost-stock)／会計(keiri-odd)の2ルート。
 
 - 実装: `progression.ts` の純粋ヘルパ `finalEndingFor(meters, flags)`（advanceCore/restoreCore 共用）で
   完走時のED/finalePending を決定。決断は exposed/complicit/coopted を**永続化**し、リロードでも結末が保たれる。
