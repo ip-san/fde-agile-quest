@@ -641,12 +641,12 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
-    location: 'devroom',
+    location: 'repo',
     requiresFlag: 'aiOverreliance',
     hints: {
-      po: '昨日まで賢かったAIの精度が急に落ちた。開発室で影響範囲を確かめて。',
-      sm: 'モデル更新でAIの挙動が変わったみたい。開発室で何が壊れたか切り分けよう。',
-      dev: 'AIの出力が急にバカになりました…。開発室に繋いで一緒に見てください。',
+      po: '昨日まで賢かったAIの精度が急に落ちた。リポジトリで影響範囲を確かめて。',
+      sm: 'モデル更新でAIの挙動が変わったみたい。リポジトリで何が壊れたか切り分けよう。',
+      dev: 'AIが書いたコードが急に火を噴いてます…。リポジトリで一緒に見てください。',
     },
     title: 'モデル更新、突然のバカ',
     narrative:

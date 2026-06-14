@@ -156,6 +156,16 @@ export function ResultModal({ result, onContinue }: Props) {
             <EffectDeltas effects={result.effects} />
           </div>
 
+          {/* 生成AIトークンの消費（AIに頼った選択のみ） */}
+          {result.tokenSpent ? (
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold text-slate-400">AIトークン</span>
+              <span className="rounded-lg bg-cyan-500/15 px-2.5 py-1 text-sm font-bold tabular-nums text-cyan-300">
+                🔋 ▼ −{result.tokenSpent}
+              </span>
+            </div>
+          ) : null}
+
           {/* この場面のFDE心得（手帳に集まる） */}
           {result.precepts.length > 0 && (
             <div className="space-y-1.5 border-t border-slate-800 pt-3">

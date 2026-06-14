@@ -552,6 +552,40 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     ],
   },
   {
+    id: 's2-daily-repo-aicode',
+    sprint: 2,
+    ceremony: 'daily',
+    segment: 'team',
+    location: 'repo',
+    hints: {
+      po: '需要予測の小さな機能を実装する番だ。リポジトリで作り方を決めてきて。',
+      sm: '実装の進め方でチームが迷ってる。リポジトリで方針を固めて。',
+      dev: 'AIに書かせるか自分で書くか——リポジトリで線引きを決めましょう。',
+    },
+    title: 'AIに書かせるか、自分で書くか',
+    narrative:
+      'リポジトリで、需要予測の小さな機能を実装する番。受託のAIエージェントに投げれば数分で書ける。だが中身を自分で把握できるか。{{完成の定義}}は満たせるか。そして、AIトークンも有限だ。',
+    choices: [
+      {
+        id: 'a',
+        label: 'AIエージェントに丸ごと書かせて、すぐマージする',
+        effects: { trust: 1, insight: -1 },
+        resultText:
+          '数分でPRが上がり、すぐ動いた（速さが見えて信頼+）。だが中身は誰も分かっていない。技術的負債が静かに積もり、トークンも減った。',
+        warn: true,
+        setsFlag: 'aiOverreliance',
+        tokenCost: 500,
+      },
+      {
+        id: 'b',
+        label: '時間はかかるが、自分で設計して書き、テストを通す',
+        effects: { insight: 1, culture: 1 },
+        resultText:
+          'AIと働く——たたき台は借りても、設計と検証は自分の手で。把握できるコードと、通るテストが残った。（即マージの“見える進捗”信頼+は取り逃す）',
+      },
+    ],
+  },
+  {
     id: 's2-daily-ai-handoff',
     sprint: 2,
     ceremony: 'daily',
@@ -571,9 +605,10 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         label: 'レビューも{{完成の定義}}も省いて、エージェントに丸投げで一気に進める',
         effects: { trust: 1, insight: -1 },
         resultText:
-          '驚くほど速く形になった（進捗が見えて信頼+）。検証は後回し——「動いてるからヨシ」。便利さに、深く寄りかかり始めた。',
+          '驚くほど速く形になった（進捗が見えて信頼+）。検証は後回し——「動いてるからヨシ」。便利さに、深く寄りかかり始めた。AIトークンも、ごっそり溶けた。',
         warn: true,
         setsFlag: 'aiOverreliance',
+        tokenCost: 700,
       },
       {
         id: 'b',

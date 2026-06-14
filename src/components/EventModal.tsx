@@ -37,10 +37,12 @@ function EffectBadge({ effects }: { effects: Effects }) {
 interface Props {
   event: GameEvent
   unexpected: boolean
+  /** 生成AIの残りトークン。tokenCost を超える選択は「残量不足」で選べない＝AIショートカット封印 */
+  aiTokens: number
   onChoose: (choice: Choice) => void
 }
 
-export function EventModal({ event, unexpected, onChoose }: Props) {
+export function EventModal({ event, unexpected, aiTokens, onChoose }: Props) {
   const ref = useFocusTrap<HTMLDivElement>()
   const titleId = `event-title-${event.id}`
   const segId = `event-seg-${event.id}`
@@ -99,25 +101,45 @@ export function EventModal({ event, unexpected, onChoose }: Props) {
 
           <div className="space-y-2">
             <p className="text-xs font-semibold text-slate-400">あなたの判断は？</p>
-            {event.choices.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => onChoose(c)}
-                className={`group block w-full rounded-xl border px-4 py-3 text-left transition hover:border-sky-400 hover:bg-slate-800 ${
-                  c.warn ? 'border-rose-500/40 bg-rose-950/20' : 'border-slate-700 bg-slate-800/40'
-                }`}
-              >
-                <span className="block text-sm font-medium text-slate-100">
-                  {c.warn && <span className="mr-1">⚠</span>}
-                  {/* 選択肢ラベルは外側が button なので、用語チップ(button)を入れ子にしない */}
-                  <RichText text={c.label} interactive={false} />
-                </span>
-                <span className="mt-1.5 block">
-                  <EffectBadge effects={c.effects} />
-                </span>
-              </button>
-            ))}
+            {event.choices.map((c) => {
+              const cost = c.tokenCost ?? 0
+              // 生成AIに頼る選択は、残量が足りなければ封印（手で作るしかない）
+              const locked = cost > 0 && aiTokens < cost
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => onChoose(c)}
+                  disabled={locked}
+                  className={`group block w-full rounded-xl border px-4 py-3 text-left transition ${
+                    locked
+                      ? 'cursor-not-allowed border-slate-800 bg-slate-900/40 opacity-50'
+                      : c.warn
+                        ? 'border-rose-500/40 bg-rose-950/20 hover:border-sky-400 hover:bg-slate-800'
+                        : 'border-slate-700 bg-slate-800/40 hover:border-sky-400 hover:bg-slate-800'
+                  }`}
+                >
+                  <span className="block text-sm font-medium text-slate-100">
+                    {c.warn && <span className="mr-1">⚠</span>}
+                    {/* 選択肢ラベルは外側が button なので、用語チップ(button)を入れ子にしない */}
+                    <RichText text={c.label} interactive={false} />
+                  </span>
+                  <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                    <EffectBadge effects={c.effects} />
+                    {cost > 0 && (
+                      <span
+                        className={`rounded px-1.5 py-0.5 text-xs font-semibold tabular-nums ${
+                          locked ? 'bg-rose-500/15 text-rose-300' : 'bg-cyan-500/15 text-cyan-300'
+                        }`}
+                      >
+                        🔋 AI −{cost}
+                        {locked && '（残量不足）'}
+                      </span>
+                    )}
+                  </span>
+                </button>
+              )
+            })}
           </div>
           <p className="text-center text-[11px] text-slate-400">
             ※ 正解はない。すべてはトレードオフ。

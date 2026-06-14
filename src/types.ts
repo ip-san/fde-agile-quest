@@ -43,6 +43,7 @@ export type LocationId =
   | 'soumu'
   | 'jinji'
   | 'keiri'
+  | 'repo'
   | 'devroom'
 
 /** リモート・デイリースクラムで話す役割（画面の向こうのルーメンのチーム）。
@@ -76,6 +77,8 @@ export interface Choice {
   setsFlag?: GameFlag
   /** 危険な選択（UIで警告表示） */
   warn?: boolean
+  /** 生成AIに頼る選択が消費するトークン量（消費型リソース）。残量が足りないと選べない＝AIショートカット封印 */
+  tokenCost?: number
 }
 
 /** ルーレットで引かれるイベント */
@@ -161,6 +164,8 @@ export interface ResultView {
   execPrimary?: MeterKey | null
   execDelta?: number
   minigameKind?: MiniGameKind
+  /** この選択で消費した生成AIトークン（表示用。0/未消費なら省略） */
+  tokenSpent?: number
   /** このイベントが体現するFDE心得のID（手帳に集まる） */
   precepts: number[]
   /** このうち、今回はじめて出会った心得のID（「NEW」表示用）。store が埋める */

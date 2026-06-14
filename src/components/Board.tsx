@@ -2,15 +2,17 @@ import { useState } from 'react'
 import { CEREMONY_LABELS, CEREMONY_SHORT, SPRINTS } from '../data/chapters/chapter-01'
 import { PRECEPTS } from '../data/precepts'
 import { miniGameKindFor } from '../engine/game'
-import { isRouletteCeremony } from '../engine/progression'
+import { isRouletteCeremony, repoStats } from '../engine/progression'
 import { useEngagement } from '../store/engagementStore'
 import type { Choice, Ceremony } from '../types'
+import { AiTokenBar } from './AiTokenBar'
 import { EventLog } from './EventLog'
 import { EventModal } from './EventModal'
 import { MeterHUD } from './MeterHUD'
 import { MiniGame } from './minigame/MiniGame'
 import { PreceptBook } from './PreceptBook'
 import { Prologue } from './Prologue'
+import { RepoPanel } from './RepoPanel'
 import { ResultModal } from './ResultModal'
 import { Roulette } from './Roulette'
 import { Travel } from './Travel'
@@ -45,6 +47,9 @@ export function Board() {
     generation,
     seenPrecepts,
     peekLocation,
+    aiTokens,
+    resolvedIds,
+    flags,
     spin,
     arrive,
     proceed,
@@ -53,6 +58,7 @@ export function Board() {
     reset,
   } = useEngagement()
   const [bookOpen, setBookOpen] = useState(false)
+  const [repoOpen, setRepoOpen] = useState(false)
   // 選択 → 実行ミニゲーム → 結果。選んだ choice を保持し、ミニゲームの出来を tier として渡す
   const [pendingChoice, setPendingChoice] = useState<Choice | null>(null)
   // 初回はプロローグを自動表示。以降は「あらすじ」から再生できる
@@ -72,7 +78,7 @@ export function Board() {
 
   // モーダル表示中は背後を支援技術ツリー/操作から外す（aria-modal 任せにしない）
   const modalOpen =
-    (status === 'event' && !!currentEvent && !result) || !!result || bookOpen || prologueOpen
+    (status === 'event' && !!currentEvent && !result) || !!result || bookOpen || prologueOpen || repoOpen
 
   return (
     <>
@@ -90,13 +96,22 @@ export function Board() {
           </p>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1.5">
-          <button
-            type="button"
-            onClick={() => setBookOpen(true)}
-            className="rounded-lg border border-sky-700/60 bg-sky-900/30 px-2.5 py-1 text-xs font-semibold text-sky-200 transition hover:bg-sky-900/60"
-          >
-            <span aria-hidden="true">📖</span> 心得 {seenPrecepts.size}/{PRECEPTS.length}
-          </button>
+          <div className="flex gap-1.5">
+            <button
+              type="button"
+              onClick={() => setRepoOpen(true)}
+              className="rounded-lg border border-cyan-700/60 bg-cyan-900/30 px-2.5 py-1 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-900/60"
+            >
+              <span aria-hidden="true">🗂️</span> リポジトリ
+            </button>
+            <button
+              type="button"
+              onClick={() => setBookOpen(true)}
+              className="rounded-lg border border-sky-700/60 bg-sky-900/30 px-2.5 py-1 text-xs font-semibold text-sky-200 transition hover:bg-sky-900/60"
+            >
+              <span aria-hidden="true">📖</span> 心得 {seenPrecepts.size}/{PRECEPTS.length}
+            </button>
+          </div>
           <div className="flex gap-1.5">
             <button
               type="button"
@@ -118,6 +133,7 @@ export function Board() {
 
       {/* メーターHUD */}
       <MeterHUD meters={meters} />
+      <AiTokenBar aiTokens={aiTokens} />
       <p className="-mt-2 text-center text-[11px] text-slate-400">
         ⚠ 3つのゲージは、どれか1つでも <span className="text-rose-400">0</span> になると案件は終了。
         差し引きプラスでも、削りすぎは命取り。
@@ -215,7 +231,12 @@ export function Board() {
 
       {/* イベント＝判断モーダル（選択するとミニゲームへ） */}
       {status === 'event' && currentEvent && !result && !pendingChoice && (
-        <EventModal event={currentEvent} unexpected={unexpected} onChoose={setPendingChoice} />
+        <EventModal
+          event={currentEvent}
+          unexpected={unexpected}
+          aiTokens={aiTokens}
+          onChoose={setPendingChoice}
+        />
       )}
 
       {/* 実行ミニゲーム（選択後・結果前）。出来=tier で主正メーターを倍率調整 */}
@@ -239,6 +260,11 @@ export function Board() {
 
       {/* 心得手帳 */}
       {bookOpen && <PreceptBook seen={seenPrecepts} onClose={() => setBookOpen(false)} />}
+
+      {/* コードリポジトリ状態パネル */}
+      {repoOpen && (
+        <RepoPanel stats={repoStats({ resolvedIds, flags, aiTokens })} onClose={() => setRepoOpen(false)} />
+      )}
 
       {/* プロローグ（初回自動・以降は「あらすじ」から） */}
       {prologueOpen && <Prologue onClose={closePrologue} />}

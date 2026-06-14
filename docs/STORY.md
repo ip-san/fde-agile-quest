@@ -144,24 +144,38 @@
    - **PO（鷹野）** … 価値・優先度の観点
    - **スクラムマスター（久遠）** … プロセス・障害の観点
    - **開発メンバー（瀬川）** … 技術・事実の観点（※瀬川＝本社で支える新キャスト）
-3. **現地マップ**で行き先を選ぶ。場所は7つ：📦倉庫(genba)／🖥️電算室(trouble)／🏢情シス会議室(kokyaku)／
+3. **現地マップ**で行き先を選ぶ。場所は8つ：📦倉庫(genba)／🖥️電算室(trouble)／🏢情シス会議室(kokyaku)／
    🗄️総務部（庶務・入館証・稟議・契約）／🧑‍💼人事部（採用・評価・異動・人員）／🧮経理部（仕訳・決算・連結）／
-   💻ルーメン開発室【リモート接続】(team)。chanceは既定で倉庫、総務部/人事部/経理部はセグメント既定が無く
-   `location` 明示のイベント専用：
+   🗂️コードリポジトリ（コード・PR・テスト・生成AI・技術的負債）／💻ルーメン開発室【リモート接続】(team)。
+   chanceは既定で倉庫、総務部/人事部/経理部/リポジトリはセグメント既定が無く `location` 明示のイベント専用：
    - 総務部: 入館証/ガバナンス s1-soumu-access・入館証失効 s2-soumu-badge・稟議/承認 s2-soumu-ringi・
      人事評価の警告 s2-soumu-hyoka（守屋が総務から知らせる）・内部統制 s3-soumu-expense・不正の紙の裏取り s3-soumu-paper
    - 人事部: 偏る残業/勤怠 s1-jinji-roster・人員削減 s2-daily-costcut・出向の脅し s3-daily-faction（顔＝新田）
    - 経理部: 実体の見えない売上 s2-keiri-odd（手がかり）・連結の帳尻 s3-keiri-closing（証拠）（顔＝間宮）
+   - リポジトリ: AIに書かせるか自分で書くか s2-repo-aicode・AIモデル退化 s3-daily-ai-regression
    - 山場イベント（ghost-stock 等）は `location` で明示。
    ヒントが指す場所＝今日のイベントの場所へ着くと話が始まる。**外しても「今日は静か」の小景だけでペナルティ無し**
    （ヒント読みを促す）。
 
 - **単発セレモニー（プランニング/レビュー/レトロ＝会議）はマップ無し**。従来どおり「進める」で直接イベントへ。
 - 場所⇄セグメントの既定写像と役割ヒントは `src/data/locations.ts`（`LOCATION_BY_SEGMENT` / `hintsFor`）。
-  山場（ghost-stock=倉庫・circular=電算室・AI handoff/regression=開発室）と人事・政治系（costcut/faction=総務部）は
+  山場・部署系（ghost-stock=倉庫／circular=電算室／AI handoff=開発室・aicode/regression=リポジトリ／粉飾=経理部 等）は
   `location`＋手書き `hints` で印象づけ。
 - エンジンは `status:'travel'` と `arriveCore`（正しい場所→event／外し→peekLocation のみ）。**travel は一時状態で
   非永続**（リロードすると再びルーレットから。0ルール失敗時はそもそも travel に入らない）。
+
+### 4.2 生成AIトークン（消費型リソース）＋コードリポジトリ（状態パネル）
+
+- **生成AIトークン**: キャンペーンを通じた**有限予算**（初期 `AI_TOKENS_MAX=2000`・自然回復なし）。AIに頼る選択
+  （`Choice.tokenCost`）で消費する。**3ゲージ(trust/insight/culture)とは別枠＝0でも即失敗ではない**（0ルールはメーター専用）。
+  だが**残量が tokenCost に満たない選択は UI で封印**（`EventModal` が disabled）＝「AIショートカットが使えず、手で作るしかない」。
+  AIに丸投げするほど速いが（信頼+の“見える進捗”）、トークンが溶け、技術的負債が積もり、終盤の **AIモデル退化(s3-ai-regression)** が
+  効いてくる——という資源管理がAI過信アークと噛み合う。代表: `s2-repo-aicode`（AI丸投げ −500・setsFlag aiOverreliance）／
+  `s2-ai-handoff`（丸投げ −700）。
+- **コードリポジトリ**: ロケーション（🗂️＝開発の現場）＋**状態パネル**（ヘッダの「🗂️リポジトリ」ボタン）。パネルは新しい永続
+  フィールドを増やさず `repoStats()` が既存状態から導出：マージ済みPR（解決した team/trouble/repo/devroom イベント数）・
+  AIトークン残量・技術的負債（aiOverreliance→高／wrongKpi or AI多用→中／else 低）。
+- 永続化: `aiTokens` のみ Persisted に追加（旧セーブは欠落 → `restoreCore` が満タンで補完。範囲外は `clampTokens` で丸め）。
 
 | Sprint | タイトル | ゴール |
 |---|---|---|

@@ -41,7 +41,12 @@ export interface ProgressCore {
   pendingLocation: LocationId | null
   /** travel 中：直前に「外した」場所（＝今日は静か。小景を出すだけでペナルティ無し） */
   peekLocation: LocationId | null
+  /** 生成AIの残りトークン（消費型リソース。0でも即失敗ではないが、AIショートカットが封印される） */
+  aiTokens: number
 }
+
+/** 生成AIトークンの初期予算（キャンペーンを通じた有限資源・自然回復なし） */
+export const AI_TOKENS_MAX = 2000
 
 /** localStorage に保存する最小形 */
 export interface Persisted {
@@ -51,6 +56,8 @@ export interface Persisted {
   resolvedIds: string[]
   flags: GameFlag[]
   log: LogEntry[]
+  /** 生成AIの残りトークン（旧セーブには無いので復元時は AI_TOKENS_MAX で補完） */
+  aiTokens?: number
 }
 
 const METER_KEYS: MeterKey[] = ['trust', 'insight', 'culture']
@@ -82,7 +89,33 @@ export function freshCore(starting: Meters): ProgressCore {
     finalePending: false,
     pendingLocation: null,
     peekLocation: null,
+    aiTokens: AI_TOKENS_MAX,
   }
+}
+
+/** リポジトリ・パネル用の派生状態（純粋）。新規の永続フィールドを増やさず、既存状態から導出する。
+ *  - mergedPrs: 解決済みの“技術イベント”（team/trouble セグメント or repo/devroom）の数
+ *  - tokensUsed: 消費した生成AIトークン
+ *  - debt: 技術的負債の質的レベル（AI過信や誤KPIのツケ、AI多用で上がる） */
+export function repoStats(core: Pick<ProgressCore, 'resolvedIds' | 'flags' | 'aiTokens'>): {
+  mergedPrs: number
+  tokensUsed: number
+  tokensLeft: number
+  debt: 'low' | 'mid' | 'high'
+} {
+  let mergedPrs = 0
+  for (const ev of EVENTS) {
+    if (!core.resolvedIds.has(ev.id)) continue
+    const tech = ev.segment === 'team' || ev.segment === 'trouble' || ev.location === 'repo' || ev.location === 'devroom'
+    if (tech) mergedPrs++
+  }
+  const tokensUsed = AI_TOKENS_MAX - core.aiTokens
+  const debt: 'low' | 'mid' | 'high' = core.flags.has('aiOverreliance')
+    ? 'high'
+    : core.flags.has('wrongKpi') || tokensUsed >= AI_TOKENS_MAX * 0.5
+      ? 'mid'
+      : 'low'
+  return { mergedPrs, tokensUsed, tokensLeft: core.aiTokens, debt }
 }
 
 /** キャンペーン完走時のエンディング決定（純粋）。advanceCore と restoreCore で共用。
@@ -196,6 +229,9 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
   // ミニゲームの出来で「意図した正の効果」だけ倍率調整（負効果は不変＝代償と0ルールを守る）
   const amp = amplifyEffects(choice.effects, tier)
   const { meters, flags } = resolveChoice(core.meters, core.flags, { ...choice, effects: amp.effects })
+  // 生成AIトークンを消費（残量を超えては減らない＝0で下げ止まり。0でも即失敗にはしない）
+  const tokenSpent = choice.tokenCost && choice.tokenCost > 0 ? Math.min(choice.tokenCost, core.aiTokens) : 0
+  const aiTokens = core.aiTokens - tokenSpent
   const resolvedIds = new Set(core.resolvedIds).add(event.id)
   const log: LogEntry[] = [
     ...core.log,
@@ -223,9 +259,10 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
     execPrimary: amp.primary,
     execDelta: amp.delta,
     minigameKind: miniGameKindFor(event),
+    tokenSpent: tokenSpent || undefined,
   }
 
-  const base = { ...core, meters, flags, resolvedIds, log }
+  const base = { ...core, meters, flags, resolvedIds, log, aiTokens }
 
   // ★0ルール: どれか1つでもゲージが0になったら、その場で失敗エピローグ
   const zeroed = zeroedMeter(meters)
@@ -277,7 +314,15 @@ export function restoreCore(p: Persisted): ProgressCore {
     finalePending: fin.finalePending,
     pendingLocation: null,
     peekLocation: null,
+    // 旧セーブは aiTokens を持たない → 満タンで補完。範囲外は丸める
+    aiTokens: clampTokens(p.aiTokens ?? AI_TOKENS_MAX),
   }
+}
+
+/** AIトークンを 0..MAX の整数に丸める */
+export function clampTokens(v: number): number {
+  if (!Number.isFinite(v)) return AI_TOKENS_MAX
+  return Math.max(0, Math.min(AI_TOKENS_MAX, Math.floor(v)))
 }
 
 /** 永続データを書き出し用の最小形へ */
@@ -289,5 +334,6 @@ export function toPersisted(core: ProgressCore): Persisted {
     resolvedIds: [...core.resolvedIds],
     flags: [...core.flags],
     log: core.log,
+    aiTokens: core.aiTokens,
   }
 }

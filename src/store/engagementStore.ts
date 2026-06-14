@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { CEREMONY_ORDER, CHAPTER_TITLE, SPRINTS, STARTING_METERS } from '../data/chapters/chapter-01'
 import { PRECEPT_BY_ID } from '../data/precepts'
 import {
+  AI_TOKENS_MAX,
   type Persisted,
   type ProgressCore,
   arriveCore,
@@ -85,6 +86,7 @@ function coreOf(s: EngagementState): ProgressCore {
     finalePending: s.finalePending,
     pendingLocation: s.pendingLocation,
     peekLocation: s.peekLocation,
+    aiTokens: s.aiTokens,
   }
 }
 
@@ -140,6 +142,11 @@ export function isValidPersisted(x: unknown): x is Persisted {
   if (!o.resolvedIds.every((id) => typeof id === 'string')) return false
   if (!o.flags.every((f) => typeof f === 'string' && FLAG_SET.has(f))) return false
   if (!o.log.every(isValidLogEntry)) return false
+  // aiTokens は任意（旧セーブは無く restore 時に補完）。あるなら 0..MAX の整数のみ許可
+  if (o.aiTokens !== undefined) {
+    if (typeof o.aiTokens !== 'number' || !Number.isInteger(o.aiTokens) || o.aiTokens < 0 || o.aiTokens > AI_TOKENS_MAX)
+      return false
+  }
   const si = o.sprintIndex as number
   const bi = o.beatIndex as number
   if (si < 0 || si > SPRINTS.length) return false

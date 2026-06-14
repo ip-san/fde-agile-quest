@@ -219,6 +219,7 @@ export const EVENT_PRECEPTS: Record<string, number[]> = {
   's2-daily-courage': [27, 84],
   's2-daily-aidata': [59, 60],
   's2-daily-blamewar': [73, 27],
+  's2-daily-repo-aicode': [41, 49],
   's2-daily-keiri-odd': [73, 54],
   's2-daily-soumu-badge': [60, 28],
   's2-daily-soumu-hyoka': [79, 29],
