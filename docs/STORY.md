@@ -140,8 +140,9 @@
 3. **現地マップ**で行き先を選ぶ。場所は5つ：📦倉庫(genba)／🖥️電算室(trouble)／🏢情シス会議室(kokyaku)／
    🗄️総務部（人事・庶務・契約／社内政治）／💻ルーメン開発室【リモート接続】(team)。
    chanceは既定で倉庫、総務部はセグメント既定が無く `location` 明示のイベント専用
-   （入館証/ガバナンス s1-soumu-access・稟議/承認 s2-soumu-ringi・人事/政治 costcut/faction・
-   不正の紙の裏取り s3-soumu-paper）、山場イベントは `location` で明示。
+   （入館証/ガバナンス s1-soumu-access・入館証失効 s2-soumu-badge・稟議/承認 s2-soumu-ringi・
+   人事評価 s2-soumu-hyoka・人員/政治 costcut/faction・内部統制 s3-soumu-expense・不正の紙の裏取り
+   s3-soumu-paper）、山場イベントは `location` で明示。
    ヒントが指す場所＝今日のイベントの場所へ着くと話が始まる。**外しても「今日は静か」の小景だけでペナルティ無し**
    （ヒント読みを促す）。
 

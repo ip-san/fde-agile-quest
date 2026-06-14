@@ -1008,6 +1008,38 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ],
   },
   {
+    id: 's3-daily-soumu-expense',
+    sprint: 3,
+    ceremony: 'daily',
+    segment: 'trouble',
+    location: 'soumu',
+    hints: {
+      po: '経費まわりの統制が気になる。総務部で精算のフローを見てきて。',
+      sm: '承認が形骸化してるかも。総務部で手続きの実態を確かめて。',
+      dev: '領収書と承認印の運用がゆるい気がします。総務部で確かめてください。',
+    },
+    title: '経費の綻び',
+    narrative:
+      '経費精算の代理入力を頼まれ、ふと気づく。承認印は形だけ、領収書は後付けでも通ってしまう。内部統制がザルだ。これでは、数字はいくらでも作れてしまう——嫌な符合が、頭をよぎる。',
+    choices: [
+      {
+        id: 'a',
+        label: '自分の領分じゃない。言われた通り処理して返す',
+        effects: { trust: 1, insight: -1 },
+        resultText:
+          '波風を立てず、総務の覚えはよい（信頼+）。だが、見て見ぬふりをした統制の穴は、そのまま残った。',
+        warn: true,
+      },
+      {
+        id: 'b',
+        label: '統制の穴を、責めずに改善提案として総務へそっと添える',
+        effects: { culture: 1, insight: 1 },
+        resultText:
+          '誰かを責めるのでなく、仕組みで塞ぐ提案にした。{{ガバナンス}}は後付けにせず、設計で受け止める。組織が少し賢くなった。（事を荒立てない信頼+は取り逃す）',
+      },
+    ],
+  },
+  {
     id: 's3-daily-soumu-paper',
     sprint: 3,
     ceremony: 'daily',
