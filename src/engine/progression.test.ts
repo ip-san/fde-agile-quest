@@ -443,23 +443,51 @@ describe('生成AIトークン（消費型リソース）', () => {
   })
 })
 
-describe('repoStats（リポジトリ・パネルの派生状態）', () => {
-  it('技術イベントの解決数・トークン使用・負債を導出する', () => {
+describe('repoStats（リポジトリ＝開発の量と質を映す）', () => {
+  it('技術イベント数(PR)・トークン・カバレッジ・負債を導出する', () => {
     const stats = repoStats({
       resolvedIds: new Set(['s2-daily-repo-aicode']), // segment team / location repo＝技術
       flags: new Set(['aiOverreliance']),
       aiTokens: 800,
+      repoCoverage: 45,
+      repoDebt: 2,
     })
     expect(stats.mergedPrs).toBe(1)
     expect(stats.tokensLeft).toBe(800)
     expect(stats.tokensUsed).toBe(AI_TOKENS_MAX - 800)
-    expect(stats.debt).toBe('high') // aiOverreliance のツケ
+    expect(stats.coverage).toBe(45)
+    expect(stats.debtPoints).toBe(2)
+    expect(stats.debt).toBe('high') // 累積2 + 過信4 = 6 >= 5
   })
 
-  it('負債は AI過信なし・トークン温存なら low', () => {
-    const stats = repoStats({ resolvedIds: new Set(), flags: new Set(), aiTokens: AI_TOKENS_MAX })
+  it('良い開発（過信なし・負債0）は low、カバレッジ0', () => {
+    const stats = repoStats({
+      resolvedIds: new Set(),
+      flags: new Set(),
+      aiTokens: AI_TOKENS_MAX,
+      repoCoverage: 0,
+      repoDebt: 0,
+    })
     expect(stats.debt).toBe('low')
     expect(stats.mergedPrs).toBe(0)
+    expect(stats.coverage).toBe(0)
+  })
+
+  it('累積した雑さ(repoDebt)だけでも負債レベルが上がる（フラグ非依存）', () => {
+    const mk = (repoDebt: number) =>
+      repoStats({ resolvedIds: new Set(), flags: new Set(), aiTokens: AI_TOKENS_MAX, repoCoverage: 0, repoDebt }).debt
+    expect(mk(1)).toBe('low')
+    expect(mk(2)).toBe('mid')
+    expect(mk(5)).toBe('high')
+  })
+
+  it('chooseCore で choice.repo がカバレッジ/負債に積み上がる（0..100 / 0..でクランプ）', () => {
+    const good = chooseCore(eventCore(), choice({ insight: 1 }, { repo: { coverage: 30 } }))
+    expect(good.repoCoverage).toBe(30)
+    expect(good.repoDebt).toBe(0)
+    const messy = chooseCore(eventCore({ repoCoverage: 10 }), choice({ trust: 1 }, { repo: { coverage: -20, debt: 2 } }))
+    expect(messy.repoCoverage).toBe(0) // 10-20 を 0 で下げ止まり
+    expect(messy.repoDebt).toBe(2)
   })
 })
 

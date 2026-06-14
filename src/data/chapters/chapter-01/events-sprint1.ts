@@ -264,6 +264,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         id: 'a',
         label: '{{プロンプト}}に言葉を足し、呪文のように調整し続ける',
         effects: { insight: -1 },
+        repo: { debt: 1 },
         resultText:
           'プロンプトは呪文ではない。前提知識が無いまま言い回しをいじっても、的は外れたまま。',
         warn: true,
@@ -272,6 +273,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         id: 'b',
         label: '現場の用語と業務ルールを整理し、知識としてAIに渡す',
         effects: { insight: 1, culture: 1 },
+        repo: { coverage: 10 },
         resultText:
           '{{RAG}}の前に、まず知識を整理する。AIの出力が一気に現場に噛み合い始めた。',
       },
@@ -291,6 +293,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         id: 'a',
         label: 'レガシーを切り捨て、最新構成で作り直す前提で動く',
         effects: { insight: -1, trust: -1 },
+        repo: { debt: 1 },
         resultText:
           '「現場が回ってる仕組みを軽んじるな」と顧客の顔が曇る（信頼−）。{{レガシー}}には20年分の業務知識が埋まっている。',
         warn: true,
@@ -299,6 +302,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         id: 'b',
         label: 'レガシーと承認フローを“前提”として受け入れ、設計条件にする',
         effects: { insight: 1, culture: 1 },
+        repo: { coverage: 10 },
         resultText:
           '{{ガバナンス}}は敵でなく入場券。古い仕組みを笑わず読み解くと、本当の制約と業務の理由が見えた。',
       },

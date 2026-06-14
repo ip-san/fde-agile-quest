@@ -3,6 +3,8 @@ import { useFocusTrap } from '../hooks/useFocusTrap'
 
 interface RepoStats {
   mergedPrs: number
+  coverage: number
+  debtPoints: number
   tokensUsed: number
   tokensLeft: number
   debt: 'low' | 'mid' | 'high'
@@ -15,8 +17,8 @@ interface Props {
 
 const DEBT_VIEW: Record<RepoStats['debt'], { label: string; tone: string; note: string }> = {
   low: { label: '低（管理下）', tone: 'text-emerald-300', note: '今のところ、手の届く範囲。小さく作り、こまめに直せている。' },
-  mid: { label: '中（要注意）', tone: 'text-amber-300', note: '誤ったKPIのツケが、コードの形をして見え始めた。早めに返したい。' },
-  high: { label: '高（AI過信のツケ）', tone: 'text-rose-300', note: 'AIに頼り切ったコードが溜まり、中身を誰も把握しきれていない。退化に弱い。' },
+  mid: { label: '中（要注意）', tone: 'text-amber-300', note: '急いだツケ・省いたレビュー・誤ったKPIが、コードの形をして溜まり始めた。早めに返したい。' },
+  high: { label: '高（危険）', tone: 'text-rose-300', note: '丸投げ／レビュー省略が積もり、中身を誰も把握しきれていない。AIモデル退化にも弱い。' },
 }
 
 /** コードリポジトリの“状態パネル”。心得手帳と同じく、積み上がった開発の健康度を見る画面。
@@ -43,9 +45,30 @@ export function RepoPanel({ stats, onClose }: Props) {
         </header>
 
         <div className="space-y-3 overflow-y-auto px-5 py-4">
-          <Row icon="✅" label="マージ済みPR（開発・トラブル対応）">
+          <p className="text-[11px] leading-relaxed text-slate-400">
+            開発の“量”と“質”。PRが増え、カバレッジが上がり、負債が低いほど——健全に開発が進んでいる。
+          </p>
+
+          <Row icon="✅" label="マージ済みPR（開発の活動量）">
             <span className="tabular-nums text-slate-100">{stats.mergedPrs}</span>
           </Row>
+
+          {/* テストカバレッジ＝良い開発の積み上げ（拡充の質） */}
+          <div className="rounded-xl bg-slate-800/40 px-3 py-2.5">
+            <div className="mb-1 flex items-center justify-between text-xs">
+              <span className="text-slate-300">🧪 テストカバレッジ</span>
+              <span className="tabular-nums text-slate-400">{stats.coverage}%</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-slate-700">
+              <div
+                className={`h-full rounded-full transition-all ${stats.coverage >= 60 ? 'bg-emerald-400' : stats.coverage >= 30 ? 'bg-amber-400' : 'bg-slate-500'}`}
+                style={{ width: `${stats.coverage}%` }}
+              />
+            </div>
+            <p className="mt-1 text-[11px] text-slate-500">
+              レビュー・完成の定義・検証・リファクタの良い選択で上がる。
+            </p>
+          </div>
 
           <div className="rounded-xl bg-slate-800/40 px-3 py-2.5">
             <div className="mb-1 flex items-center justify-between text-xs">
@@ -66,7 +89,12 @@ export function RepoPanel({ stats, onClose }: Props) {
           </div>
 
           <Row icon="▲" label="技術的負債">
-            <span className={`font-semibold ${debt.tone}`}>{debt.label}</span>
+            <span className={`font-semibold ${debt.tone}`}>
+              {debt.label}
+              {stats.debtPoints > 0 && (
+                <span className="ml-1 text-[11px] font-normal text-slate-500">（{stats.debtPoints}pt）</span>
+              )}
+            </span>
           </Row>
           <p className="rounded-lg bg-slate-800/30 px-3 py-2 text-[11px] leading-relaxed text-slate-400">
             {debt.note}

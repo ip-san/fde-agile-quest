@@ -85,6 +85,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         id: 'b',
         label: '品質に妥協せず、リリースを1スプリント遅らせる',
         effects: { culture: 1, trust: -1 },
+        repo: { coverage: 10 },
         resultText:
           '締切を割り、結城さんは渋い顔（納期遅れで信頼−）。だがコードは持続可能で、チームは無理をしていない。',
       },
@@ -204,6 +205,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         id: 'a',
         label: '「AIが書いたものなので」と原因をAIに帰す',
         effects: { trust: -1, culture: -1 },
+        repo: { debt: 2 },
         resultText:
           'AIは速度をくれるが、責任はくれない。原因をAIに帰したことで現場は「直す気がない」と受け取り、信頼が削れた（責任回避で信頼−）。AIが書いたコードも、本番に出した以上はお前のコードだ。',
         warn: true,
@@ -212,6 +214,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         id: 'b',
         label: '自分の責任とし、AI生成コードのレビュー体制を敷く',
         effects: { insight: 1, culture: 1 },
+        repo: { coverage: 15 },
         resultText:
           'レビューを挟むぶん一時的に速度は落ちた（速く出す信頼+は取り逃す＝機会コスト）。だが「AIが書いてもレビューは人」がチームの作法になった。',
       },
@@ -219,6 +222,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         id: 'c',
         label: 'AIに回帰テストを大量生成させ、人のレビューと二重で品質を固める',
         effects: { trust: 1, insight: 1 },
+        repo: { coverage: 20 },
         resultText:
           '“評価なき生成は祈り”——今度は評価基準をAIに書かせ、人が検証した。在庫ズレが止まり、現場の信頼が戻った（実害を止めて信頼+）。AIトークンは要るが、これがAIとの正しい働き方だ。',
         tokenCost: 250,
@@ -578,6 +582,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         id: 'a',
         label: 'AIエージェントに丸ごと書かせて、すぐマージする',
         effects: { trust: 1, insight: -1 },
+        repo: { debt: 2, coverage: -10 },
         resultText:
           '数分でPRが上がり、すぐ動いた（速さが見えて信頼+）。だが中身は誰も分かっていない。技術的負債が静かに積もり、トークンも減った。',
         warn: true,
@@ -588,6 +593,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         id: 'b',
         label: '時間はかかるが、自分で設計して書き、テストを通す',
         effects: { insight: 1, culture: 1 },
+        repo: { coverage: 15 },
         resultText:
           'AIと働く——たたき台は借りても、設計と検証は自分の手で。把握できるコードと、通るテストが残った。（即マージの“見える進捗”信頼+は取り逃す）',
       },
@@ -612,6 +618,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         id: 'a',
         label: 'レビューも{{完成の定義}}も省いて、エージェントに丸投げで一気に進める',
         effects: { trust: 1, insight: -1 },
+        repo: { debt: 2, coverage: -10 },
         resultText:
           '驚くほど速く形になった（進捗が見えて信頼+）。検証は後回し——「動いてるからヨシ」。便利さに、深く寄りかかり始めた。AIトークンも、ごっそり溶けた。',
         warn: true,
@@ -622,6 +629,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         id: 'b',
         label: 'AIは下書きに使い、人のレビューと{{完成の定義}}を必ず通す',
         effects: { insight: 1, culture: 1 },
+        repo: { coverage: 15 },
         resultText:
           '速さは活かしつつ、出力は人の目で受け入れる。{{ハルシネーション}}は、ここで食い止める。（“全部お任せ”の速さが持つ信頼+は取り逃す）',
       },
@@ -640,6 +648,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         id: 'a',
         label: '理想を高く掲げ、フルの品質基準を一律で課す',
         effects: { culture: -1 },
+        repo: { debt: 1 },
         resultText:
           '基準は立派だが重すぎて、誰も守れず形骸化した。守れない{{完成の定義}}は、無いのと同じだ。',
         warn: true,
@@ -648,6 +657,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         id: 'b',
         label: 'まず守れる最小の{{完成の定義}}を決め、回しながら厳しくする',
         effects: { insight: 1, culture: 1 },
+        repo: { coverage: 10 },
         resultText:
           '小さく始めて、徐々に上げる。守れる基準だけが、品質を本当に支える。',
       },
@@ -856,6 +866,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         id: 'b',
         label: '予測の当たり外れを品目別に検証し、外しても痛くない範囲で先回りする',
         effects: { insight: 1 },
+        repo: { coverage: 10 },
         resultText:
           '当たる品から少しずつ。{{需要予測}}は、外れる前提で安全幅を設計する。',
       },

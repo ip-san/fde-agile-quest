@@ -43,7 +43,13 @@ export interface ProgressCore {
   peekLocation: LocationId | null
   /** 生成AIの残りトークン（消費型リソース。0でも即失敗ではないが、AIショートカットが封印される） */
   aiTokens: number
+  /** リポジトリのテストカバレッジ(0..100)。良い開発の選択で上がる＝健全な拡充の指標 */
+  repoCoverage: number
+  /** リポジトリの技術的負債（0..）。雑な開発で積もり、リファクタ/検証で減る */
+  repoDebt: number
 }
+
+export const REPO_COVERAGE_MAX = 100
 
 /** 生成AIトークンの初期予算（キャンペーンを通じた有限資源・自然回復なし）。
  *  消費源: 丸投げ s2-ai-handoff(700)/s2-repo-aicode(500)＝過信フラグ付き、賢い協働＝フラグ無しで小さく消費。
@@ -60,6 +66,9 @@ export interface Persisted {
   log: LogEntry[]
   /** 生成AIの残りトークン（旧セーブには無いので復元時は AI_TOKENS_MAX で補完） */
   aiTokens?: number
+  /** リポジトリのテストカバレッジ/技術的負債（旧セーブには無いので 0 で補完） */
+  repoCoverage?: number
+  repoDebt?: number
 }
 
 const METER_KEYS: MeterKey[] = ['trust', 'insight', 'culture']
@@ -92,16 +101,22 @@ export function freshCore(starting: Meters): ProgressCore {
     pendingLocation: null,
     peekLocation: null,
     aiTokens: AI_TOKENS_MAX,
+    repoCoverage: 0,
+    repoDebt: 0,
   }
 }
 
-/** リポジトリ・パネル用の派生状態（純粋）。新規の永続フィールドを増やさず、既存状態から導出する。
- *  - mergedPrs: 解決済みの“技術イベント”（team/trouble セグメント、または repo/devroom かつ非チャンス）の数
- *  - tokensUsed: 消費した生成AIトークン
- *  - debt: 技術的負債の質的レベル（AI過信=高 / 誤KPIのツケ=中 / それ以外=低）。
- *    ※AIに頼る選択は必ず aiOverreliance を立てる設計なので、トークン量ではなくフラグで判定する */
-export function repoStats(core: Pick<ProgressCore, 'resolvedIds' | 'flags' | 'aiTokens'>): {
+/** リポジトリ・パネル用の派生状態（純粋）。「拡充＝開発が進む」を“量”と“質”の両面で映す。
+ *  - mergedPrs: 解決済みの“技術イベント”の数＝開発の活動量（拡充の量）
+ *  - coverage: テストカバレッジ(0..100)＝良い開発で積み上がる健全度（拡充の質）
+ *  - debt: 技術的負債のレベル＝累積負債(repoDebt)＋過信/誤KPIフラグから判定（質の負の側）
+ *  - tokensUsed/Left: 生成AIトークン */
+export function repoStats(
+  core: Pick<ProgressCore, 'resolvedIds' | 'flags' | 'aiTokens' | 'repoCoverage' | 'repoDebt'>,
+): {
   mergedPrs: number
+  coverage: number
+  debtPoints: number
   tokensUsed: number
   tokensLeft: number
   debt: 'low' | 'mid' | 'high'
@@ -116,13 +131,18 @@ export function repoStats(core: Pick<ProgressCore, 'resolvedIds' | 'flags' | 'ai
       ((ev.location === 'repo' || ev.location === 'devroom') && ev.segment !== 'chance')
     if (tech) mergedPrs++
   }
-  const tokensUsed = AI_TOKENS_MAX - core.aiTokens
-  const debt: 'low' | 'mid' | 'high' = core.flags.has('aiOverreliance')
-    ? 'high'
-    : core.flags.has('wrongKpi')
-      ? 'mid'
-      : 'low'
-  return { mergedPrs, tokensUsed, tokensLeft: core.aiTokens, debt }
+  // 負債は「累積した雑さ(repoDebt)」＋「過信/誤KPIのフラグ」を合算して質的レベルへ
+  const flagWeight = (core.flags.has('aiOverreliance') ? 4 : 0) + (core.flags.has('wrongKpi') ? 2 : 0)
+  const score = core.repoDebt + flagWeight
+  const debt: 'low' | 'mid' | 'high' = score >= 5 ? 'high' : score >= 2 ? 'mid' : 'low'
+  return {
+    mergedPrs,
+    coverage: core.repoCoverage,
+    debtPoints: core.repoDebt,
+    tokensUsed: AI_TOKENS_MAX - core.aiTokens,
+    tokensLeft: core.aiTokens,
+    debt,
+  }
 }
 
 /** キャンペーン完走時のエンディング決定（純粋）。advanceCore と restoreCore で共用。
@@ -239,6 +259,9 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
   // 生成AIトークンを消費（残量を超えては減らない＝0で下げ止まり。0でも即失敗にはしない）
   const tokenSpent = choice.tokenCost && choice.tokenCost > 0 ? Math.min(choice.tokenCost, core.aiTokens) : 0
   const aiTokens = core.aiTokens - tokenSpent
+  // リポジトリの健全度（開発の質）を選択で更新。coverage は 0..100、debt は 0..へ丸める
+  const repoCoverage = clamp01(core.repoCoverage + (choice.repo?.coverage ?? 0), REPO_COVERAGE_MAX)
+  const repoDebt = Math.max(0, core.repoDebt + (choice.repo?.debt ?? 0))
   const resolvedIds = new Set(core.resolvedIds).add(event.id)
   const log: LogEntry[] = [
     ...core.log,
@@ -269,7 +292,7 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
     tokenSpent: tokenSpent || undefined,
   }
 
-  const base = { ...core, meters, flags, resolvedIds, log, aiTokens }
+  const base = { ...core, meters, flags, resolvedIds, log, aiTokens, repoCoverage, repoDebt }
 
   // ★0ルール: どれか1つでもゲージが0になったら、その場で失敗エピローグ
   const zeroed = zeroedMeter(meters)
@@ -323,6 +346,8 @@ export function restoreCore(p: Persisted): ProgressCore {
     peekLocation: null,
     // 旧セーブは aiTokens を持たない → 満タンで補完。範囲外は丸める
     aiTokens: clampTokens(p.aiTokens ?? AI_TOKENS_MAX),
+    repoCoverage: clamp01(p.repoCoverage ?? 0, REPO_COVERAGE_MAX),
+    repoDebt: Math.max(0, Math.floor(p.repoDebt ?? 0)),
   }
 }
 
@@ -330,6 +355,12 @@ export function restoreCore(p: Persisted): ProgressCore {
 export function clampTokens(v: number): number {
   if (!Number.isFinite(v)) return AI_TOKENS_MAX
   return Math.max(0, Math.min(AI_TOKENS_MAX, Math.floor(v)))
+}
+
+/** 0..max に丸める（カバレッジ用） */
+function clamp01(v: number, max: number): number {
+  if (!Number.isFinite(v)) return 0
+  return Math.max(0, Math.min(max, Math.round(v)))
 }
 
 /** 永続データを書き出し用の最小形へ */
@@ -342,5 +373,7 @@ export function toPersisted(core: ProgressCore): Persisted {
     flags: [...core.flags],
     log: core.log,
     aiTokens: core.aiTokens,
+    repoCoverage: core.repoCoverage,
+    repoDebt: core.repoDebt,
   }
 }

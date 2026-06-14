@@ -79,6 +79,9 @@ export interface Choice {
   warn?: boolean
   /** 生成AIに頼る選択が消費するトークン量（消費型リソース）。残量が足りないと選べない＝AIショートカット封印 */
   tokenCost?: number
+  /** リポジトリの健全度への影響（開発の質）。coverage=テストカバレッジ増減(%)、debt=技術的負債増減。
+   *  良い開発（レビュー/DoD/検証/リファクタ）で coverage+、雑な開発（丸投げ/省略）で debt+/coverage-。 */
+  repo?: { coverage?: number; debt?: number }
 }
 
 /** ルーレットで引かれるイベント */

@@ -50,6 +50,8 @@ export function Board() {
     aiTokens,
     resolvedIds,
     flags,
+    repoCoverage,
+    repoDebt,
     spin,
     arrive,
     proceed,
@@ -263,7 +265,10 @@ export function Board() {
 
       {/* コードリポジトリ状態パネル */}
       {repoOpen && (
-        <RepoPanel stats={repoStats({ resolvedIds, flags, aiTokens })} onClose={() => setRepoOpen(false)} />
+        <RepoPanel
+          stats={repoStats({ resolvedIds, flags, aiTokens, repoCoverage, repoDebt })}
+          onClose={() => setRepoOpen(false)}
+        />
       )}
 
       {/* プロローグ（初回自動・以降は「あらすじ」から） */}

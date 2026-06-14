@@ -86,6 +86,8 @@ function coreOf(s: EngagementState): ProgressCore {
     pendingLocation: s.pendingLocation,
     peekLocation: s.peekLocation,
     aiTokens: s.aiTokens,
+    repoCoverage: s.repoCoverage,
+    repoDebt: s.repoDebt,
   }
 }
 
@@ -145,6 +147,11 @@ export function isValidPersisted(x: unknown): x is Persisted {
   // 上限超過は破棄せず restoreCore の clampTokens に委ねる（MAX 引き下げ等で旧セーブを全消ししない）
   if (o.aiTokens !== undefined) {
     if (typeof o.aiTokens !== 'number' || !Number.isInteger(o.aiTokens) || o.aiTokens < 0) return false
+  }
+  // repoCoverage/repoDebt も任意（旧セーブは欠落 → restore で0補完）。負値/非整数のみ破損として弾く
+  for (const k of ['repoCoverage', 'repoDebt'] as const) {
+    const v = o[k]
+    if (v !== undefined && (typeof v !== 'number' || !Number.isInteger(v) || v < 0)) return false
   }
   const si = o.sprintIndex as number
   const bi = o.beatIndex as number

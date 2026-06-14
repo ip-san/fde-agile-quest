@@ -48,6 +48,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: 'KPIの誤りを認め、「誤出荷率」に立て直して作り直す',
         effects: { insight: 1, trust: -1 },
+        repo: { coverage: 5, debt: -1 },
         resultText:
           '「作り直し…？」と結城さんは渋い顔（前提の誤りを認めて信頼−）。痛い手戻りだが軌道修正した。上が崩れたら下は全部やり直す。',
       },
@@ -224,6 +225,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: 'AIに丸投げして、自分は次の案件へ',
         effects: { trust: 1, insight: -1 },
+        repo: { debt: 2 },
         resultText:
           '速く仕上げて見せたので顧客は一旦満足（信頼+）。だが現場差をAIは知らない。「AIを使う」だけでは、また別の沈黙を生む。',
         warn: true,
@@ -656,6 +658,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: 'とりあえずプロンプトを盛って、その場の出力を取り繕う',
         effects: { trust: -1, insight: -1 },
+        repo: { debt: 2, coverage: -10 },
         resultText:
           '一時はそれらしい数字に戻った。だが根本は{{リグレッション}}したまま。顧客に出した在庫提案がまたズレ、結城さんの信頼が削れた（顧客に実害＝信頼−）。{{ハルシネーション}}を、{{ハルシネーション}}で塗り重ねた。',
         warn: true,
@@ -664,6 +667,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'b',
         label: '一旦AIを“下書き”に格下げし、人の検証と{{完成の定義}}を作り直す',
         effects: { insight: 1, culture: 1 },
+        repo: { coverage: 15, debt: -1 },
         resultText:
           '出力は遅くなった。だが人の目を通す関所を取り戻し、二度と黙って壊れない構えにした。AIが書いた答えも、最後は自分の責任だ。',
       },
@@ -671,6 +675,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'c',
         label: '安定版に切り戻し、AIには“検証”を大量生成させて素早く立て直す',
         effects: { trust: 1, insight: 1 },
+        repo: { coverage: 15 },
         resultText:
           'AIに“答え”でなく“回帰テスト”を生成させ、人の関所は保ったまま一気に立て直した。{{充足率}}は即日戻り、結城さんが胸をなで下ろす（早い復旧＝信頼+）。AIは、こう使う。',
         tokenCost: 400,
