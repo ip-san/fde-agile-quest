@@ -26,6 +26,8 @@ export const AVAILABLE_IMAGES = new Set<string>([
   's3-daily-ai-regression', // 夜のオフィスで集中して原因を探るエンジニア（AIモデル退化の立て直し）
   's1-daily-soumu-access', // 総務部の受付カウンターで入館証の手続きを待つFDE（保守的な総務との折衝）
   's2-daily-keiri-odd', // 経理部で数値を指す経理担当と眉をひそめるFDE（実体の見えない売上＝手がかり）
+  // プロローグ4パネルの情景画像（cast.ts の PROLOGUE_PANELS.image）
+  'prologue-boardroom', // 役員会議：横ばいの売上グラフと沈鬱な役員、末席の主人公
 ])
 
 export function imageUrl(key: string): string {
