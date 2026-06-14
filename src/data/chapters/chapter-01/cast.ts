@@ -135,6 +135,16 @@ export const CAST: Character[] = [
     blurb:
       '現場改革に冷ややか。「3PLに移管してコストを切れ」と政治的に押す対立軸。社内政治の影。',
   },
+  {
+    id: 'moriya',
+    name: '守屋（もりや）',
+    role: 'カルゴ物流 総務部の担当',
+    side: 'cargo',
+    archetype: '規程の番人 → 紙の証人',
+    meterTie: 'culture',
+    blurb:
+      '規程と書類の番人。入館証・稟議・人事・経費を握る総務の窓口で、最初は杓子定規な「関所」。だが筋を通す相手には静かに心を開く。総務に流れる契約・請求・経費のすべてに通じ、やがて不正を照らす“紙の証人”になりうる。',
+  },
 ]
 
 export const CAST_BY_ID: Record<string, Character> = Object.fromEntries(
