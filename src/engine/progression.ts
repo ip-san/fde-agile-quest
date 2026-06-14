@@ -450,6 +450,16 @@ function clamp01(v: number, max: number): number {
   return Math.max(0, Math.min(max, Math.round(v)))
 }
 
+/** 顧客価値（成果＝北極星指標・0..100）。FDEの働きの“結実”を導出する：
+ *  3ゲージ(信頼/理解/巻き込み)の伸びを主軸(重み70)に、コードの健全度(カバレッジ・重み30)を足し、
+ *  技術的負債が引く。＝信頼を築き・現場を理解し・文化を残し・良いコードを積むほど、顧客価値が上がる。
+ *  これを高めることがゲームの基本目標。 */
+export function customerValue(meters: Meters, coverage: number, debtScore: number): number {
+  const meansSum = meters.trust + meters.insight + meters.culture // 0..30
+  const v = (meansSum / 30) * 70 + (Math.max(0, Math.min(100, coverage)) / 100) * 30 - Math.max(0, debtScore) * 2
+  return Math.max(0, Math.min(100, Math.round(v)))
+}
+
 /** 技術的負債が高いほど“良いコードが積み上がりにくい”ドラッグ係数（0.3..1.0）。
  *  負債スコア(repoDebt + 過信/誤KPI 加点) が大きいほどカバレッジの伸びが鈍る。 */
 export function coverageDrag(repoDebt: number, flags: Set<GameFlag>): number {

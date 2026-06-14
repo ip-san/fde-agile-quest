@@ -1,14 +1,16 @@
+import { CustomerValueBar } from './CustomerValueBar'
 import { MeterHUD } from './MeterHUD'
 import type { Epilogue, LogEntry, Meters } from '../types'
 
 interface Props {
   ending: Epilogue
   meters: Meters
+  customerValue: number
   log: LogEntry[]
   onReset: () => void
 }
 
-export function EndingScreen({ ending, meters, log, onReset }: Props) {
+export function EndingScreen({ ending, meters, customerValue, log, onReset }: Props) {
   const failed = ending.id.startsWith('fail-')
 
   return (
@@ -45,8 +47,9 @@ export function EndingScreen({ ending, meters, log, onReset }: Props) {
         {ending.reflection}
       </p>
 
-      <div>
+      <div className="space-y-2">
         <p className="mb-2 text-xs font-semibold text-slate-400">最終状態</p>
+        <CustomerValueBar value={customerValue} />
         <MeterHUD meters={meters} />
       </div>
 

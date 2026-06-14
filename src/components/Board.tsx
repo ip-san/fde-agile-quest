@@ -3,10 +3,11 @@ import { CEREMONY_LABELS, CEREMONY_SHORT, EVENTS, SPRINTS } from '../data/chapte
 import { PRECEPTS } from '../data/precepts'
 import { hearingThemeFor } from '../data/minigames'
 import { miniGameKindFor } from '../engine/game'
-import { isRouletteCeremony, repoStats } from '../engine/progression'
+import { customerValue, isRouletteCeremony, repoStats } from '../engine/progression'
 import { useEngagement } from '../store/engagementStore'
 import type { Choice, Ceremony } from '../types'
 import { AiTokenBar } from './AiTokenBar'
+import { CustomerValueBar } from './CustomerValueBar'
 import { RepoBar } from './RepoBar'
 import { EventLog } from './EventLog'
 import { EventModal } from './EventModal'
@@ -136,12 +137,17 @@ export function Board() {
         </div>
       </header>
 
-      {/* メーターHUD */}
-      <MeterHUD meters={meters} />
-      <AiTokenBar aiTokens={aiTokens} />
+      {/* HUD：北極星＝顧客価値（目標）→ 手段ゲージ（信頼/理解/巻込・AI・リポジトリ） */}
       {(() => {
         const rs = repoStats({ resolvedIds, flags, aiTokens, repoCoverage, repoDebt })
-        return <RepoBar coverage={rs.coverage} debt={rs.debt} debtScore={rs.debtScore} />
+        return (
+          <>
+            <CustomerValueBar value={customerValue(meters, rs.coverage, rs.debtScore)} />
+            <MeterHUD meters={meters} />
+            <AiTokenBar aiTokens={aiTokens} />
+            <RepoBar coverage={rs.coverage} debt={rs.debt} debtScore={rs.debtScore} />
+          </>
+        )
       })()}
       <p className="-mt-2 text-center text-[11px] text-slate-400">
         ⚠ 3つのゲージは、どれか1つでも <span className="text-rose-400">0</span> になると案件は終了。
