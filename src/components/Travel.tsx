@@ -6,6 +6,7 @@ import {
   type StandupVoice,
   standupFor,
 } from '../data/locations'
+import { displayName } from '../data/chapters/chapter-01/names'
 import type { GameEvent, LocationId } from '../types'
 import { RichText } from './RichText'
 
@@ -51,7 +52,7 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
           </span>
         </div>
         <p className="mb-2.5 px-1 text-[11px] text-slate-400">
-          本社ルーメンのチームが、今日それぞれ別の優先を推す。<span className="text-slate-300">あなたが動けるのは1箇所だけ</span>
+          本社{displayName('lumen')}のチームが、今日それぞれ別の優先を推す。<span className="text-slate-300">あなたが動けるのは1箇所だけ</span>
           ——どの声に賭ける？（選ばなかった方は見送りになる）
         </p>
 
@@ -82,7 +83,7 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
               <span className="rounded bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-sky-300">
                 FDE・現地
               </span>
-              <span className="ml-auto text-[10px] text-slate-500">📍 カルゴ物流</span>
+              <span className="ml-auto text-[10px] text-slate-500">📍 {displayName('cargo')}</span>
             </div>
             <p className="text-xs leading-relaxed text-slate-400">（どれが今日の“本当の火種”か。1つに賭ける）</p>
           </div>
