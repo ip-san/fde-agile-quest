@@ -1,5 +1,6 @@
 import { FINALE } from '../data/chapters/chapter-01'
 import type { GameFlag } from '../types'
+import { RichText } from './RichText'
 
 interface Props {
   /** 選んだ選択肢のフラグで結末を確定する */
@@ -19,7 +20,7 @@ export function Finale({ onResolve }: Props) {
       </div>
 
       <p className="rounded-2xl border border-amber-500/40 bg-amber-950/20 p-5 text-sm leading-relaxed text-slate-100">
-        {FINALE.prompt}
+        <RichText text={FINALE.prompt} />
       </p>
 
       <div className="space-y-2.5">
