@@ -7,6 +7,7 @@ import { isRouletteCeremony, repoStats } from '../engine/progression'
 import { useEngagement } from '../store/engagementStore'
 import type { Choice, Ceremony } from '../types'
 import { AiTokenBar } from './AiTokenBar'
+import { RepoBar } from './RepoBar'
 import { EventLog } from './EventLog'
 import { EventModal } from './EventModal'
 import { MeterHUD } from './MeterHUD'
@@ -138,6 +139,10 @@ export function Board() {
       {/* メーターHUD */}
       <MeterHUD meters={meters} />
       <AiTokenBar aiTokens={aiTokens} />
+      {(() => {
+        const rs = repoStats({ resolvedIds, flags, aiTokens, repoCoverage, repoDebt })
+        return <RepoBar coverage={rs.coverage} debt={rs.debt} debtScore={rs.debtScore} />
+      })()}
       <p className="-mt-2 text-center text-[11px] text-slate-400">
         ⚠ 3つのゲージは、どれか1つでも <span className="text-rose-400">0</span> になると案件は終了。
         差し引きプラスでも、削りすぎは命取り。

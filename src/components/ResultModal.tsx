@@ -166,6 +166,29 @@ export function ResultModal({ result, onContinue }: Props) {
             </div>
           ) : null}
 
+          {/* リポジトリ：コード（カバレッジ）／技術的負債の増減 */}
+          {result.coverageDelta || result.debtDelta ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-semibold text-slate-400">リポジトリ</span>
+              {result.coverageDelta ? (
+                <span
+                  className={`rounded-lg px-2.5 py-1 text-sm font-bold tabular-nums ${result.coverageDelta > 0 ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'}`}
+                >
+                  🗂️ コード {result.coverageDelta > 0 ? '▲ +' : '▼ '}
+                  {result.coverageDelta}%
+                </span>
+              ) : null}
+              {result.debtDelta ? (
+                <span
+                  className={`rounded-lg px-2.5 py-1 text-sm font-bold tabular-nums ${result.debtDelta > 0 ? 'bg-rose-500/15 text-rose-300' : 'bg-emerald-500/15 text-emerald-300'}`}
+                >
+                  ▲ 負債 {result.debtDelta > 0 ? '+' : ''}
+                  {result.debtDelta}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+
           {/* この場面のFDE心得（手帳に集まる） */}
           {result.precepts.length > 0 && (
             <div className="space-y-1.5 border-t border-slate-800 pt-3">

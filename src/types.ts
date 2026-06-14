@@ -176,6 +176,9 @@ export interface ResultView {
   minigameKind?: MiniGameKind
   /** この選択で消費した生成AIトークン（表示用。0/未消費なら省略） */
   tokenSpent?: number
+  /** この選択で動いたテストカバレッジ（負債ドラッグ適用後の実値）／技術的負債の差分（表示用） */
+  coverageDelta?: number
+  debtDelta?: number
   /** このイベントが体現するFDE心得のID（手帳に集まる） */
   precepts: number[]
   /** このうち、今回はじめて出会った心得のID（「NEW」表示用）。store が埋める */

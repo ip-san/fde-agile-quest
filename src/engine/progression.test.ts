@@ -10,6 +10,7 @@ import {
   advanceCore,
   arriveCore,
   canAfford,
+  coverageDrag,
   drawCandidates,
   repoStats,
   chooseCore,
@@ -498,6 +499,34 @@ describe('repoStats（リポジトリ＝開発の量と質を映す）', () => {
     const messy = chooseCore(eventCore({ repoCoverage: 10 }), choice({ trust: 1 }, { repo: { coverage: -20, debt: 2 } }))
     expect(messy.repoCoverage).toBe(0) // 10-20 を 0 で下げ止まり
     expect(messy.repoDebt).toBe(2)
+  })
+})
+
+describe('技術的負債のドラッグ（負債が高いほどコードが積み上がりにくい）', () => {
+  it('coverageDrag は負債/フラグでカバレッジの伸びを鈍らせる（0.3 で下げ止まり）', () => {
+    const none = new Set<GameFlag>()
+    expect(coverageDrag(0, none)).toBe(1)
+    expect(coverageDrag(3, none)).toBeCloseTo(0.7)
+    expect(coverageDrag(5, none)).toBeCloseTo(0.5)
+    expect(coverageDrag(100, none)).toBe(0.3)
+    expect(coverageDrag(0, new Set(['aiOverreliance']))).toBeCloseTo(0.6) // フラグも負債として効く
+  })
+
+  it('chooseCore: 負債が高いほど repo.coverage の正の伸びが鈍る（負の補正は不変）', () => {
+    const cov = (debt: number) =>
+      chooseCore(eventCore({ repoDebt: debt }), choice({ insight: 1 }, { repo: { coverage: 30 } }))
+    expect(cov(0).repoCoverage).toBe(30)
+    expect(cov(5).repoCoverage).toBe(15) // 30 * 0.5
+    expect(cov(0).result?.coverageDelta).toBe(30)
+    expect(cov(5).result?.coverageDelta).toBe(15)
+    // 負のカバレッジ（負債のダメージ）はドラッグ対象外
+    const neg = chooseCore(
+      eventCore({ repoCoverage: 20, repoDebt: 5 }),
+      choice({ trust: 1 }, { repo: { coverage: -10, debt: 1 } }),
+    )
+    expect(neg.repoCoverage).toBe(10)
+    expect(neg.result?.coverageDelta).toBe(-10)
+    expect(neg.result?.debtDelta).toBe(1)
   })
 })
 

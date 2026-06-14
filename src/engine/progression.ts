@@ -332,9 +332,13 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
   // 生成AIトークンを消費（残量を超えては減らない＝0で下げ止まり。0でも即失敗にはしない）
   const tokenSpent = choice.tokenCost && choice.tokenCost > 0 ? Math.min(choice.tokenCost, core.aiTokens) : 0
   const aiTokens = core.aiTokens - tokenSpent
-  // リポジトリの健全度（開発の質）を選択で更新。coverage は 0..100、debt は 0..へ丸める
-  const repoCoverage = clamp01(core.repoCoverage + (choice.repo?.coverage ?? 0), REPO_COVERAGE_MAX)
-  const repoDebt = Math.max(0, core.repoDebt + (choice.repo?.debt ?? 0))
+  // リポジトリの健全度（開発の質）を選択で更新。
+  // ★負債が高いほど“良いコードが積み上がりにくい”＝coverage の正の伸びをドラッグで鈍らせる（負の補正は不変）
+  const rawCov = choice.repo?.coverage ?? 0
+  const covDelta = rawCov > 0 ? Math.round(rawCov * coverageDrag(core.repoDebt, core.flags)) : rawCov
+  const repoCoverage = clamp01(core.repoCoverage + covDelta, REPO_COVERAGE_MAX)
+  const debtRaw = choice.repo?.debt ?? 0
+  const repoDebt = Math.max(0, core.repoDebt + debtRaw)
   const resolvedIds = new Set(core.resolvedIds).add(event.id)
   const log: LogEntry[] = [
     ...core.log,
@@ -363,6 +367,8 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
     execDelta: amp.delta,
     minigameKind: miniGameKindFor(event),
     tokenSpent: tokenSpent || undefined,
+    coverageDelta: covDelta || undefined,
+    debtDelta: debtRaw || undefined,
   }
 
   const base = { ...core, meters, flags, resolvedIds, log, aiTokens, repoCoverage, repoDebt }
@@ -442,6 +448,13 @@ export function clampTokens(v: number): number {
 function clamp01(v: number, max: number): number {
   if (!Number.isFinite(v)) return 0
   return Math.max(0, Math.min(max, Math.round(v)))
+}
+
+/** 技術的負債が高いほど“良いコードが積み上がりにくい”ドラッグ係数（0.3..1.0）。
+ *  負債スコア(repoDebt + 過信/誤KPI 加点) が大きいほどカバレッジの伸びが鈍る。 */
+export function coverageDrag(repoDebt: number, flags: Set<GameFlag>): number {
+  const score = Math.max(0, repoDebt) + (flags.has('aiOverreliance') ? 4 : 0) + (flags.has('wrongKpi') ? 2 : 0)
+  return Math.max(0.3, 1 - score * 0.1)
 }
 
 /** 永続データを書き出し用の最小形へ */
