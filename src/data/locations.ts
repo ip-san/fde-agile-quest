@@ -7,7 +7,7 @@
 // プレイヤーはマップで現地3箇所（倉庫/電算室/会議室）を歩いて回り、開発室だけは
 // リモート接続で“訪れる”。ルーレットで決まった今日のイベントの場所へ着くと話が始まる。
 // ───────────────────────────────────────────────────────────
-import type { DailyRole, GameEvent, LocationId, Segment } from '../types'
+import type { DailyRole, GameEvent, GameFlag, LocationId, Segment } from '../types'
 import { localizeDeep } from './chapters/chapter-01/names'
 
 export interface LocationDef {
@@ -328,54 +328,79 @@ const SEGMENT_LEAD: Record<Segment, DailyRole> = {
   chance: 'po',
 }
 
-// 役割＝人格ごとの“主張”バリアント。観点はスクラムの3つの責任（The Scrum Guide 2020）に接地:
-//   PO（鷹野）  = プロダクトの価値の最大化 → 価値・顧客KPI・優先順位から推す（確信の経営者）
-//   SM（久遠）  = スクラムチームの有効性／障害の除去 → 流れの滞り・スプリントゴールを塞ぐ障害から推す（問いを置くメンター）
-//   開発（瀬川）= DoD遵守で品質を作り込む → 技術的負債・テスト・壊れやすさ等“技術の事実”から推す（砕けた相棒）
-// 口調と切り口だけ変え、毎朝同じ読み上げに感じさせない。seed（イベントid由来）で1つ選ぶ＝
-// 同じ場面は同じ、場面が変われば言い回しも変わる。出典: The Scrum Guide 2020（REFERENCES.md §3）。
-const ADVOCACY_VARIANTS: Record<'po' | 'sm', ((title: string, loc: string) => string)[]> = {
+// ── 朝会の口上（advocacyLine）。10体調査が突き止めた“意味不明”の根本原因への対応 ───────────
+// 設計原則:
+// ① イベントtitleは“今日の論点／シーン題”（体言止め・否定文・問い・セリフ・皮肉）。価値/障害/負債と
+//    「断定」せず、その役割の「気がかり」と「現地で確かめてくる観点」として語る（調査の促し）。
+//    → どんな title でも称揚（粉飾やリストラを“価値”と持ち上げる等）にも非文にもならない。
+// ② title は bareTitle で前後の鉤括弧を1組剥がしてから一重の「」で括る（二重カギ括弧バグの解消）。
+// ③ 人事/総務/経理/不正など“価値・障害・コード”の語彙が不適切な題材は SENSITIVE バンクで中立に扱う。
+// ④ 開発（瀬川）はコード視点。リポジトリ/開発室は直接コードへ、それ以外は“確かめてコードに反映”。
+// 役割の人格: PO鷹野=確信の経営者 / SM久遠=問いを置く師 / dev瀬川=砕けた相棒（The Scrum Guide 2020 接地）。
+
+/** title 前後の鉤括弧（「」『』）を1組だけ剥がす。地の文の引用や二重括弧化を防ぐ。 */
+function bareTitle(t: string): string {
+  const m = t.match(/^[「『]([\s\S]*)[」』]$/)
+  return m ? m[1] : t
+}
+
+/** “価値/障害/コード”の語彙が不適切になる題材（人事・総務・経理・不正・社内政治）か。
+ *  中立バンクで「筋を通す/事実と記録を確かめる」として扱い、称揚・矮小化を避ける。 */
+function isSensitiveEvent(event: GameEvent): boolean {
+  const loc = locationOf(event)
+  if (loc === 'soumu' || loc === 'jinji' || loc === 'keiri') return true
+  const fraud = (f?: GameFlag) => f === 'fraudClue' || f === 'fraudCase'
+  return fraud(event.requiresFlag) || event.choices.some((c) => fraud(c.setsFlag))
+}
+
+type Line = (t: string, l: string) => string
+const PO_LINES: Line[] = [
+  (t, l) => `今日は「${t}」が気がかりだ。${l}で、お客さんにとって何がいちばん効くかを確かめてこよう。`,
+  (t, l) => `「${t}」、価値の芯はどこにある。${l}で優先順位を見極めてきてほしい。`,
+  (t, l) => `「${t}」の件、後回しにすると効くはずの価値を取り逃す。${l}を今日の最優先に。`,
+]
+const SM_LINES: Line[] = [
+  (t, l) => `「${t}」、流れに響きそうだ。${l}で、どこで詰まっているか見てきなさい。`,
+  (t, l) => `…急がなくていい。「${t}」が何なのか、${l}で確かめておきたい。`,
+  (t, l) => `「${t}」、放っておくほど絡まる類かもしれない。${l}で様子を見てきて。`,
+]
+const DEV_REPO_LINES: Line[] = [
+  (t, l) => `「${t}」、コードに手を入れに行きましょう。${l}でテストごと固めたいです。`,
+  (t, l) => `「${t}」は実装で片がつきます。${l}でリファクタして、DoD（完成の定義）まで通しましょう。`,
+  (t, l) => `「${t}」、AIに書かせた所が雑かもしれません。${l}でコードを読み直して計測を仕込みましょう。`,
+]
+const DEV_FIELD_LINES: Line[] = [
+  (t, l) => `「${t}」、たぶんデータか実装に跳ねます。${l}で事実を確かめたら、リポジトリで直しましょう。`,
+  (t, l) => `「${t}」、${l}の数字がシステムと噛み合ってるか怪しいです。事実を掴んでコードに反映を。`,
+  (t, l) => `「${t}」、最後はコードに返ってきます。${l}で要件を固めて、リポジトリで形にしましょう。`,
+]
+// 人事・総務・経理・不正など、価値/障害/コードで語ると称揚・矮小化になる題材。役割の人格は保ちつつ中立に。
+const SENSITIVE_LINES: Record<DailyRole, Line[]> = {
   po: [
-    (t, l) => `「${t}」——これは顧客の価値に直結する。${l}を最優先で、価値の大きい順に取ろう。`,
-    (t, l) => `お客さんの成果から逆算しよう。${l}の「${t}」が、いちばんKPIに効く。`,
-    (t, l) => `バックログの一番上はこれだよ。${l}で「${t}」の価値を、今スプリントで出しに行こう。`,
+    (t, l) => `「${t}」は、数字の見栄えより本質が問われる話だ。${l}で実態を確かめてこよう。`,
+    (t, l) => `「${t}」、目先の数字に流されたくない。${l}で何が起きているかを見極めてきて。`,
   ],
   sm: [
-    (t, l) => `「${t}」を放っておくと、流れが詰まる。先に${l}の滞りを解いておきたい。`,
-    (t, l) => `…焦らなくていい。だが${l}の「${t}」は、放置するほどスプリントゴールを塞ぐ障害になる。`,
-    (t, l) => `チームの足を止めている石はどれか。${l}の「${t}」を片づければ、流れが通る。`,
+    (t, l) => `「${t}」、無理に急がなくていい。${l}で何が起きているか、丁寧に確かめてきなさい。`,
+    (t, l) => `「${t}」、答えは資料の外だ。${l}で現場の事実に当たってきなさい。`,
+  ],
+  dev: [
+    (t, l) => `「${t}」、僕らの手に余るかもしれません。${l}で事実と記録だけは、きちんと押さえましょう。`,
+    (t, l) => `「${t}」、まず一次情報です。${l}で何が本当か、確かめてきましょう。`,
   ],
 }
 
-// 開発（瀬川）は“コードの人”。観点は常に技術／データ／実装で、最後はリポジトリに手を入れる方へ誘導する。
-// 物理拠点（倉庫・会議室など）でも「技術的負債／壊れやすい」と断じず、データ・システムの食い違いを“現地で
-// 確かめてコードに反映する”という、技術者として自然な動機で推す。リポジトリ／開発室ではコードそのものに向かう。
-const DEV_REPO_LINES: ((title: string, loc: string) => string)[] = [
-  (t, l) => `${l}の「${t}」、コードに手を入れに行きましょう。技術的負債になる前に、テストごと固めたいです。`,
-  (t, l) => `「${t}」は実装で片がつきます。${l}でリファクタして、DoD（完成の定義）まで通しましょう。`,
-  (t, l) => `「${t}」、AIに書かせた所が雑かもしれません。${l}でコードを読み直して、計測を仕込みましょう。`,
-]
-const DEV_FIELD_LINES: ((title: string, loc: string) => string)[] = [
-  (t, l) => `「${t}」、たぶんデータか実装の問題です。${l}で現物を確かめたら、リポジトリで直しましょう。`,
-  (t, l) => `${l}の「${t}」、数字がシステムと噛み合ってない気がします。事実を掴んで、コードに反映を。`,
-  (t, l) => `「${t}」は結局コードに跳ね返ってきます。${l}で要件を固めて、リポジトリで形にしましょう。`,
-]
-
-/** 役割ごとの“主張”（行き先＝候補の場所を、その役割の観点と人格で押す）。seed でバリアント選択。
- *  開発（瀬川）はコード視点で、リポジトリ／開発室なら直接コードへ、それ以外なら“確かめてコードに反映”へ誘導。 */
-function advocacyLine(
-  role: DailyRole,
-  title: string,
-  locShort: string,
-  seed: number,
-  location: LocationId,
-): string {
+/** 役割ごとの“主張”。title は調査対象として中立に括り（bareTitle＋一重「」）、その役割の観点で
+ *  「現地で確かめてくる」よう促す（断定しない）。題材が人事/不正等なら中立バンク。 */
+function advocacyLine(role: DailyRole, event: GameEvent, locShort: string, seed: number): string {
+  const t = bareTitle(event.title)
+  const pick = (bank: Line[]) => bank[Math.floor(frac(seed) * bank.length) % bank.length](t, locShort)
+  if (isSensitiveEvent(event)) return pick(SENSITIVE_LINES[role])
   if (role === 'dev') {
-    const bank = location === 'repo' || location === 'devroom' ? DEV_REPO_LINES : DEV_FIELD_LINES
-    return bank[Math.floor(frac(seed) * bank.length) % bank.length](title, locShort)
+    const loc = locationOf(event)
+    return pick(loc === 'repo' || loc === 'devroom' ? DEV_REPO_LINES : DEV_FIELD_LINES)
   }
-  const variants = ADVOCACY_VARIANTS[role]
-  return variants[Math.floor(frac(seed) * variants.length) % variants.length](title, locShort)
+  return pick(role === 'po' ? PO_LINES : SM_LINES)
 }
 
 /** イベントidから決定的なseed（バリアント選択用） */
@@ -431,7 +456,7 @@ export function standupFor(candidates: GameEvent[]): StandupVoice[] {
       const def = DAILY_ROLES[role]
       const loc = locationOf(c)
       const short = LOCATIONS[loc].short
-      const line = c.advocacy?.[role] ?? advocacyLine(role, c.title, short, idSeed(c.id), loc)
+      const line = c.advocacy?.[role] ?? advocacyLine(role, c, short, idSeed(c.id))
       return {
         role,
         name: def.name,
