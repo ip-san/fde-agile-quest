@@ -6,9 +6,8 @@ import { miniGameKindFor } from '../engine/game'
 import { customerValue, isRouletteCeremony, repoStats } from '../engine/progression'
 import { useEngagement } from '../store/engagementStore'
 import type { Choice, Ceremony } from '../types'
-import { AiTokenBar } from './AiTokenBar'
 import { CustomerValueBar } from './CustomerValueBar'
-import { RepoBar } from './RepoBar'
+import { SecondaryStats } from './SecondaryStats'
 import { EventLog } from './EventLog'
 import { EventModal } from './EventModal'
 import { MeterHUD } from './MeterHUD'
@@ -137,15 +136,19 @@ export function Board() {
         </div>
       </header>
 
-      {/* HUD：北極星＝顧客価値（目標）→ 手段ゲージ（信頼/理解/巻込・AI・リポジトリ） */}
+      {/* HUD：北極星＝顧客価値（目標・大）→ 3メーター（手段・0ルール対象）→ 従ゲージは1行に圧縮 */}
       {(() => {
         const rs = repoStats({ resolvedIds, flags, aiTokens, repoCoverage, repoDebt })
         return (
           <>
             <CustomerValueBar value={customerValue(meters, rs.coverage, rs.debtScore)} />
             <MeterHUD meters={meters} />
-            <AiTokenBar aiTokens={aiTokens} />
-            <RepoBar coverage={rs.coverage} debt={rs.debt} debtScore={rs.debtScore} />
+            <SecondaryStats
+              aiTokens={aiTokens}
+              coverage={rs.coverage}
+              debt={rs.debt}
+              onOpenDetail={() => setRepoOpen(true)}
+            />
           </>
         )
       })()}
