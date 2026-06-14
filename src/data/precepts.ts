@@ -155,6 +155,10 @@ export const PRECEPT_BY_ID: Record<number, Precept> = Object.fromEntries(
  * イベント定義から切り離して一覧管理（カバレッジの可視化・回帰テストがしやすい）。
  */
 export const EVENT_PRECEPTS: Record<string, number[]> = {
+  // 買収の皮肉アーク（親会社の実証ショーケース圧力 vs 現場の現実）
+  's1-daily-showcase-order': [73, 52], // 事実・推測・願望を分けろ / メトリクスは飾るな
+  's2-daily-showcase-visit': [62, 64], // レガシーを笑うな / 現場の手作業は未来のプロダクト仕様
+  's3-daily-showcase-report': [52, 89], // メトリクスは飾るな / 失敗を隠すな
   's1-plan-goal': [10, 37],
   's1-daily-warehouse': [1, 3, 9],
   's1-daily-logs': [6, 8],

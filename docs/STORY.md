@@ -249,8 +249,10 @@
 | `genbaTrust`/`topDown` | s2-retro（排他） | s3 review/retro バリアント | 主軸の分岐（§5） |
 | `fraudClue` | s2-daily-ghost-stock b（現場）／ s2-daily-keiri-odd b（会計） | s3 の証拠イベント群／フィナーレ（§6.5） | 不正暴露アークの“手がかり”（2ルート） |
 | `fraudCase` | s3-daily-circular b（データ）／ s3-daily-soumu-paper b（紙）／ s3-daily-keiri-closing b（会計）（いずれも要fraudClue） | フィナーレ（§6.5） | “動かぬ証拠”（3ルートのいずれかで成立） |
+| `showcasePressure` | s1-daily-showcase-order（a/b 両方で立つ） | s2-daily-showcase-visit／s3-daily-showcase-report（要showcasePressure） | 買収の皮肉アーク（§6.6・親会社の登場） |
 
 > いずれも「立てる側より配列で後ろ」に回収イベントを置く。デイリー回収は引けた周回のみ／背骨回収は確実。
+> 補足: `drawCandidates` がフラグ解放イベントを朝会候補に最優先するため、フラグが立った後の回収は実質確実に提示される。
 
 ---
 
@@ -283,6 +285,30 @@
   完走時のED/finalePending を決定。決断は exposed/complicit/coopted を**永続化**し、リロードでも結末が保たれる。
   手口の型は**実在の循環取引型粉飾に着想**（特定企業・事件のモデル化はしない／[`MOTIFS.md`](./MOTIFS.md) §4・
   [`../REFERENCES.md`](../REFERENCES.md) 参照）。
+
+---
+
+## 6.6 買収の皮肉アーク（親会社ジェネリック電機の登場）
+
+§1の背景設定——「フィジカルAI実証の場として買ったのに、現場はIT化すらされていないアナログ」という
+**買収の皮肉**——を、親会社を“institutionalな圧力”として実イベントに出すアーク（深いキャラは作らず、
+**視察団・グループ通達・経営報告**という顔の見えない圧力として登場させる）。`showcasePressure` フラグで
+3イベントが連鎖し、**夢（実証）と現実（アナログ現場）の落差**を巡って毎回「取り繕う／正直に出す」を問う。
+
+- **起点 `s1-daily-showcase-order`（会議室）**: グループ経営企画から「フィジカルAI実証の視察に行く、デモを
+  用意せよ」。だが現場は基本のIT化すらまだ。a=“AIらしい”画面を急ごしらえで取り繕う(warn, insight−)／
+  b=「実証の前にまず基本のIT化が要る」と正直に上げる(insight+/culture+)。**a/b 両方が `showcasePressure` を立て**、
+  視察→報告の連鎖が確実に続く（圧力は選択に関わらず存在する）。
+- **視察 `s2-daily-showcase-visit`（倉庫・要showcasePressure）**: 視察団が“動くAI”を期待して来るが、現実は
+  田淵さんの手書き台帳とフォークリフト。a=ベテランの手書きを隠してデモだけ見せ取り繕う(warn, culture−＝現場の
+  誇りを傷つける)／b=アナログの現実と地に足の改善を田淵さんと正直に見せる(insight+/culture+)。
+- **報告 `s3-daily-showcase-report`（会議室・要showcasePressure）**: グループへの実証報告。a=「実証は順調」と
+  見栄えの数字で盛る(warn, insight−／「盛った数字はいつか誰かが帳尻を合わせる」＝§6.5不正の温床へ薄く接続)／
+  b=「実証はまだ。だが現場は確かに動き始めた」と本物の進捗を正直に報告(insight+/culture+)。
+
+> テーマ的縦糸: §1「数字を盛る vs 正直」「まずIT化、フィジカルAIはその先」と直結。実在の特定企業・ファンド・
+> 事件は断定しない（親会社は“上からの見栄え圧力”の抽象装置）。メーター原則は維持（warn は負効果、正直側は
+> 取り逃す trust+ を結果文に明記）。
 
 ---
 
