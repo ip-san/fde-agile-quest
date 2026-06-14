@@ -641,7 +641,13 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
+    location: 'devroom',
     requiresFlag: 'aiOverreliance',
+    hints: {
+      po: '昨日まで賢かったAIの精度が急に落ちた。開発室で影響範囲を確かめて。',
+      sm: 'モデル更新でAIの挙動が変わったみたい。開発室で何が壊れたか切り分けよう。',
+      dev: 'AIの出力が急にバカになりました…。開発室に繋いで一緒に見てください。',
+    },
     title: 'モデル更新、突然のバカ',
     narrative:
       'ある朝、{{需要予測}}AIの出力が突然おかしくなった。提供元のモデルが黙って更新され、昨日まで通っていた在庫提案が軒並み的外れに。検証を省いて全面委任していた箇所が、一斉に火を噴く。{{欠品}}が広がり、{{充足率}}が急落していく。',
@@ -1032,6 +1038,12 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
+    location: 'serverroom',
+    hints: {
+      po: 'お客さんの数字の裏が気になる。電算室で取引データに当たってきて。',
+      sm: '部門の壁でデータが分断されてる。電算室で繋いで全体の流れを見て。',
+      dev: '同じ機材のシリアルが何度も出てくる気が。電算室で取引ログを追ってください。',
+    },
     requiresFlag: 'fraudClue',
     title: '書類の上だけ、ぐるぐる回る',
     narrative:

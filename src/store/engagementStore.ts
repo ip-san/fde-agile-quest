@@ -4,6 +4,7 @@ import { PRECEPT_BY_ID } from '../data/precepts'
 import {
   type Persisted,
   type ProgressCore,
+  arriveCore,
   ceremonyAt,
   chooseCore,
   dismissResultCore,
@@ -14,7 +15,7 @@ import {
   spinCore,
   toPersisted,
 } from '../engine/progression'
-import type { Ceremony, Choice, ExecTier, GameFlag, Segment } from '../types'
+import type { Ceremony, Choice, ExecTier, GameFlag, LocationId, Segment } from '../types'
 
 const STORAGE_KEY = 'fde-agile-quest:chapter-01-v2'
 // 心得手帳は「周回をまたいで集める」コレクションなので別キーで保存し、reset では消さない
@@ -30,6 +31,8 @@ interface EngagementState extends ProgressCore {
   /** 現在のセレモニー（位置から導出）。終了後は null */
   currentCeremony: () => Ceremony | null
   spin: (segment: Segment, pickRandom: number) => void
+  /** デイリーのマップで行き先を選ぶ。今日の場所なら event へ、外せば「静か」な小景 */
+  arrive: (location: LocationId) => void
   /** 単発セレモニーで「進める」。ルーレットを介さず直接イベントを出す */
   proceed: () => void
   /** tier＝選択後の実行ミニゲームの出来（省略時は good＝標準） */
@@ -80,6 +83,8 @@ function coreOf(s: EngagementState): ProgressCore {
     unexpected: s.unexpected,
     result: s.result,
     finalePending: s.finalePending,
+    pendingLocation: s.pendingLocation,
+    peekLocation: s.peekLocation,
   }
 }
 
@@ -176,9 +181,12 @@ export const useEngagement = create<EngagementState>((set, get) => ({
   spin: (segment, pickRandom) => {
     const next = spinCore(coreOf(get()), segment, pickRandom)
     set(next)
-    // イベント提示は一時状態なので保存しない。素通り前進（=durableな進行）した時だけ保存
-    if (next.status !== 'event') persistCore(next)
+    // travel/event は一時状態なので保存しない。素通り前進（=durableな進行）した時だけ保存
+    if (next.status !== 'event' && next.status !== 'travel') persistCore(next)
   },
+
+  // マップ移動は一時状態（travel↔event）なので永続化しない
+  arrive: (location) => set(arriveCore(coreOf(get()), location)),
 
   proceed: () => {
     const next = proceedCore(coreOf(get()))

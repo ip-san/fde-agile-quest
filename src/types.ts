@@ -31,8 +31,15 @@ export type GameFlag =
   | 'complicit'
   | 'coopted'
 
-/** 進行状態 */
-export type Status = 'playing' | 'event' | 'ended'
+/** 進行状態。travel＝デイリーでルーレット後、リモート朝会＋現地マップ移動の最中 */
+export type Status = 'playing' | 'travel' | 'event' | 'ended'
+
+/** 主人公が動き回る場所。現地3箇所＋リモート接続の開発室。デイリーのマップ移動で選ぶ */
+export type LocationId = 'warehouse' | 'serverroom' | 'client' | 'devroom'
+
+/** リモート・デイリースクラムで話す役割（画面の向こうのルーメンのチーム）。
+ *  役割ごとに「ヒントの観点」が違う＝スクラムの役割を自然に学ぶ */
+export type DailyRole = 'po' | 'sm' | 'dev'
 
 /** スクラムのセレモニー（スプリントの中の節目） */
 export type Ceremony = 'planning' | 'daily' | 'review' | 'retro'
@@ -79,6 +86,11 @@ export interface GameEvent {
   requiresFlag?: GameFlag
   /** 選択後の実行ミニゲームの種類。未指定なら segment から既定（作る/直す=dev、人と現場=hearing） */
   minigame?: MiniGameKind
+  /** このイベントが起きる場所。未指定なら segment から既定（locations.ts の LOCATION_BY_SEGMENT） */
+  location?: LocationId
+  /** リモート朝会の役割別ヒント（任意）。未指定の役割は場所テンプレから自動生成。
+   *  山場のイベントだけ手書きして印象づける */
+  hints?: Partial<Record<DailyRole, string>>
 }
 
 /** スプリント定義 */

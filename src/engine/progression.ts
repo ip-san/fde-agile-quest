@@ -3,6 +3,7 @@
 // store はこれらを呼ぶ薄いラッパに徹し、ここを game.test と同様に単体テストする。
 // ───────────────────────────────────────────────────────────
 import { ENDINGS, EVENTS, FAILURE_EPILOGUES, FINALE_EPILOGUES, SPRINTS } from '../data/chapters/chapter-01'
+import { locationOf } from '../data/locations'
 import { preceptsForEvent } from '../data/precepts'
 import { amplifyEffects, availableEvents, drawEvent, evaluateEnding, miniGameKindFor, resolveChoice } from './game'
 import type {
@@ -12,6 +13,7 @@ import type {
   ExecTier,
   GameEvent,
   GameFlag,
+  LocationId,
   LogEntry,
   MeterKey,
   Meters,
@@ -35,6 +37,10 @@ export interface ProgressCore {
   result: ResultView | null
   /** 完走したが、不正暴露アークの「暴露の決断」待ち（fraudClue 有りで未決断）。App が Finale を出す */
   finalePending: boolean
+  /** travel 中：今日のイベントが起きる場所（マップでここへ着くと話が始まる） */
+  pendingLocation: LocationId | null
+  /** travel 中：直前に「外した」場所（＝今日は静か。小景を出すだけでペナルティ無し） */
+  peekLocation: LocationId | null
 }
 
 /** localStorage に保存する最小形 */
@@ -74,6 +80,8 @@ export function freshCore(starting: Meters): ProgressCore {
     unexpected: false,
     result: null,
     finalePending: false,
+    pendingLocation: null,
+    peekLocation: null,
   }
 }
 
@@ -106,7 +114,16 @@ export function advanceCore(core: ProgressCore, result: ResultView | null = null
     beatIndex = 0
   }
 
-  const base = { ...core, sprintIndex, beatIndex, currentEvent: null, unexpected: false, result }
+  const base = {
+    ...core,
+    sprintIndex,
+    beatIndex,
+    currentEvent: null,
+    unexpected: false,
+    result,
+    pendingLocation: null,
+    peekLocation: null,
+  }
 
   if (sprintIndex >= SPRINTS.length) {
     const fin = finalEndingFor(core.meters, core.flags)
@@ -121,7 +138,8 @@ export function isRouletteCeremony(ceremony: Ceremony): boolean {
   return ceremony === 'daily'
 }
 
-/** 「進める」: セグメント不問で、現セレモニーの最初の出せるイベントを引く（重要分岐を必ず出す） */
+/** 「進める」: セグメント不問で、現セレモニーの最初の出せるイベントを引く（重要分岐を必ず出す）。
+ *  単発セレモニー（Planning/Review/Retro＝会議）はマップ移動を挟まず直接イベントへ */
 export function proceedCore(core: ProgressCore): ProgressCore {
   if (core.status !== 'playing') return core
   const ceremony = ceremonyAt(core.sprintIndex, core.beatIndex)
@@ -130,10 +148,11 @@ export function proceedCore(core: ProgressCore): ProgressCore {
   const avail = availableEvents(EVENTS, sprintNo, ceremony, core.resolvedIds, core.flags)
   const event = avail[0] ?? null
   if (!event) return advanceCore(core)
-  return { ...core, currentEvent: event, unexpected: false, status: 'event' }
+  return { ...core, currentEvent: event, unexpected: false, status: 'event', pendingLocation: null, peekLocation: null }
 }
 
-/** ルーレット結果セグメントから現セレモニーのイベントを引く */
+/** ルーレット結果セグメントから現セレモニーのイベントを引く。
+ *  引けたら travel（リモート朝会＋現地マップ移動）へ。着いてから event になる */
 export function spinCore(core: ProgressCore, segment: Segment, pickRandom: number): ProgressCore {
   if (core.status !== 'playing') return core
   const ceremony = ceremonyAt(core.sprintIndex, core.beatIndex)
@@ -145,8 +164,27 @@ export function spinCore(core: ProgressCore, segment: Segment, pickRandom: numbe
     // このビートに出せるイベントが無い → 何事もなく次へ
     return advanceCore(core)
   }
-  // 想定外バナーはデイリー（不確実な開発中）でのみ意味を持たせる
-  return { ...core, currentEvent: event, unexpected: unexpected && ceremony === 'daily', status: 'event' }
+  // デイリー（現場を回る日）だけ travel＝リモート朝会＋マップ移動を挟む。
+  // 想定外バナーもデイリー（不確実な開発中）でのみ意味を持たせる
+  const isDaily = ceremony === 'daily'
+  return {
+    ...core,
+    currentEvent: event,
+    unexpected: unexpected && isDaily,
+    status: isDaily ? 'travel' : 'event',
+    pendingLocation: isDaily ? locationOf(event) : null,
+    peekLocation: null,
+  }
+}
+
+/** マップで行き先を選ぶ。今日のイベントの場所なら話が始まる（event）。
+ *  外したら peekLocation を立てるだけ＝「今日は静か」の小景を出し、travel のまま留まる */
+export function arriveCore(core: ProgressCore, location: LocationId): ProgressCore {
+  if (core.status !== 'travel' || !core.currentEvent) return core
+  if (location === core.pendingLocation) {
+    return { ...core, status: 'event', peekLocation: null }
+  }
+  return { ...core, peekLocation: location }
 }
 
 /** 進行中イベントの選択を解決し、結果ビューを添えて次状態を返す。
@@ -199,6 +237,8 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
       status: 'ended',
       ending: FAILURE_EPILOGUES[zeroed],
       result,
+      pendingLocation: null,
+      peekLocation: null,
     }
   }
 
@@ -235,6 +275,8 @@ export function restoreCore(p: Persisted): ProgressCore {
     unexpected: false,
     result: null,
     finalePending: fin.finalePending,
+    pendingLocation: null,
+    peekLocation: null,
   }
 }
 

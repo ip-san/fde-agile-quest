@@ -13,6 +13,7 @@ import { PreceptBook } from './PreceptBook'
 import { Prologue } from './Prologue'
 import { ResultModal } from './ResultModal'
 import { Roulette } from './Roulette'
+import { Travel } from './Travel'
 
 /** イベントIDから決定的なシード（ミニゲームの内容選択用） */
 function seedFor(id: string): number {
@@ -43,7 +44,9 @@ export function Board() {
     result,
     generation,
     seenPrecepts,
+    peekLocation,
     spin,
+    arrive,
     proceed,
     choose,
     dismissResult,
@@ -167,26 +170,37 @@ export function Board() {
         })}
       </div>
 
-      {/* 現在のセレモニー + ルーレット/進める */}
+      {/* 現在のセレモニー + ルーレット/マップ/進める */}
       <div className="flex flex-1 flex-col items-center justify-center gap-3 py-2">
-        <p className="text-sm text-slate-300">
-          いまは <span className="font-bold text-sky-300">{CEREMONY_LABELS[ceremony]}</span>
-          <span className="ml-1 text-xs text-slate-400">
-            {useRoulette ? '— 回して、その日の出来事を見る' : '— 進めて始める'}
-          </span>
-        </p>
-        {useRoulette ? (
-          <Roulette key={generation} disabled={status !== 'playing' || !!result} onResult={spin} />
+        {status === 'travel' && currentEvent ? (
+          <Travel
+            event={currentEvent}
+            seed={seedFor(currentEvent.id)}
+            peekLocation={peekLocation}
+            onTravel={arrive}
+          />
         ) : (
-          <button
-            type="button"
-            onClick={proceed}
-            disabled={status !== 'playing' || !!result}
-            data-focus-return
-            className="rounded-xl bg-sky-500 px-10 py-3 text-lg font-bold text-slate-950 shadow-lg shadow-sky-500/30 transition hover:bg-sky-400 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-600 disabled:text-slate-400 disabled:shadow-none"
-          >
-            ▶ 進める
-          </button>
+          <>
+            <p className="text-sm text-slate-300">
+              いまは <span className="font-bold text-sky-300">{CEREMONY_LABELS[ceremony]}</span>
+              <span className="ml-1 text-xs text-slate-400">
+                {useRoulette ? '— 回して、その日の出来事を見る' : '— 進めて始める'}
+              </span>
+            </p>
+            {useRoulette ? (
+              <Roulette key={generation} disabled={status !== 'playing' || !!result} onResult={spin} />
+            ) : (
+              <button
+                type="button"
+                onClick={proceed}
+                disabled={status !== 'playing' || !!result}
+                data-focus-return
+                className="rounded-xl bg-sky-500 px-10 py-3 text-lg font-bold text-slate-950 shadow-lg shadow-sky-500/30 transition hover:bg-sky-400 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-600 disabled:text-slate-400 disabled:shadow-none"
+              >
+                ▶ 進める
+              </button>
+            )}
+          </>
         )}
       </div>
 

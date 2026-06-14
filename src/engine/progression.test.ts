@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { EVENTS, SPRINTS, STARTING_METERS } from '../data/chapters/chapter-01'
 import type { Choice, Effects, GameEvent, GameFlag, Meters, Status } from '../types'
 import { availableEvents } from './game'
+import { locationOf } from '../data/locations'
 import {
   type Persisted,
   type ProgressCore,
   advanceCore,
+  arriveCore,
   chooseCore,
   dismissResultCore,
   finalEndingFor,
@@ -335,25 +337,67 @@ describe('spinCore — 想定外(unexpected)の分岐', () => {
     sprint1DailyAll.filter((e) => e.segment !== keepSeg).map((e) => e.id),
   )
 
-  it('デイリーで該当セグメントが尽きていれば、別イベントを unexpected=true で出す', () => {
+  it('デイリーで該当セグメントが尽きていれば、別イベントを unexpected=true で出す（travel へ）', () => {
     const core: ProgressCore = {
       ...freshCore(STARTING_METERS),
       beatIndex: 1, // 最初の daily
       resolvedIds: resolvedExceptTeam,
     }
     const next = spinCore(core, requestSeg, 0)
-    expect(next.status).toBe('event')
+    expect(next.status).toBe('travel') // デイリーは朝会＋マップ移動を挟む
     expect(next.currentEvent?.segment).toBe(keepSeg) // 想定外＝別セグメントが出る
     expect(next.unexpected).toBe(true)
   })
 
-  it('デイリー以外（プランニング）では unexpected を抑制して false にする', () => {
+  it('デイリー以外（プランニング）では travel を挟まず直接 event・unexpected 抑制', () => {
     // sprint1 planning はイベント1件のみ。非該当セグメントを要求すると drawEvent は
-    // unexpected=true を返すが、spinCore はデイリー以外なので false へ抑制する
+    // unexpected=true を返すが、spinCore はデイリー以外なので false へ抑制し、直接 event
     const next = spinCore(freshCore(STARTING_METERS), 'genba', 0)
     expect(next.status).toBe('event')
     expect(next.currentEvent?.id).toBe('s1-plan-goal')
     expect(next.unexpected).toBe(false)
+    expect(next.pendingLocation).toBeNull()
+  })
+})
+
+describe('arriveCore — デイリーのマップ移動（リモート朝会の後）', () => {
+  // sprint1 daily を回して travel に入った core を作る
+  const travelCore = (): ProgressCore => {
+    const next = spinCore({ ...freshCore(STARTING_METERS), beatIndex: 1 }, 'genba', 0)
+    expect(next.status).toBe('travel')
+    return next
+  }
+
+  it('spinCore はデイリーで travel になり、pendingLocation がイベントの場所に一致', () => {
+    const t = travelCore()
+    expect(t.pendingLocation).not.toBeNull()
+    expect(t.pendingLocation).toBe(locationOf(t.currentEvent!))
+    expect(t.peekLocation).toBeNull()
+  })
+
+  it('正しい場所へ着くと event に進む（currentEvent は維持）', () => {
+    const t = travelCore()
+    const arrived = arriveCore(t, t.pendingLocation!)
+    expect(arrived.status).toBe('event')
+    expect(arrived.currentEvent).toBe(t.currentEvent)
+    expect(arrived.peekLocation).toBeNull()
+  })
+
+  it('違う場所を選ぶと travel のまま peekLocation を立てるだけ（ペナルティ無し）', () => {
+    const t = travelCore()
+    const wrong = (['warehouse', 'serverroom', 'client', 'devroom'] as const).find(
+      (l) => l !== t.pendingLocation,
+    )!
+    const peeked = arriveCore(t, wrong)
+    expect(peeked.status).toBe('travel')
+    expect(peeked.peekLocation).toBe(wrong)
+    expect(peeked.meters).toEqual(t.meters) // メーターは動かない
+    expect(peeked.currentEvent).toBe(t.currentEvent)
+  })
+
+  it('travel 以外では arriveCore は何もしない', () => {
+    const core = freshCore(STARTING_METERS)
+    expect(arriveCore(core, 'warehouse')).toBe(core)
   })
 })
 
