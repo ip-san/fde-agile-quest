@@ -118,6 +118,11 @@ export const AVAILABLE_IMAGES = new Set<string>([
   's3-daily-handover2', // 手順書か、橋本さんか（業務手順書を無視して人に聞く群衆）
   's3-daily-retro-owner', // 「やろう」で終わる改善（担当者名のないアクションアイテムで頷くチーム）
   's3-daily-bottleneck', // 窓口が、あなたで止まる（一人の開発者に群がる行列・属人化の帰結）
+  // kokyakuセグメント個別画像
+  's1-daily-scope', // 増えていく要望（次々と付箋を追加するステークホルダー）
+  's1-daily-jinji-roster', // 偏る残業（人事部で棒グラフを指差す・一人への集中が一目瞭然）
+  's1-review', // スプリントレビュー：まだ"機能"はない（空のスクリーンの前で困惑するPO）
+  's2-daily-pressure', // 横やりの催促（上司がデイリースクラムに乗り込んで予測機能を迫る）
   // プロローグ4パネルの情景画像（cast.ts の PROLOGUE_PANELS.image）
   'prologue-boardroom', // 役員会議：横ばいの売上グラフと沈鬱な役員、末席の主人公
   'prologue-summons', // 呼び出し：会議後の廊下で社長(鷹野)が主人公に語りかける、横に久遠
