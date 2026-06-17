@@ -31,6 +31,10 @@ export const AVAILABLE_IMAGES = new Set<string>([
   's3-review-topdown', // 本番デモが崩れ赤いエラーが並ぶ画面と凍りつくFDE（主軸の山場）
   's3-review-trust', // 現場の勘が組み込まれデモ成功・専務の視線が現場へ（主軸の山場）
   's3-daily-soumu-paper', // 守屋さんが棚の奥からファイルを出す（不正暴露の紙側）
+  's2-retro', // レトロで「暗黙知・課題」が赤丸・腕組みの田淵さん（主軸の分岐点）
+  's2-daily-costcut', // 人事部で新田さんが人員削減の書類を前に切り出す（「人を減らして数字を作れ」）
+  's3-daily-faction', // 課長がFDEに耳打ち・背後で現場が凍りつく（契約解除と出向の脅し）
+  's3-daily-keiri-closing', // 経理部で間宮さんと連結決算の循環を記録（不正暴露の会計ルート）
   // プロローグ4パネルの情景画像（cast.ts の PROLOGUE_PANELS.image）
   'prologue-boardroom', // 役員会議：横ばいの売上グラフと沈鬱な役員、末席の主人公
   'prologue-summons', // 呼び出し：会議後の廊下で社長(鷹野)が主人公に語りかける、横に久遠
