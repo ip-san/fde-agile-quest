@@ -24,6 +24,9 @@ export const AVAILABLE_IMAGES = new Set<string>([
   's2-retro__b__r', // FDEと田淵さんが並んで手順書を書く（genbaTrust選択の結果・信頼の入口）
   // 状況（問題）の個別画像 public/img/{eventId}.jpg
   's2-daily-ghost-stock', // 空の棚＝在るはずの機材が無い（不正暴露の入口）
+  's2-daily-showcase-visit', // スーツの視察団と手書き台帳の田淵さん・期待と現実のギャップ
+  's2-daily-missed-context', // 「うちの流れと違う」と田淵さんに指摘される的外れなMVP（現場ヒアリング省略の代償）
+  's2-daily-mvp', // スマホで手書きメモを撮影するFDE・小さな一手の着想（MVP）
   's2-daily-repo-aicode', // AI生成コードを前に思案するFDE（AIに書かせるか自分で書くか）
   's3-daily-ai-regression', // 夜のオフィスで集中して原因を探るエンジニア（AIモデル退化の立て直し）
   's1-daily-soumu-access', // 総務部の受付カウンターで入館証の手続きを待つFDE（保守的な総務との折衝）
@@ -46,6 +49,9 @@ export const AVAILABLE_IMAGES = new Set<string>([
   's3-daily-rework', // 誰も使わない新機能タブと、メモを続ける現場（wrongKpiの着地点）
   's3-retro-topdown', // 沈んだチームと現場の溝・頭を下げるFDE（topDownルートの結末）
   's1-daily-warehouse', // 倉庫の片隅・田淵さんが手書きノートで棚卸し・端末は埃をかぶる（最初の遭遇）
+  's1-daily-tanaoroshi', // 田淵さんが「毎月この棚だけズレる」と棚を指差す月次棚卸（暗黙知の入口）
+  's1-daily-5s', // 人気商品が遠い棚に・動線が交差する倉庫レイアウト（誤出荷の物理的原因）
+  's1-daily-hideknowhow', // 田淵さんが口を閉ざす・「見て覚えるもんだ」（ノウハウを隠す恐れ）
   's1-daily-feedback', // 「これ、全然使えない」と言われるレビューシーン（Sprint1序盤の厳しいダメ出し）
   's1-daily-jousys-gate', // サーバ室の扉で腕組みの結城係長・申請書を持つFDE（開かない城門）
   's1-retro', // Sprint1初レトロ・付箋だらけのホワイトボードを前にチームが集まる（形か本気か）
