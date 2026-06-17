@@ -20,12 +20,17 @@ export const AVAILABLE_IMAGES = new Set<string>([
   // 結果（顛末）の個別画像 public/img/{eventId}__{choiceId}__r.jpg は、
   // 問題画像と必ず別の絵を用意できたものだけここに追加する（同一絵の流用は不可）。
   's1-daily-warehouse__b__r', // 田淵さんの手書き台帳を一緒に覗く（信頼の入口）
+  's2-daily-ghost-stock__b__r', // 空の棚番をデータと照合する手元（不正暴露の入口・結果）
   // 状況（問題）の個別画像 public/img/{eventId}.jpg
   's2-daily-ghost-stock', // 空の棚＝在るはずの機材が無い（不正暴露の入口）
   's2-daily-repo-aicode', // AI生成コードを前に思案するFDE（AIに書かせるか自分で書くか）
   's3-daily-ai-regression', // 夜のオフィスで集中して原因を探るエンジニア（AIモデル退化の立て直し）
   's1-daily-soumu-access', // 総務部の受付カウンターで入館証の手続きを待つFDE（保守的な総務との折衝）
   's2-daily-keiri-odd', // 経理部で数値を指す経理担当と眉をひそめるFDE（実体の見えない売上＝手がかり）
+  's3-daily-circular', // 同じシリアルが複数社を巡る循環取引データ（不正暴露の核心）
+  's3-review-topdown', // 本番デモが崩れ赤いエラーが並ぶ画面と凍りつくFDE（主軸の山場）
+  's3-review-trust', // 現場の勘が組み込まれデモ成功・専務の視線が現場へ（主軸の山場）
+  's3-daily-soumu-paper', // 守屋さんが棚の奥からファイルを出す（不正暴露の紙側）
   // プロローグ4パネルの情景画像（cast.ts の PROLOGUE_PANELS.image）
   'prologue-boardroom', // 役員会議：横ばいの売上グラフと沈鬱な役員、末席の主人公
   'prologue-summons', // 呼び出し：会議後の廊下で社長(鷹野)が主人公に語りかける、横に久遠
