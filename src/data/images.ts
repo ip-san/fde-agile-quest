@@ -88,6 +88,8 @@ export const AVAILABLE_IMAGES = new Set<string>([
   's1-daily-rough', // オフィスで手を止めるエンジニア・完璧主義で出せない手が固まる
   's3-daily-ai-partner', // デュアルモニターでAI出力を批判的に精査するエンジニア（AIと協働）
   's3-daily-craft', // 夕暮れの会社玄関に立つエンジニア・次の現場へ向かう静かな決意
+  's1-daily-ai-chores', // AIで定型作業を終えたエンジニアが窓の外を見つめる（空いた時間をどう使うか）
+  's2-daily-depth', // 若手がAIコードを指して「専門性なんて要る？」・先輩が眉をひそめる（専門性の議論）
   // プロローグ4パネルの情景画像（cast.ts の PROLOGUE_PANELS.image）
   'prologue-boardroom', // 役員会議：横ばいの売上グラフと沈鬱な役員、末席の主人公
   'prologue-summons', // 呼び出し：会議後の廊下で社長(鷹野)が主人公に語りかける、横に久遠
