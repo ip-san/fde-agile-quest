@@ -21,6 +21,7 @@ export const AVAILABLE_IMAGES = new Set<string>([
   // 問題画像と必ず別の絵を用意できたものだけここに追加する（同一絵の流用は不可）。
   's1-daily-warehouse__b__r', // 田淵さんの手書き台帳を一緒に覗く（信頼の入口）
   's2-daily-ghost-stock__b__r', // 空の棚番をデータと照合する手元（不正暴露の入口・結果）
+  's2-retro__b__r', // FDEと田淵さんが並んで手順書を書く（genbaTrust選択の結果・信頼の入口）
   // 状況（問題）の個別画像 public/img/{eventId}.jpg
   's2-daily-ghost-stock', // 空の棚＝在るはずの機材が無い（不正暴露の入口）
   's2-daily-repo-aicode', // AI生成コードを前に思案するFDE（AIに書かせるか自分で書くか）
@@ -30,12 +31,20 @@ export const AVAILABLE_IMAGES = new Set<string>([
   's3-daily-circular', // 同じシリアルが複数社を巡る循環取引データ（不正暴露の核心）
   's3-review-topdown', // 本番デモが崩れ赤いエラーが並ぶ画面と凍りつくFDE（主軸の山場）
   's3-review-trust', // 現場の勘が組み込まれデモ成功・専務の視線が現場へ（主軸の山場）
+  's3-retro-trust', // 田淵さんが「仕事を奪いに来たと思ってた」と打ち明ける最終レトロ（genbaTrustルートのフィナーレ）
   's3-daily-soumu-paper', // 守屋さんが棚の奥からファイルを出す（不正暴露の紙側）
   's2-retro', // レトロで「暗黙知・課題」が赤丸・腕組みの田淵さん（主軸の分岐点）
+  's2-plan-kpi', // KPI設定会議：「機能数」か「誤出荷率」か（wrongKpiFlagの起点）
   's2-daily-costcut', // 人事部で新田さんが人員削減の書類を前に切り出す（「人を減らして数字を作れ」）
   's3-daily-faction', // 課長がFDEに耳打ち・背後で現場が凍りつく（契約解除と出向の脅し）
+  's3-daily-mentor', // 夜の倉庫で久遠さんがコーヒーを差し出す（FDE哲学の問い）
+  's3-daily-stuck-base', // 警告ログが流れるレガシー基盤（missedUpgradeの着地点）
+  's3-daily-lastman', // 空いた椅子を囲み全員が顔を見合わせる（組織のAccountability欠如）
   's3-daily-keiri-closing', // 経理部で間宮さんと連結決算の循環を記録（不正暴露の会計ルート）
+  's3-daily-rework', // 誰も使わない新機能タブと、メモを続ける現場（wrongKpiの着地点）
+  's3-retro-topdown', // 沈んだチームと現場の溝・頭を下げるFDE（topDownルートの結末）
   's1-daily-warehouse', // 倉庫の片隅・田淵さんが手書きノートで棚卸し・端末は埃をかぶる（最初の遭遇）
+  's1-daily-feedback', // 「これ、全然使えない」と言われるレビューシーン（Sprint1序盤の厳しいダメ出し）
   's1-daily-jousys-gate', // サーバ室の扉で腕組みの結城係長・申請書を持つFDE（開かない城門）
   's2-daily-shadow-it', // 「シャドーIT禁止」付箋・三者の攻防（野良ツール発覚）
   // プロローグ4パネルの情景画像（cast.ts の PROLOGUE_PANELS.image）
