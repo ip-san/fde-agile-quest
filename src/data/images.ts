@@ -35,6 +35,9 @@ export const AVAILABLE_IMAGES = new Set<string>([
   's2-daily-costcut', // 人事部で新田さんが人員削減の書類を前に切り出す（「人を減らして数字を作れ」）
   's3-daily-faction', // 課長がFDEに耳打ち・背後で現場が凍りつく（契約解除と出向の脅し）
   's3-daily-keiri-closing', // 経理部で間宮さんと連結決算の循環を記録（不正暴露の会計ルート）
+  's1-daily-warehouse', // 倉庫の片隅・田淵さんが手書きノートで棚卸し・端末は埃をかぶる（最初の遭遇）
+  's1-daily-jousys-gate', // サーバ室の扉で腕組みの結城係長・申請書を持つFDE（開かない城門）
+  's2-daily-shadow-it', // 「シャドーIT禁止」付箋・三者の攻防（野良ツール発覚）
   // プロローグ4パネルの情景画像（cast.ts の PROLOGUE_PANELS.image）
   'prologue-boardroom', // 役員会議：横ばいの売上グラフと沈鬱な役員、末席の主人公
   'prologue-summons', // 呼び出し：会議後の廊下で社長(鷹野)が主人公に語りかける、横に久遠
