@@ -74,6 +74,13 @@ export const AVAILABLE_IMAGES = new Set<string>([
   's1-daily-jousys-gate', // サーバ室の扉で腕組みの結城係長・申請書を持つFDE（開かない城門）
   's1-retro', // Sprint1初レトロ・付箋だらけのホワイトボードを前にチームが集まる（形か本気か）
   's2-daily-shadow-it', // 「シャドーIT禁止」付箋・三者の攻防（野良ツール発覚）
+  // troubleセグメント個別画像
+  's1-daily-bottleneck', // 橋本さんの机に行列・ホワイトボードにWMSトラブル・棚番変更・配車（詰まりの一点）
+  's1-daily-incident', // 夕方のWMSフリーズ・ERROR画面を囲む作業員・一人は電話中（出荷直前の危機）
+  's3-daily-sre', // 深夜の空いたオフィスで一人エンジニア・エナジードリンク・エラーログ画面（本番障害）
+  's3-daily-blame', // 役員が前傾みで指さし・チームが俯く会議室（「誰のミスだ」犯人探し）
+  's2-daily-soumu-badge', // 赤いERRORランプのゲートで困惑するエンジニア・受付で書類を持つ総務（失効した入館証）
+  's3-daily-leadership', // 壁の時計・全員が顔を見合わせ沈黙する会議室（「誰が決めるのか」）
   // プロローグ4パネルの情景画像（cast.ts の PROLOGUE_PANELS.image）
   'prologue-boardroom', // 役員会議：横ばいの売上グラフと沈鬱な役員、末席の主人公
   'prologue-summons', // 呼び出し：会議後の廊下で社長(鷹野)が主人公に語りかける、横に久遠
