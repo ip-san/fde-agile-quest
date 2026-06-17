@@ -81,6 +81,13 @@ export const AVAILABLE_IMAGES = new Set<string>([
   's3-daily-blame', // 役員が前傾みで指さし・チームが俯く会議室（「誰のミスだ」犯人探し）
   's2-daily-soumu-badge', // 赤いERRORランプのゲートで困惑するエンジニア・受付で書類を持つ総務（失効した入館証）
   's3-daily-leadership', // 壁の時計・全員が顔を見合わせ沈黙する会議室（「誰が決めるのか」）
+  // chanceセグメント個別画像
+  's2-daily-idea', // 倉庫事務室・ベテランがエンジニアのノートPCを指差し改善案を提案（現場からの改善案）
+  's2-daily-leadtime', // 会議室・係長がグラフ画面に身を乗り出す・需要予測への期待
+  's3-daily-scale', // 役員会議室・地図を指す役員・拠点展開の野心（横展開の誘い）
+  's1-daily-rough', // オフィスで手を止めるエンジニア・完璧主義で出せない手が固まる
+  's3-daily-ai-partner', // デュアルモニターでAI出力を批判的に精査するエンジニア（AIと協働）
+  's3-daily-craft', // 夕暮れの会社玄関に立つエンジニア・次の現場へ向かう静かな決意
   // プロローグ4パネルの情景画像（cast.ts の PROLOGUE_PANELS.image）
   'prologue-boardroom', // 役員会議：横ばいの売上グラフと沈鬱な役員、末席の主人公
   'prologue-summons', // 呼び出し：会議後の廊下で社長(鷹野)が主人公に語りかける、横に久遠
