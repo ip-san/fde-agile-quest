@@ -36,6 +36,8 @@ export const AVAILABLE_IMAGES = new Set<string>([
   's2-retro', // レトロで「暗黙知・課題」が赤丸・腕組みの田淵さん（主軸の分岐点）
   's2-plan-kpi', // KPI設定会議：「機能数」か「誤出荷率」か（wrongKpiFlagの起点）
   's2-daily-costcut', // 人事部で新田さんが人員削減の書類を前に切り出す（「人を減らして数字を作れ」）
+  's2-daily-blamewar', // 会議室で責任を押し付け合う結城さんと業務側・専務の機嫌が悪化（組織の機能不全）
+  's2-daily-demofail', // レビュー前夜・エラー画面を前に深夜一人で向き合うFDE（本番前夜の危機）
   's3-daily-faction', // 課長がFDEに耳打ち・背後で現場が凍りつく（契約解除と出向の脅し）
   's3-daily-mentor', // 夜の倉庫で久遠さんがコーヒーを差し出す（FDE哲学の問い）
   's3-daily-stuck-base', // 警告ログが流れるレガシー基盤（missedUpgradeの着地点）
@@ -46,6 +48,7 @@ export const AVAILABLE_IMAGES = new Set<string>([
   's1-daily-warehouse', // 倉庫の片隅・田淵さんが手書きノートで棚卸し・端末は埃をかぶる（最初の遭遇）
   's1-daily-feedback', // 「これ、全然使えない」と言われるレビューシーン（Sprint1序盤の厳しいダメ出し）
   's1-daily-jousys-gate', // サーバ室の扉で腕組みの結城係長・申請書を持つFDE（開かない城門）
+  's1-retro', // Sprint1初レトロ・付箋だらけのホワイトボードを前にチームが集まる（形か本気か）
   's2-daily-shadow-it', // 「シャドーIT禁止」付箋・三者の攻防（野良ツール発覚）
   // プロローグ4パネルの情景画像（cast.ts の PROLOGUE_PANELS.image）
   'prologue-boardroom', // 役員会議：横ばいの売上グラフと沈鬱な役員、末席の主人公
