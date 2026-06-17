@@ -37,6 +37,12 @@ export const AVAILABLE_IMAGES = new Set<string>([
   's3-retro-trust', // 田淵さんが「仕事を奪いに来たと思ってた」と打ち明ける最終レトロ（genbaTrustルートのフィナーレ）
   's3-daily-soumu-paper', // 守屋さんが棚の奥からファイルを出す（不正暴露の紙側）
   's2-retro', // レトロで「暗黙知・課題」が赤丸・腕組みの田淵さん（主軸の分岐点）
+  's1-plan-goal', // 「予測機能を約束した」と急かす結城さん・FDEが初日に迫られる選択（ゲーム最初のイベント）
+  's1-daily-showcase-order', // 親会社のPhysicalAIデモ指令・窓越し倉庫と書類「Gap vs. Reality」（kokyaku）
+  's2-daily-stakeholders', // 会議室・3者が同じ資料に全く違う反応（ステークホルダーごとに「成功」が違う）
+  's3-daily-showcase-report', // 役員会議室・地味な成果を発表するFDE・失望した役員たち（期待vs現実の落差）
+  's3-daily-handoff-trust', // 倉庫事務室・ベテランが「抜けたら元に戻るんじゃ」と前傾みで問いかける
+  's2-daily-promise-gap', // タスク消化するFDE・ガラス越しに手書き作業が続く倉庫（ゴールの空回り）
   's2-plan-kpi', // KPI設定会議：「機能数」か「誤出荷率」か（wrongKpiFlagの起点）
   's2-daily-costcut', // 人事部で新田さんが人員削減の書類を前に切り出す（「人を減らして数字を作れ」）
   's2-daily-blamewar', // 会議室で責任を押し付け合う結城さんと業務側・専務の機嫌が悪化（組織の機能不全）
