@@ -2,11 +2,13 @@
 // 進行ロジック（純粋関数）。localStorage / zustand / 乱数源に依存しない。
 // store はこれらを呼ぶ薄いラッパに徹し、ここを game.test と同様に単体テストする。
 // ───────────────────────────────────────────────────────────
-import { ENDINGS, EVENTS, FAILURE_EPILOGUES, FINALE_EPILOGUES, SPRINTS } from '../data/chapters/chapter-01'
+import { ENDINGS, EVENTS, FAILURE_EPILOGUES, FINALE_EPILOGUES, PRODUCT_BACKLOG, SPRINTS } from '../data/chapters/chapter-01'
 import { LOCATION_ORDER, locationOf } from '../data/locations'
 import { preceptsForEvent } from '../data/precepts'
+import { isKnownPbi, resolveSprintBacklog } from './backlog'
 import { amplifyEffects, availableEvents, drawEvent, evaluateEnding, miniGameKindFor, resolveChoice } from './game'
 import type {
+  BacklogReview,
   Ceremony,
   Choice,
   Epilogue,
@@ -52,6 +54,15 @@ export interface ProgressCore {
   /** スプリントごとに“プランニングで決めた”ゴール（index=sprintIndex）。未決定の枠は undefined。
    *  プランニングの選択肢が choice.sprintGoal を持つと、その周回で選んだ狙いが表示ゴールになる。 */
   sprintGoals: string[]
+  // ── バックログ（daily ルーレットとは独立した別レイヤー）──
+  /** プロダクトバックログの現在の優先順位（PBI id 列。初期＝シード順、プレイヤーが提案で並べ替え） */
+  backlogOrder: string[]
+  /** 今スプリントの予測（フォーキャスト）＝スプリントバックログに引いた PBI id 群 */
+  sprintForecast: string[]
+  /** DoD 達成済み PBI id（キャンペーン通算） */
+  backlogDone: string[]
+  /** スプリントごとの完了ポイント（ベロシティ。index=sprintIndex）。容量算出と推移表示に使う */
+  velocity: number[]
 }
 
 export const REPO_COVERAGE_MAX = 100
@@ -76,6 +87,11 @@ export interface Persisted {
   repoDebt?: number
   /** プランニングで決めたスプリントゴール（旧セーブには無いので [] で補完） */
   sprintGoals?: string[]
+  /** バックログ状態（旧セーブには無いので restore 時に補完） */
+  backlogOrder?: string[]
+  sprintForecast?: string[]
+  backlogDone?: string[]
+  velocity?: number[]
 }
 
 const METER_KEYS: MeterKey[] = ['trust', 'insight', 'culture']
@@ -112,6 +128,10 @@ export function freshCore(starting: Meters): ProgressCore {
     repoCoverage: 0,
     repoDebt: 0,
     sprintGoals: [],
+    backlogOrder: PRODUCT_BACKLOG.map((p) => p.id),
+    sprintForecast: [],
+    backlogDone: [],
+    velocity: [],
   }
 }
 
@@ -376,6 +396,20 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
       resultText: choice.resultText,
     },
   ]
+
+  const choiceBase = { ...core, meters, flags, resolvedIds, log, aiTokens, repoCoverage, repoDebt, sprintGoals }
+
+  // スプリントレビューを解決した瞬間に、スプリントバックログ（別レイヤー）を精算する：
+  // 予測を優先順に容量まで done、超過は持ち越し、ベロシティ記録、予測の健全さで culture を ±1 ナッジ。
+  // ナッジ後のメーターで 0ルールを判定する（既存設計と一貫）。
+  let base = choiceBase
+  let backlogReview: BacklogReview | undefined
+  if (event.ceremony === 'review') {
+    const res = resolveSprintBacklog(choiceBase)
+    base = res.core
+    backlogReview = res.review
+  }
+
   const result: ResultView = {
     eventId: event.id,
     choiceId: choice.id,
@@ -384,7 +418,7 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
     segment: event.segment,
     choiceLabel: choice.label,
     resultText: choice.resultText,
-    effects: amp.effects, // 実際に適用された増減（倍率込み）
+    effects: amp.effects, // 実際に適用された増減（倍率込み・選択の効果のみ。バックログのナッジは backlogReview で別表示）
     warn: choice.warn,
     precepts: preceptsForEvent(event.id),
     newPreceptIds: [], // 新規判定は store が seenPrecepts と突き合わせて埋める
@@ -395,12 +429,11 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
     tokenSpent: tokenSpent || undefined,
     coverageDelta: covDelta || undefined,
     debtDelta: debtRaw || undefined,
+    backlogReview,
   }
 
-  const base = { ...core, meters, flags, resolvedIds, log, aiTokens, repoCoverage, repoDebt, sprintGoals }
-
-  // ★0ルール: どれか1つでもゲージが0になったら、その場で失敗エピローグ
-  const zeroed = zeroedMeter(meters)
+  // ★0ルール: どれか1つでもゲージが0になったら、その場で失敗エピローグ（バックログのナッジ込みのメーターで判定）
+  const zeroed = zeroedMeter(base.meters)
   if (zeroed) {
     return {
       ...base,
@@ -457,7 +490,36 @@ export function restoreCore(p: Persisted): ProgressCore {
     repoDebt: Math.max(0, Math.floor(p.repoDebt ?? 0)),
     // index=sprintIndex を保つため filter で詰めず、各枠を文字列か空文字に正規化（空＝未決定）
     sprintGoals: Array.isArray(p.sprintGoals) ? p.sprintGoals.map((g) => (typeof g === 'string' ? g : '')) : [],
+    ...restoreBacklog(p),
   }
+}
+
+/** バックログ状態を旧セーブ/破損に強く復元する。
+ *  - backlogOrder: 既知 PBI だけに filter し、欠けている既知 id を“正本の順”で末尾補完（後で PBI 追加しても消えない）
+ *  - sprintForecast: 既知かつ未done のみ
+ *  - backlogDone: 既知のみ（重複排除）
+ *  - velocity: 各枠を有限・非負の数へ正規化（index 整合のため詰めない） */
+function restoreBacklog(
+  p: Persisted,
+): Pick<ProgressCore, 'backlogOrder' | 'sprintForecast' | 'backlogDone' | 'velocity'> {
+  const seedOrder = PRODUCT_BACKLOG.map((q) => q.id)
+  const savedOrder = (Array.isArray(p.backlogOrder) ? p.backlogOrder : []).filter(
+    (id): id is string => typeof id === 'string' && isKnownPbi(id),
+  )
+  const seen = new Set(savedOrder)
+  const backlogOrder = [...savedOrder, ...seedOrder.filter((id) => !seen.has(id))]
+  const done = new Set(
+    (Array.isArray(p.backlogDone) ? p.backlogDone : []).filter(
+      (id): id is string => typeof id === 'string' && isKnownPbi(id),
+    ),
+  )
+  const sprintForecast = (Array.isArray(p.sprintForecast) ? p.sprintForecast : []).filter(
+    (id): id is string => typeof id === 'string' && isKnownPbi(id) && !done.has(id),
+  )
+  const velocity = (Array.isArray(p.velocity) ? p.velocity : []).map((v) =>
+    typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0,
+  )
+  return { backlogOrder, sprintForecast, backlogDone: [...done], velocity }
 }
 
 /** その選択が生成AIトークン残量で「選べる」か（tokenCost が残量以下）。
@@ -508,5 +570,9 @@ export function toPersisted(core: ProgressCore): Persisted {
     repoCoverage: core.repoCoverage,
     repoDebt: core.repoDebt,
     sprintGoals: core.sprintGoals,
+    backlogOrder: core.backlogOrder,
+    sprintForecast: core.sprintForecast,
+    backlogDone: core.backlogDone,
+    velocity: core.velocity,
   }
 }

@@ -6,6 +6,7 @@ import { miniGameKindFor } from '../engine/game'
 import { customerValue, isRouletteCeremony, repoStats } from '../engine/progression'
 import { useEngagement } from '../store/engagementStore'
 import type { Choice, Ceremony } from '../types'
+import { BacklogPanel } from './BacklogPanel'
 import { CustomerValueBar } from './CustomerValueBar'
 import { SecondaryStats } from './SecondaryStats'
 import { EventLog } from './EventLog'
@@ -65,6 +66,7 @@ export function Board() {
   } = useEngagement()
   const [bookOpen, setBookOpen] = useState(false)
   const [repoOpen, setRepoOpen] = useState(false)
+  const [backlogOpen, setBacklogOpen] = useState(false)
   // 選択 → 実行ミニゲーム → 結果。選んだ choice を保持し、ミニゲームの出来を tier として渡す
   const [pendingChoice, setPendingChoice] = useState<Choice | null>(null)
   // 初回はプロローグを自動表示。以降は「あらすじ」から再生できる
@@ -84,7 +86,12 @@ export function Board() {
 
   // モーダル表示中は背後を支援技術ツリー/操作から外す（aria-modal 任せにしない）
   const modalOpen =
-    (status === 'event' && !!currentEvent && !result) || !!result || bookOpen || prologueOpen || repoOpen
+    (status === 'event' && !!currentEvent && !result) ||
+    !!result ||
+    bookOpen ||
+    prologueOpen ||
+    repoOpen ||
+    backlogOpen
 
   return (
     <>
@@ -209,6 +216,16 @@ export function Board() {
                 ▶ 進める
               </button>
             )}
+            {/* プランニングでは“予測（スプリントバックログ）”を組み立てられる。非ブロッキングの誘導。 */}
+            {ceremony === 'planning' && (
+              <button
+                type="button"
+                onClick={() => setBacklogOpen(true)}
+                className="rounded-lg border border-sky-500/40 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-200 transition hover:bg-sky-500/20 active:scale-95"
+              >
+                📋 スプリントバックログに予測を入れる
+              </button>
+            )}
           </>
         )}
       </div>
@@ -235,6 +252,14 @@ export function Board() {
           >
             <span className="text-base" aria-hidden="true">🗂️</span>
             リポジトリ
+          </button>
+          <button
+            type="button"
+            onClick={() => setBacklogOpen(true)}
+            className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-emerald-200 transition hover:bg-slate-800 active:scale-95"
+          >
+            <span className="text-base" aria-hidden="true">📋</span>
+            バックログ
           </button>
           <button
             type="button"
@@ -304,6 +329,9 @@ export function Board() {
           onClose={() => setRepoOpen(false)}
         />
       )}
+
+      {/* バックログ（プロダクト/スプリント）パネル */}
+      {backlogOpen && <BacklogPanel onClose={() => setBacklogOpen(false)} />}
 
       {/* プロローグ（初回自動・以降は「あらすじ」から） */}
       {prologueOpen && <Prologue onClose={closePrologue} />}

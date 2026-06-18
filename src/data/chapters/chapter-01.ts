@@ -1,4 +1,5 @@
 import type {
+  BacklogItem,
   Ceremony,
   Ending,
   Epilogue,
@@ -9,6 +10,7 @@ import type {
   Segment,
   SprintDef,
 } from '../../types'
+import { PRODUCT_BACKLOG as PRODUCT_BACKLOG_RAW } from './chapter-01/backlog'
 import { SPRINT1_EVENTS } from './chapter-01/events-sprint1'
 import { SPRINT2_EVENTS } from './chapter-01/events-sprint2'
 import { SPRINT3_EVENTS } from './chapter-01/events-sprint3'
@@ -110,6 +112,13 @@ export const EVENTS: GameEvent[] = localizeDeep([
   ...SPRINT2_EVENTS,
   ...SPRINT3_EVENTS,
 ])
+
+// プロダクトバックログ（PBI）。配列順＝POの初期優先順位。固有名詞は表示名へ置換して公開する。
+export const PRODUCT_BACKLOG: BacklogItem[] = localizeDeep(PRODUCT_BACKLOG_RAW)
+
+/** スプリント1の基準キャパシティ（“昨日の天気”がまだ無い初回の見込み）。
+ *  PBI の見積りに対し、おおむね2〜3項目が収まる量。以降は前スプリントのベロシティを使う。 */
+export const BASE_CAPACITY = 8
 
 export const ENDINGS: Ending[] = [
   {

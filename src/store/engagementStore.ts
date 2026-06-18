@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { CEREMONY_ORDER, CHAPTER_TITLE, SPRINTS, STARTING_METERS } from '../data/chapters/chapter-01'
 import { PRECEPT_BY_ID } from '../data/precepts'
+import { reorderBacklog, toggleForecast } from '../engine/backlog'
 import {
   type Persisted,
   type ProgressCore,
@@ -40,6 +41,11 @@ interface EngagementState extends ProgressCore {
   dismissResult: () => void
   /** 不正暴露アークの「暴露の決断」を解決（選んだフラグで結末を確定・永続化） */
   resolveFinale: (flag: GameFlag) => void
+  // ── バックログ操作 ──
+  /** PO が承認した優先順位を確定する（並べ替えの所有は PO。プレイヤーは提案し、PO審査後にここで確定） */
+  commitBacklogOrder: (ids: string[]) => void
+  /** PBI を今スプリントの予測に出し入れ（プランニング中・未done のみ有効） */
+  toggleForecast: (pbiId: string) => void
   reset: () => void
 }
 
@@ -90,6 +96,10 @@ function coreOf(s: EngagementState): ProgressCore {
     repoCoverage: s.repoCoverage,
     repoDebt: s.repoDebt,
     sprintGoals: s.sprintGoals,
+    backlogOrder: s.backlogOrder,
+    sprintForecast: s.sprintForecast,
+    backlogDone: s.backlogDone,
+    velocity: s.velocity,
   }
 }
 
@@ -159,6 +169,16 @@ export function isValidPersisted(x: unknown): x is Persisted {
   for (const k of ['repoCoverage', 'repoDebt'] as const) {
     const v = o[k]
     if (v !== undefined && (typeof v !== 'number' || !Number.isInteger(v) || v < 0)) return false
+  }
+  // バックログ状態も任意（旧セーブは欠落 → restore で補完・正規化）。寛容に検証し、
+  // 型が明確に壊れている時だけ弾く（未知 id・index ズレ等は restoreBacklog が吸収する）。
+  for (const k of ['backlogOrder', 'sprintForecast', 'backlogDone'] as const) {
+    const v = o[k]
+    if (v !== undefined && (!Array.isArray(v) || !v.every((id) => typeof id === 'string'))) return false
+  }
+  if (o.velocity !== undefined) {
+    if (!Array.isArray(o.velocity)) return false
+    if (!o.velocity.every((n) => typeof n === 'number' && Number.isFinite(n) && n >= 0)) return false
   }
   const si = o.sprintIndex as number
   const bi = o.beatIndex as number
@@ -244,6 +264,18 @@ export const useEngagement = create<EngagementState>((set, get) => ({
     }
     set(next)
     persistCore(next) // フラグを永続化し、リロードしても結末が保たれる
+  },
+
+  commitBacklogOrder: (ids) => {
+    const next = reorderBacklog(coreOf(get()), ids)
+    set(next)
+    persistCore(next)
+  },
+
+  toggleForecast: (pbiId) => {
+    const next = toggleForecast(coreOf(get()), pbiId)
+    set(next)
+    persistCore(next)
   },
 
   reset: () => {

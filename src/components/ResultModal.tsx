@@ -2,7 +2,7 @@ import { ACTION_LABELS, SEGMENT_COLORS, SEGMENT_LABELS } from '../data/chapters/
 import { imageUrl, resultImage } from '../data/images'
 import { PRECEPT_BY_ID } from '../data/precepts'
 import { useFocusTrap } from '../hooks/useFocusTrap'
-import type { Effects, ResultView } from '../types'
+import type { BacklogReview, Effects, ResultView } from '../types'
 import { RichText } from './RichText'
 
 const EFFECT_LABEL: Record<keyof Effects, string> = {
@@ -74,6 +74,65 @@ function ExecBadge({ result }: { result: ResultView }) {
     <div className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm ${conf.cls}`}>
       <span aria-hidden="true">{conf.icon}</span>
       <span className="font-medium">{conf.text}</span>
+    </div>
+  )
+}
+
+/** スプリントレビューの“成果”＝スプリントバックログの精算。DoD は二値（部分点なし）。
+ *  容量を超えて予測した分はキャリーオーバーになり、健全な予測は culture を後押しする。 */
+function BacklogReviewBlock({ review }: { review: BacklogReview }) {
+  const cd = review.cultureDelta
+  return (
+    <div className="space-y-2 rounded-xl border border-slate-700 bg-slate-800/40 px-4 py-3">
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] font-semibold text-slate-400">
+          📋 スプリントバックログの精算
+        </p>
+        <span className="tabular-nums text-xs text-emerald-300">
+          📈 ベロシティ {review.velocity} / 容量 {review.capacity}pt
+        </span>
+      </div>
+
+      {review.done.length > 0 ? (
+        <div>
+          <p className="mb-1 text-xs text-emerald-300">✓ 完成（DoD達成）</p>
+          <ul className="space-y-0.5">
+            {review.done.map((d) => (
+              <li key={d.id} className="flex items-start gap-1.5 text-sm text-slate-200">
+                <span className="shrink-0 tabular-nums text-[11px] text-slate-500">{d.estimate}pt</span>
+                <RichText text={d.title} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <p className="text-xs text-slate-500">この予測では、完成（DoD達成）した項目はなかった。</p>
+      )}
+
+      {review.carryover.length > 0 && (
+        <div>
+          <p className="mb-1 text-xs text-rose-300">↪ キャリーオーバー（次へ持ち越し）</p>
+          <ul className="space-y-0.5">
+            {review.carryover.map((d) => (
+              <li key={d.id} className="flex items-start gap-1.5 text-sm text-slate-300">
+                <span className="shrink-0 tabular-nums text-[11px] text-slate-500">{d.estimate}pt</span>
+                <RichText text={d.title} />
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1 text-xs text-slate-500">
+            完成しなかった分は部分点なしでプロダクトバックログに戻り、改めて並べ替えられる。
+          </p>
+        </div>
+      )}
+
+      {cd !== 0 && (
+        <p className={`text-xs ${cd > 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+          {cd > 0
+            ? '巻込 ▲ +1：容量に見合う予測を守り切った（持続可能なペース）。'
+            : '巻込 ▼ −1：容量を超えて欲張り、終わらなかった。'}
+        </p>
+      )}
     </div>
   )
 }
@@ -188,6 +247,9 @@ export function ResultModal({ result, onContinue }: Props) {
               ) : null}
             </div>
           ) : null}
+
+          {/* スプリントレビュー：スプリントバックログの精算（done/キャリーオーバー/ベロシティ） */}
+          {result.backlogReview && <BacklogReviewBlock review={result.backlogReview} />}
 
           {/* この場面のFDE心得（手帳に集まる）。新規だけ全文で“獲得”を演出し、
               既出は手帳に集約済みなので小さなチップに畳む（説教の二重化を避ける）。 */}

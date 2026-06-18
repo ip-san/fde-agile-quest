@@ -133,6 +133,35 @@ export interface SprintDef {
   beats: Ceremony[]
 }
 
+/** プロダクトバックログ項目（PBI）。章ごとに用意する“やりたいこと”の元データ。
+ *  配列順＝プロダクトオーナーの初期優先順位。プレイヤーは並べ替え（提案）し、
+ *  プランニングで上位を「予測（フォーキャスト）」としてスプリントバックログに引く。 */
+export interface BacklogItem {
+  id: string
+  /** 項目名。{{用語}} 埋め込み可 */
+  title: string
+  /** 1行補足（任意） */
+  detail?: string
+  /** ストーリーポイント（相対サイズの見積り。1,2,3,5,8…） */
+  estimate: number
+  /** 物語上どのスプリントに資するかのヒント（表示用。選択をハードロックはしない） */
+  sprintHint?: number
+}
+
+/** スプリント末（レビュー）のバックログ精算結果。done は二値（DoD未達は部分点なし）。 */
+export interface BacklogReview {
+  /** このスプリントで完成（DoD達成）した項目 */
+  done: { id: string; title: string; estimate: number }[]
+  /** 予測したが容量を超え、次へ持ち越した項目（キャリーオーバー） */
+  carryover: { id: string; title: string; estimate: number }[]
+  /** 今スプリントのベロシティ（完了ポイント合計） */
+  velocity: number
+  /** このスプリントの容量（キャパシティ。＝予測の物差し） */
+  capacity: number
+  /** 予測の健全さに応じた culture の増減（+1/0/−1） */
+  cultureDelta: number
+}
+
 /** 用語集エントリ（従＝いつの間にか慣れる） */
 export interface Term {
   key: string
@@ -191,4 +220,6 @@ export interface ResultView {
   precepts: number[]
   /** このうち、今回はじめて出会った心得のID（「NEW」表示用）。store が埋める */
   newPreceptIds: number[]
+  /** スプリントレビューの結果に添える、バックログの精算（レビューのイベントのみ）。 */
+  backlogReview?: BacklogReview
 }
