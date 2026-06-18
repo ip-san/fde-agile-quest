@@ -123,6 +123,17 @@ export const AVAILABLE_IMAGES = new Set<string>([
   's1-daily-jinji-roster', // 偏る残業（人事部で棒グラフを指差す・一人への集中が一目瞭然）
   's1-review', // スプリントレビュー：まだ"機能"はない（空のスクリーンの前で困惑するPO）
   's2-daily-pressure', // 横やりの催促（上司がデイリースクラムに乗り込んで予測機能を迫る）
+  's2-daily-record', // 口頭の「OK」（廊下での口頭承認・メモなし）
+  's2-daily-demo', // 進捗を説明しろ（経営会議で進捗デモ要求）
+  's2-daily-anxiety', // どこか不安そうな顔（リリース直前の不安なステークホルダー）
+  's2-review', // スプリントレビュー：現場が触る（現場が叩き台を操作）
+  's2-daily-goalcreep', // 揺らぐスプリントゴール（スプリント中の割り込み要求）
+  's2-daily-aidata', // 使えるデータ、使っていいデータ（AIデータ活用倫理）
+  's2-daily-jousys-perm', // 本番は、渡さない（サーバールームで情シスが権限拒否）
+  's2-daily-soumu-hyoka', // 橋本さんの評価問題（総務部の人事評価書類）
+  's2-daily-soumu-ringi', // 総務部の稟議承認（稟議書が総務で詰まる）
+  's2-daily-hqorder', // 本社からの一律通達（本社から在庫3割削減通達）
+  's3-plan-handoff', // 本番化の構え（最終スプリントのプランニング）
   // プロローグ4パネルの情景画像（cast.ts の PROLOGUE_PANELS.image）
   'prologue-boardroom', // 役員会議：横ばいの売上グラフと沈鬱な役員、末席の主人公
   'prologue-summons', // 呼び出し：会議後の廊下で社長(鷹野)が主人公に語りかける、横に久遠
