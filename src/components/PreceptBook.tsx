@@ -1,4 +1,4 @@
-import { PRECEPTS, PRECEPT_CLUSTERS } from '../data/precepts'
+import { PRECEPT_CLUSTERS, PRECEPTS } from '../data/precepts'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 
 interface Props {
@@ -30,9 +30,7 @@ export function PreceptBook({ seen, onClose }: Props) {
           </span>
         </header>
 
-        <p className="px-5 pt-3 text-xs text-slate-400">
-          判断の場面で出会った心得が集まります（周回をまたいで記録）。
-        </p>
+        <p className="px-5 pt-3 text-xs text-slate-400">判断の場面で出会った心得が集まります（周回をまたいで記録）。</p>
 
         <div className="flex-1 space-y-4 overflow-y-auto px-5 py-3">
           {PRECEPT_CLUSTERS.map((cluster) => {
@@ -56,9 +54,7 @@ export function PreceptBook({ seen, onClose }: Props) {
                           has ? 'bg-slate-800/40 text-slate-100' : 'text-slate-600'
                         }`}
                       >
-                        <span className="mt-px shrink-0 tabular-nums text-[10px] text-slate-400">
-                          #{p.id}
-                        </span>
+                        <span className="mt-px shrink-0 tabular-nums text-[10px] text-slate-400">#{p.id}</span>
                         <span>{has ? p.text : '？？？（まだ出会っていない）'}</span>
                       </li>
                     )

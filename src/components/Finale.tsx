@@ -13,9 +13,7 @@ export function Finale({ onResolve }: Props) {
   return (
     <div className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center gap-6 px-4 py-10">
       <div className="text-center">
-        <p className="text-xs font-semibold uppercase tracking-widest text-amber-400">
-          FINALE — 暴露の決断
-        </p>
+        <p className="text-xs font-semibold uppercase tracking-widest text-amber-400">FINALE — 暴露の決断</p>
         <h1 className="mt-2 text-2xl font-bold text-amber-200">不正の証拠が、手の中にある</h1>
       </div>
 
@@ -43,9 +41,7 @@ export function Finale({ onResolve }: Props) {
         ))}
       </div>
 
-      <p className="text-center text-[11px] text-slate-400">
-        ※ ここでの選択が、この物語の結末になる。
-      </p>
+      <p className="text-center text-[11px] text-slate-400">※ ここでの選択が、この物語の結末になる。</p>
     </div>
   )
 }

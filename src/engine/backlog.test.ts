@@ -11,7 +11,7 @@ import {
   sprintCapacity,
   toggleForecast,
 } from './backlog'
-import { type ProgressCore, chooseCore, freshCore, restoreCore, toPersisted } from './progression'
+import { chooseCore, freshCore, type ProgressCore, restoreCore, toPersisted } from './progression'
 
 // 既知 PBI（テストは id を直に使うが、見積りは PRODUCT_BACKLOG から導出して内容変更に強くする）
 const ID = {
@@ -226,7 +226,11 @@ describe('永続化ラウンドトリップ / 旧セーブ復元', () => {
   })
 
   it('未知 id や done 済みの予測は復元時に正規化される', () => {
-    const c = core({ backlogOrder: [ID.floor, 'ghost'], sprintForecast: [ID.veteran, 'ghost'], backlogDone: [ID.veteran] })
+    const c = core({
+      backlogOrder: [ID.floor, 'ghost'],
+      sprintForecast: [ID.veteran, 'ghost'],
+      backlogDone: [ID.veteran],
+    })
     const restored = restoreCore(toPersisted(c))
     expect(restored.backlogOrder).not.toContain('ghost')
     expect(restored.backlogOrder).toHaveLength(PRODUCT_BACKLOG.length) // 欠けた既知 id を補完

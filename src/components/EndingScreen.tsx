@@ -1,6 +1,6 @@
+import type { Epilogue, LogEntry, Meters } from '../types'
 import { CustomerValueBar } from './CustomerValueBar'
 import { MeterHUD } from './MeterHUD'
-import type { Epilogue, LogEntry, Meters } from '../types'
 
 interface Props {
   ending: Epilogue
@@ -20,8 +20,10 @@ const FRAUD_TEASER: Record<'clue' | 'case', string> = {
 
 /** 顧客価値（北極星）の最終ランク。案件の“スコア”として結果に意味を与える。 */
 function valueRank(v: number): { grade: string; label: string; cls: string } {
-  if (v >= 90) return { grade: 'S', label: '圧倒的な価値を届けた', cls: 'text-amber-300 border-amber-400/50 bg-amber-400/10' }
-  if (v >= 75) return { grade: 'A', label: '確かな価値を届けた', cls: 'text-emerald-300 border-emerald-400/40 bg-emerald-400/10' }
+  if (v >= 90)
+    return { grade: 'S', label: '圧倒的な価値を届けた', cls: 'text-amber-300 border-amber-400/50 bg-amber-400/10' }
+  if (v >= 75)
+    return { grade: 'A', label: '確かな価値を届けた', cls: 'text-emerald-300 border-emerald-400/40 bg-emerald-400/10' }
   if (v >= 60) return { grade: 'B', label: '価値は届いた', cls: 'text-sky-300 border-sky-400/40 bg-sky-400/10' }
   if (v >= 40) return { grade: 'C', label: '価値は道半ば', cls: 'text-slate-300 border-slate-500/40 bg-slate-500/10' }
   return { grade: 'D', label: '価値を残せなかった', cls: 'text-rose-300 border-rose-400/40 bg-rose-400/10' }
@@ -35,32 +37,20 @@ export function EndingScreen({ ending, meters, customerValue, fraudHint = 'none'
   return (
     <div className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center gap-6 px-safe py-10">
       <div className="text-center">
-        <p
-          className={`text-xs font-semibold uppercase tracking-widest ${
-            failed ? 'text-rose-400' : 'text-slate-400'
-          }`}
-        >
+        <p className={`text-xs font-semibold uppercase tracking-widest ${failed ? 'text-rose-400' : 'text-slate-400'}`}>
           {failed ? 'BAD END — 案件終了' : 'Ending'}
         </p>
-        <h1
-          className={`mt-2 text-3xl font-bold ${failed ? 'text-rose-300' : 'text-sky-300'}`}
-        >
+        <h1 className={`mt-2 text-3xl font-bold ${failed ? 'text-rose-300' : 'text-sky-300'}`}>
           {failed ? '💀 ' : ''}
           {ending.title}
         </h1>
       </div>
 
-      {failed && (
-        <p className="text-center text-xs text-rose-300/80">
-          ゲージが1つでも0になると、案件はここで終わる。
-        </p>
-      )}
+      {failed && <p className="text-center text-xs text-rose-300/80">ゲージが1つでも0になると、案件はここで終わる。</p>}
 
       <p
         className={`rounded-2xl border p-5 text-sm leading-relaxed ${
-          failed
-            ? 'border-rose-500/40 bg-rose-950/30 text-rose-100'
-            : 'border-slate-700 bg-slate-900/60 text-slate-200'
+          failed ? 'border-rose-500/40 bg-rose-950/30 text-rose-100' : 'border-slate-700 bg-slate-900/60 text-slate-200'
         }`}
       >
         {ending.reflection}

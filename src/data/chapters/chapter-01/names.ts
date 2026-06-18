@@ -57,7 +57,13 @@ export interface NameDef {
 export const NAMES: Record<NameId, NameDef> = {
   // ── 企業 ──
   lumen: { canonical: 'ルーメン', name: 'ルミクラウド', kind: 'company' },
-  cargo: { canonical: 'カルゴ物流', name: 'カルゴ物流', reading: 'カルゴぶつりゅう', kind: 'company', also: ['カルゴ'] },
+  cargo: {
+    canonical: 'カルゴ物流',
+    name: 'カルゴ物流',
+    reading: 'カルゴぶつりゅう',
+    kind: 'company',
+    also: ['カルゴ'],
+  },
   parent: { canonical: 'ジェネリック電機', name: 'ジェネリック電機', kind: 'company' },
   grandparent: { canonical: 'ジェネリックロジスティクス', name: 'ジェネリックロジスティクス', kind: 'company' },
   product: { canonical: 'StockPilot', name: 'StockPilot', kind: 'company' },

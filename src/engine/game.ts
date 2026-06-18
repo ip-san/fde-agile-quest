@@ -1,8 +1,8 @@
 import type {
   Ceremony,
   Choice,
-  Ending,
   Effects,
+  Ending,
   ExecTier,
   GameEvent,
   GameFlag,
@@ -54,7 +54,7 @@ export function primaryPositive(e: Effects): MeterKey | null {
  */
 export function amplifyEffects(
   e: Effects,
-  tier: ExecTier,
+  tier: ExecTier
 ): { effects: Effects; primary: MeterKey | null; delta: number } {
   const primary = primaryPositive(e)
   const raw = tier === 'great' ? 1 : tier === 'poor' ? -1 : 0
@@ -82,7 +82,7 @@ export function miniGameKindFor(event: GameEvent): MiniGameKind {
 export function resolveChoice(
   meters: Meters,
   flags: Set<GameFlag>,
-  choice: Choice,
+  choice: Choice
 ): { meters: Meters; flags: Set<GameFlag> } {
   const nextFlags = new Set(flags)
   if (choice.setsFlag) nextFlags.add(choice.setsFlag)
@@ -95,14 +95,14 @@ export function availableEvents(
   sprint: number,
   ceremony: Ceremony,
   resolvedIds: Set<string>,
-  flags: Set<GameFlag>,
+  flags: Set<GameFlag>
 ): GameEvent[] {
   return allEvents.filter(
     (ev) =>
       ev.sprint === sprint &&
       ev.ceremony === ceremony &&
       !resolvedIds.has(ev.id) &&
-      (ev.requiresFlag === undefined || flags.has(ev.requiresFlag)),
+      (ev.requiresFlag === undefined || flags.has(ev.requiresFlag))
   )
 }
 
@@ -114,7 +114,7 @@ export function availableEvents(
 export function drawEvent(
   available: GameEvent[],
   segment: Segment,
-  pickRandom: number,
+  pickRandom: number
 ): { event: GameEvent | null; unexpected: boolean } {
   if (available.length === 0) return { event: null, unexpected: false }
   const matching = available.filter((ev) => ev.segment === segment)

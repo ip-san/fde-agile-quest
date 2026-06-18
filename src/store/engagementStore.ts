@@ -3,14 +3,14 @@ import { CEREMONY_ORDER, CHAPTER_TITLE, SPRINTS, STARTING_METERS } from '../data
 import { PRECEPT_BY_ID } from '../data/precepts'
 import { reorderBacklog, toggleForecast } from '../engine/backlog'
 import {
-  type Persisted,
-  type ProgressCore,
   arriveCore,
   ceremonyAt,
   chooseCore,
   dismissResultCore,
   finalEndingFor,
   freshCore,
+  type Persisted,
+  type ProgressCore,
   proceedCore,
   restoreCore,
   spinCore,

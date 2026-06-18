@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { SPRINTS } from '../data/chapters/chapter-01'
 import {
-  type ProposalVerdict,
   backlogItem,
   forecastPoints,
+  type ProposalVerdict,
   reviewBacklogProposal,
   sprintCapacity,
 } from '../engine/backlog'
@@ -44,8 +44,7 @@ export function BacklogPanel({ onClose }: Props) {
 
   const doneSet = new Set(backlogDone)
   const forecastSet = new Set(sprintForecast)
-  const stateOf = (id: string): ItemState =>
-    doneSet.has(id) ? 'done' : forecastSet.has(id) ? 'forecast' : 'todo'
+  const stateOf = (id: string): ItemState => (doneSet.has(id) ? 'done' : forecastSet.has(id) ? 'forecast' : 'todo')
 
   // PO が確定した公式順のうち、未完了（並べ替え対象）と完了済み（末尾固定表示）に分ける
   const officialActive = backlogOrder.filter((id) => !doneSet.has(id))
@@ -107,7 +106,9 @@ export function BacklogPanel({ onClose }: Props) {
           </p>
 
           {/* 容量メーター（プランニング中のみ操作の文脈になる） */}
-          <div className={`rounded-xl px-3 py-2.5 ${over ? 'bg-rose-500/10 ring-1 ring-rose-500/40' : 'bg-slate-800/40'}`}>
+          <div
+            className={`rounded-xl px-3 py-2.5 ${over ? 'bg-rose-500/10 ring-1 ring-rose-500/40' : 'bg-slate-800/40'}`}
+          >
             <div className="mb-1 flex items-center justify-between text-xs">
               <span className="text-slate-300">
                 🧮 今スプリントの予測 / <RichText text="{{キャパシティ}}" />
@@ -139,7 +140,8 @@ export function BacklogPanel({ onClose }: Props) {
           {velocity.some((v) => v > 0) && (
             <div className="rounded-xl bg-slate-800/40 px-3 py-2.5">
               <div className="mb-1 text-xs text-slate-300">
-                📈 <RichText text="{{ベロシティ}}" />（完了pt）
+                📈 <RichText text="{{ベロシティ}}" />
+                （完了pt）
               </div>
               <div className="flex items-end gap-2">
                 {SPRINTS.map((sp, i) => {
@@ -308,7 +310,9 @@ export function BacklogPanel({ onClose }: Props) {
 
 function StateBadge({ state }: { state: ItemState }) {
   if (state === 'done')
-    return <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">✓ 完了</span>
+    return (
+      <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">✓ 完了</span>
+    )
   if (state === 'forecast')
     return <span className="rounded bg-sky-500/20 px-1.5 py-0.5 text-[10px] font-bold text-sky-300">今スプリント</span>
   return <span className="rounded bg-slate-700/60 px-1.5 py-0.5 text-[10px] text-slate-400">未着手</span>

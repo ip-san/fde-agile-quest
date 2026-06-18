@@ -1,7 +1,7 @@
 import { Fragment, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { GLOSSARY } from '../data/glossary'
 import { localizeNames } from '../data/chapters/chapter-01/names'
+import { GLOSSARY } from '../data/glossary'
 
 /** {{用語}} を含む文字列を、用語ホバー解説つきに変換して描画する。
  *  社名・人名は names.ts を定義元として、描画直前に現在の表示名へ置換する
@@ -107,13 +107,11 @@ function TermChip({ termKey }: { termKey: string }) {
           >
             <span className="mb-1 block font-bold text-sky-300">
               {term.label}
-              {term.reading && (
-                <span className="ml-1 text-[10px] text-slate-400">（{term.reading}）</span>
-              )}
+              {term.reading && <span className="ml-1 text-[10px] text-slate-400">（{term.reading}）</span>}
             </span>
             {term.desc}
           </span>,
-          document.body,
+          document.body
         )}
     </span>
   )

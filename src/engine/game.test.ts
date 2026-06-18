@@ -9,8 +9,7 @@ import {
 } from '../data/chapters/chapter-01'
 import { GLOSSARY } from '../data/glossary'
 import { EVENT_PRECEPTS, PRECEPTS } from '../data/precepts'
-import type { GameFlag, MeterKey } from '../types'
-import type { Ceremony, Choice, GameEvent, Meters } from '../types'
+import type { Ceremony, Choice, GameEvent, GameFlag, MeterKey, Meters } from '../types'
 import {
   amplifyEffects,
   applyEffects,
@@ -38,9 +37,7 @@ describe('clampMeters', () => {
 
 describe('applyEffects', () => {
   it('指定キーのみ加算する', () => {
-    expect(applyEffects(meters(), { insight: 2, culture: -1 })).toEqual(
-      meters({ insight: 4, culture: 1 }),
-    )
+    expect(applyEffects(meters(), { insight: 2, culture: -1 })).toEqual(meters({ insight: 4, culture: 1 }))
   })
   // in-game の唯一のメーター変更経路。境界を跨いで 0..10 にクランプされることを固定
   // （clampMeters ラッパーを外す回帰を検出する）
@@ -236,9 +233,7 @@ describe('キャンペーン構造の健全性', () => {
     for (const sp of SPRINTS) {
       const ceremonies = new Set<Ceremony>(sp.beats)
       for (const c of ceremonies) {
-        const base = EVENTS.filter(
-          (e) => e.sprint === sp.n && e.ceremony === c && !e.requiresFlag,
-        )
+        const base = EVENTS.filter((e) => e.sprint === sp.n && e.ceremony === c && !e.requiresFlag)
         expect(base.length, `sprint ${sp.n} / ${c}`).toBeGreaterThan(0)
       }
     }
@@ -248,9 +243,7 @@ describe('キャンペーン構造の健全性', () => {
       const counts: Record<string, number> = {}
       for (const b of sp.beats) counts[b] = (counts[b] ?? 0) + 1
       for (const [c, beatCount] of Object.entries(counts)) {
-        const pool = EVENTS.filter(
-          (e) => e.sprint === sp.n && e.ceremony === c && !e.requiresFlag,
-        ).length
+        const pool = EVENTS.filter((e) => e.sprint === sp.n && e.ceremony === c && !e.requiresFlag).length
         expect(pool, `sprint ${sp.n} / ${c}`).toBeGreaterThanOrEqual(beatCount)
       }
     }
@@ -281,8 +274,7 @@ describe('0ルール（失敗エピローグ）', () => {
 })
 
 describe('用語マーカーの健全性', () => {
-  const extractTerms = (text: string): string[] =>
-    [...text.matchAll(/\{\{(.+?)\}\}/g)].map((m) => m[1])
+  const extractTerms = (text: string): string[] => [...text.matchAll(/\{\{(.+?)\}\}/g)].map((m) => m[1])
 
   it('本文中の全 {{用語}} が GLOSSARY に存在する（ホバー解説が必ず出る）', () => {
     const texts: string[] = []
@@ -311,7 +303,7 @@ describe('用語マーカーの健全性', () => {
         const hasDeferredDownside = c.setsFlag !== undefined
         expect(
           hasNegative || hasDeferredDownside,
-          `${e.id}/${c.id} は warn なのに即時の負効果も将来の手戻りも無い`,
+          `${e.id}/${c.id} は warn なのに即時の負効果も将来の手戻りも無い`
         ).toBe(true)
       }
     }
@@ -349,9 +341,7 @@ describe('FDE心得デッキの健全性', () => {
 })
 
 describe('生成AIトークン経済のバランス（資源として意味を持つ）', () => {
-  const tokenChoices = EVENTS.flatMap((e) =>
-    e.choices.filter((c) => (c.tokenCost ?? 0) > 0).map((c) => ({ e, c })),
-  )
+  const tokenChoices = EVENTS.flatMap((e) => e.choices.filter((c) => (c.tokenCost ?? 0) > 0).map((c) => ({ e, c })))
 
   it('tokenCost は正の整数で、単発でも予算内（必ず最初は選べる）', () => {
     for (const { e, c } of tokenChoices) {
@@ -391,8 +381,14 @@ describe('リポジトリの健全度（拡充＝量と質を伴う）', () => {
   const repoChoices = EVENTS.flatMap((e) => e.choices.filter((c) => c.repo).map((c) => ({ e, c })))
 
   it('カバレッジを上げる良い選択と、負債を上げる雑な選択の両方が存在する', () => {
-    expect(repoChoices.some(({ c }) => (c.repo?.coverage ?? 0) > 0), 'coverage+ の選択が無い').toBe(true)
-    expect(repoChoices.some(({ c }) => (c.repo?.debt ?? 0) > 0), 'debt+ の選択が無い').toBe(true)
+    expect(
+      repoChoices.some(({ c }) => (c.repo?.coverage ?? 0) > 0),
+      'coverage+ の選択が無い'
+    ).toBe(true)
+    expect(
+      repoChoices.some(({ c }) => (c.repo?.debt ?? 0) > 0),
+      'debt+ の選択が無い'
+    ).toBe(true)
   })
 
   it('丸投げ（aiOverreliance）の選択は技術的負債を積む', () => {

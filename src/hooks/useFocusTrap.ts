@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react'
 
-const FOCUSABLE =
-  'a[href],button:not([disabled]),textarea,input,select,[tabindex]:not([tabindex="-1"])'
+const FOCUSABLE = 'a[href],button:not([disabled]),textarea,input,select,[tabindex]:not([tabindex="-1"])'
 
 /** いま実際にフォーカスできる要素か（接続済み・disabled でない・body そのものでない） */
 function canFocus(el: Element | null): el is HTMLElement {

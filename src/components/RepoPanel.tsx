@@ -16,9 +16,21 @@ interface Props {
 }
 
 const DEBT_VIEW: Record<RepoStats['debt'], { label: string; tone: string; note: string }> = {
-  low: { label: '低（管理下）', tone: 'text-emerald-300', note: '今のところ、手の届く範囲。小さく作り、こまめに直せている。' },
-  mid: { label: '中（要注意）', tone: 'text-amber-300', note: '急いだツケ・省いたレビュー・誤ったKPIが、コードの形をして溜まり始めた。早めに返したい。' },
-  high: { label: '高（危険）', tone: 'text-rose-300', note: '丸投げ／レビュー省略が積もり、中身を誰も把握しきれていない。AIモデル退化にも弱い。' },
+  low: {
+    label: '低（管理下）',
+    tone: 'text-emerald-300',
+    note: '今のところ、手の届く範囲。小さく作り、こまめに直せている。',
+  },
+  mid: {
+    label: '中（要注意）',
+    tone: 'text-amber-300',
+    note: '急いだツケ・省いたレビュー・誤ったKPIが、コードの形をして溜まり始めた。早めに返したい。',
+  },
+  high: {
+    label: '高（危険）',
+    tone: 'text-rose-300',
+    note: '丸投げ／レビュー省略が積もり、中身を誰も把握しきれていない。AIモデル退化にも弱い。',
+  },
 }
 
 /** コードリポジトリの“状態パネル”。心得手帳と同じく、積み上がった開発の健康度を見る画面。
@@ -65,9 +77,7 @@ export function RepoPanel({ stats, onClose }: Props) {
                 style={{ width: `${stats.coverage}%` }}
               />
             </div>
-            <p className="mt-1 text-xs text-slate-500">
-              レビュー・完成の定義・検証・リファクタの良い選択で上がる。
-            </p>
+            <p className="mt-1 text-xs text-slate-500">レビュー・完成の定義・検証・リファクタの良い選択で上がる。</p>
           </div>
 
           <div className="rounded-xl bg-slate-800/40 px-3 py-2.5">
@@ -96,9 +106,7 @@ export function RepoPanel({ stats, onClose }: Props) {
               )}
             </span>
           </Row>
-          <p className="rounded-lg bg-slate-800/30 px-3 py-2 text-xs leading-relaxed text-slate-400">
-            {debt.note}
-          </p>
+          <p className="rounded-lg bg-slate-800/30 px-3 py-2 text-xs leading-relaxed text-slate-400">{debt.note}</p>
         </div>
 
         <footer className="border-t border-slate-800 px-5 py-3">

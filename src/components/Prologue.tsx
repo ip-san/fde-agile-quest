@@ -64,9 +64,7 @@ export function Prologue({ onClose }: Props) {
                 />
               )}
               <h1 className="text-lg font-bold text-slate-100">{panel.heading}</h1>
-              <p className="whitespace-pre-line text-[15px] leading-relaxed text-slate-200">
-                {panel.body}
-              </p>
+              <p className="whitespace-pre-line text-[15px] leading-relaxed text-slate-200">{panel.body}</p>
               <div className="flex items-center gap-1.5 pt-1" aria-hidden="true">
                 {PROLOGUE_PANELS.map((p, i) => (
                   <span

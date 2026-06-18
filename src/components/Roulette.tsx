@@ -38,7 +38,7 @@ export function Roulette({ disabled, onResult }: Props) {
   const [announce, setAnnounce] = useState('')
   // 前庭障害対策: prefers-reduced-motion なら回転アニメを省く
   const [reduceMotion] = useState(
-    () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
+    () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
   )
   const pendingSegment = useRef<Segment | null>(null)
   const pendingPick = useRef(0)
@@ -99,9 +99,12 @@ export function Roulette({ disabled, onResult }: Props) {
   }, [spin, disabled, spinning])
 
   // アンマウント時に保険タイマーを破棄（reset による key 付け替え再マウントで stale 発火を断つ）
-  useEffect(() => () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current)
-  }, [])
+  useEffect(
+    () => () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    },
+    []
+  )
 
   // 回転(transform)の遷移完了のみを拾う。他プロパティの transitionend で多重発火しない
   const handleTransitionEnd = (e: { propertyName: string }) => {
@@ -121,10 +124,7 @@ export function Roulette({ disabled, onResult }: Props) {
           className="h-56 w-56 min-[400px]:h-64 min-[400px]:w-64 sm:h-72 sm:w-72"
           style={{
             transform: `rotate(${rotation}deg)`,
-            transition:
-              spinning && !reduceMotion
-                ? 'transform 3.6s cubic-bezier(0.17, 0.67, 0.12, 0.99)'
-                : 'none',
+            transition: spinning && !reduceMotion ? 'transform 3.6s cubic-bezier(0.17, 0.67, 0.12, 0.99)' : 'none',
           }}
           onTransitionEnd={handleTransitionEnd}
           aria-hidden="true"

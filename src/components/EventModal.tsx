@@ -88,7 +88,9 @@ export function EventModal({ event, unexpected, aiTokens, onChoose }: Props) {
                   onClick={() => onChoose(c)}
                   disabled={locked}
                   aria-label={
-                    locked ? `${c.label}（AIトークン残量不足のため選べません。必要 ${cost} / 残り ${aiTokens}）` : undefined
+                    locked
+                      ? `${c.label}（AIトークン残量不足のため選べません。必要 ${cost} / 残り ${aiTokens}）`
+                      : undefined
                   }
                   className={`group block w-full rounded-xl border px-4 py-3 text-left transition ${
                     locked

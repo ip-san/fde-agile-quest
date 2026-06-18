@@ -2,11 +2,16 @@
 // 進行ロジック（純粋関数）。localStorage / zustand / 乱数源に依存しない。
 // store はこれらを呼ぶ薄いラッパに徹し、ここを game.test と同様に単体テストする。
 // ───────────────────────────────────────────────────────────
-import { ENDINGS, EVENTS, FAILURE_EPILOGUES, FINALE_EPILOGUES, PRODUCT_BACKLOG, SPRINTS } from '../data/chapters/chapter-01'
+import {
+  ENDINGS,
+  EVENTS,
+  FAILURE_EPILOGUES,
+  FINALE_EPILOGUES,
+  PRODUCT_BACKLOG,
+  SPRINTS,
+} from '../data/chapters/chapter-01'
 import { LOCATION_ORDER, locationOf } from '../data/locations'
 import { preceptsForEvent } from '../data/precepts'
-import { isKnownPbi, resolveSprintBacklog } from './backlog'
-import { amplifyEffects, availableEvents, drawEvent, evaluateEnding, miniGameKindFor, resolveChoice } from './game'
 import type {
   BacklogReview,
   Ceremony,
@@ -23,6 +28,8 @@ import type {
   Segment,
   Status,
 } from '../types'
+import { isKnownPbi, resolveSprintBacklog } from './backlog'
+import { amplifyEffects, availableEvents, drawEvent, evaluateEnding, miniGameKindFor, resolveChoice } from './game'
 
 /** 進行の中核状態（永続化対象＋導出フィールド）。UIアクション関数は含まない */
 export interface ProgressCore {
@@ -141,7 +148,7 @@ export function freshCore(starting: Meters): ProgressCore {
  *  - debt: 技術的負債のレベル＝累積負債(repoDebt)＋過信/誤KPIフラグから判定（質の負の側）
  *  - tokensUsed/Left: 生成AIトークン */
 export function repoStats(
-  core: Pick<ProgressCore, 'resolvedIds' | 'flags' | 'aiTokens' | 'repoCoverage' | 'repoDebt'>,
+  core: Pick<ProgressCore, 'resolvedIds' | 'flags' | 'aiTokens' | 'repoCoverage' | 'repoDebt'>
 ): {
   mergedPrs: number
   coverage: number
@@ -181,7 +188,7 @@ export function repoStats(
  *  ■ exposed/complicit/coopted の分岐は将来章のためのドーマント（第1章では立たない）。 */
 export function finalEndingFor(
   meters: Meters,
-  flags: Set<GameFlag>,
+  flags: Set<GameFlag>
 ): { ending: Epilogue | null; finalePending: boolean } {
   // ── 将来章用のドーマント分岐（第1章ではこれらのフラグは立たない）──
   // 暴くを選んだ場合、動かぬ証拠(fraudCase)を固めていれば告発が通り、無ければ握り潰される
@@ -331,9 +338,7 @@ export function spinCore(core: ProgressCore, segment: Segment, pickRandom: numbe
  *  候補でない場所＝「今日は静か」（peekLocation を立てるだけ）。 */
 export function arriveCore(core: ProgressCore, location: LocationId): ProgressCore {
   if (core.status !== 'travel') return core
-  const cands = core.dailyCandidates
-    .map((id) => EVENTS.find((e) => e.id === id))
-    .filter((e): e is GameEvent => !!e)
+  const cands = core.dailyCandidates.map((id) => EVENTS.find((e) => e.id === id)).filter((e): e is GameEvent => !!e)
   const chosen = cands.find((e) => locationOf(e) === location)
   if (!chosen) return { ...core, peekLocation: location } // 今日は静か（候補でない場所）
 
@@ -500,24 +505,24 @@ export function restoreCore(p: Persisted): ProgressCore {
  *  - backlogDone: 既知のみ（重複排除）
  *  - velocity: 各枠を有限・非負の数へ正規化（index 整合のため詰めない） */
 function restoreBacklog(
-  p: Persisted,
+  p: Persisted
 ): Pick<ProgressCore, 'backlogOrder' | 'sprintForecast' | 'backlogDone' | 'velocity'> {
   const seedOrder = PRODUCT_BACKLOG.map((q) => q.id)
   const savedOrder = (Array.isArray(p.backlogOrder) ? p.backlogOrder : []).filter(
-    (id): id is string => typeof id === 'string' && isKnownPbi(id),
+    (id): id is string => typeof id === 'string' && isKnownPbi(id)
   )
   const seen = new Set(savedOrder)
   const backlogOrder = [...savedOrder, ...seedOrder.filter((id) => !seen.has(id))]
   const done = new Set(
     (Array.isArray(p.backlogDone) ? p.backlogDone : []).filter(
-      (id): id is string => typeof id === 'string' && isKnownPbi(id),
-    ),
+      (id): id is string => typeof id === 'string' && isKnownPbi(id)
+    )
   )
   const sprintForecast = (Array.isArray(p.sprintForecast) ? p.sprintForecast : []).filter(
-    (id): id is string => typeof id === 'string' && isKnownPbi(id) && !done.has(id),
+    (id): id is string => typeof id === 'string' && isKnownPbi(id) && !done.has(id)
   )
   const velocity = (Array.isArray(p.velocity) ? p.velocity : []).map((v) =>
-    typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0,
+    typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0
   )
   return { backlogOrder, sprintForecast, backlogDone: [...done], velocity }
 }

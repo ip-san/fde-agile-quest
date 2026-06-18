@@ -3,7 +3,6 @@
 import type { GameEvent } from '../../../types'
 
 export const SPRINT3_EVENTS: GameEvent[] = [
-
   // ═══ Sprint 3「文化を残す」═══════════════════════════
   // ── プランニング ──
   {
@@ -30,8 +29,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         label: '社内メンバーへの{{オンボーディング}}と移譲をゴールにする',
         sprintGoal: '社内へのオンボーディングと移譲',
         effects: { culture: 1 },
-        resultText:
-          '「太く残す」に舵を切った。自分の見せ場は減るが、組織に根付く形へ。（頼られる信頼+は取り逃す）',
+        resultText: '「太く残す」に舵を切った。自分の見せ場は減るが、組織に根付く形へ。（頼られる信頼+は取り逃す）',
       },
     ],
   },
@@ -78,16 +76,14 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: '自分でやった方が速いので巻き取る',
         effects: { trust: 1, culture: -1 },
-        resultText:
-          '今日は速く回り、結城さんも安心（信頼+）。だが運用が自分に依存し、組織は賢くならない。',
+        resultText: '今日は速く回り、結城さんも安心（信頼+）。だが運用が自分に依存し、組織は賢くならない。',
         warn: true,
       },
       {
         id: 'b',
         label: '任せて、詰まったところだけ支える',
         effects: { culture: 1 },
-        resultText:
-          '若手が運用を語れるようになった。文化が人に宿る。（自分が握る安心の信頼+は取り逃す）',
+        resultText: '若手が運用を語れるようになった。文化が人に宿る。（自分が握る安心の信頼+は取り逃す）',
       },
     ],
   },
@@ -120,15 +116,13 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'chance',
     title: '横展開の誘い',
-    narrative:
-      '経営から「他拠点にも広げたい」と声がかかった。{{ペルソナ}}は拠点ごとに少し違う。',
+    narrative: '経営から「他拠点にも広げたい」と声がかかった。{{ペルソナ}}は拠点ごとに少し違う。',
     choices: [
       {
         id: 'a',
         label: '期待に応え、今の成功をそのまま全拠点にコピーする',
         effects: { trust: 1, insight: -1 },
-        resultText:
-          'スピード感に経営は満足（信頼+）。だが拠点差を無視したコピーは、また別の「沈黙」を生むかも。',
+        resultText: 'スピード感に経営は満足（信頼+）。だが拠点差を無視したコピーは、また別の「沈黙」を生むかも。',
       },
       {
         id: 'b',
@@ -145,23 +139,20 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'kokyaku',
     title: '広がる評判',
-    narrative:
-      '誤出荷が減ったと評判が立ち、別部署の部長が「うちにも来てくれ」と接触してきた。',
+    narrative: '誤出荷が減ったと評判が立ち、別部署の部長が「うちにも来てくれ」と接触してきた。',
     choices: [
       {
         id: 'a',
         label: '今の案件を放って、すぐ新しい部署に乗り換える',
         effects: { trust: -1, culture: -1, insight: -1 },
-        resultText:
-          '目新しさに飛びつき、今の現場の定着を置き去りに。「もう興味ないのか」と熱が冷め、信頼が削れた。',
+        resultText: '目新しさに飛びつき、今の現場の定着を置き去りに。「もう興味ないのか」と熱が冷め、信頼が削れた。',
         warn: true,
       },
       {
         id: 'b',
         label: '今の定着を見届けつつ、紹介は次の入口として丁寧に繋ぐ',
         effects: { trust: 1, culture: 1 },
-        resultText:
-          '最後までやり切る姿勢が信頼を呼ぶ（信頼+）。「太く残す」が評判になって広がる。',
+        resultText: '最後までやり切る姿勢が信頼を呼ぶ（信頼+）。「太く残す」が評判になって広がる。',
       },
     ],
   },
@@ -171,8 +162,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'trouble',
     title: '誰がダッシュボードを見るか',
-    narrative:
-      '誤出荷率の{{ダッシュボード}}を作ったが、自分が抜けたら誰も見ない懸念がある。',
+    narrative: '誤出荷率の{{ダッシュボード}}を作ったが、自分が抜けたら誰も見ない懸念がある。',
     choices: [
       {
         id: 'a',
@@ -186,8 +176,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'b',
         label: '現場のリーダーが見て動ける運用に組み替える',
         effects: { culture: 1, insight: 1 },
-        resultText:
-          '数字が現場の手に渡った。{{フィードバックループ}}が自走し始める。（毎朝報告の信頼+は取り逃す）',
+        resultText: '数字が現場の手に渡った。{{フィードバックループ}}が自走し始める。（毎朝報告の信頼+は取り逃す）',
       },
     ],
   },
@@ -239,8 +228,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         label: 'AIと協働し、現場知の部分は自分が判断して仕上げる',
         effects: { insight: 1, culture: 1 },
         repo: { coverage: 10 },
-        resultText:
-          'AIを“使う”でなく“共に働く”。速度はAI、判断は人。これがFDEのAIとの距離感だ。',
+        resultText: 'AIを“使う”でなく“共に働く”。速度はAI、判断は人。これがFDEのAIとの距離感だ。',
       },
     ],
   },
@@ -261,8 +249,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         label: 'その場しのぎのパッチで、とりあえず動かし続ける',
         effects: { trust: 1, insight: -1 },
         repo: { debt: 2 },
-        resultText:
-          '今日は止まらなかった（応急処置で信頼+）。だが負債の上に負債を重ねた。基盤はいつか必ず折れる。',
+        resultText: '今日は止まらなかった（応急処置で信頼+）。だが負債の上に負債を重ねた。基盤はいつか必ず折れる。',
         warn: true,
       },
       {
@@ -270,8 +257,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         label: '痛みを認め、基盤の更新を正面から計画に組み込む',
         effects: { insight: 1, culture: 1 },
         repo: { coverage: 5, debt: -1 },
-        resultText:
-          'レガシーを笑わず、設計条件として向き合った。遅れて始めた更新が、本番を支える土台になり始めた。',
+        resultText: 'レガシーを笑わず、設計条件として向き合った。遅れて始めた更新が、本番を支える土台になり始めた。',
       },
     ],
   },
@@ -281,15 +267,13 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'trouble',
     title: '深夜の本番障害',
-    narrative:
-      '本番の写真入力が深夜に停止。在庫が更新されず、朝の出荷に間に合わない。運用担当はまだ育っていない。',
+    narrative: '本番の写真入力が深夜に停止。在庫が更新されず、朝の出荷に間に合わない。運用担当はまだ育っていない。',
     choices: [
       {
         id: 'a',
         label: '「自分の担当範囲外」として、朝の出社まで待つ',
         effects: { trust: -2, culture: -1 },
-        resultText:
-          '朝、出荷が止まり現場は混乱（信頼−−）。FDEはSREでもある。火が出たら、まず消すのが筋だ。',
+        resultText: '朝、出荷が止まり現場は混乱（信頼−−）。FDEはSREでもある。火が出たら、まず消すのが筋だ。',
         warn: true,
       },
       {
@@ -313,16 +297,14 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: '「営業の領域なので」と話を技術に戻す',
         effects: { trust: -1 },
-        resultText:
-          '境界線の上に立てなかった（信頼−）。FDEは営業でもコンサルでもある。価値を語れる人が信頼を得る。',
+        resultText: '境界線の上に立てなかった（信頼−）。FDEは営業でもコンサルでもある。価値を語れる人が信頼を得る。',
         warn: true,
       },
       {
         id: 'b',
         label: '誤出荷削減の効果額を試算し、営業・コンサルとして価値を言葉にする',
         effects: { trust: 1, insight: 1 },
-        resultText:
-          'FDEは営業でもコンサルでもある。成果を“いくらの価値か”で語れたことが、次の案件を呼んだ。',
+        resultText: 'FDEは営業でもコンサルでもある。成果を“いくらの価値か”で語れたことが、次の案件を呼んだ。',
       },
     ],
   },
@@ -347,8 +329,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'b',
         label: '事実・推測・願望を分けて報告する（実績／見込み／目標）',
         effects: { insight: 1, culture: 1 },
-        resultText:
-          '事実と推測と願望を切り分けた報告は、地味だが信頼に足る。経営の意思決定の土台になった。',
+        resultText: '事実と推測と願望を切り分けた報告は、地味だが信頼に足る。経営の意思決定の土台になった。',
       },
     ],
   },
@@ -359,15 +340,13 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'team',
     title: '宙に浮くデータ移行',
-    narrative:
-      'データ移行が必要だが、「それは情シスの仕事」「いや業者の仕事」と誰も手を付けない。',
+    narrative: 'データ移行が必要だが、「それは情シスの仕事」「いや業者の仕事」と誰も手を付けない。',
     choices: [
       {
         id: 'a',
         label: '自分の担当でもないので、決まるまで待つ',
         effects: { culture: -1, insight: -1 },
-        resultText:
-          '誰の仕事でもないものは、お前の仕事。境界線の上に立てず、移行は宙に浮いた。',
+        resultText: '誰の仕事でもないものは、お前の仕事。境界線の上に立てず、移行は宙に浮いた。',
         warn: true,
       },
       {
@@ -399,8 +378,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'b',
         label: 'ラストマンとして座り、小さく切り替えてその場で試す',
         effects: { trust: 1, insight: 1 },
-        resultText:
-          'ラストマンとして座り、その場で試す。責任を引き受けた瞬間、場が動き出した。',
+        resultText: 'ラストマンとして座り、その場で試す。責任を引き受けた瞬間、場が動き出した。',
       },
     ],
   },
@@ -416,8 +394,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: '空気を読んで、結論は次回に持ち越す',
         effects: { culture: -1 },
-        resultText:
-          'その場で動かす者が主導権を握る。動かなかったあなたから、主導権は静かに離れた。',
+        resultText: 'その場で動かす者が主導権を握る。動かなかったあなたから、主導権は静かに離れた。',
         warn: true,
       },
       {
@@ -435,23 +412,20 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'team',
     title: '「それ、おかしくないですか」',
-    narrative:
-      'あなたの設計に、若手が「それ、おかしくないですか」と反論し、別の人が次々質問してくる。',
+    narrative: 'あなたの設計に、若手が「それ、おかしくないですか」と反論し、別の人が次々質問してくる。',
     choices: [
       {
         id: 'a',
         label: '面倒なので「決まったことだから」と議論を打ち切る',
         effects: { culture: -1, insight: -1 },
-        resultText:
-          '反論と質問を歓迎しなかった。以後、誰も異論を言わなくなり、欠陥が放置された。',
+        resultText: '反論と質問を歓迎しなかった。以後、誰も異論を言わなくなり、欠陥が放置された。',
         warn: true,
       },
       {
         id: 'b',
         label: '反論を歓迎し、質問を喜んで、設計を一緒に鍛える',
         effects: { culture: 1, insight: 1 },
-        resultText:
-          '反論を歓迎しろ、質問されたら喜べ。叩かれた設計は、一人で考えたものより強くなった。',
+        resultText: '反論を歓迎しろ、質問されたら喜べ。叩かれた設計は、一人で考えたものより強くなった。',
       },
     ],
   },
@@ -476,8 +450,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'b',
         label: 'リハーサルで練習し、炎上を“授業料つきの実地訓練”として記録する',
         effects: { insight: 1, culture: 1 },
-        resultText:
-          '練習しろ。小さな炎上は授業料つきの実地訓練。記録した教訓が、次の現場で効く。',
+        resultText: '練習しろ。小さな炎上は授業料つきの実地訓練。記録した教訓が、次の現場で効く。',
       },
     ],
   },
@@ -493,16 +466,14 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: '案件が終われば一区切り。特に振り返らず次へ',
         effects: { insight: -1 },
-        resultText:
-          '自分の道具を磨かなければ、次の現場では通用しない。FDEの旅はここで止まる。',
+        resultText: '自分の道具を磨かなければ、次の現場では通用しない。FDEの旅はここで止まる。',
         warn: true,
       },
       {
         id: 'b',
         label: '自分の道具（専門性・型）を磨き、次の現場へデプロイする準備をする',
         effects: { insight: 1, culture: 1 },
-        resultText:
-          '自分の道具を磨け。{{FDE}}とは、未来を現場にデプロイする仕事。次の現場が待っている。',
+        resultText: '自分の道具を磨け。{{FDE}}とは、未来を現場にデプロイする仕事。次の現場が待っている。',
       },
     ],
   },
@@ -577,8 +548,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: '数字を少し盛って、成功をきれいに見せる',
         effects: { trust: 1, culture: -1, insight: -1 },
-        resultText:
-          'きれいな成果に拍手（その場の信頼+）。だが事実とズレた時、信頼は一気に崩れる火種を抱えた。',
+        resultText: 'きれいな成果に拍手（その場の信頼+）。だが事実とズレた時、信頼は一気に崩れる火種を抱えた。',
         warn: true,
       },
       {
@@ -634,8 +604,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: '成功体験を、横展開のテンプレとして手早くまとめて次の現場へ急ぐ',
         effects: { insight: -1 },
-        resultText:
-          '雛形はできた。だが「現場ごとに違う」という今回いちばんの学びを、自分で薄めてしまった。',
+        resultText: '雛形はできた。だが「現場ごとに違う」という今回いちばんの学びを、自分で薄めてしまった。',
         warn: true,
       },
       {
@@ -660,16 +629,14 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: '成功を自分の手柄としてまとめ、経営に売り込む',
         effects: { trust: 1, culture: -1 },
-        resultText:
-          '個人の評価は上がった（信頼+）。だが学びは自分に閉じ、チームには残らない。',
+        resultText: '個人の評価は上がった（信頼+）。だが学びは自分に閉じ、チームには残らない。',
         warn: true,
       },
       {
         id: 'b',
         label: 'チームと組織の学びとして言語化し残す',
         effects: { culture: 2 },
-        resultText:
-          '現場の学びがプロダクトと人に残った。「太く残す」一手。（手柄にする信頼+は取り逃す）',
+        resultText: '現場の学びがプロダクトと人に残った。「太く残す」一手。（手柄にする信頼+は取り逃す）',
       },
     ],
   },
@@ -730,16 +697,14 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: 'DoDは満たしたので「完了」とし、次の機能に進む',
         effects: { insight: -1 },
-        resultText:
-          'チケットは閉じた。だが使われない機能が、また一つ増えた。作って動くことを、成果と取り違えた。',
+        resultText: 'チケットは閉じた。だが使われない機能が、また一つ増えた。作って動くことを、成果と取り違えた。',
         warn: true,
       },
       {
         id: 'b',
         label: '{{成果の定義}}——田淵さんが手書きをやめたか——まで見届ける',
         effects: { insight: 1, culture: 1 },
-        resultText:
-          '画面に一手間足したら、ついに手書きが消えた。出力でなく、現場に起きた変化が“完了”だ。',
+        resultText: '画面に一手間足したら、ついに手書きが消えた。出力でなく、現場に起きた変化が“完了”だ。',
       },
     ],
   },
@@ -782,8 +747,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: '急ぎだから、今日もまた橋本さんに直接聞いて済ませる',
         effects: { culture: -1 },
-        resultText:
-          '今日は速かった。だが手順書は使われず埃をかぶる。仕組みは、使う習慣まで作って初めて根付く。',
+        resultText: '今日は速かった。だが手順書は使われず埃をかぶる。仕組みは、使う習慣まで作って初めて根付く。',
         warn: true,
       },
       {
@@ -801,23 +765,20 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'team',
     title: '「やろう」で終わる改善',
-    narrative:
-      '改善案はたくさん出た。だが「誰が・いつまでに」やるかが、いつものように曖昧なまま終わりそうだ。',
+    narrative: '改善案はたくさん出た。だが「誰が・いつまでに」やるかが、いつものように曖昧なまま終わりそうだ。',
     choices: [
       {
         id: 'a',
         label: '空気よく、たくさんの改善に全部「やろう」と頷いて終える',
         effects: { culture: -1 },
-        resultText:
-          '前向きな空気で散会した。だが誰のものでもない改善は、誰もやらず、次も同じ議題が並ぶ。',
+        resultText: '前向きな空気で散会した。だが誰のものでもない改善は、誰もやらず、次も同じ議題が並ぶ。',
         warn: true,
       },
       {
         id: 'b',
         label: '改善を3つに絞り、それぞれ担当と期限を{{バックログ}}に刻む',
         effects: { culture: 1, insight: 1 },
-        resultText:
-          '少ないが、確実に回る改善が残った。所有と期限のない合意は、ただの願望にすぎない。',
+        resultText: '少ないが、確実に回る改善が残った。所有と期限のない合意は、ただの願望にすぎない。',
       },
     ],
   },
@@ -834,8 +795,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: '波風を立てず、全員一致を待って判断を先送りにする',
         effects: { insight: -1 },
-        resultText:
-          '合議は続き、決まらないまま好機を逃した。全員の責任は、しばしば誰の責任でもなくなる。',
+        resultText: '合議は続き、決まらないまま好機を逃した。全員の責任は、しばしば誰の責任でもなくなる。',
         warn: true,
       },
       {
@@ -860,8 +820,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: 'もう少し作り込んでから、と本番投入を先送りする',
         effects: { insight: -1 },
-        resultText:
-          '磨きは進んだが、現場の反応は得られないまま。{{PoC}}で満足する“あと一歩”が、いちばん遠い。',
+        resultText: '磨きは進んだが、現場の反応は得られないまま。{{PoC}}で満足する“あと一歩”が、いちばん遠い。',
         warn: true,
       },
       {
@@ -912,16 +871,14 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: '良い数字だけをきれいに並べ、成功として締める',
         effects: { insight: -1 },
-        resultText:
-          '数字は拍手を呼んだ。だが理由を語らなかったぶん、再現性は残らない。定量は方向、定性は理由なのに。',
+        resultText: '数字は拍手を呼んだ。だが理由を語らなかったぶん、再現性は残らない。定量は方向、定性は理由なのに。',
         warn: true,
       },
       {
         id: 'b',
         label: '数字に、現場で何が変わったかの物語を添えて報告する',
         effects: { insight: 1, culture: 1 },
-        resultText:
-          '「だから、ここを残すんです」。数字と理由が揃って初めて、次へ続く成果になった。',
+        resultText: '「だから、ここを残すんです」。数字と理由が揃って初めて、次へ続く成果になった。',
       },
     ],
   },
@@ -931,8 +888,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'trouble',
     title: '「誰のミスだ」',
-    narrative:
-      '本番で小さな事故が出た。経営は「誰のミスだ」と犯人を探したがる。チームは萎縮し始めている。',
+    narrative: '本番で小さな事故が出た。経営は「誰のミスだ」と犯人を探したがる。チームは萎縮し始めている。',
     choices: [
       {
         id: 'a',
@@ -957,23 +913,20 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'chance',
     title: '「ついでにあれも」',
-    narrative:
-      '成果が出て、結城さんも郷田専務も上機嫌だ。「ついでにあれも、これも」と新しい要望が一気に膨らみ始めた。',
+    narrative: '成果が出て、結城さんも郷田専務も上機嫌だ。「ついでにあれも、これも」と新しい要望が一気に膨らみ始めた。',
     choices: [
       {
         id: 'a',
         label: '機運に乗って、出てきた要望を全部この案件に詰め込む',
         effects: { insight: -1 },
-        resultText:
-          '欲張ったぶん、どれも中途半端になった。成功の勢いは、焦点を溶かす毒にもなる。',
+        resultText: '欲張ったぶん、どれも中途半端になった。成功の勢いは、焦点を溶かす毒にもなる。',
         warn: true,
       },
       {
         id: 'b',
         label: '今回の{{スプリントゴール}}は守り、新要望は次の{{プロダクトゴール}}として整理する',
         effects: { insight: 1, culture: 1 },
-        resultText:
-          '「次の約束」に並べ替えた。広げたい時こそ、Whyの最上段から積み直す。',
+        resultText: '「次の約束」に並べ替えた。広げたい時こそ、Whyの最上段から積み直す。',
       },
     ],
   },
@@ -1108,8 +1061,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: '自分の領分じゃない。言われた通り処理して返す',
         effects: { trust: 1, insight: -1 },
-        resultText:
-          '波風を立てず、総務の覚えはよい（信頼+）。だが、見て見ぬふりをした統制の穴は、そのまま残った。',
+        resultText: '波風を立てず、総務の覚えはよい（信頼+）。だが、見て見ぬふりをした統制の穴は、そのまま残った。',
         warn: true,
       },
       {
@@ -1141,8 +1093,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: '波風を立てず、書類はそっと元の棚に戻す',
         effects: { trust: 1, insight: -1 },
-        resultText:
-          '面倒を避け、見なかったことにした（角が立たず信頼+）。だが——真実から目を逸らした手応えだけが残る。',
+        resultText: '面倒を避け、見なかったことにした（角が立たず信頼+）。だが——真実から目を逸らした手応えだけが残る。',
         warn: true,
       },
       {

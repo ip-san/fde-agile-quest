@@ -1,12 +1,6 @@
 import { useState } from 'react'
-import {
-  LOCATION_ORDER,
-  LOCATIONS,
-  QUIET_BY_LOCATION,
-  type StandupVoice,
-  standupFor,
-} from '../data/locations'
 import { displayName } from '../data/chapters/chapter-01/names'
+import { LOCATION_ORDER, LOCATIONS, QUIET_BY_LOCATION, type StandupVoice, standupFor } from '../data/locations'
 import type { GameEvent, LocationId } from '../types'
 import { RichText } from './RichText'
 
@@ -32,7 +26,7 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
   const voices = standupFor(candidates)
   const liveLocations = new Set(voices.map((v) => v.location))
   const [reduceMotion] = useState(
-    () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
+    () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
   )
 
   return (
@@ -52,7 +46,8 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
           </span>
         </div>
         <p className="mb-2.5 px-1 text-[11px] text-slate-400">
-          本社{displayName('lumen')}のチームが、今日それぞれ別の優先を推す。<span className="text-slate-300">あなたが動けるのは1箇所だけ</span>
+          本社{displayName('lumen')}のチームが、今日それぞれ別の優先を推す。
+          <span className="text-slate-300">あなたが動けるのは1箇所だけ</span>
           ——どの声に賭ける？（選ばなかった方は見送りになる）
         </p>
 

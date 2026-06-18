@@ -16,11 +16,7 @@ const prefersReducedMotion = () =>
 export function MiniGameDev({ seed, onResolve }: Props) {
   const [reduced] = useState(prefersReducedMotion)
   const usePuzzle = reduced || seed % 2 === 0
-  return usePuzzle ? (
-    <MiniGameDevPuzzle seed={seed} onResolve={onResolve} />
-  ) : (
-    <DevTiming onResolve={onResolve} />
-  )
+  return usePuzzle ? <MiniGameDevPuzzle seed={seed} onResolve={onResolve} /> : <DevTiming onResolve={onResolve} />
 }
 
 /** マーカーが帯を往復。的（中央）に近いほど great。Space/タップで止める。 */

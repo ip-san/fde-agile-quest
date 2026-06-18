@@ -1,7 +1,7 @@
 // 全イベントを source から抽出し docs/EVENT_INDEX.md を生成する。
 // 物語の矛盾チェック・筋書き調整の“現状スナップショット”。再実行で最新化:
 //   node scripts/gen-event-index.mjs
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 

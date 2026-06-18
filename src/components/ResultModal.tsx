@@ -51,10 +51,7 @@ function ExecBadge({ result }: { result: ResultView }) {
       ? {
           cls: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
           icon: '◎',
-          text:
-            primary && delta > 0
-              ? `会心の${kind}！ ${primary}の伸びを ＋${delta} 上乗せ`
-              : `会心の${kind}！`,
+          text: primary && delta > 0 ? `会心の${kind}！ ${primary}の伸びを ＋${delta} 上乗せ` : `会心の${kind}！`,
         }
       : tier === 'poor'
         ? {
@@ -85,9 +82,7 @@ function BacklogReviewBlock({ review }: { review: BacklogReview }) {
   return (
     <div className="space-y-2 rounded-xl border border-slate-700 bg-slate-800/40 px-4 py-3">
       <div className="flex items-center justify-between">
-        <p className="text-[11px] font-semibold text-slate-400">
-          📋 スプリントバックログの精算
-        </p>
+        <p className="text-[11px] font-semibold text-slate-400">📋 スプリントバックログの精算</p>
         <span className="tabular-nums text-xs text-emerald-300">
           📈 ベロシティ {review.velocity} / 容量 {review.capacity}pt
         </span>
@@ -261,9 +256,7 @@ export function ResultModal({ result, onContinue }: Props) {
                 <div className="space-y-2 border-t border-slate-800 pt-3">
                   {newIds.length > 0 && (
                     <div className="space-y-1.5">
-                      <span className="text-[11px] font-semibold text-amber-300">
-                        ✨ 心得を獲得
-                      </span>
+                      <span className="text-[11px] font-semibold text-amber-300">✨ 心得を獲得</span>
                       {newIds.map((id) => {
                         const p = PRECEPT_BY_ID[id]
                         if (!p) return null

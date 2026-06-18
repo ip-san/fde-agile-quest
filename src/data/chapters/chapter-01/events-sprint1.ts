@@ -124,23 +124,20 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'kokyaku',
     title: '増えていく要望',
-    narrative:
-      '結城さんが「ついでにこの帳票も」と次々に要望を足してくる。{{バックログ}}が膨らみ始めた。',
+    narrative: '結城さんが「ついでにこの帳票も」と次々に要望を足してくる。{{バックログ}}が膨らみ始めた。',
     choices: [
       {
         id: 'a',
         label: '断ると角が立つので、全部引き受ける',
         effects: { trust: 1, culture: -1, insight: -1 },
-        resultText:
-          '“何でも応えてくれる”と結城さんは満悦（信頼+）。だが的が散り、チームは振り回されて疲れる。',
+        resultText: '“何でも応えてくれる”と結城さんは満悦（信頼+）。だが的が散り、チームは振り回されて疲れる。',
         warn: true,
       },
       {
         id: 'b',
         label: '今の{{スプリント}}ゴールに照らし、一緒に「今はやらない」を決める',
         effects: { insight: 1, culture: 1 },
-        resultText:
-          'ゴールを示して線引きすると、結城さんも「確かに」と一旦納得（信頼は据え置き）。的が絞れた。',
+        resultText: 'ゴールを示して線引きすると、結城さんも「確かに」と一旦納得（信頼は据え置き）。的が絞れた。',
       },
     ],
   },
@@ -195,8 +192,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         id: 'a',
         label: '人事の数字は人事の領分。深入りせず、現場の改善に集中する',
         effects: { insight: -1 },
-        resultText:
-          '横断のサインを一つ見送った。部署の壁の内側だけを見ていては、詰まりの全体像は掴めない。',
+        resultText: '横断のサインを一つ見送った。部署の壁の内側だけを見ていては、詰まりの全体像は掴めない。',
         warn: true,
       },
       {
@@ -215,8 +211,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     segment: 'chance',
     missedFlag: 'missedHearing',
     title: '思わぬ味方',
-    narrative:
-      '現場のパートさんが「私、前から不便だと思ってたんです」と声をかけてきた。改善のヒントの宝庫だ。',
+    narrative: '現場のパートさんが「私、前から不便だと思ってたんです」と声をかけてきた。改善のヒントの宝庫だ。',
     choices: [
       {
         id: 'a',
@@ -239,14 +234,14 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'chance',
     title: 'AIで空いた時間',
-    narrative:
-      '定型の集計レポート作成をAIに任せたら、毎日1時間が浮いた。この時間をどう使う？',
+    narrative: '定型の集計レポート作成をAIに任せたら、毎日1時間が浮いた。この時間をどう使う？',
     choices: [
       {
         id: 'a',
         label: '浮いた時間で、別の機能を作り込む',
         effects: { trust: 1, insight: -1 },
-        resultText: '機能が増え、結城さんは進捗が見えて一旦満足（信頼+）。だがAIが生んだ余白を、また机上の開発に使ってしまった。',
+        resultText:
+          '機能が増え、結城さんは進捗が見えて一旦満足（信頼+）。だがAIが生んだ余白を、また机上の開発に使ってしまった。',
       },
       {
         id: 'b',
@@ -271,8 +266,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         label: '{{プロンプト}}に言葉を足し、呪文のように調整し続ける',
         effects: { insight: -1 },
         repo: { debt: 1 },
-        resultText:
-          'プロンプトは呪文ではない。前提知識が無いまま言い回しをいじっても、的は外れたまま。',
+        resultText: 'プロンプトは呪文ではない。前提知識が無いまま言い回しをいじっても、的は外れたまま。',
         warn: true,
       },
       {
@@ -280,8 +274,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         label: '現場の用語と業務ルールを整理し、知識としてAIに渡す',
         effects: { insight: 1, culture: 1 },
         repo: { coverage: 10 },
-        resultText:
-          '{{RAG}}の前に、まず知識を整理する。AIの出力が一気に現場に噛み合い始めた。',
+        resultText: '{{RAG}}の前に、まず知識を整理する。AIの出力が一気に現場に噛み合い始めた。',
       },
     ],
   },
@@ -337,8 +330,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         label: 'レガシーと承認フローを“前提”として受け入れ、設計条件にする',
         effects: { insight: 1, culture: 1 },
         repo: { coverage: 10 },
-        resultText:
-          '{{ガバナンス}}は敵でなく入場券。古い仕組みを笑わず読み解くと、本当の制約と業務の理由が見えた。',
+        resultText: '{{ガバナンス}}は敵でなく入場券。古い仕組みを笑わず読み解くと、本当の制約と業務の理由が見えた。',
       },
     ],
   },
@@ -348,8 +340,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'genba',
     title: '頭の中の在庫フロー',
-    narrative:
-      '入庫・出庫・返品が絡む在庫の流れは複雑で、口頭で説明すると毎回こんがらがる。',
+    narrative: '入庫・出庫・返品が絡む在庫の流れは複雑で、口頭で説明すると毎回こんがらがる。',
     choices: [
       {
         id: 'a',
@@ -374,8 +365,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'genba',
     title: '「見える化したい」',
-    narrative:
-      '結城さんは「在庫を見える化したい」と言う。だが“見える化”が現場で何を意味するかは、人によって違う。',
+    narrative: '結城さんは「在庫を見える化したい」と言う。だが“見える化”が現場で何を意味するかは、人によって違う。',
     choices: [
       {
         id: 'a',
@@ -399,15 +389,13 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'genba',
     title: '巨大なExcel',
-    narrative:
-      '現場は在庫をマクロだらけの巨大なExcelで管理していた。複雑だが、ちゃんと回ってはいる。',
+    narrative: '現場は在庫をマクロだらけの巨大なExcelで管理していた。複雑だが、ちゃんと回ってはいる。',
     choices: [
       {
         id: 'a',
         label: '「Excel管理なんて」と一蹴し、無視して新システムを作る',
         effects: { insight: -1 },
-        resultText:
-          'Excelを軽んじた。だがあのマクロには、例外処理に滲む業務の本質が詰まっていた。',
+        resultText: 'Excelを軽んじた。だがあのマクロには、例外処理に滲む業務の本質が詰まっていた。',
         warn: true,
       },
       {
@@ -425,8 +413,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'chance',
     title: '手が止まる',
-    narrative:
-      'アイデアはある。だが「ちゃんとしたものを見せないと恥ずかしい」と、手が止まっている。',
+    narrative: 'アイデアはある。だが「ちゃんとしたものを見せないと恥ずかしい」と、手が止まっている。',
     choices: [
       {
         id: 'a',
@@ -440,8 +427,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         id: 'b',
         label: '最初の解は雑でいい。動く粗いものを今日、現場に当てる',
         effects: { insight: 1, culture: 1, trust: -1 },
-        resultText:
-          '粗さに結城さんは少し不安顔（信頼−）。だが本番に当てて初めて、仮説が学びに変わる。',
+        resultText: '粗さに結城さんは少し不安顔（信頼−）。だが本番に当てて初めて、仮説が学びに変わる。',
       },
     ],
   },
@@ -465,8 +451,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         id: 'b',
         label: '「できません」の前に最小版を作り、難所を分解して見せる',
         effects: { insight: 1, culture: 1 },
-        resultText:
-          'できませんの前に最小版、難しいの前に分解。無理筋が、やれる形に変わった。',
+        resultText: 'できませんの前に最小版、難しいの前に分解。無理筋が、やれる形に変わった。',
       },
     ],
   },
@@ -513,8 +498,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         id: 'b',
         label: 'わからない点を即メモし、痛い指摘を資産として持ち帰る',
         effects: { insight: 1, culture: 1 },
-        resultText:
-          'わからないことは即メモ。フィードバックは痛いが資産。次の一手が具体的になった。',
+        resultText: 'わからないことは即メモ。フィードバックは痛いが資産。次の一手が具体的になった。',
       },
     ],
   },
@@ -540,8 +524,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         id: 'b',
         label: '「画面が使われていない事実」と現場の声を率直に見せる',
         effects: { insight: 1, culture: 1, trust: -1 },
-        resultText:
-          '「自分たちの失敗を見せられた」と空気は重く、信頼は一旦下がった。だが全員が同じ事実に立てた。',
+        resultText: '「自分たちの失敗を見せられた」と空気は重く、信頼は一旦下がった。だが全員が同じ事実に立てた。',
       },
     ],
   },
@@ -553,8 +536,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     ceremony: 'retro',
     segment: 'team',
     title: 'レトロスペクティブ',
-    narrative:
-      'スプリント末。{{レトロスペクティブ}}は毎スプリント必ず開く場だ。今回はどう使う？',
+    narrative: 'スプリント末。{{レトロスペクティブ}}は毎スプリント必ず開く場だ。今回はどう使う？',
     choices: [
       {
         id: 'a',
@@ -567,8 +549,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         id: 'b',
         label: '本気で振り返り、やり方を1つ改善して持ち帰る',
         effects: { culture: 2 },
-        resultText:
-          'チームが自分でプロセスを直し始めた。（見せ場づくりの信頼+は取り逃す＝機会コスト）',
+        resultText: 'チームが自分でプロセスを直し始めた。（見せ場づくりの信頼+は取り逃す＝機会コスト）',
       },
     ],
   },
@@ -611,16 +592,14 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         id: 'a',
         label: '帳簿を実数に上書きし、辻褄を合わせて先へ進む',
         effects: { insight: -1 },
-        resultText:
-          '数字は合った。だが原因は闇のまま、来月もまた同じ棚がズレる。「答えは資料の外」を素通りした。',
+        resultText: '数字は合った。だが原因は闇のまま、来月もまた同じ棚がズレる。「答えは資料の外」を素通りした。',
         warn: true,
       },
       {
         id: 'b',
         label: '田淵さんの言う“いつもズレる棚”に張り付いて原因を観察する',
         effects: { insight: 1 },
-        resultText:
-          '入庫の置き場と棚番の振り方が、現場の運用とズレていた。差異の正体は、現場の動きの中にあった。',
+        resultText: '入庫の置き場と棚番の振り方が、現場の運用とズレていた。差異の正体は、現場の動きの中にあった。',
       },
     ],
   },
@@ -637,16 +616,14 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         id: 'a',
         label: '波風を立てず、報告会のまま上向きの進捗を整える',
         effects: { trust: 1, culture: -1 },
-        resultText:
-          '経営への見栄えは保たれた（進捗が見えて信頼+）。だが本当の障害は、水面下に沈んだままだ。',
+        resultText: '経営への見栄えは保たれた（進捗が見えて信頼+）。だが本当の障害は、水面下に沈んだままだ。',
         warn: true,
       },
       {
         id: 'b',
         label: '「今日いちばんの詰まりは何か」を問う場に変え、{{自己組織化}}を促す',
         effects: { insight: 1, culture: 1 },
-        resultText:
-          'ぽつりと「実は…」が出始めた。報告から、助け合いの場へ。（見栄えの信頼+は取り逃す）',
+        resultText: 'ぽつりと「実は…」が出始めた。報告から、助け合いの場へ。（見栄えの信頼+は取り逃す）',
       },
     ],
   },
@@ -663,16 +640,14 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         id: 'a',
         label: 'Simpleな改修と決めて、見積もり通り一気に作り込む',
         effects: { insight: -1 },
-        resultText:
-          '「ただの画面追加」は、引当ルールの沼だった。読み違えたぶん、手戻りが出た。',
+        resultText: '「ただの画面追加」は、引当ルールの沼だった。読み違えたぶん、手戻りが出た。',
         warn: true,
       },
       {
         id: 'b',
         label: '複雑系と見て、まず一部署で小さく試し、反応で学ぶ',
         effects: { insight: 1 },
-        resultText:
-          '小さく出したら、想定外の例外がすぐ見つかった。{{複雑系}}は、計画よりも実験で解く。',
+        resultText: '小さく出したら、想定外の例外がすぐ見つかった。{{複雑系}}は、計画よりも実験で解く。',
       },
     ],
   },
@@ -767,16 +742,14 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         id: 'a',
         label: '「仕様通りなので、運用でカバーしてください」と返す',
         effects: { insight: -1 },
-        resultText:
-          '正論で田淵さんは口を閉じた。沈黙の奥にあった本当の要件を、自分の手で閉じてしまった。',
+        resultText: '正論で田淵さんは口を閉じた。沈黙の奥にあった本当の要件を、自分の手で閉じてしまった。',
         warn: true,
       },
       {
         id: 'b',
         label: '二度手間の正体——WMSと手書きの二重入力を、田淵さんと再現してみる',
         effects: { insight: 1 },
-        resultText:
-          'システムが、現場の最後の一歩に届いていなかった。沈黙は、まだ見つかっていない要件だった。',
+        resultText: 'システムが、現場の最後の一歩に届いていなかった。沈黙は、まだ見つかっていない要件だった。',
       },
     ],
   },
@@ -793,8 +766,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         id: 'a',
         label: '隠すなら仕方ない、と外から見える範囲だけで自動化を設計する',
         effects: { insight: -1 },
-        resultText:
-          '表面だけで作った仕組みは、肝心の例外で必ず破れる。隠された“勘”こそが、この案件の本丸だったのに。',
+        resultText: '表面だけで作った仕組みは、肝心の例外で必ず破れる。隠された“勘”こそが、この案件の本丸だったのに。',
         warn: true,
       },
       {

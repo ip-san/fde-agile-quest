@@ -1,16 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import {
-  NAMES,
-  displayName,
-  localizeDeep,
-  localizeNames,
-  nameWithReading,
-} from './names'
+import { displayName, localizeDeep, localizeNames, NAMES, nameWithReading } from './names'
 
 // NAMES は可変 export。テストで name を差し替えたら必ず元へ戻す。
-const ORIGINAL = Object.fromEntries(
-  Object.entries(NAMES).map(([k, v]) => [k, { ...v }]),
-) as typeof NAMES
+const ORIGINAL = Object.fromEntries(Object.entries(NAMES).map(([k, v]) => [k, { ...v }])) as typeof NAMES
 
 afterEach(() => {
   for (const [k, v] of Object.entries(ORIGINAL)) {

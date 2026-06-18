@@ -146,9 +146,7 @@ export const PRECEPTS: Precept[] = [
   { id: 100, cluster: 'legacy', text: 'FDEとは、未来を現場にデプロイする仕事' },
 ]
 
-export const PRECEPT_BY_ID: Record<number, Precept> = Object.fromEntries(
-  PRECEPTS.map((p) => [p.id, p]),
-)
+export const PRECEPT_BY_ID: Record<number, Precept> = Object.fromEntries(PRECEPTS.map((p) => [p.id, p]))
 
 /**
  * イベント → そのイベントが体現する心得ID。

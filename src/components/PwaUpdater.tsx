@@ -24,9 +24,7 @@ export function PwaUpdater() {
     >
       <div className="flex w-full max-w-md items-center gap-3 rounded-xl border border-sky-500/40 bg-slate-900/98 px-4 py-3 shadow-2xl shadow-black/50 backdrop-blur">
         <span className="flex-1 text-sm text-slate-200">
-          {needRefresh
-            ? '新しいバージョンがあります。'
-            : 'オフラインでも遊べるようになりました。'}
+          {needRefresh ? '新しいバージョンがあります。' : 'オフラインでも遊べるようになりました。'}
         </span>
         {needRefresh && (
           <button

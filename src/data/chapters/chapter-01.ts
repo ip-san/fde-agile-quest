@@ -107,11 +107,7 @@ export const SEGMENT_COLORS: Record<Segment, string> = {
 
 // 固有名詞（社名・人名）は names.ts を唯一の定義元として、表示時に現在の表示名へ置換する。
 // リネームが無ければ localizeDeep は元の値をそのまま返す（恒等・ゼロコスト）。
-export const EVENTS: GameEvent[] = localizeDeep([
-  ...SPRINT1_EVENTS,
-  ...SPRINT2_EVENTS,
-  ...SPRINT3_EVENTS,
-])
+export const EVENTS: GameEvent[] = localizeDeep([...SPRINT1_EVENTS, ...SPRINT2_EVENTS, ...SPRINT3_EVENTS])
 
 // プロダクトバックログ（PBI）。配列順＝POの初期優先順位。固有名詞は表示名へ置換して公開する。
 export const PRODUCT_BACKLOG: BacklogItem[] = localizeDeep(PRODUCT_BACKLOG_RAW)

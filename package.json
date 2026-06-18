@@ -11,8 +11,17 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "format": "biome format --write src/ scripts/",
+    "format:check": "biome format src/ scripts/",
+    "lint": "biome lint src/ scripts/",
+    "check:lint": "biome check src/ scripts/",
+    "check": "npm run typecheck && npm run check:lint && npm run test",
     "generate-icons": "node scripts/generate-icons.mjs",
-    "gen:index": "node scripts/gen-event-index.mjs"
+    "gen:index": "node scripts/gen-event-index.mjs",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,mjs}": "biome check --write --no-errors-on-unmatched"
   },
   "dependencies": {
     "react": "^19.2.0",
@@ -20,12 +29,15 @@
     "zustand": "^5.0.2"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.0",
     "@tailwindcss/postcss": "^4.0.0",
     "@testing-library/react": "^16.1.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
+    "husky": "^9.1.7",
     "jsdom": "^25.0.1",
+    "lint-staged": "^17.0.7",
     "postcss": "^8.4.49",
     "sharp": "^0.35.1",
     "tailwindcss": "^4.0.0",

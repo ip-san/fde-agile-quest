@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
-  type HearingTheme,
   dealDevFlow,
   dealHearing,
+  type HearingTheme,
   hearingThemeFor,
   scoreHearing,
   scoreSequence,
@@ -29,7 +29,12 @@ describe('dealHearing', () => {
       expect(r.filter((o) => !o.good)).toHaveLength(3)
     }
     // 同 seed でもテーマが違えば顔ぶれが変わる（少なくとも1ペアで不一致）
-    const sets = themes.map((t) => dealHearing(7, t).map((o) => o.text).sort().join('|'))
+    const sets = themes.map((t) =>
+      dealHearing(7, t)
+        .map((o) => o.text)
+        .sort()
+        .join('|')
+    )
     expect(new Set(sets).size).toBeGreaterThan(1)
   })
   it('hearingThemeFor: hearing 系セグメントを themed に、その他は kokyaku に寄せる', () => {

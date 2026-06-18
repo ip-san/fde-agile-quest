@@ -5,9 +5,7 @@ import { RichText } from './RichText'
 export function EventLog({ log }: { log: LogEntry[] }) {
   if (log.length === 0) {
     return (
-      <p className="px-1 text-xs text-slate-400">
-        💬 セレモニーでルーレットを回すと、起きた出来事がここに残ります。
-      </p>
+      <p className="px-1 text-xs text-slate-400">💬 セレモニーでルーレットを回すと、起きた出来事がここに残ります。</p>
     )
   }
   const recent = [...log].reverse()

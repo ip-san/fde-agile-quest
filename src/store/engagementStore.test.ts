@@ -42,12 +42,8 @@ describe('isValidPersisted', () => {
   it('log 要素が LogEntry の形でない（非文字列フィールド）なら弾く', () => {
     expect(isValidPersisted({ ...valid, log: [null] })).toBe(false)
     expect(isValidPersisted({ ...valid, log: ['oops'] })).toBe(false)
-    expect(
-      isValidPersisted({ ...valid, log: [{ ...valid.log[0], resultText: 123 }] }),
-    ).toBe(false)
-    expect(
-      isValidPersisted({ ...valid, log: [{ ...valid.log[0], choiceLabel: undefined }] }),
-    ).toBe(false)
+    expect(isValidPersisted({ ...valid, log: [{ ...valid.log[0], resultText: 123 }] })).toBe(false)
+    expect(isValidPersisted({ ...valid, log: [{ ...valid.log[0], choiceLabel: undefined }] })).toBe(false)
   })
 
   it('resolvedIds / flags に非文字列が混ざれば弾く', () => {
@@ -60,9 +56,7 @@ describe('isValidPersisted', () => {
   })
 
   it('log の ceremony が Ceremony union 外なら弾く', () => {
-    expect(
-      isValidPersisted({ ...valid, log: [{ ...valid.log[0], ceremony: 'standup' }] }),
-    ).toBe(false)
+    expect(isValidPersisted({ ...valid, log: [{ ...valid.log[0], ceremony: 'standup' }] })).toBe(false)
   })
 
   it('空の log / resolvedIds / flags は許容する', () => {

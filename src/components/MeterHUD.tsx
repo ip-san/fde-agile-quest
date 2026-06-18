@@ -24,17 +24,7 @@ export function MeterHUD({ meters }: { meters: Meters }) {
   )
 }
 
-function Pips({
-  icon,
-  label,
-  value,
-  color,
-}: {
-  icon: string
-  label: string
-  value: number
-  color: string
-}) {
+function Pips({ icon, label, value, color }: { icon: string; label: string; value: number; color: string }) {
   const critical = value <= 2 // 残りわずか
   const low = value <= 3
   return (
@@ -51,9 +41,7 @@ function Pips({
         <span className="truncate text-slate-300">
           <span aria-hidden="true">{icon}</span> {label}
         </span>
-        <span
-          className={`tabular-nums ${critical ? 'font-bold text-rose-300' : 'text-slate-400'}`}
-        >
+        <span className={`tabular-nums ${critical ? 'font-bold text-rose-300' : 'text-slate-400'}`}>
           {critical ? <span aria-hidden="true">⚠</span> : null}
           {value}/{METER_MAX}
         </span>

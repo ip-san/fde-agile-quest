@@ -38,7 +38,7 @@
 //   （信頼=ノウハウ開示→定着／トップダウン=隠れた例外が漏れ大障害→挽回の余地）。
 // ───────────────────────────────────────────────────────────
 
-import { localizeDeep, nameWithReading, NAMES, type NameId } from './names'
+import { localizeDeep, NAMES, type NameId, nameWithReading } from './names'
 
 export interface Character {
   id: string
@@ -69,8 +69,7 @@ const RAW_CAST: Character[] = [
     role: 'ルーメン受託部門の生き字引・メンター',
     side: 'mentor',
     archetype: '師（Erik 型）',
-    blurb:
-      'かつて受託で現場を渡り歩いた古参。折々に現れ、FDE心得を“問い”として置いていく。「答えは資料の外にある」。',
+    blurb: 'かつて受託で現場を渡り歩いた古参。折々に現れ、FDE心得を“問い”として置いていく。「答えは資料の外にある」。',
   },
   {
     id: 'takano',
@@ -107,8 +106,7 @@ const RAW_CAST: Character[] = [
     side: 'cargo',
     archetype: '現場の声',
     meterTie: 'insight',
-    blurb:
-      '勤続20年。手書きメモで在庫を数え、システムを信じない。「あの画面な、使ってないよ」。現場理解の鍵。',
+    blurb: '勤続20年。手書きメモで在庫を数え、システムを信じない。「あの画面な、使ってないよ」。現場理解の鍵。',
   },
   {
     id: 'hashimoto',
@@ -117,8 +115,7 @@ const RAW_CAST: Character[] = [
     side: 'cargo',
     archetype: 'ボトルネックの英雄（Brent 型）',
     meterTie: 'culture',
-    blurb:
-      'WMSもネットワークも障害対応も一人で背負う。頼れるが、彼が休むと全部止まる。属人化の象徴＝巻き込みの鍵。',
+    blurb: 'WMSもネットワークも障害対応も一人で背負う。頼れるが、彼が休むと全部止まる。属人化の象徴＝巻き込みの鍵。',
   },
   {
     id: 'goda',
@@ -134,8 +131,7 @@ const RAW_CAST: Character[] = [
     role: 'カルゴ物流 販売管理部長',
     side: 'cargo',
     archetype: '対立する事業部長（Sarah 型）',
-    blurb:
-      '現場改革に冷ややか。「3PLに移管してコストを切れ」と政治的に押す対立軸。社内政治の影。',
+    blurb: '現場改革に冷ややか。「3PLに移管してコストを切れ」と政治的に押す対立軸。社内政治の影。',
   },
   {
     id: 'moriya',
@@ -172,12 +168,10 @@ const RAW_CAST: Character[] = [
 // 表示名・ふりがなは names.ts から解決し、リネーム時に人物カードも追従させる。
 // role/blurb の地の文に出てくる社名・人名も localizeDeep で現在の表示名へ置換。
 export const CAST: Character[] = localizeDeep(RAW_CAST).map((c) =>
-  c.id in NAMES ? { ...c, name: nameWithReading(c.id as NameId) } : c,
+  c.id in NAMES ? { ...c, name: nameWithReading(c.id as NameId) } : c
 )
 
-export const CAST_BY_ID: Record<string, Character> = Object.fromEntries(
-  CAST.map((c) => [c.id, c]),
-)
+export const CAST_BY_ID: Record<string, Character> = Object.fromEntries(CAST.map((c) => [c.id, c]))
 
 /** Prologue（オープニング）のパネル。難しい用語は避け、短い文で情景から掴む。
  *  image は public/img/{key}.jpg のキー。images.ts の AVAILABLE_IMAGES に登録された

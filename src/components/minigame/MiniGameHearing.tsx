@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { type HearingOption, type HearingTheme, dealHearing, scoreHearing } from '../../data/minigames'
+import { dealHearing, type HearingOption, type HearingTheme, scoreHearing } from '../../data/minigames'
 import type { ExecTier } from '../../types'
 
 interface Props {

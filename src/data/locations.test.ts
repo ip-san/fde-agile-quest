@@ -112,7 +112,9 @@ describe('standupFor（朝会＝競合する主張）', () => {
   })
 
   it('鉤括弧入りtitleでも二重カギ括弧にならない（bareTitle）', () => {
-    const v = standupFor([synth({ id: 'q', segment: 'kokyaku', location: 'client', title: '「で、いくらで売れる？」' })])
+    const v = standupFor([
+      synth({ id: 'q', segment: 'kokyaku', location: 'client', title: '「で、いくらで売れる？」' }),
+    ])
     expect(v[0].line).not.toContain('「「')
     expect(v[0].line).not.toContain('」」')
     expect(v[0].line).toContain('で、いくらで売れる？')
@@ -121,11 +123,27 @@ describe('standupFor（朝会＝競合する主張）', () => {
   it('人事/総務/経理/不正の題材は“価値/障害/コード”の語彙で称揚・矮小化しない（中立バンク）', () => {
     // 実イベントのうち sensitive（人事/総務/経理 ロケーション or 不正フラグ）を単独候補で朝会化し、
     // 不適切な持ち上げ・タスク化の語が出ないことを保証する
-    const PRAISE = ['KPIに効く', '価値の大きい順', '価値を、今スプリント', '価値に直結', '障害になる', '片づければ', 'リポジトリで直し', 'コードに反映', 'リファクタ']
+    const PRAISE = [
+      'KPIに効く',
+      '価値の大きい順',
+      '価値を、今スプリント',
+      '価値に直結',
+      '障害になる',
+      '片づければ',
+      'リポジトリで直し',
+      'コードに反映',
+      'リファクタ',
+    ]
     const sensitive = EVENTS.filter((e) => {
       const loc = locationOf(e)
       const fraud = (f?: string) => f === 'fraudClue' || f === 'fraudCase'
-      return loc === 'soumu' || loc === 'jinji' || loc === 'keiri' || fraud(e.requiresFlag) || e.choices.some((c) => fraud(c.setsFlag))
+      return (
+        loc === 'soumu' ||
+        loc === 'jinji' ||
+        loc === 'keiri' ||
+        fraud(e.requiresFlag) ||
+        e.choices.some((c) => fraud(c.setsFlag))
+      )
     })
     expect(sensitive.length).toBeGreaterThan(0)
     for (const e of sensitive) {

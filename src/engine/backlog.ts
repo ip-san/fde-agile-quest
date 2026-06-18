@@ -48,9 +48,7 @@ export function toggleForecast(core: ProgressCore, pbiId: string): ProgressCore 
   if (!PBI_BY_ID.has(pbiId)) return core
   if (core.backlogDone.includes(pbiId)) return core
   const has = core.sprintForecast.includes(pbiId)
-  const sprintForecast = has
-    ? core.sprintForecast.filter((id) => id !== pbiId)
-    : [...core.sprintForecast, pbiId]
+  const sprintForecast = has ? core.sprintForecast.filter((id) => id !== pbiId) : [...core.sprintForecast, pbiId]
   return { ...core, sprintForecast }
 }
 
@@ -80,7 +78,7 @@ export interface ProposalVerdict {
  *  - ゴール項目が非ゴール項目より下に埋もれていたら、その項目を上に戻し floated に記録（部分採用） */
 export function reviewBacklogProposal(
   core: Pick<ProgressCore, 'sprintIndex' | 'backlogDone' | 'backlogOrder'>,
-  proposedIds: string[],
+  proposedIds: string[]
 ): ProposalVerdict {
   // 提案を既知 id に正規化し、漏れた既知 id は現行順で末尾補完
   const known = proposedIds.filter((id) => PBI_BY_ID.has(id))

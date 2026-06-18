@@ -3,13 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { useFocusTrap } from './useFocusTrap'
 
-function Dialog({
-  initialFocusLast = false,
-  onEscape,
-}: {
-  initialFocusLast?: boolean
-  onEscape?: () => void
-}) {
+function Dialog({ initialFocusLast = false, onEscape }: { initialFocusLast?: boolean; onEscape?: () => void }) {
   const ref = useFocusTrap<HTMLDivElement>(onEscape)
   return (
     <div ref={ref} role="dialog" aria-modal="true">
@@ -78,7 +72,7 @@ describe('useFocusTrap', () => {
     render(
       <div data-testid="backdrop">
         <Dialog />
-      </div>,
+      </div>
     )
     const backdrop = screen.getByTestId('backdrop')
     // 外側 mousedown はキャンセルされる（＝既定のフォーカス移動が起きない）
