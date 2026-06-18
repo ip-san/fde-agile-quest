@@ -134,6 +134,14 @@ export const AVAILABLE_IMAGES = new Set<string>([
   's2-daily-soumu-ringi', // 総務部の稟議承認（稟議書が総務で詰まる）
   's2-daily-hqorder', // 本社からの一律通達（本社から在庫3割削減通達）
   's3-plan-handoff', // 本番化の構え（最終スプリントのプランニング）
+  's3-daily-referral', // 広がる評判（別部署からアプローチ）
+  's3-daily-sales', // 「で、いくらで売れる？」（経営が商用化を尋ねる）
+  's3-daily-facts', // 混ざる事実と願望（事実と仮定が混在する報告書）
+  's3-daily-drive', // 紛糾する会議（誰も決めない会議）
+  's3-review', // 最終レビュー：成果を語る（専務への最終報告）
+  's3-daily-outcome', // 「動く」と「使われる」の谷（完成したが使われないシステム）
+  's3-daily-numbers', // 数字だけ並べるか（数字のみの最終報告）
+  's3-daily-subcon', // 下請けへの値下げ要求（下請けへの圧力）
   // プロローグ4パネルの情景画像（cast.ts の PROLOGUE_PANELS.image）
   'prologue-boardroom', // 役員会議：横ばいの売上グラフと沈鬱な役員、末席の主人公
   'prologue-summons', // 呼び出し：会議後の廊下で社長(鷹野)が主人公に語りかける、横に久遠
