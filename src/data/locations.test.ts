@@ -93,6 +93,23 @@ describe('standupFor（朝会＝競合する主張）', () => {
     expect(v[0].line).toContain('で、いくらで売れる？')
   })
 
+  it('全イベントの朝会口上が鉤括弧の入れ子（「「 / 」」）にならない', () => {
+    const bad = EVENTS.map((e) => ({ id: e.id, line: standupFor([e])[0]?.line ?? '' }))
+      .filter(({ line }) => line.includes('「「') || line.includes('」」'))
+      .map(({ id, line }) => `${id}: ${line}`)
+    expect(bad, bad.join('\n')).toEqual([])
+  })
+
+  it('題の“途中”に「」を含む題がテンプレに落ちても、外側「」と入れ子にせず内部を『』へ自然化する', () => {
+    // 上書き(advocacy/hints)の無い合成イベント＝テンプレ経路。内部「」が外側「」と入れ子になる退行を防ぐ。
+    const v = standupFor([
+      synth({ id: 'z', segment: 'kokyaku', location: 'client', title: '親会社からの「実証デモ」要求' }),
+    ])
+    expect(v[0].line).not.toContain('「「')
+    expect(v[0].line).not.toContain('実証デモ」') // 内部「」が残っていない
+    expect(v[0].line).toContain('『実証デモ』')
+  })
+
   it('人事/総務/経理/不正の題材は“価値/障害/コード”の語彙で称揚・矮小化しない（中立バンク）', () => {
     // 実イベントのうち sensitive（人事/総務/経理 ロケーション or 不正フラグ）を単独候補で朝会化し、
     // 不適切な持ち上げ・タスク化の語が出ないことを保証する（禁止語は実装と同じ単一の真実源）

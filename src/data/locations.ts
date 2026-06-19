@@ -203,6 +203,13 @@ function bareTitle(t: string): string {
   return m ? m[1] : t
 }
 
+/** テンプレ口上に埋める用に題を整える。外側の鉤括弧を1組剥がし、さらに“途中に残る”「」は
+ *  『』へ変換する——テンプレが外側を「」で括るため、内部の「」をそのままにすると入れ子になり
+ *  「親会社からの「実証デモ」要求」のように不自然化する（→「親会社からの『実証デモ』要求」）。 */
+function cleanTitle(t: string): string {
+  return bareTitle(t).replace(/「/g, '『').replace(/」/g, '』')
+}
+
 /** “価値/障害/コード”の語彙が不適切になる題材（人事・総務・経理・不正・社内政治）か。
  *  中立バンクで「筋を通す/事実と記録を確かめる」として扱い、称揚・矮小化を避ける。 */
 function isSensitiveEvent(event: GameEvent): boolean {
@@ -293,7 +300,7 @@ const SENSITIVE_LINES: Record<DailyRole, Line[]> = {
 /** 役割ごとの“主張”。title は調査対象として中立に括り（bareTitle＋一重「」）、その役割の観点で
  *  「現地で確かめてくる」よう促す（断定しない）。題材が人事/不正等なら中立バンク。 */
 function advocacyLine(role: DailyRole, event: GameEvent, locShort: string, seed: number): string {
-  const t = bareTitle(event.title)
+  const t = cleanTitle(event.title)
   const pick = (bank: Line[]) => bank[Math.floor(frac(seed) * bank.length) % bank.length](t, locShort)
   if (isSensitiveEvent(event)) return pick(SENSITIVE_LINES[role])
   if (role === 'dev') {
