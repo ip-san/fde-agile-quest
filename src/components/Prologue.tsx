@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { CAST, PROLOGUE_PANELS } from '../data/chapters/chapter-01/cast'
 import { displayName } from '../data/chapters/chapter-01/names'
 import { AVAILABLE_IMAGES, imageUrl } from '../data/images'
+import { METER_META } from '../data/meters'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 
 interface Props {
@@ -79,6 +80,20 @@ export function Prologue({ onClose }: Props) {
           ) : (
             <section className="space-y-3">
               <h1 className="text-lg font-bold text-slate-100">登場人物</h1>
+              {/* 二重構造の舞台モチーフ：表（受託の常駐）と裏（文化変革）の二面性を明示し、群像の意味づけをする。 */}
+              <div className="rounded-xl border border-violet-500/30 bg-violet-500/10 px-3 py-2 text-xs leading-relaxed text-violet-100">
+                <p className="font-semibold text-violet-200">
+                  <span aria-hidden="true">🎭</span> 二重の任務
+                </p>
+                <p className="mt-0.5">
+                  表の顔は、「StockPilot」を直しに来た常駐エンジニア。だが裏には、二つの本当の任務がある。
+                  ひとつは、現場にアジャイルの文化を根づかせ
+                  <span className="font-semibold">あなたが去っても回り続ける組織</span>を残すこと。
+                  もうひとつは、現場でしか掴めない<span className="font-semibold">“次の機能の種”</span>
+                  を吸い上げ、自社SaaS「StockPilot」へ還元すること。
+                  AIで誰でもソフトを作れる時代に、現場に立つFDEだけが見つけられる価値が、会社の生き残る道だ。
+                </p>
+              </div>
               <p className="text-xs text-slate-400">
                 この物語で何度も顔を合わせる相手。彼らとの距離が、3つのメーターになる。
               </p>
@@ -93,6 +108,15 @@ export function Prologue({ onClose }: Props) {
                       </span>
                     </div>
                     <p className="mt-1 text-xs leading-relaxed text-slate-300">{c.blurb}</p>
+                    {/* 効く軸＝この相手に最も響く判断（キャラごとに正解の軸が違う）。 */}
+                    {c.meterTie && (
+                      <span
+                        className={`mt-1.5 inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold ${METER_META[c.meterTie].chip}`}
+                      >
+                        効く軸：<span aria-hidden="true">{METER_META[c.meterTie].icon}</span>{' '}
+                        {METER_META[c.meterTie].full}
+                      </span>
+                    )}
                   </li>
                 ))}
               </ul>

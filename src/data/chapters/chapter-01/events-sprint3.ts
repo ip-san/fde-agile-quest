@@ -85,6 +85,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         effects: { culture: 1 },
         resultText:
           '若手が運用を語れるようになった。{{オンボーディング}}が実を結び、文化が人に宿る。（自分が握る安心の信頼+は取り逃す）',
+        seedId: 'guided-onboarding',
       },
     ],
   },
@@ -101,6 +102,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         label: 'リモートで数字だけ確認して済ます',
         effects: { insight: -1 },
         resultText: '数字は良い。だが現場の小さな不満は拾えていない。',
+        warn: true,
       },
       {
         id: 'b',
@@ -118,12 +120,40 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     segment: 'chance',
     title: '横展開の誘い',
     narrative: '経営から「他拠点にも広げたい」と声がかかった。{{ペルソナ}}は拠点ごとに少し違う。',
+    deduction: {
+      prompt: 'そのまま全拠点にコピーすると、何が起きる？“本当のリスク”はどれだ？',
+      reveal:
+        '今の成功はこの拠点の{{ペルソナ}}に最適化されたもの。拠点差を無視したコピーは、また別の「沈黙する画面」を生む。まず1拠点で現場を見る。',
+      options: [
+        {
+          id: 'load',
+          text: 'サーバー負荷が増え、性能が足りなくなる',
+          miss: '技術の問題ではない。各拠点の現場が違う、という根が見えていない。',
+        },
+        {
+          id: 'persona',
+          text: '拠点ごとに{{ペルソナ}}が違い、コピーは別の「沈黙」を生む',
+          truth: true,
+        },
+        {
+          id: 'pace',
+          text: '展開が速すぎて、チームが疲弊する',
+          miss: 'ペースの話ではない。同じものが別の現場で“使われない”のが本質だ。',
+        },
+        {
+          id: 'expectation',
+          text: '経営の期待が高すぎる',
+          miss: '期待でなく、現場差という事実を無視することが危うい。',
+        },
+      ],
+    },
     choices: [
       {
         id: 'a',
         label: '期待に応え、今の成功をそのまま全拠点にコピーする',
         effects: { trust: 1, insight: -1 },
         resultText: 'スピード感に経営は満足（信頼+）。だが拠点差を無視したコピーは、また別の「沈黙」を生むかも。',
+        warn: true,
       },
       {
         id: 'b',
@@ -165,6 +195,33 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     segment: 'trouble',
     title: '誰がダッシュボードを見るか',
     narrative: '誤出荷率の{{ダッシュボード}}を作ったが、自分が抜けたら誰も見ない懸念がある。',
+    deduction: {
+      prompt: 'このダッシュボードの“本当の懸念”はどれだ？',
+      reveal:
+        '数字を読む役が自分に依存していること。自分が抜けたら止まる——属人化だ。現場が自分で見て動ける運用に渡すのが「太く残す」道。',
+      options: [
+        {
+          id: 'accuracy',
+          text: '数字の精度が足りず、信用されていない',
+          miss: '精度の話ではない。問題は「誰が」見続けるかだ。',
+        },
+        {
+          id: 'solo',
+          text: '運用が自分に依存し、自分が抜けたら誰も見ない（属人化）',
+          truth: true,
+        },
+        {
+          id: 'ui',
+          text: 'ダッシュボードのUIが使いにくい',
+          miss: '道具のせいにする前に、見る習慣が誰にも根付いていない。',
+        },
+        {
+          id: 'apathy',
+          text: '経営が数字に興味を持っていない',
+          miss: '興味の有無でなく、現場が自分で意思決定する仕組みが無いことが芯だ。',
+        },
+      ],
+    },
     choices: [
       {
         id: 'a',
@@ -179,6 +236,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         label: '現場のリーダーが見て動ける運用に組み替える',
         effects: { culture: 1, insight: 1 },
         resultText: '数字が現場の手に渡った。{{フィードバックループ}}が自走し始める。（毎朝報告の信頼+は取り逃す）',
+        seedId: 'genba-dashboard',
       },
     ],
   },
@@ -261,6 +319,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         repo: { coverage: 5, debt: -1 },
         resultText:
           '{{レガシー}}を笑わず、設計条件として向き合った。遅れて始めた更新が、本番を支える土台になり始めた。',
+        seedId: 'legacy-bridge',
       },
     ],
   },
@@ -278,6 +337,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         effects: { trust: -2, culture: -1 },
         resultText: '朝、出荷が止まり現場は混乱（信頼−−）。{{FDE}}はSREでもある。火が出たら、まず消すのが筋だ。',
         warn: true,
+        restraint: true,
       },
       {
         id: 'b',
@@ -1162,6 +1222,33 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     title: '書類の上だけ、ぐるぐる回る',
     narrative:
       '“在るはずの無い機材”を追い、組織の壁を壊して本社の取引データに繋いだ。すると見えてきた——同じシリアルの{{フィジカルAI}}機材が、グループ各社を書類の上だけで巡り、一周するたびに売上が立っている。架空の循環取引。カルゴ物流は、その踏み台にされていた。',
+    deduction: {
+      prompt: 'この数字のからくりの正体は何だ？',
+      reveal:
+        '同じ機材が書類の上だけでグループ各社を巡り、一周ごとに売上が立つ——架空の循環取引の“影”だ。カルゴ物流は、その尻尾を踏まされているのかもしれない。一人の{{FDE}}が断ずるには大きすぎる。まず記録を残せ。',
+      options: [
+        {
+          id: 'dup',
+          text: '在庫管理のミスで、同じ機材が重複計上されている',
+          miss: 'ミスなら一方向に出る。同じシリアルが各社を“巡って”戻る循環は、意図的だ。',
+        },
+        {
+          id: 'circular',
+          text: '同じ機材が書類上だけグループ各社を巡り、売上を水増ししている',
+          truth: true,
+        },
+        {
+          id: 'leak',
+          text: '機材の横流し——実物が外部に売られている',
+          miss: '実物が動いた形跡はない。動いているのは書類と数字だけだ。',
+        },
+        {
+          id: 'separate',
+          text: '各社が別々に同型機材を買っただけ',
+          miss: '別々の購入ならシリアルは異なる。同一シリアルが巡るのは一台の使い回しだ。',
+        },
+      ],
+    },
     choices: [
       {
         id: 'a',

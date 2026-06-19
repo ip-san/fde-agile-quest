@@ -1,3 +1,4 @@
+import { SEEDS } from '../data/seeds'
 import { AI_TOKENS_MAX } from '../engine/progression'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 
@@ -13,6 +14,8 @@ interface RepoStats {
 
 interface Props {
   stats: RepoStats
+  /** 現場で発見した「次の機能の種」ID（周回をまたいで永続） */
+  foundSeeds: Set<string>
   onClose: () => void
 }
 
@@ -36,7 +39,7 @@ const DEBT_VIEW: Record<RepoStats['debt'], { label: string; tone: string; note: 
 
 /** コードリポジトリの“状態パネル”。心得手帳と同じく、積み上がった開発の健康度を見る画面。
  *  新規の永続フィールドを増やさず、既存状態（解決数・フラグ・AIトークン）から導出して表示する。 */
-export function RepoPanel({ stats, onClose }: Props) {
+export function RepoPanel({ stats, foundSeeds, onClose }: Props) {
   const ref = useFocusTrap<HTMLDivElement>(onClose)
   const debt = DEBT_VIEW[stats.debt]
   const tokenRatio = stats.tokensLeft / AI_TOKENS_MAX
@@ -112,6 +115,39 @@ export function RepoPanel({ stats, onClose }: Props) {
             </span>
           </Row>
           <p className="rounded-lg bg-slate-800/30 px-3 py-2 text-xs leading-relaxed text-slate-400">{debt.note}</p>
+
+          {/* 次の機能の種＝現場でしか掴めないプロダクトの種を吸い上げ、自社SaaSへ還元する（FDEの本懐）。 */}
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-3 py-2.5">
+            <div className="mb-1.5 flex items-center justify-between text-xs">
+              <span className="font-semibold text-emerald-300">🌱 次の機能の種（現場発 → StockPilot）</span>
+              <span className="tabular-nums text-slate-400">
+                {foundSeeds.size}/{SEEDS.length}
+              </span>
+            </div>
+            <ul className="space-y-1">
+              {SEEDS.map((s) => {
+                const found = foundSeeds.has(s.id)
+                return (
+                  <li key={s.id} className="flex items-start gap-1.5 text-xs">
+                    <span aria-hidden="true" className="shrink-0">
+                      {found ? '🌱' : '🔒'}
+                    </span>
+                    {found ? (
+                      <span className="text-slate-200">
+                        {s.title}
+                        <span className="ml-1 text-[11px] text-slate-500">— {s.from}</span>
+                      </span>
+                    ) : (
+                      <span className="text-slate-600">？？？（現場でまだ見つけていない）</span>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+            <p className="mt-1.5 text-[11px] leading-relaxed text-slate-400">
+              現場を観る判断で見つかる。AIで誰でも作れる時代に、現場のFDEだけが掴める“次の一手”。
+            </p>
+          </div>
         </div>
 
         <footer className="border-t border-slate-800 px-5 py-3">

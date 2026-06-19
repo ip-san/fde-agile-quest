@@ -1,7 +1,9 @@
 import { create } from 'zustand'
 import { CEREMONY_ORDER, CHAPTER_TITLE, SPRINTS, STARTING_METERS } from '../data/chapters/chapter-01'
 import { PRECEPT_BY_ID } from '../data/precepts'
+import { SEED_BY_ID } from '../data/seeds'
 import { reorderBacklog, reviewItem, startItem, toggleForecast } from '../engine/backlog'
+import { METER_MAX } from '../engine/game'
 import {
   arriveCore,
   ceremonyAt,
@@ -21,6 +23,8 @@ import type { Ceremony, Choice, ExecTier, GameFlag, LocationId, ReviewDepth, Seg
 const STORAGE_KEY = 'fde-agile-quest:chapter-01-v2'
 // 心得手帳は「周回をまたいで集める」コレクションなので別キーで保存し、reset では消さない
 const PRECEPTS_KEY = 'fde-agile-quest:precepts-seen'
+// 「次の機能の種」も周回をまたぐコレクション（reset では消さない）
+const SEEDS_KEY = 'fde-agile-quest:feature-seeds'
 
 interface EngagementState extends ProgressCore {
   chapterTitle: string
@@ -28,6 +32,8 @@ interface EngagementState extends ProgressCore {
   generation: number
   /** これまでに出会った心得ID（周回をまたいで永続。reset では消えない） */
   seenPrecepts: Set<number>
+  /** これまでに発見した「次の機能の種」ID（周回をまたいで永続。reset では消えない） */
+  foundSeeds: Set<string>
 
   /** 現在のセレモニー（位置から導出）。終了後は null */
   currentCeremony: () => Ceremony | null
@@ -37,7 +43,7 @@ interface EngagementState extends ProgressCore {
   /** 単発セレモニーで「進める」。ルーレットを介さず直接イベントを出す */
   proceed: () => void
   /** tier＝選択後の実行ミニゲームの出来（省略時は good＝標準） */
-  choose: (choice: Choice, tier?: ExecTier) => void
+  choose: (choice: Choice, tier?: ExecTier, deductionBonus?: number) => void
   dismissResult: () => void
   /** 不正暴露アークの「暴露の決断」を解決（選んだフラグで結末を確定・永続化） */
   resolveFinale: (flag: GameFlag) => void
@@ -73,6 +79,30 @@ function loadSeenPrecepts(): Set<number> {
 function persistSeenPrecepts(seen: Set<number>) {
   try {
     localStorage.setItem(PRECEPTS_KEY, JSON.stringify([...seen]))
+  } catch {
+    /* noop */
+  }
+}
+
+/** 永続化された foundSeeds を、実在する種IDだけの集合に正規化する（破損・改名で範囲外を除く）。 */
+function sanitizeFoundSeeds(arr: unknown): Set<string> {
+  if (!Array.isArray(arr)) return new Set()
+  return new Set(arr.filter((s) => typeof s === 'string' && SEED_BY_ID[s] !== undefined))
+}
+
+function loadFoundSeeds(): Set<string> {
+  try {
+    const raw = localStorage.getItem(SEEDS_KEY)
+    if (!raw) return new Set()
+    return sanitizeFoundSeeds(JSON.parse(raw))
+  } catch {
+    return new Set()
+  }
+}
+
+function persistFoundSeeds(found: Set<string>) {
+  try {
+    localStorage.setItem(SEEDS_KEY, JSON.stringify([...found]))
   } catch {
     /* noop */
   }
@@ -238,6 +268,7 @@ export const useEngagement = create<EngagementState>((set, get) => ({
   chapterTitle: CHAPTER_TITLE,
   generation: 0,
   seenPrecepts: loadSeenPrecepts(),
+  foundSeeds: loadFoundSeeds(),
   ...initialCore,
 
   currentCeremony: () => ceremonyAt(get().sprintIndex, get().beatIndex),
@@ -258,19 +289,45 @@ export const useEngagement = create<EngagementState>((set, get) => ({
     if (next.status !== 'event') persistCore(next)
   },
 
-  choose: (choice, tier) => {
+  choose: (choice, tier, deductionBonus = 0) => {
     const seen = get().seenPrecepts
-    const next = chooseCore(coreOf(get()), choice, tier)
+    let next = chooseCore(coreOf(get()), choice, tier)
+
+    // 推理で本音を見抜けた「見抜きボーナス」：その選択の“主正メーター”を +1（上限まで）。
+    // ・理解(insight)固定をやめ主正に連動＝特定メーターへの一極集中（エンディング判定の歪み）を防ぐ。
+    // ・ミニゲーム会心(great)の倍率(+1)とは排他＝同じメーターに二重で乗らない（読みの冴え or 実行の冴え、どちらか）。
+    // ・加算は正方向のみ＝0ルール（致命圏）の判定に影響しないので chooseCore の後段で安全に適用できる。
+    const primary = next.result?.execPrimary
+    if (deductionBonus > 0 && primary && next.result?.execTier !== 'great' && next.result) {
+      const cur = next.meters[primary]
+      const capped = Math.min(METER_MAX, cur + deductionBonus)
+      const applied = capped - cur
+      if (applied > 0) {
+        next = {
+          ...next,
+          meters: { ...next.meters, [primary]: capped },
+          result: { ...next.result, deductionBonus: applied },
+        }
+      }
+    }
 
     // 心得手帳の更新: このイベントの心得のうち、初めて出会ったものを記録
     const eventPrecepts = next.result?.precepts ?? []
     const newPreceptIds = eventPrecepts.filter((id) => !seen.has(id))
     const seenPrecepts = newPreceptIds.length ? new Set([...seen, ...newPreceptIds]) : seen
-    const result = next.result ? { ...next.result, newPreceptIds } : next.result
 
-    set({ ...next, result, seenPrecepts })
+    // 「次の機能の種」: この選択で種を掴んだら、初発見かを判定してコレクションへ加える
+    const found = get().foundSeeds
+    const seedId = next.result?.seedId
+    const seedNew = !!seedId && SEED_BY_ID[seedId] !== undefined && !found.has(seedId)
+    const foundSeeds = seedNew ? new Set([...found, seedId as string]) : found
+
+    const result = next.result ? { ...next.result, newPreceptIds, seedNew } : next.result
+
+    set({ ...next, result, seenPrecepts, foundSeeds })
     persistCore(next)
     if (newPreceptIds.length) persistSeenPrecepts(seenPrecepts)
+    if (seedNew) persistFoundSeeds(foundSeeds)
   },
 
   dismissResult: () => set(dismissResultCore(coreOf(get()))),

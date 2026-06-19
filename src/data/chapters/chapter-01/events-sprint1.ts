@@ -59,6 +59,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         effects: { insight: 2, culture: -1 },
         resultText:
           '手書きメモの理由が見えた。{{現場主義}}は深い。ただし丸一日チームから離れ、開発は止まった（巻き込み−）。',
+        restraint: true,
       },
       {
         id: 'c',
@@ -76,6 +77,33 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     title: '沈黙するアクセスログ',
     narrative:
       'アクセスログを見ると、在庫画面はこの3ヶ月ほぼ開かれていない。{{チャーン}}どころか最初から使われていない。',
+    deduction: {
+      prompt: 'この沈黙の“本当の理由”はどれだ？',
+      reveal:
+        '機能でも納期でも予算でもない。現場の仕事に画面が合っておらず、誰も信用していない。{{現場主義}}で「なぜ使われないか」を掴むのが先だ。',
+      options: [
+        {
+          id: 'deadline',
+          text: 'リリースを急ぎすぎて、現場への告知が足りなかった',
+          miss: '告知の問題なら一度は開かれるはず。3ヶ月ゼロは、もっと根が深い。',
+        },
+        {
+          id: 'distrust',
+          text: '現場の実務に画面が合っておらず、そもそも信用されていない',
+          truth: true,
+        },
+        {
+          id: 'budget',
+          text: '予算が足りず、機能が中途半端なまま止まっている',
+          miss: '機能の多寡の話ではない。使われない画面は、機能を足しても使われない。',
+        },
+        {
+          id: 'staff',
+          text: '人手が足りず、入力する余裕が現場にない',
+          miss: '忙しさは理由になりうるが、手書きメモは続いている。問題は“手間”でなく“信用”だ。',
+        },
+      ],
+    },
     choices: [
       {
         id: 'a',
@@ -90,6 +118,13 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         effects: { insight: 2, trust: -1 },
         resultText:
           '「うちのやり方を否定するのか」と結城さんはむっとした（耳の痛い指摘で信頼−）。だが沈黙の理由が言葉になった。',
+      },
+      {
+        id: 'c',
+        label: '今は問い詰めず、静かに現場とログを観察し続ける',
+        effects: { insight: 1 },
+        resultText: '結論を急がず観察に徹した。{{経験主義}}——事実を溜めてから動く。沈黙の輪郭が、少しずつ濃くなる。',
+        restraint: true,
       },
     ],
   },
@@ -108,6 +143,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         effects: { trust: 1, culture: -1 },
         resultText:
           '着手が速く、結城さんは「お、動き出した」と安心（進捗が見えて信頼+）。だがチームは指示待ちになった。',
+        warn: true,
       },
       {
         id: 'b',
@@ -115,6 +151,14 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         effects: { culture: 1 },
         resultText:
           '別途{{リファインメント}}の時間を取ったぶん着手は遅れたが、チームが「なぜ」を理解して自走し始めた。（速く見せる信頼+は取り逃す＝機会コスト）',
+      },
+      {
+        id: 'c',
+        label: 'あえて答えを出さず「どう思う？」と問い返し、チームが考えるのを待つ',
+        effects: { culture: 1, trust: -1 },
+        resultText:
+          'すぐ答えを与えない沈黙が、チームの{{自己組織化}}を促した。だが結城さんには“決めない人”に映り、信頼は少し揺れた。',
+        restraint: true,
       },
     ],
   },
@@ -187,6 +231,33 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     title: '偏る残業',
     narrative:
       '人事部の新田さんが、勤怠データをそっと見せてくれた。すると、ある一人——橋本さんに、残業が異常に偏っていた。人が足りないのではない。仕事が一人に集まっているのだ。{{制約理論}}でいう詰まりの一点が、数字にも出ていた。',
+    deduction: {
+      prompt: '「人が足りない」の裏にある“本当の詰まり”はどれだ？',
+      reveal:
+        '人手不足ではない。仕事が橋本さん一人に集中している——属人化という{{制約理論}}の詰まりだ。増員より先に、一極集中を解く。',
+      options: [
+        {
+          id: 'headcount',
+          text: '単純に人手が足りず、増員すれば解決する',
+          miss: '増員しても仕事の集まり方が同じなら、また誰かに偏る。問題は人数でなく流れ方。',
+        },
+        {
+          id: 'bottleneck',
+          text: '仕事が橋本さん一人に集中している（属人化＝ボトルネック）',
+          truth: true,
+        },
+        {
+          id: 'person',
+          text: '橋本さんの仕事が遅く、本人の問題だ',
+          miss: '個人を責めても詰まりは動かない。偏りは仕組みが生む。',
+        },
+        {
+          id: 'busy',
+          text: '繁忙期で、たまたま残業が増えただけ',
+          miss: '一時の波なら全員に散る。一人だけ突出しているのは構造のサインだ。',
+        },
+      ],
+    },
     choices: [
       {
         id: 'a',
@@ -242,6 +313,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         effects: { trust: 1, insight: -1 },
         resultText:
           '機能が増え、結城さんは進捗が見えて一旦満足（信頼+）。だがAIが生んだ余白を、また机上の開発に使ってしまった。',
+        warn: true,
       },
       {
         id: 'b',
@@ -355,6 +427,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         effects: { insight: 1, culture: 1 },
         resultText:
           '書けない・図にできない設計は、考え切れていない証拠。図にした瞬間、例外パターンが3つあぶり出された。',
+        seedId: 'exception-flow',
       },
     ],
   },

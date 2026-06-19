@@ -460,6 +460,7 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
     coverageDelta: covDelta || undefined,
     debtDelta: debtRaw || undefined,
     backlogReview,
+    seedId: choice.seedId, // 「次の機能の種」（発見の新旧判定は store が foundSeeds と突き合わせて埋める）
   }
 
   // ★0ルール: どれか1つでもゲージが0になったら、その場で失敗エピローグ（バックログのナッジ込みのメーターで判定）

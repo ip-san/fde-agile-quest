@@ -1,14 +1,21 @@
+import { useEffect } from 'react'
 import { ACTION_LABELS, SEGMENT_COLORS, SEGMENT_LABELS } from '../data/chapters/chapter-01'
 import { imageUrl, resultImage } from '../data/images'
+import { METER_META } from '../data/meters'
 import { PRECEPT_BY_ID } from '../data/precepts'
+import { SEED_BY_ID } from '../data/seeds'
+import { METER_CRITICAL } from '../engine/game'
+import { type RevealKind, revealKindFor, sfxDanger, sfxPrecept, sfxReveal } from '../engine/sfx'
 import { useFocusTrap } from '../hooks/useFocusTrap'
-import type { BacklogReview, Effects, ResultView } from '../types'
+import type { BacklogReview, Effects, Meters, ResultView } from '../types'
+import { DecisiveFlash } from './DecisiveFlash'
 import { RichText } from './RichText'
 
+// メーターのラベルは data/meters.ts に一元化（短＝差分表示、正式＝文中）。
 const EFFECT_LABEL: Record<keyof Effects, string> = {
-  trust: '信頼',
-  insight: '理解',
-  culture: '巻込',
+  trust: METER_META.trust.short,
+  insight: METER_META.insight.short,
+  culture: METER_META.culture.short,
 }
 
 function EffectDeltas({ effects }: { effects: Effects }) {
@@ -132,20 +139,92 @@ function BacklogReviewBlock({ review }: { review: BacklogReview }) {
   )
 }
 
+const METER_FULL_LABEL: Record<keyof Meters, string> = {
+  trust: METER_META.trust.full,
+  insight: METER_META.insight.full,
+  culture: METER_META.culture.full,
+}
+
+/** トレードオフの明示：同じ判断で上げ下げが同時に起きた時だけ、機会コストを一行で言語化する。
+ *  「全部を上げる単一最適解はない」という本作の核を結果の瞬間に体得させる（出典: Reigns の構造的トレードオフ）。 */
+function TradeoffNote({ effects }: { effects: Effects }) {
+  const keys = Object.keys(METER_FULL_LABEL) as (keyof Meters)[]
+  const gained = keys.filter((k) => (effects[k] ?? 0) > 0)
+  const lost = keys.filter((k) => (effects[k] ?? 0) < 0)
+  if (gained.length === 0 || lost.length === 0) return null
+  return (
+    <p className="rounded-lg bg-violet-500/10 px-3 py-2 text-xs text-violet-200">
+      <span aria-hidden="true">🔁</span> トレードオフ：{gained.map((k) => METER_FULL_LABEL[k]).join('・')}
+      を得る代わりに、
+      {lost.map((k) => METER_FULL_LABEL[k]).join('・')}を手放した。
+    </p>
+  )
+}
+
+/** 次の機能の種の発見＝自社SaaS「StockPilot」への還元（FDEの本懐）。 */
+function SeedReveal({ seedId, seedNew }: { seedId?: string; seedNew?: boolean }) {
+  const seed = seedId ? SEED_BY_ID[seedId] : undefined
+  if (!seed) return null
+  return (
+    <div className="space-y-1 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-2.5">
+      <p className="text-[11px] font-semibold text-emerald-300">
+        <span aria-hidden="true">🌱</span> 次の機能の種を{seedNew ? '発見' : '再確認'}（StockPilotへ還元）
+      </p>
+      <p className="text-sm font-medium text-slate-100">{seed.title}</p>
+      <p className="text-[11px] text-slate-400">現場から：{seed.from}</p>
+    </div>
+  )
+}
+
 interface Props {
   result: ResultView
+  /** 判断適用後のメーター（致命圏入りの検知に使う） */
+  meters: Meters
   onContinue: () => void
 }
 
-export function ResultModal({ result, onContinue }: Props) {
+/** 開示演出のフラッシュ色。閃光は“決定的瞬間”だけに絞る（impact のみ／danger は別途 rose）。
+ *  good/bad/normal は音のみ＝結果画面の閃光過多と認知負荷を避ける。 */
+const FLASH_COLOR: Record<RevealKind, string | null> = {
+  impact: '#fbbf24', // amber-400 ＝「異議あり！」の閃光に相当
+  good: null,
+  bad: null,
+  normal: null,
+}
+
+export function ResultModal({ result, meters, onContinue }: Props) {
   // フォーカストラップ＋Escで次へ。Enter/Space は data-initial-focus を当てた
   // 「次へ」ボタンへ初期フォーカスが乗るので native に処理される
   const ref = useFocusTrap<HTMLDivElement>(onContinue)
   const titleId = 'result-title'
   const imgKey = resultImage(result.eventId, result.choiceId, result.segment)
 
+  // この判断で「致命圏」へ削られたメーター（効果が負、かつ適用後の値が DANGER_AT 以下）。
+  // 差し引きプラスでも、削りすぎは命取り——というトレードオフを“追い詰められる緊張”として見せる。
+  const dangerMeters = (Object.keys(METER_FULL_LABEL) as (keyof Meters)[]).filter(
+    (k) => (result.effects[k] ?? 0) < 0 && meters[k] <= METER_CRITICAL
+  )
+  const onBrink = dangerMeters.some((k) => meters[k] <= 1) // あと一歩で 0＝案件終了
+
+  // 結果開示＝本作の「決定的瞬間」。メーターの振れ幅から演出強度を決め、
+  // 一拍おいた一撃（音）＋一瞬の閃光（CSS）で印象づける（出典: 逆転裁判の音演出）。
+  // 音の優先度: 致命圏（追い詰められる警告）＞ 心得の新規獲得（学習のご褒美）＞ 通常の開示。
+  const kind = revealKindFor(result.effects, result.warn)
+  const gotPrecept = result.newPreceptIds.length > 0
+  const gotSeed = !!result.seedNew
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 結果（eventId/choiceId）が変わるたびに一度だけ鳴らす
+  useEffect(() => {
+    if (dangerMeters.length > 0) sfxDanger()
+    else if (gotPrecept || gotSeed) sfxPrecept()
+    else sfxReveal(kind)
+  }, [result.eventId, result.choiceId])
+  // 致命圏ならフラッシュも警告色（rose）で上書きする
+  const flashColor = dangerMeters.length > 0 ? '#fb7185' : FLASH_COLOR[kind]
+
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:px-safe sm:pt-safe sm:pb-safe">
+      {/* 決定的瞬間の閃光。key を結果ごとに変えてアニメを再生させる。 */}
+      <DecisiveFlash key={`${result.eventId}-${result.choiceId}`} color={flashColor} />
       <div
         ref={ref}
         role="dialog"
@@ -201,6 +280,36 @@ export function ResultModal({ result, onContinue }: Props) {
             </p>
           </div>
 
+          {/* 致命圏に踏み込んだ瞬間の警告（追い詰められる緊張）。0 で案件終了。
+              ダイアログ開封と同時に存在する静的内容なので role="status"(polite)。
+              assertive な alert はタイトル読み上げと競合するため使わない（WCAG 4.1.3）。 */}
+          {dangerMeters.length > 0 && (
+            <div
+              role="status"
+              className={`rounded-xl border px-4 py-2.5 ${
+                onBrink
+                  ? 'border-rose-500/70 bg-rose-500/15 motion-safe:animate-pulse'
+                  : 'border-amber-500/50 bg-amber-500/10'
+              }`}
+            >
+              <p className={`text-sm font-bold ${onBrink ? 'text-rose-200' : 'text-amber-200'}`}>
+                <span aria-hidden="true">⚠</span> {onBrink ? '危険水域——あと一歩で案件終了' : '危険水域'}
+              </p>
+              <p className="mt-0.5 text-xs text-slate-300">
+                {dangerMeters.map((k, i) => (
+                  <span key={k}>
+                    {i > 0 && '／'}
+                    {METER_FULL_LABEL[k]} <span className="font-bold tabular-nums">残り{meters[k]}</span>
+                  </span>
+                ))}
+                。
+                {onBrink
+                  ? '0 になると案件は終了する。差し引きプラスでも、削りすぎは命取り。'
+                  : 'このまま削ると危ない。'}
+              </p>
+            </div>
+          )}
+
           {/* 実行ミニゲームの出来 */}
           <ExecBadge result={result} />
 
@@ -209,6 +318,24 @@ export function ResultModal({ result, onContinue }: Props) {
             <span className="text-[11px] font-semibold text-slate-400">メーター</span>
             <EffectDeltas effects={result.effects} />
           </div>
+
+          {/* トレードオフの明示（機会コストの言語化）。 */}
+          <TradeoffNote effects={result.effects} />
+
+          {/* 見抜きボーナス（推理で本音を当てた報酬。その選択の主正メーターに別枠で +）。 */}
+          {result.deductionBonus && result.execPrimary ? (
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold text-amber-300">
+                <span aria-hidden="true">🔍</span> 見抜きボーナス
+              </span>
+              <span className="rounded-lg bg-amber-500/15 px-2.5 py-1 text-sm font-bold tabular-nums text-amber-200">
+                {EFFECT_LABEL[result.execPrimary]} ▲ +{result.deductionBonus}
+              </span>
+            </div>
+          ) : null}
+
+          {/* 次の機能の種：現場で掴んだプロダクトの種を発見＝自社SaaSへ還元できる（FDEの本懐）。 */}
+          <SeedReveal seedId={result.seedId} seedNew={result.seedNew} />
 
           {/* 生成AIトークンの消費（AIに頼った選択のみ） */}
           {result.tokenSpent ? (

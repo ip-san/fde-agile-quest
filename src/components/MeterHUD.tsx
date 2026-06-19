@@ -1,32 +1,28 @@
-import { METER_MAX } from '../engine/game'
-import type { Meters } from '../types'
+import { METER_META } from '../data/meters'
+import { METER_CRITICAL, METER_MAX } from '../engine/game'
+import type { MeterKey, Meters } from '../types'
 
-interface MeterDef {
-  key: keyof Meters
-  label: string
-  icon: string
-  color: string
-}
-
-const METER_DEFS: MeterDef[] = [
-  { key: 'trust', label: '信頼', icon: '🤝', color: 'bg-violet-400' },
-  { key: 'insight', label: '現場', icon: '🔍', color: 'bg-sky-400' },
-  { key: 'culture', label: '巻込', icon: '🌱', color: 'bg-emerald-400' },
-]
+const METER_ORDER: MeterKey[] = ['trust', 'insight', 'culture']
 
 export function MeterHUD({ meters }: { meters: Meters }) {
   return (
     <div className="grid grid-cols-3 gap-2" role="group" aria-label="3つのメーター">
-      {METER_DEFS.map((d) => (
-        <Pips key={d.key} icon={d.icon} label={d.label} value={meters[d.key]} color={d.color} />
+      {METER_ORDER.map((k) => (
+        <Pips
+          key={k}
+          icon={METER_META[k].icon}
+          label={METER_META[k].short}
+          value={meters[k]}
+          color={METER_META[k].bar}
+        />
       ))}
     </div>
   )
 }
 
 function Pips({ icon, label, value, color }: { icon: string; label: string; value: number; color: string }) {
-  const critical = value <= 2 // 残りわずか
-  const low = value <= 3
+  const critical = value <= METER_CRITICAL // 残りわずか
+  const low = value <= METER_CRITICAL + 1
   return (
     <div
       className={`rounded-lg px-3 py-2 ${

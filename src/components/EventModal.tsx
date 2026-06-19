@@ -1,23 +1,59 @@
+import { useEffect, useRef, useState } from 'react'
 import { ACTION_LABELS, SEGMENT_COLORS, SEGMENT_LABELS } from '../data/chapters/chapter-01'
 import { eventImage, imageUrl } from '../data/images'
 import { canAfford } from '../engine/progression'
+import { sfxDecide } from '../engine/sfx'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 import type { Choice, GameEvent } from '../types'
 import { RichText } from './RichText'
+
+/** 時限選択（LIPS）の持ち時間（秒）。学習を妨げないよう寛容に。opt-in（既定OFF）。 */
+const TIMED_SECONDS = 15
 
 interface Props {
   event: GameEvent
   unexpected: boolean
   /** 生成AIの残りトークン。tokenCost を超える選択は「残量不足」で選べない＝AIショートカット封印 */
   aiTokens: number
+  /** 推理で本音を見抜けた時の開示ヒント（核心が“開く”）。外した／推理なしなら undefined */
+  revealHint?: string
+  /** 時限選択を有効にするか（設定でON。静観の選択肢があるイベントだけカウントダウンする）。 */
+  timed?: boolean
   onChoose: (choice: Choice) => void
 }
 
-export function EventModal({ event, unexpected, aiTokens, onChoose }: Props) {
+export function EventModal({ event, unexpected, aiTokens, revealHint, timed, onChoose }: Props) {
   const ref = useFocusTrap<HTMLDivElement>()
   const titleId = `event-title-${event.id}`
   const segId = `event-seg-${event.id}`
   const eventImgKey = eventImage(event)
+
+  // 時限選択（LIPS の「無回答＝沈黙も選択」の移植）。静観の選択肢があるイベントだけ作動し、
+  // 時間切れ＝その静観を自動選択する。迷っている間に「動かない」を選んだことになる。
+  // ※ warn 付き静観（罠）は自動選択対象にしない（迷って時間切れで最悪手を強制しない）。
+  // ※ Board が key={event.id} で再マウントするので、remaining/firedRef はイベント毎にリセットされる。
+  const restraintChoice = event.choices.find((c) => c.restraint && !c.warn)
+  // 解除＝WCAG 2.2.1（Timing Adjustable）。本人操作でこの判断の制限時間を止められる。
+  const [timerOff, setTimerOff] = useState(false)
+  const timerOn = !!timed && !!restraintChoice && !timerOff
+  const [remaining, setRemaining] = useState(TIMED_SECONDS)
+  const firedRef = useRef(false)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: イベントごとに一度だけ仕掛ける（key 再マウント前提。restraintChoice/onChoose は event から導出）
+  useEffect(() => {
+    if (!timerOn || !restraintChoice) return
+    const tick = setInterval(() => setRemaining((r) => Math.max(0, r - 1)), 1000)
+    const fire = setTimeout(() => {
+      if (firedRef.current) return
+      firedRef.current = true
+      sfxDecide()
+      onChoose(restraintChoice)
+    }, TIMED_SECONDS * 1000)
+    return () => {
+      clearInterval(tick)
+      clearTimeout(fire)
+    }
+  }, [timerOn, event.id])
+
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:px-safe sm:pt-safe sm:pb-safe">
       <div
@@ -67,9 +103,57 @@ export function EventModal({ event, unexpected, aiTokens, onChoose }: Props) {
               ⚡ 想定外の展開——現場は狙い通りには動かない。
             </p>
           )}
+
+          {/* 時限選択のカウントダウン（時間切れ＝🕯静観を自動選択）。 */}
+          {timerOn && (
+            <div>
+              <div className="mb-1 flex items-center justify-between gap-2 text-[11px] font-semibold text-amber-300">
+                <span>
+                  <span aria-hidden="true">⏱</span> 時限選択
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="tabular-nums">残り {remaining}秒（時間切れ＝🕯 静観）</span>
+                  {/* WCAG 2.2.1: 本人操作で制限時間を解除できる */}
+                  <button
+                    type="button"
+                    onClick={() => setTimerOff(true)}
+                    className="rounded border border-amber-400/40 px-1.5 py-0.5 text-[10px] text-amber-200 transition hover:bg-amber-400/10"
+                  >
+                    解除
+                  </button>
+                </span>
+              </div>
+              <div
+                className="h-1 overflow-hidden rounded-full bg-slate-700"
+                role="progressbar"
+                aria-label="判断の残り時間"
+                aria-valuenow={remaining}
+                aria-valuemin={0}
+                aria-valuemax={TIMED_SECONDS}
+              >
+                <div
+                  className="h-full rounded-full bg-amber-400 transition-[width] duration-1000 ease-linear motion-reduce:transition-none"
+                  style={{ width: `${(remaining / TIMED_SECONDS) * 100}%` }}
+                />
+              </div>
+              {/* SR向けは毎秒読み上げず、節目（5/3/1秒）だけ通知する */}
+              <span className="sr-only" aria-live="polite">
+                {remaining === 5 || remaining === 3 || remaining === 1 ? `残り${remaining}秒` : ''}
+              </span>
+            </div>
+          )}
+
           <p className="text-sm leading-relaxed text-slate-200">
             <RichText text={event.narrative} />
           </p>
+
+          {/* 推理で見抜いた本音（核心が“開く”）。手探りで選ぶのと、本音を掴んで選ぶのとの差。 */}
+          {revealHint && (
+            <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+              <span aria-hidden="true">🔍</span> 見抜いた本音：
+              <RichText text={revealHint} />
+            </p>
+          )}
 
           <div className="space-y-2">
             {/* 注記は選択肢の“上”に置き、選択肢を親指の届く最下段に配置（HIG: 主操作を下部に） */}
@@ -85,7 +169,14 @@ export function EventModal({ event, unexpected, aiTokens, onChoose }: Props) {
                 <button
                   key={c.id}
                   type="button"
-                  onClick={() => onChoose(c)}
+                  onClick={() => {
+                    // タイマーの自動発火と手動クリックの二重 onChoose を防ぐ（同tick競合ガード）。
+                    firedRef.current = true
+                    // 判断を確定した瞬間の“決め”の合図（＝突きつける手応え）。
+                    // この後ミニゲーム→結果開示へ。決定的瞬間の音は ResultModal が鳴らす。
+                    sfxDecide()
+                    onChoose(c)
+                  }}
                   disabled={locked}
                   aria-label={
                     locked
@@ -98,6 +189,12 @@ export function EventModal({ event, unexpected, aiTokens, onChoose }: Props) {
                       : 'border-slate-700 bg-slate-800/40 hover:border-sky-400 hover:bg-slate-800'
                   }`}
                 >
+                  {/* 「静観」スタンス＝今は動かない選択を識別表示（LIPSの「沈黙も選択」の移植）。 */}
+                  {c.restraint && (
+                    <span className="mb-1 inline-block rounded bg-slate-700/60 px-1.5 py-0.5 text-[10px] font-semibold text-slate-300">
+                      <span aria-hidden="true">🕯</span> 静観
+                    </span>
+                  )}
                   <span className="block text-sm font-medium text-slate-100">
                     {/* メーター増減と⚠は選択前は伏せ、結果画面で初めて見せる（判断＝賭けにする）。
                         選択肢ラベルは外側が button なので、用語チップ(button)を入れ子にしない */}

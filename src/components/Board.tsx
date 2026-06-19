@@ -4,10 +4,12 @@ import { hearingThemeFor } from '../data/minigames'
 import { PRECEPTS } from '../data/precepts'
 import { miniGameKindFor } from '../engine/game'
 import { customerValue, isRouletteCeremony, repoStats } from '../engine/progression'
+import { isMuted, toggleMuted } from '../engine/sfx'
 import { useEngagement } from '../store/engagementStore'
 import type { Ceremony, Choice } from '../types'
 import { BacklogPanel } from './BacklogPanel'
 import { CustomerValueBar } from './CustomerValueBar'
+import { DeductionModal } from './DeductionModal'
 import { EventLog } from './EventLog'
 import { EventModal } from './EventModal'
 import { MeterHUD } from './MeterHUD'
@@ -37,6 +39,23 @@ function prologueSeen(): boolean {
   }
 }
 
+// 時限選択（LIPS）の設定。既定OFF（学習を妨げないため opt-in）。localStorage 永続。
+const TIMED_CHOICE_KEY = 'fde-agile-quest:timed-choice'
+function timedChoicePref(): boolean {
+  try {
+    return localStorage.getItem(TIMED_CHOICE_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+function setTimedChoicePref(on: boolean): void {
+  try {
+    localStorage.setItem(TIMED_CHOICE_KEY, on ? '1' : '0')
+  } catch {
+    /* noop */
+  }
+}
+
 export function Board() {
   const {
     chapterTitle,
@@ -50,6 +69,7 @@ export function Board() {
     result,
     generation,
     seenPrecepts,
+    foundSeeds,
     peekLocation,
     dailyCandidates,
     aiTokens,
@@ -70,8 +90,15 @@ export function Board() {
   const [bookOpen, setBookOpen] = useState(false)
   const [repoOpen, setRepoOpen] = useState(false)
   const [backlogOpen, setBacklogOpen] = useState(false)
+  // 効果音のミュート（決定的瞬間の演出音。localStorage に永続化）
+  const [muted, setMuted] = useState(isMuted)
+  // 時限選択（LIPS）の ON/OFF。既定OFF・opt-in。
+  const [timed, setTimed] = useState(timedChoicePref)
   // 選択 → 実行ミニゲーム → 結果。選んだ choice を保持し、ミニゲームの出来を tier として渡す
   const [pendingChoice, setPendingChoice] = useState<Choice | null>(null)
+  // 「本音を見抜く」推理の解決状態（イベントIDで管理＝イベントが変われば自動リセット）。
+  // 当てると reveal ヒントを選択画面に渡す＝核心が“開く”。
+  const [deduction, setDeduction] = useState<{ id: string; correct: boolean } | null>(null)
   // 初回はプロローグを自動表示。以降は「あらすじ」から再生できる
   const [prologueOpen, setPrologueOpen] = useState(prologueSeen() === false)
   const closePrologue = () => {
@@ -87,6 +114,20 @@ export function Board() {
   const ceremony: Ceremony = sprint.beats[Math.min(beatIndex, sprint.beats.length - 1)]
   const useRoulette = isRouletteCeremony(ceremony)
 
+  // イベントに推理があり、まだこのイベントで解いていなければ、選択の前に推理ステップを挟む
+  const needsDeduction =
+    status === 'event' &&
+    !!currentEvent &&
+    !result &&
+    !pendingChoice &&
+    !!currentEvent.deduction &&
+    deduction?.id !== currentEvent.id
+  // 推理を当てて選択へ来た場合、本音ヒント（reveal）を選択画面に渡す＝核心が“開く”
+  const deducedCorrect = !!currentEvent?.deduction && deduction?.id === currentEvent.id && deduction.correct
+  const revealHint = deducedCorrect ? currentEvent?.deduction?.reveal : undefined
+  // 本音を見抜けた判断には「見抜きボーナス」として理解 +1（store 側で別枠加算・表示）
+  const deductionBonus = deducedCorrect ? 1 : 0
+
   // モーダル表示中は背後を支援技術ツリー/操作から外す（aria-modal 任せにしない）
   const modalOpen =
     (status === 'event' && !!currentEvent && !result) || !!result || bookOpen || prologueOpen || repoOpen || backlogOpen
@@ -98,9 +139,37 @@ export function Board() {
         inert={modalOpen || undefined}
       >
         {/* ヘッダー：スプリント（見出しだけの1カラム。ユーティリティは下部タブバーへ移動） */}
-        <header>
+        <header className="relative">
+          {/* 右上のユーティリティ：時限選択トグル＋効果音ミュート。オフィス利用でも調整できるよう常設。 */}
+          <div className="absolute right-0 top-0 flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                const next = !timed
+                setTimed(next)
+                setTimedChoicePref(next)
+              }}
+              aria-pressed={timed}
+              aria-label={timed ? '時限選択をオフにする' : '時限選択をオンにする（時間切れは静観）'}
+              title={timed ? '時限選択：ON（時間切れ＝静観）' : '時限選択：OFF'}
+              className={`flex h-9 w-9 items-center justify-center rounded-lg text-base transition hover:bg-slate-800 active:scale-95 ${
+                timed ? 'text-amber-300' : 'text-slate-500'
+              }`}
+            >
+              <span aria-hidden="true">⏱</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMuted(toggleMuted())}
+              aria-pressed={muted}
+              aria-label={muted ? '効果音をオンにする' : '効果音をオフにする'}
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-base text-slate-400 transition hover:bg-slate-800 hover:text-slate-200 active:scale-95"
+            >
+              <span aria-hidden="true">{muted ? '🔇' : '🔊'}</span>
+            </button>
+          </div>
           <p className="text-xs text-slate-400">{chapterTitle}</p>
-          <h1 className="mt-0.5 text-lg font-bold text-slate-100">{sprint.title}</h1>
+          <h1 className="mt-0.5 pr-20 text-lg font-bold text-slate-100">{sprint.title}</h1>
           {/* プロダクトゴール＝章全体の到達点（PO所有・不変）。各スプリントゴールはこれに連なる。
               スプリントゴールの上に置いて「ゴールの階層（Product→Sprint）」を見せる。 */}
           <p className="mt-1 text-xs text-slate-400">
@@ -310,9 +379,23 @@ export function Board() {
         </nav>
       </div>
 
+      {/* 本音を見抜く推理（選択の前。当てると本音ヒントを得て選択へ＝核心が開く） */}
+      {needsDeduction && currentEvent && (
+        <DeductionModal event={currentEvent} onResolve={(correct) => setDeduction({ id: currentEvent.id, correct })} />
+      )}
+
       {/* イベント＝判断モーダル（選択するとミニゲームへ） */}
-      {status === 'event' && currentEvent && !result && !pendingChoice && (
-        <EventModal event={currentEvent} unexpected={unexpected} aiTokens={aiTokens} onChoose={setPendingChoice} />
+      {status === 'event' && currentEvent && !result && !pendingChoice && !needsDeduction && (
+        <EventModal
+          // イベント毎に新規マウントし、時限選択の remaining/firedRef とフォーカストラップを確実にリセット
+          key={currentEvent.id}
+          event={currentEvent}
+          unexpected={unexpected}
+          aiTokens={aiTokens}
+          revealHint={revealHint}
+          timed={timed}
+          onChoose={setPendingChoice}
+        />
       )}
 
       {/* 実行ミニゲーム（選択後・結果前）。出来=tier で主正メーターを倍率調整 */}
@@ -322,18 +405,18 @@ export function Board() {
           seed={seedFor(currentEvent.id)}
           theme={hearingThemeFor(currentEvent.segment)}
           onDone={(tier) => {
-            choose(pendingChoice, tier)
+            choose(pendingChoice, tier, deductionBonus)
             setPendingChoice(null)
           }}
           onSkip={() => {
-            choose(pendingChoice, 'good')
+            choose(pendingChoice, 'good', deductionBonus)
             setPendingChoice(null)
           }}
         />
       )}
 
       {/* 結果オーバーレイ（判断直後に一度ちゃんと見せる） */}
-      {result && <ResultModal result={result} onContinue={dismissResult} />}
+      {result && <ResultModal result={result} meters={meters} onContinue={dismissResult} />}
 
       {/* 心得手帳 */}
       {bookOpen && <PreceptBook seen={seenPrecepts} onClose={() => setBookOpen(false)} />}
@@ -342,6 +425,7 @@ export function Board() {
       {repoOpen && (
         <RepoPanel
           stats={repoStats({ resolvedIds, flags, aiTokens, repoCoverage, repoDebt, backlogDone })}
+          foundSeeds={foundSeeds}
           onClose={() => setRepoOpen(false)}
         />
       )}

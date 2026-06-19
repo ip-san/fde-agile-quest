@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { SEGMENT_COLORS, SEGMENT_LABELS } from '../data/chapters/chapter-01'
+import { sfxSpin, sfxStop } from '../engine/sfx'
 import type { Segment } from '../types'
 
 const SEGMENTS: Segment[] = ['genba', 'kokyaku', 'team', 'trouble', 'chance']
@@ -57,6 +58,7 @@ export function Roulette({ disabled, onResult }: Props) {
     setSpinning(false)
     const seg = pendingSegment.current
     if (seg) {
+      sfxStop() // 止まった瞬間の合図（お題が確定する区切り）
       setAnnounce(`ルーレットは「${SEGMENT_LABELS[seg]}」に止まりました`)
       onResult(seg, pendingPick.current)
     }
@@ -76,6 +78,7 @@ export function Roulette({ disabled, onResult }: Props) {
     const spins = 5 + Math.floor(Math.random() * 3)
     setRotation(base + spins * 360 + landing)
     setSpinning(true)
+    sfxSpin() // 回り出した合図
     setAnnounce('ルーレットを回しています…')
 
     // transitionend 取りこぼし（タブ非アクティブ・reduced-motion 等）の保険。

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { GLOSSARY } from '../glossary'
+import { SEED_BY_ID, SEEDS } from '../seeds'
 import { EVENTS } from './chapter-01'
 
 // ───────────────────────────────────────────────────────────
@@ -37,6 +38,14 @@ function allTermUses(): { where: string; key: string }[] {
       for (const k of termsIn(c.label)) uses.push({ where: `${e.id}/${c.id}.label`, key: k })
       for (const k of termsIn(c.resultText)) uses.push({ where: `${e.id}/${c.id}.resultText`, key: k })
     }
+    if (e.deduction) {
+      for (const k of termsIn(e.deduction.prompt)) uses.push({ where: `${e.id}.deduction.prompt`, key: k })
+      for (const k of termsIn(e.deduction.reveal)) uses.push({ where: `${e.id}.deduction.reveal`, key: k })
+      for (const o of e.deduction.options) {
+        for (const k of termsIn(o.text)) uses.push({ where: `${e.id}.deduction/${o.id}.text`, key: k })
+        for (const k of termsIn(o.miss)) uses.push({ where: `${e.id}.deduction/${o.id}.miss`, key: k })
+      }
+    }
   }
   return uses
 }
@@ -52,6 +61,75 @@ describe('用語カバレッジ — 正本性', () => {
       .filter(([prop, term]) => prop !== term.key)
       .map(([prop, term]) => `${prop}!=${term.key}`)
     expect(mismatched, mismatched.join(', ')).toEqual([])
+  })
+})
+
+describe('推理（見抜く）データの整合性', () => {
+  const withDeduction = EVENTS.filter((e) => e.deduction)
+
+  it('各推理はちょうど1つの本音（truth）を持つ', () => {
+    const bad = withDeduction
+      .map((e) => ({ id: e.id, truths: e.deduction?.options.filter((o) => o.truth).length ?? 0 }))
+      .filter((x) => x.truths !== 1)
+    expect(bad, `本音が1つでない推理: ${bad.map((x) => `${x.id}(${x.truths})`).join(', ')}`).toEqual([])
+  })
+
+  it('各推理は2つ以上の候補を持ち、本音以外には外し時の miss がある', () => {
+    const bad: string[] = []
+    for (const e of withDeduction) {
+      const opts = e.deduction?.options ?? []
+      if (opts.length < 2) bad.push(`${e.id}: 候補${opts.length}件`)
+      for (const o of opts) {
+        if (!o.truth && !o.miss) bad.push(`${e.id}/${o.id}: miss 未設定`)
+      }
+    }
+    expect(bad, bad.join(', ')).toEqual([])
+  })
+
+  it('候補IDは推理内で一意', () => {
+    const bad: string[] = []
+    for (const e of withDeduction) {
+      const ids = (e.deduction?.options ?? []).map((o) => o.id)
+      if (new Set(ids).size !== ids.length) bad.push(e.id)
+    }
+    expect(bad, `候補IDが重複: ${bad.join(', ')}`).toEqual([])
+  })
+})
+
+describe('機能の種（seeds）の整合性', () => {
+  const choices = EVENTS.flatMap((e) => e.choices)
+
+  it('choice.seedId はすべて SEEDS に定義されている', () => {
+    const unknown = choices.filter((c) => c.seedId && !SEED_BY_ID[c.seedId]).map((c) => c.seedId)
+    expect(unknown, `未定義の seedId: ${unknown.join(', ')}`).toEqual([])
+  })
+
+  it('すべての種は、いずれかの選択肢から発見できる（孤立した種が無い）', () => {
+    const referenced = new Set(choices.map((c) => c.seedId).filter(Boolean))
+    const orphan = SEEDS.filter((s) => !referenced.has(s.id)).map((s) => s.id)
+    expect(orphan, `どの選択からも発見できない種: ${orphan.join(', ')}`).toEqual([])
+  })
+})
+
+describe('悪手（warn）の常設 — ラチェット', () => {
+  // サクラ大戦の「言ってはいけない一手」に倣い、デイリーの判断にはほぼ必ず
+  // “誘惑的だがFDE原則を裏切る悪手”（warn）を1つ置く。warn 無しは意図的な例外のみ許可リストで認める。
+  // 例外＝『意図的な技術的負債』のように悪手とは言えない正当な判断（件数だけでなくIDで縛り、別イベントの後退を捕捉）。
+  const WARN_EXEMPT = new Set(['s2-daily-debt'])
+
+  it('複数選択肢のデイリーで warn が無いのは許可リストのイベントだけ', () => {
+    const noWarn = EVENTS.filter(
+      (e) => e.ceremony === 'daily' && e.choices.length >= 2 && !e.choices.some((c) => c.warn)
+    ).map((e) => e.id)
+    const unexpected = noWarn.filter((id) => !WARN_EXEMPT.has(id))
+    expect(unexpected, `許可外で warn 無しのデイリー: ${unexpected.join(', ')}`).toEqual([])
+  })
+})
+
+describe('静観（restraint）の整合性', () => {
+  it('1イベントに静観の選択肢は高々1つ（自動選択は最初の1件を採るため）', () => {
+    const bad = EVENTS.filter((e) => e.choices.filter((c) => c.restraint).length > 1).map((e) => e.id)
+    expect(bad, `静観が2つ以上のイベント: ${bad.join(', ')}`).toEqual([])
   })
 })
 

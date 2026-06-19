@@ -83,11 +83,38 @@ export interface Choice {
   sprintGoal?: string
   /** 危険な選択（UIで警告表示） */
   warn?: boolean
+  /** 「静観」スタンス＝今は動かない／観察する／即答しない選択（サクラ大戦LIPSの「沈黙も選択」の移植）。
+   *  UIで識別表示する。多くの場面で賢手だが、動くべき局面では悪手になりうる＝単一最適解はない。 */
+  restraint?: boolean
+  /** この選択で“発見”する「次の機能の種」のID（seeds.ts）。現場の観察から製品(StockPilot)へ還元する種。 */
+  seedId?: string
   /** 生成AIに頼る選択が消費するトークン量（消費型リソース）。残量が足りないと選べない＝AIショートカット封印 */
   tokenCost?: number
   /** リポジトリの健全度への影響（開発の質）。coverage=テストカバレッジ増減(%)、debt=技術的負債増減。
    *  良い開発（レビュー/DoD/検証/リファクタ）で coverage+、雑な開発（丸投げ/省略）で debt+/coverage-。 */
   repo?: { coverage?: number; debt?: number }
+}
+
+/** 推理（見抜く）の選択肢。建前・ノイズに紛れた「本音（真の制約）」を1つだけ truth にする。 */
+export interface DeductionOption {
+  id: string
+  /** 候補の文（証言・建前・ノイズ）。{{用語}} 可 */
+  text: string
+  /** これが現場の本音（正解）か。1つの Deduction にちょうど1つだけ true */
+  truth?: boolean
+  /** 外したときの一言（なぜ本音でないか）。{{用語}} 可 */
+  miss?: string
+}
+
+/** 選択の前に挟む「現場の本音を見抜く」推理ステップ（任意）。GameEvent.deduction でのみ使用。
+ *  当てると本音ヒントを得て選択へ（情報優位）、外すと手探りで選択へ。正解探し＝逆転裁判の“見抜く”快感の移植。 */
+interface Deduction {
+  /** 問い（例: この現場の“本当の問題”はどれだ？） */
+  prompt: string
+  /** 候補。ちょうど1つが truth。表示はこの順 */
+  options: DeductionOption[]
+  /** 見抜いたときに開示する本音のヒント（選択画面に表示）。{{用語}} 可 */
+  reveal: string
 }
 
 /** ルーレットで引かれるイベント */
@@ -101,6 +128,8 @@ export interface GameEvent {
   title: string
   /** 状況描写。{{用語}} で用語を埋め込める */
   narrative: string
+  /** 選択の前に挟む「本音を見抜く」推理（任意）。当てると本音ヒントを得て選択へ。 */
+  deduction?: Deduction
   choices: Choice[]
   /** このフラグが立っている時だけ出現する（手戻りイベント等） */
   requiresFlag?: GameFlag
@@ -206,6 +235,12 @@ export interface ResultView {
   minigameKind?: MiniGameKind
   /** この選択で消費した生成AIトークン（表示用。0/未消費なら省略） */
   tokenSpent?: number
+  /** 推理で本音を見抜けた「見抜きボーナス」で加算された理解（選択効果とは別枠の表示用）。 */
+  deductionBonus?: number
+  /** この選択で発見した「次の機能の種」のID（seeds.ts）。表示用。 */
+  seedId?: string
+  /** その種が今回はじめての発見か（「NEW」演出用。store が埋める）。 */
+  seedNew?: boolean
   /** この選択で動いたテストカバレッジ（負債ドラッグ適用後の実値）／技術的負債の差分（表示用） */
   coverageDelta?: number
   debtDelta?: number

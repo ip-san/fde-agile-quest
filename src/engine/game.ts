@@ -14,6 +14,8 @@ import type {
 
 const METER_MIN = 0
 export const METER_MAX = 10
+/** 致命圏のしきい値。この値以下で「残りわずか」表示／結果画面の危険水域警告（HUDとResultModalで共有）。 */
+export const METER_CRITICAL = 2
 
 /** メーターを 0..10 に丸める */
 export function clampMeters(m: Meters): Meters {

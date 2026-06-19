@@ -42,3 +42,28 @@ body {
     transform: rotate(var(--spin-to));
   }
 }
+
+/* 決定的瞬間のフラッシュ（逆転裁判の「異議あり！」の一瞬の閃光に相当）。
+ * 結果開示で一瞬だけ点灯し、素早くフェードアウトする。色は currentColor で受け取る。 */
+@keyframes decisive-flash {
+  0% {
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.decisive-flash {
+  animation: decisive-flash 0.55s ease-out forwards;
+}
+
+/* モーション過敏設定では閃光・回転などの動きを無効化する（アクセシビリティ）。 */
+@media (prefers-reduced-motion: reduce) {
+  .decisive-flash {
+    animation: none;
+    opacity: 0;
+  }
+}
