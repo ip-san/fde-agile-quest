@@ -105,7 +105,7 @@ export function Board() {
             {(() => {
               const chosen = sprintGoals[sprintIndex]
               if (chosen) return <span className="text-sky-300">{chosen}</span>
-              if (ceremony === 'planning') return <span className="text-slate-500">プランニングで決める…</span>
+              if (ceremony === 'planning') return <span className="text-slate-400">プランニングで決める…</span>
               return <span className="text-sky-300">{sprint.goal}</span>
             })()}
           </p>

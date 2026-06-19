@@ -77,7 +77,7 @@ export function RepoPanel({ stats, onClose }: Props) {
                 style={{ width: `${stats.coverage}%` }}
               />
             </div>
-            <p className="mt-1 text-xs text-slate-500">レビュー・完成の定義・検証・リファクタの良い選択で上がる。</p>
+            <p className="mt-1 text-xs text-slate-400">レビュー・完成の定義・検証・リファクタの良い選択で上がる。</p>
           </div>
 
           <div className="rounded-xl bg-slate-800/40 px-3 py-2.5">
@@ -93,7 +93,7 @@ export function RepoPanel({ stats, onClose }: Props) {
                 style={{ width: `${Math.max(0, tokenRatio) * 100}%` }}
               />
             </div>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-slate-400">
               使用 {stats.tokensUsed}。尽きるとAIショートカットは選べなくなる（手で作るしかない）。
             </p>
           </div>
@@ -102,7 +102,7 @@ export function RepoPanel({ stats, onClose }: Props) {
             <span className={`font-semibold ${debt.tone}`}>
               {debt.label}
               {stats.debtScore > 0 && (
-                <span className="ml-1 text-xs font-normal text-slate-500">（{stats.debtScore}pt）</span>
+                <span className="ml-1 text-xs font-normal text-slate-400">（{stats.debtScore}pt）</span>
               )}
             </span>
           </Row>

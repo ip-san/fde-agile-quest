@@ -42,7 +42,7 @@ export function MiniGameDevPuzzle({ seed, onResolve }: Props) {
                   </span>
                 </button>
               ) : (
-                <span className="flex-1 rounded-lg border border-dashed border-slate-700 px-3 py-2 text-sm text-slate-500">
+                <span className="flex-1 rounded-lg border border-dashed border-slate-700 px-3 py-2 text-sm text-slate-400">
                   ——
                 </span>
               )}

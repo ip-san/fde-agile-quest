@@ -60,12 +60,12 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
                 <div className="mb-1 flex items-center gap-1.5">
                   <span className={`text-sm font-bold ${tone.name}`}>{v.name}</span>
                   <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${tone.badge}`}>{v.label}</span>
-                  <span className="ml-auto text-[10px] text-slate-500">👀 {v.lens}</span>
+                  <span className="ml-auto text-[10px] text-slate-400">👀 {v.lens}</span>
                 </div>
                 <p className="text-xs leading-relaxed text-slate-200">
                   <RichText text={v.line} />
                 </p>
-                <p className="mt-1 text-[10px] text-slate-500">
+                <p className="mt-1 text-[10px] text-slate-400">
                   {LOCATIONS[v.location].emoji} 推す行き先：{v.locationShort}
                 </p>
               </div>
@@ -78,7 +78,7 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
               <span className="rounded bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-sky-300">
                 FDE・現地
               </span>
-              <span className="ml-auto text-[10px] text-slate-500">📍 {displayName('cargo')}</span>
+              <span className="ml-auto text-[10px] text-slate-400">📍 {displayName('cargo')}</span>
             </div>
             <p className="text-xs leading-relaxed text-slate-400">（どれが今日の“本当の火種”か。1つに賭ける）</p>
           </div>

@@ -123,7 +123,7 @@ export function BacklogPanel({ onClose }: Props) {
                 style={{ width: `${Math.min(100, capacity ? (fpts / capacity) * 100 : 0)}%` }}
               />
             </div>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-slate-400">
               {over ? (
                 <span className="text-rose-300">
                   容量オーバー。欲張ると終わらず、レビューで持ち越し（キャリーオーバー）になる。
@@ -156,7 +156,7 @@ export function BacklogPanel({ onClose }: Props) {
                         />
                       </div>
                       <span className="tabular-nums text-[10px] text-slate-400">S{sp.n}</span>
-                      <span className="tabular-nums text-[10px] text-slate-500">{v || '—'}</span>
+                      <span className="tabular-nums text-[10px] text-slate-400">{v || '—'}</span>
                     </div>
                   )
                 })}
@@ -222,7 +222,7 @@ export function BacklogPanel({ onClose }: Props) {
                         <RichText text={item.title} />
                       </p>
                       {item.detail && (
-                        <p className="mt-0.5 text-xs leading-snug text-slate-500">
+                        <p className="mt-0.5 text-xs leading-snug text-slate-400">
                           <RichText text={item.detail} />
                         </p>
                       )}
@@ -270,7 +270,7 @@ export function BacklogPanel({ onClose }: Props) {
                   type="button"
                   onClick={submitProposal}
                   disabled={!dirty}
-                  className="flex-1 rounded-lg bg-amber-500/90 py-2 text-sm font-bold text-slate-950 transition hover:bg-amber-400 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
+                  className="flex-1 rounded-lg bg-amber-500/90 py-2 text-sm font-bold text-slate-950 transition hover:bg-amber-400 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
                 >
                   並びをPOに提案する
                 </button>
@@ -287,7 +287,7 @@ export function BacklogPanel({ onClose }: Props) {
                   </button>
                 )}
               </div>
-              <p className="text-[11px] leading-snug text-slate-500">
+              <p className="text-[11px] leading-snug text-slate-400">
                 ↑↓で並びを提案し、POに諮る。POはゴールに直結する項目を最優先に審査し、承認または補正する。
               </p>
             </div>

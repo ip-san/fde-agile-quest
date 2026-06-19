@@ -75,7 +75,7 @@ export function EventModal({ event, unexpected, aiTokens, onChoose }: Props) {
             {/* 注記は選択肢の“上”に置き、選択肢を親指の届く最下段に配置（HIG: 主操作を下部に） */}
             <div className="flex flex-wrap items-baseline justify-between gap-x-2">
               <p className="text-xs font-semibold text-slate-400">あなたの判断は？</p>
-              <p className="text-xs text-slate-500">※ 正解はない。結果は決めてから分かる</p>
+              <p className="text-xs text-slate-400">※ 正解はない。結果は決めてから分かる</p>
             </div>
             {event.choices.map((c) => {
               const cost = c.tokenCost ?? 0

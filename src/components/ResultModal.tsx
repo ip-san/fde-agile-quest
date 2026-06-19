@@ -94,14 +94,14 @@ function BacklogReviewBlock({ review }: { review: BacklogReview }) {
           <ul className="space-y-0.5">
             {review.done.map((d) => (
               <li key={d.id} className="flex items-start gap-1.5 text-sm text-slate-200">
-                <span className="shrink-0 tabular-nums text-[11px] text-slate-500">{d.estimate}pt</span>
+                <span className="shrink-0 tabular-nums text-[11px] text-slate-400">{d.estimate}pt</span>
                 <RichText text={d.title} />
               </li>
             ))}
           </ul>
         </div>
       ) : (
-        <p className="text-xs text-slate-500">この予測では、完成（DoD達成）した項目はなかった。</p>
+        <p className="text-xs text-slate-400">この予測では、完成（DoD達成）した項目はなかった。</p>
       )}
 
       {review.carryover.length > 0 && (
@@ -110,12 +110,12 @@ function BacklogReviewBlock({ review }: { review: BacklogReview }) {
           <ul className="space-y-0.5">
             {review.carryover.map((d) => (
               <li key={d.id} className="flex items-start gap-1.5 text-sm text-slate-300">
-                <span className="shrink-0 tabular-nums text-[11px] text-slate-500">{d.estimate}pt</span>
+                <span className="shrink-0 tabular-nums text-[11px] text-slate-400">{d.estimate}pt</span>
                 <RichText text={d.title} />
               </li>
             ))}
           </ul>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-slate-400">
             完成しなかった分は部分点なしでプロダクトバックログに戻り、改めて並べ替えられる。
           </p>
         </div>
@@ -276,7 +276,7 @@ export function ResultModal({ result, onContinue }: Props) {
                   )}
                   {seenIds.length > 0 && (
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-[11px] text-slate-500">この場面の心得</span>
+                      <span className="text-[11px] text-slate-400">この場面の心得</span>
                       {seenIds.map((id) => (
                         <span
                           key={id}

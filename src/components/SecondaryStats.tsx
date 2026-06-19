@@ -33,7 +33,7 @@ export function SecondaryStats({ aiTokens, coverage, debt, onOpenDetail }: Props
       <span className="flex items-center gap-1 tabular-nums text-slate-300">
         <span aria-hidden="true">🗂️</span>
         {coverage}
-        <span className="text-slate-500">/{REPO_COVERAGE_MAX}</span>
+        <span className="text-slate-400">/{REPO_COVERAGE_MAX}</span>
       </span>
       <span className="text-slate-600" aria-hidden="true">
         ·
@@ -42,7 +42,7 @@ export function SecondaryStats({ aiTokens, coverage, debt, onOpenDetail }: Props
         <span aria-hidden="true">▲</span>
         負債{DEBT_LABEL[debt]}
       </span>
-      <span className="ml-auto text-slate-500">詳細 ›</span>
+      <span className="ml-auto text-slate-400">詳細 ›</span>
     </button>
   )
 }

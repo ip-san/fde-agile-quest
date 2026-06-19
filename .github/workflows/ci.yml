@@ -29,3 +29,6 @@ jobs:
       - run: npm run size
       # Lighthouse 監査（dist を preview で配信。a11y/best-practices は閾値割れで失敗）
       - run: npm run lighthouse
+      # e2e a11y（axe）。モーダルを開いた状態など、Lighthouse の単一ロードでは届かない検査
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
