@@ -6,6 +6,8 @@ interface Props {
   ending: Epilogue
   meters: Meters
   customerValue: number
+  /** 届けたインクリメント＝DoD 達成のバックログ項目（カンバンの Done 通算） */
+  deliveredItems: number
   /** 第1章で掴んだ不正の“伏線”の深さ（次章への引き）。none=気づかず / clue=違和感 / case=輪郭 */
   fraudHint?: 'none' | 'clue' | 'case'
   log: LogEntry[]
@@ -29,7 +31,15 @@ function valueRank(v: number): { grade: string; label: string; cls: string } {
   return { grade: 'D', label: '価値を残せなかった', cls: 'text-rose-300 border-rose-400/40 bg-rose-400/10' }
 }
 
-export function EndingScreen({ ending, meters, customerValue, fraudHint = 'none', log, onReset }: Props) {
+export function EndingScreen({
+  ending,
+  meters,
+  customerValue,
+  deliveredItems,
+  fraudHint = 'none',
+  log,
+  onReset,
+}: Props) {
   const failed = ending.id.startsWith('fail-')
   const rank = valueRank(customerValue)
   const teaser = fraudHint === 'none' ? null : FRAUD_TEASER[fraudHint]
@@ -78,6 +88,17 @@ export function EndingScreen({ ending, meters, customerValue, fraudHint = 'none'
         </div>
         <CustomerValueBar value={customerValue} />
         <MeterHUD meters={meters} />
+        {/* 届けたインクリメント＝スプリントバックログを Done にした成果。0 は“使わなかった機会損失”として可視化 */}
+        <div className="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-2.5 text-sm">
+          <span className="text-slate-300">
+            <span aria-hidden="true">📦</span> 届けたインクリメント
+          </span>
+          {deliveredItems > 0 ? (
+            <span className="font-bold tabular-nums text-emerald-300">{deliveredItems} 件</span>
+          ) : (
+            <span className="text-xs text-slate-400">0 件 — バックログを Done にできなかった</span>
+          )}
+        </div>
       </div>
 
       <p className="text-center text-xs text-slate-400">

@@ -20,6 +20,7 @@ export default function App() {
     aiTokens,
     repoCoverage,
     repoDebt,
+    backlogDone,
   } = useEngagement()
 
   // 結果オーバーレイ表示中は、最後の判断の結果を見せ切ってから次へ。
@@ -28,7 +29,7 @@ export default function App() {
   if (status === 'ended' && !result && finalePending) {
     screen = <Finale onResolve={resolveFinale} />
   } else if (status === 'ended' && ending && !result) {
-    const rs = repoStats({ resolvedIds, flags, aiTokens, repoCoverage, repoDebt })
+    const rs = repoStats({ resolvedIds, flags, aiTokens, repoCoverage, repoDebt, backlogDone })
     // 第1章は不正を“伏線”として残す。掴んだ深さに応じて次章への引きを出す
     const fraudHint = flags.has('fraudCase') ? 'case' : flags.has('fraudClue') ? 'clue' : 'none'
     screen = (
@@ -36,6 +37,7 @@ export default function App() {
         ending={ending}
         meters={meters}
         customerValue={customerValue(meters, rs.coverage, rs.debtScore)}
+        deliveredItems={rs.deliveredItems}
         fraudHint={fraudHint}
         log={log}
         onReset={reset}
