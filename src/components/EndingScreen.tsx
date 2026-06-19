@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Epilogue, LogEntry, Meters } from '../types'
 import { CustomerValueBar } from './CustomerValueBar'
 import { MeterHUD } from './MeterHUD'
@@ -18,6 +19,61 @@ interface Props {
 const FRAUD_TEASER: Record<'clue' | 'case', string> = {
   clue: '——本物の仕事を進めるほどに、グループの数字の裏に、説明のつかない違和感が一つ、残った。それが何なのか、今はまだ分からない。だが、見なかったことには、できない。',
   case: '——あなたは見てしまった。同じ機材が書類の上だけを巡る、架空の循環取引の輪郭を。一介のFDEが今この場で動かせる話ではない。だがその記録は、静かに胸に刻まれた。いつか、決着をつける日のために。',
+}
+
+/** 「決断の一歩手前」（不正を掴んだ周回のみ）。告発の決着は次章へ繰り延べる（§6.5）ので、
+ *  ここでは“決着”ではなく主人公の「姿勢」を一つ選ばせ、繰り延べを“自分で選んだ焦らし”に変える。
+ *  フレーバー（結びの一文を彩る）に留め、メーターや永続フラグには影響しない。 */
+const FRAUD_STANCE: Record<
+  'clue' | 'case',
+  { prompt: string; options: { key: string; label: string; after: string }[] }
+> = {
+  case: {
+    prompt: 'この記録を、どう抱える？',
+    options: [
+      { key: 'pursue', label: 'いつか、必ず暴く', after: '——胸の奥で、静かに刃を研ぐと決めた。次章で、必ず。' },
+      {
+        key: 'hold',
+        label: '今は、記録だけを抱いて',
+        after: '——今は動かない。だが消さない。時が満ちるまで、抱えていく。',
+      },
+    ],
+  },
+  clue: {
+    prompt: 'この違和感を、どうする？',
+    options: [
+      {
+        key: 'pursue',
+        label: '忘れない。必ず確かめる',
+        after: '——小さな棘が刺さったまま。次章で、その正体を確かめる。',
+      },
+      { key: 'letgo', label: '気のせいだと、流す', after: '——見なかったことにした。だが、本当にそうだろうか。' },
+    ],
+  },
+}
+
+function FraudStanceBeat({ hint }: { hint: 'clue' | 'case' }) {
+  const [picked, setPicked] = useState<string | null>(null)
+  const s = FRAUD_STANCE[hint]
+  const chosen = picked ? s.options.find((o) => o.key === picked) : null
+  if (chosen) return <p className="mt-3 text-sm leading-relaxed text-amber-100">{chosen.after}</p>
+  return (
+    <div className="mt-3">
+      <p className="mb-1.5 text-xs font-semibold text-amber-200/90">{s.prompt}</p>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        {s.options.map((o) => (
+          <button
+            type="button"
+            key={o.key}
+            onClick={() => setPicked(o.key)}
+            className="flex-1 rounded-lg border border-amber-500/40 px-3 py-2 text-sm text-amber-100 transition hover:bg-amber-500/10 active:scale-95"
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 /** 顧客価値（北極星）の最終ランク。案件の“スコア”として結果に意味を与える。 */
@@ -73,6 +129,8 @@ export function EndingScreen({
             To be continued — 次章へ
           </p>
           <p className="text-sm leading-relaxed text-amber-100/90">{teaser}</p>
+          {/* 決着はつけず（§6.5）、主人公の“姿勢”だけを選ばせて繰り延べを焦らしに変える */}
+          <FraudStanceBeat hint={fraudHint as 'clue' | 'case'} />
         </div>
       )}
 
