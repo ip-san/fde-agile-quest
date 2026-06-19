@@ -38,16 +38,16 @@ describe('localizeNames — リネームすると本文が追従する', () => {
   it('複数のリネームが同時に効く', () => {
     NAMES.lumen.name = 'ルクス'
     NAMES.takano.name = '高城'
-    expect(localizeNames('ルーメンの鷹野が指名した')).toBe('ルクスの高城が指名した')
+    expect(localizeNames('ルミクラウドの鷹野が指名した')).toBe('ルクスの高城が指名した')
   })
 })
 
 describe('localizeDeep — 入れ子データの全文字列に適用', () => {
   it('リネーム無しなら同一参照を返す（ゼロコスト短絡）', () => {
-    // 既定で一部の名前がリネーム済み（例: ルーメン→ルミクラウド）なので、
-    // 「全くリネームが無い」状態を作って短絡を検証する（afterEach で復元）。
+    // 念のため全 name を canonical に揃えた「全くリネームが無い」状態で短絡を検証する
+    // （afterEach で復元）。既定でも全エントリ name===canonical なので通常も短絡する。
     for (const k of Object.keys(NAMES) as (keyof typeof NAMES)[]) NAMES[k].name = NAMES[k].canonical
-    const data = { a: 'カルゴ物流', list: ['結城', { b: 'ルーメン' }] }
+    const data = { a: 'カルゴ物流', list: ['結城', { b: 'ルミクラウド' }] }
     expect(localizeDeep(data)).toBe(data)
   })
 

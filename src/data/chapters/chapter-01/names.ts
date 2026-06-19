@@ -56,7 +56,7 @@ export interface NameDef {
 /** 固有名詞の唯一の定義元。name を変えるとアプリ全体の表示が変わる。 */
 export const NAMES: Record<NameId, NameDef> = {
   // ── 企業 ──
-  lumen: { canonical: 'ルーメン', name: 'ルミクラウド', kind: 'company' },
+  lumen: { canonical: 'ルミクラウド', name: 'ルミクラウド', kind: 'company' },
   cargo: {
     canonical: 'カルゴ物流',
     name: 'カルゴ物流',

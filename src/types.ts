@@ -47,7 +47,7 @@ export type Status = 'playing' | 'travel' | 'event' | 'ended'
  *  デイリーのマップ移動で選ぶ */
 export type LocationId = 'warehouse' | 'serverroom' | 'client' | 'soumu' | 'jinji' | 'keiri' | 'repo' | 'devroom'
 
-/** リモート・デイリースクラムで話す役割（画面の向こうのルーメンのチーム）。
+/** リモート・デイリースクラムで話す役割（画面の向こうのルミクラウドのチーム）。
  *  役割ごとに「ヒントの観点」が違う＝スクラムの役割を自然に学ぶ */
 export type DailyRole = 'po' | 'sm' | 'dev'
 
