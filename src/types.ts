@@ -133,6 +133,9 @@ export interface GameEvent {
   choices: Choice[]
   /** このフラグが立っている時だけ出現する（手戻りイベント等） */
   requiresFlag?: GameFlag
+  /** 物語の縦糸の“入口”。デイリー候補で最優先し、そのスプリントで未遭遇のまま最後のデイリーに来たら必ず提示する
+   *  （ルーレットの引きで主軸/不正の入口を取り逃して物語が断片化するのを防ぐ）。1スプリント高々1つ。 */
+  pinned?: boolean
   /** 選択後の実行ミニゲームの種類。未指定なら segment から既定（作る/直す=dev、人と現場=hearing） */
   minigame?: MiniGameKind
   /** このイベントが起きる場所。未指定なら segment から既定（locations.ts の LOCATION_BY_SEGMENT） */

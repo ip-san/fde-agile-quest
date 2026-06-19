@@ -1244,6 +1244,8 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'genba',
     location: 'warehouse',
+    // 縦糸の入口：不正暴露アークの起点。見逃すとアーク全体が始まらないため必ず遭遇させる。
+    pinned: true,
     hints: {
       po: '帳簿の在庫を前提に経営へ報告してる。倉庫で実数を確かめてきて。',
       sm: '棚卸の差異がどうも腑に落ちない。倉庫で現物と突き合わせよう。',

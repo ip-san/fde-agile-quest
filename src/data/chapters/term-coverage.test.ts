@@ -111,6 +111,27 @@ describe('機能の種（seeds）の整合性', () => {
   })
 })
 
+describe('縦糸の入口（pinned）の整合性', () => {
+  const pinned = EVENTS.filter((e) => e.pinned)
+
+  it('pinned はデイリーイベント（最後のデイリーで強制提示する仕組みのため）', () => {
+    const bad = pinned.filter((e) => e.ceremony !== 'daily').map((e) => e.id)
+    expect(bad, `daily 以外の pinned: ${bad.join(', ')}`).toEqual([])
+  })
+
+  it('1スプリントの pinned は高々1つ（強制提示は先頭1件のため複数あると取りこぼす）', () => {
+    const bySprint = new Map<number, number>()
+    for (const e of pinned) bySprint.set(e.sprint, (bySprint.get(e.sprint) ?? 0) + 1)
+    const over = [...bySprint].filter(([, n]) => n > 1).map(([s]) => `S${s}`)
+    expect(over, `pinned が2つ以上のスプリント: ${over.join(', ')}`).toEqual([])
+  })
+
+  it('pinned は requiresFlag を持たない（無条件に出る入口）', () => {
+    const bad = pinned.filter((e) => e.requiresFlag).map((e) => e.id)
+    expect(bad, `requiresFlag 付き pinned: ${bad.join(', ')}`).toEqual([])
+  })
+})
+
 describe('悪手（warn）の常設 — ラチェット', () => {
   // サクラ大戦の「言ってはいけない一手」に倣い、デイリーの判断にはほぼ必ず
   // “誘惑的だがFDE原則を裏切る悪手”（warn）を1つ置く。warn 無しは意図的な例外のみ許可リストで認める。

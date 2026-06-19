@@ -644,3 +644,29 @@ describe('dismissResultCore', () => {
     expect(dismissResultCore(core).result).toBeNull()
   })
 })
+
+describe('spinCore — 縦糸の入口(pinned)の強制提示', () => {
+  // S1 beats: [planning, daily×5, review, retro] → 最後のデイリーは beatIndex 5。
+  // pinned: s1-daily-hideknowhow（S1）。未遭遇のまま最後のデイリーに来たら必ず候補に出す。
+  const lastDailyS1: ProgressCore = { ...freshCore(STARTING_METERS), sprintIndex: 0, beatIndex: 5, status: 'playing' }
+
+  it('最後のデイリーで未遭遇なら pinned を必ず提示する', () => {
+    const next = spinCore(lastDailyS1, 'kokyaku', 0)
+    expect(next.status).toBe('travel')
+    expect(next.dailyCandidates).toEqual(['s1-daily-hideknowhow'])
+  })
+
+  it('pinned が解決済みなら強制せず通常の候補を引く', () => {
+    const core: ProgressCore = { ...lastDailyS1, resolvedIds: new Set(['s1-daily-hideknowhow']) }
+    const next = spinCore(core, 'kokyaku', 0)
+    expect(next.dailyCandidates).not.toContain('s1-daily-hideknowhow')
+  })
+
+  it('最後でないデイリーでは強制しない（pinnedは最優先候補だが単独固定ではない）', () => {
+    const midDaily: ProgressCore = { ...freshCore(STARTING_METERS), sprintIndex: 0, beatIndex: 1, status: 'playing' }
+    const next = spinCore(midDaily, 'kokyaku', 0)
+    expect(next.status).toBe('travel')
+    // 単独固定（[pinned]だけ）ではない＝複数候補が立つ
+    expect(next.dailyCandidates.length).toBeGreaterThan(1)
+  })
+})

@@ -291,8 +291,9 @@ export function drawCandidates(available: GameEvent[], segment: Segment, pickRan
   if (available.length === 0) return []
   // 場所ごとの代表。フラグ解放イベントを最優先で代表に据える（同じ場所に通常イベントがあっても勝つ）。
   const repByLoc = new Map<LocationId, GameEvent>()
+  // 回収（requiresFlag）／縦糸の入口（pinned）を場所の代表として最優先で据える
   for (const e of available) {
-    if (!e.requiresFlag) continue
+    if (!e.requiresFlag && !e.pinned) continue
     const l = locationOf(e)
     if (!repByLoc.has(l)) repByLoc.set(l, e)
   }
@@ -302,8 +303,8 @@ export function drawCandidates(available: GameEvent[], segment: Segment, pickRan
   }
 
   const order: LocationId[] = []
-  // ① フラグ解放イベントの場所を先頭に（複数あれば全部、最大3で頭打ち）
-  for (const [l, e] of repByLoc) if (e.requiresFlag && !order.includes(l)) order.push(l)
+  // ① フラグ解放／縦糸の入口イベントの場所を先頭に（複数あれば全部、最大3で頭打ち）
+  for (const [l, e] of repByLoc) if ((e.requiresFlag || e.pinned) && !order.includes(l)) order.push(l)
   // ② セグメント一致の場所
   const matching = available.find((e) => e.segment === segment)
   const matchLoc = matching ? locationOf(matching) : null
@@ -332,7 +333,12 @@ export function spinCore(core: ProgressCore, segment: Segment, pickRandom: numbe
   const avail = availableEvents(EVENTS, sprintNo, ceremony, core.resolvedIds, core.flags)
 
   if (ceremony === 'daily') {
-    const cands = drawCandidates(avail, segment, pickRandom)
+    // 縦糸の入口(pinned)を見逃したまま終わらせない：そのスプリントの最後のデイリーで未遭遇なら必ず提示する
+    // （それまでのデイリーは drawCandidates が pinned を最優先候補に据えるので自然に出やすい）。
+    const beats = SPRINTS[core.sprintIndex]?.beats ?? []
+    const isLastDaily = !beats.slice(core.beatIndex + 1).includes('daily')
+    const pinned = avail.filter((e) => e.pinned)
+    const cands = isLastDaily && pinned.length > 0 ? [pinned[0]] : drawCandidates(avail, segment, pickRandom)
     if (cands.length === 0) return advanceCore(core)
     return {
       ...core,
