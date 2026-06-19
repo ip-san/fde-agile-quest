@@ -442,50 +442,55 @@ function KanbanView({
           const prog = Math.min(item.estimate, reviewProgress[id] ?? 0)
           const reviewable = canReview(core, id)
           return (
-            <Card key={id} title={item.title} estimate={item.estimate}>
-              <div className="flex w-full flex-col gap-1.5">
-                <div className="h-1.5 overflow-hidden rounded-full bg-slate-700">
-                  <div
-                    className="h-full rounded-full bg-amber-400"
-                    style={{ width: `${item.estimate ? (prog / item.estimate) * 100 : 0}%` }}
-                  />
-                </div>
-                {depthFor === id ? (
-                  <div className="flex gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPending({ id, depth: 'quick' })
-                        setDepthFor(null)
-                      }}
-                      className="flex-1 rounded-lg bg-slate-700 px-2 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-slate-600 active:scale-95"
-                    >
-                      浅い（速い/負債）
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPending({ id, depth: 'thorough' })
-                        setDepthFor(null)
-                      }}
-                      className="flex-1 rounded-lg bg-emerald-600 px-2 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-emerald-500 active:scale-95"
-                    >
-                      深い（テスト/品質）
-                    </button>
+            <Card
+              key={id}
+              title={item.title}
+              estimate={item.estimate}
+              below={
+                <div className="mt-2 flex flex-col gap-1.5">
+                  <div className="h-1.5 overflow-hidden rounded-full bg-slate-700">
+                    <div
+                      className="h-full rounded-full bg-amber-400"
+                      style={{ width: `${item.estimate ? (prog / item.estimate) * 100 : 0}%` }}
+                    />
                   </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setDepthFor(id)}
-                    disabled={!reviewable}
-                    title={!reviewable && reviewCapacity <= 0 ? 'レビュー容量切れ（次スプリントで回復）' : undefined}
-                    className="self-start rounded-lg bg-emerald-700 px-2.5 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-emerald-600 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
-                  >
-                    🔎 レビューする
-                  </button>
-                )}
-              </div>
-            </Card>
+                  {depthFor === id ? (
+                    <div className="flex gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPending({ id, depth: 'quick' })
+                          setDepthFor(null)
+                        }}
+                        className="flex-1 rounded-lg bg-slate-700 px-2 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-slate-600 active:scale-95"
+                      >
+                        浅い（速い/負債）
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPending({ id, depth: 'thorough' })
+                          setDepthFor(null)
+                        }}
+                        className="flex-1 rounded-lg bg-emerald-600 px-2 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-emerald-500 active:scale-95"
+                      >
+                        深い（テスト/品質）
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setDepthFor(id)}
+                      disabled={!reviewable}
+                      title={!reviewable && reviewCapacity <= 0 ? 'レビュー容量切れ（次スプリントで回復）' : undefined}
+                      className="self-start rounded-lg bg-emerald-700 px-2.5 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-emerald-600 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
+                    >
+                      🔎 レビューする
+                    </button>
+                  )}
+                </div>
+              }
+            />
           )
         })}
         {inProgress.length === 0 && <Empty />}
@@ -553,11 +558,15 @@ function Card({
   estimate,
   dimmed,
   children,
+  below,
 }: {
   title: string
   estimate: number
   dimmed?: boolean
-  children: React.ReactNode
+  /** タイトル行の右に置く小さな操作（着手ボタン・DoD バッジ等）。幅を奪うと崩れるので軽量な要素のみ。 */
+  children?: React.ReactNode
+  /** タイトル行の“下”に全幅で敷くブロック（進捗バー＋レビュー操作など）。 */
+  below?: React.ReactNode
 }) {
   return (
     <div className={`rounded-lg border border-slate-700 bg-slate-800/40 px-3 py-2 ${dimmed ? 'opacity-70' : ''}`}>
@@ -572,6 +581,7 @@ function Card({
         </div>
         {children}
       </div>
+      {below}
     </div>
   )
 }
