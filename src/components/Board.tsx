@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { CEREMONY_LABELS, CEREMONY_SHORT, EVENTS, PRODUCT_GOAL, SPRINTS } from '../data/chapters/chapter-01'
 import { hearingThemeFor } from '../data/minigames'
 import { PRECEPTS } from '../data/precepts'
+import { openThreads } from '../data/threads'
 import { miniGameKindFor } from '../engine/game'
 import { customerValue, isRouletteCeremony, repoStats } from '../engine/progression'
 import { isMuted, toggleMuted } from '../engine/sfx'
@@ -309,6 +310,26 @@ export function Board() {
             </>
           )}
         </div>
+
+        {/* 未回収の伏線（フラグが立ったが回収イベント未解決のもの）。回収先はぼかして緊張だけ可視化。 */}
+        {(() => {
+          const open = openThreads(flags, (f) => EVENTS.some((e) => e.requiresFlag === f && resolvedIds.has(e.id)))
+          if (open.length === 0) return null
+          return (
+            <section className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-3">
+              <h2 className="mb-1.5 px-1 text-xs font-semibold text-amber-300">
+                <span aria-hidden="true">🧵</span> 未回収の伏線（{open.length}）
+              </h2>
+              <ul className="space-y-1 px-1">
+                {open.map((t) => (
+                  <li key={t.flag} className="text-xs leading-snug text-slate-300">
+                    ・{t.teaser}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )
+        })()}
 
         {/* イベントログ */}
         <section className="rounded-2xl bg-slate-900/40 p-3">

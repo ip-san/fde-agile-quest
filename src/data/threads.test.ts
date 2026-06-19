@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { GameFlag } from '../types'
 import { EVENTS } from './chapters/chapter-01'
-import { THREADS } from './threads'
+import { openThreads, THREADS } from './threads'
 
 // 伏線レジストリ（threads.ts）の宣言と、章データ（setsFlag/missedFlag/requiresFlag）の整合を検証する。
 // 目的: 増築で「立てたが回収しない／回収するが立てられない」伏線（張りっぱなし・宙づり）を防ぐ。
@@ -22,6 +22,11 @@ describe('伏線レジストリ（threads）の整合性', () => {
   it('全スレッドが仕掛け(setVia)と回収(payoffVia)を1つ以上持つ（孤立なし）', () => {
     const bad = flags.filter((f) => THREADS[f].setVia.length === 0 || THREADS[f].payoffVia.length === 0)
     expect(bad, `仕掛け/回収が空のスレッド: ${bad.join(', ')}`).toEqual([])
+  })
+
+  it('全スレッドに note と teaser が設定されている', () => {
+    const bad = flags.filter((f) => !THREADS[f].note.trim() || !THREADS[f].teaser.trim())
+    expect(bad, `note/teaser 未設定: ${bad.join(', ')}`).toEqual([])
   })
 
   it("setVia:'choice' の宣言とデータ（setsFlag）が一致する", () => {
@@ -69,5 +74,22 @@ describe('伏線レジストリ（threads）の整合性', () => {
       }
     }
     expect(unreachable, `回収イベントが構造的に到達不能: ${unreachable.join(', ')}`).toEqual([])
+  })
+})
+
+describe('openThreads（盤面の未回収伏線）', () => {
+  it('立っていて未回収の event 伏線だけを返す（ending/score は除外）', () => {
+    // missedHearing=event回収・未回収→出る／fraudCase=ending回収→出ない
+    const open = openThreads(['missedHearing', 'fraudCase'], () => false)
+    expect(open.map((t) => t.flag)).toEqual(['missedHearing'])
+    expect(open[0].teaser).toBe(THREADS.missedHearing.teaser)
+  })
+
+  it('回収済み（payoff解決）になったら返さない', () => {
+    expect(openThreads(['missedHearing'], () => true)).toEqual([])
+  })
+
+  it('立っていないフラグは返さない', () => {
+    expect(openThreads([], () => false)).toEqual([])
   })
 })
