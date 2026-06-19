@@ -57,7 +57,7 @@ const RAW_CAST: Character[] = [
   {
     id: 'hero',
     name: 'あなた',
-    role: 'システムの裏側をつくる技術者 → 第一号のFDE',
+    role: '第一号のFDE（スクラム: 開発者）',
     side: 'lumen',
     archetype: '主人公（Bill 型）',
     blurb:
@@ -66,7 +66,7 @@ const RAW_CAST: Character[] = [
   {
     id: 'kuon',
     name: '久遠（くおん）',
-    role: 'ルーメン受託部門の生き字引・メンター',
+    role: 'ルーメン受託部門の生き字引・メンター（スクラム: スクラムマスター）',
     side: 'mentor',
     archetype: '師（Erik 型）',
     blurb: 'かつて受託で現場を渡り歩いた古参。折々に現れ、FDE心得を“問い”として置いていく。「答えは資料の外にある」。',
@@ -74,7 +74,7 @@ const RAW_CAST: Character[] = [
   {
     id: 'takano',
     name: '鷹野（たかの）',
-    role: 'ルーメンの社長 / リモート朝会のPO',
+    role: 'ルーメンの社長（スクラム: プロダクトオーナー）',
     side: 'lumen',
     archetype: '改革者の経営者（Steve 型・社内）',
     blurb:
@@ -83,7 +83,7 @@ const RAW_CAST: Character[] = [
   {
     id: 'segawa',
     name: '瀬川（せがわ）',
-    role: 'ルーメン開発室の若手エンジニア / リモート朝会の開発メンバー',
+    role: 'ルーメン開発室の若手エンジニア（スクラム: 開発者・リモート）',
     side: 'lumen',
     archetype: '本社で支える相棒',
     blurb:
