@@ -190,7 +190,7 @@ function PlanningView({
   return (
     <>
       <p className="text-xs leading-relaxed text-slate-400">
-        <RichText text="{{プロダクトバックログ}}は価値順に並んだ唯一のリスト。並べ替え（優先順位）の最終責任はPOにある。あなたは並びを“提案”し、{{スプリントゴール}}に直結する上位から容量の範囲で{{フォーキャスト}}（予測）して To Do を組む。" />
+        <RichText text="{{プロダクトバックログ}}は{{プロダクトゴール}}へ向かう、価値順に並んだ唯一のリスト。並べ替え（優先順位）の最終責任はPOにある。あなたは並びを“提案”し、{{スプリントゴール}}に直結する上位から容量の範囲で{{フォーキャスト}}（予測）して To Do を組む。" />
       </p>
 
       <div className={`rounded-xl px-3 py-2.5 ${over ? 'bg-rose-500/10 ring-1 ring-rose-500/40' : 'bg-slate-800/40'}`}>

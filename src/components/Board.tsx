@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CEREMONY_LABELS, CEREMONY_SHORT, EVENTS, SPRINTS } from '../data/chapters/chapter-01'
+import { CEREMONY_LABELS, CEREMONY_SHORT, EVENTS, PRODUCT_GOAL, SPRINTS } from '../data/chapters/chapter-01'
 import { hearingThemeFor } from '../data/minigames'
 import { PRECEPTS } from '../data/precepts'
 import { miniGameKindFor } from '../engine/game'
@@ -16,6 +16,7 @@ import { PreceptBook } from './PreceptBook'
 import { Prologue } from './Prologue'
 import { RepoPanel } from './RepoPanel'
 import { ResultModal } from './ResultModal'
+import { RichText } from './RichText'
 import { Roulette } from './Roulette'
 import { SecondaryStats } from './SecondaryStats'
 import { Travel } from './Travel'
@@ -100,10 +101,15 @@ export function Board() {
         <header>
           <p className="text-xs text-slate-400">{chapterTitle}</p>
           <h1 className="mt-0.5 text-lg font-bold text-slate-100">{sprint.title}</h1>
+          {/* プロダクトゴール＝章全体の到達点（PO所有・不変）。各スプリントゴールはこれに連なる。
+              スプリントゴールの上に置いて「ゴールの階層（Product→Sprint）」を見せる。 */}
+          <p className="mt-1 text-xs text-slate-400">
+            🧭 <RichText text="{{プロダクトゴール}}" />：<span className="text-violet-300">{PRODUCT_GOAL}</span>
+          </p>
           {/* スプリントゴールはプランニングの“成果”。プレイヤーがプランニングで選んだ狙いを表示する。
             未決定（プランニング中）は伏せ、選んだら現す（Scrum: ゴールはプランニングで決まる）。 */}
           <p className="mt-0.5 text-xs text-slate-400">
-            🎯 スプリントゴール：
+            ↳ 🎯 スプリントゴール：
             {(() => {
               const chosen = sprintGoals[sprintIndex]
               if (chosen) return <span className="text-sky-300">{chosen}</span>
