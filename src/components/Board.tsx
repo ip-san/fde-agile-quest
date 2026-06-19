@@ -41,6 +41,8 @@ function prologueSeen(): boolean {
 }
 
 // 時限選択（LIPS）の設定。既定OFF（学習を妨げないため opt-in）。localStorage 永続。
+// TODO(quality): localStorage boolean の try/catch 定型が muted(sfx.ts)/prologueSeen/timed と4箇所目。
+// localStorageBool(key)/setLocalStorageBool(key,on) のヘルパー（例 lib/persist.ts）に集約余地あり。
 const TIMED_CHOICE_KEY = 'fde-agile-quest:timed-choice'
 function timedChoicePref(): boolean {
   try {

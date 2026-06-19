@@ -16,6 +16,9 @@ interface Props {
  * 選択の前の「現場の本音を見抜く」推理ステップ。
  * 建前・ノイズに紛れた本音（真の制約）を1つ当てる＝逆転裁判の“見抜く/突きつける”快感の移植。
  * 当てると決定的瞬間の演出＋本音ヒント開示、外すとミス演出。どちらも選択へは進める（行き止まりにしない）。
+ *
+ * TODO(gamedesign): miss 文が正解を強く示唆し消去法化しやすい。外しても reveal の核心を一部見せ
+ * 「外しても学べる」設計にする検討余地（現状はフラストレーション回避を優先し難度は据え置き）。
  */
 export function DeductionModal({ event, onResolve }: Props) {
   const d = event.deduction

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { GameFlag } from '../types'
-import { EVENTS } from './chapters/chapter-01'
+import { EVENTS, SPRINTS } from './chapters/chapter-01'
 import { openThreads, THREADS } from './threads'
 
 // 伏線レジストリ（threads.ts）の宣言と、章データ（setsFlag/missedFlag/requiresFlag）の整合を検証する。
@@ -55,25 +55,34 @@ describe('伏線レジストリ（threads）の整合性', () => {
     expect([...new Set(unknown)], `レジストリ未登録のフラグ: ${unknown.join(', ')}`).toEqual([])
   })
 
-  // Phase 2（回収保証・作問レベル）: フラグはスプリントをまたいで保持され、requiresFlag イベントは
-  // 「フラグが立った後」のスプリントでしか出ない。回収イベントが“仕掛けより前のスプリント”に置かれていると
-  // 構造的に永久到達不能（宙づり）になる。これを作問時に弾く。
-  it('イベントで回収する伏線は、回収イベントのスプリントが最初の仕掛けスプリント以降にある（構造的到達可能）', () => {
-    const minSprintOf = (pred: (e: (typeof EVENTS)[number]) => boolean): number | null => {
-      const ss = EVENTS.filter(pred).map((e) => e.sprint)
-      return ss.length ? Math.min(...ss) : null
+  // Phase 2（回収保証・作問レベル）: requiresFlag イベントは「フラグが立った後」しか出ない。
+  // スプリント番号だけでなく beat 順まで見て、各回収イベントが「最も早く立つ仕掛け」より後の
+  // 同種 beat 枠に出られるかを検証する（同一スプリント内で回収が仕掛けより前にある作問ミスも弾く）。
+  // ord = sprint*1000 + beatIndex。仕掛けは最速で“その種の最初の beat”で立つと仮定（最適手＝到達可能性の上限）。
+  it('イベントで回収する伏線は、最も早い仕掛けより後の beat 枠に回収イベントが出られる（構造的到達可能）', () => {
+    const beatsOf = (sprint: number) => SPRINTS.find((s) => s.n === sprint)?.beats ?? []
+    const fireOrd = (e: (typeof EVENTS)[number]) => {
+      const idx = beatsOf(e.sprint).indexOf(e.ceremony)
+      return e.sprint * 1000 + (idx < 0 ? 999 : idx)
     }
     const unreachable: string[] = []
     for (const f of flags) {
       if (!THREADS[f].payoffVia.includes('event')) continue
-      const minSetter = minSprintOf((e) => e.missedFlag === f || e.choices.some((c) => c.setsFlag === f))
-      const minPayoff = minSprintOf((e) => e.requiresFlag === f)
-      // event payoff があるのに setter が無い／回収が仕掛けより前 → 到達不能
-      if (minPayoff !== null && (minSetter === null || minPayoff < minSetter)) {
-        unreachable.push(`${f}(setter:S${minSetter ?? '∅'}/payoff:S${minPayoff})`)
+      const setters = EVENTS.filter((e) => e.missedFlag === f || e.choices.some((c) => c.setsFlag === f))
+      const payoffs = EVENTS.filter((e) => e.requiresFlag === f)
+      if (payoffs.length === 0) continue
+      if (setters.length === 0) {
+        unreachable.push(`${f}(仕掛け無し)`)
+        continue
+      }
+      const minFire = Math.min(...setters.map(fireOrd))
+      for (const pe of payoffs) {
+        // pe.ceremony の beat 枠が pe.sprint 内に、minFire より後（ord 大）で存在するか
+        const ok = beatsOf(pe.sprint).some((b, j) => b === pe.ceremony && pe.sprint * 1000 + j > minFire)
+        if (!ok) unreachable.push(`${f}:${pe.id}`)
       }
     }
-    expect(unreachable, `回収イベントが構造的に到達不能: ${unreachable.join(', ')}`).toEqual([])
+    expect(unreachable, `beat順で到達不能な回収イベント: ${unreachable.join(', ')}`).toEqual([])
   })
 })
 
