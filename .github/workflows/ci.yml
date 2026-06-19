@@ -27,3 +27,5 @@ jobs:
       - run: npm run build
       # バンドルサイズ予算（build 後の dist を計測。超過で失敗）
       - run: npm run size
+      # Lighthouse 監査（dist を preview で配信。a11y/best-practices は閾値割れで失敗）
+      - run: npm run lighthouse

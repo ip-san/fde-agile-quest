@@ -22,6 +22,7 @@
     "cpd": "jscpd src --min-lines 5 --min-tokens 50 --ignore \"**/data/**\" --threshold 2",
     "check:all": "npm run check && npm run circular && npm run knip && npm run type-coverage && npm run cpd",
     "size": "size-limit",
+    "lighthouse": "lhci autorun --config=lighthouserc.cjs",
     "generate-icons": "node scripts/generate-icons.mjs",
     "gen:index": "node scripts/gen-event-index.mjs",
     "prepare": "husky"
@@ -48,6 +49,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.0",
+    "@lhci/cli": "^0.15.1",
     "@size-limit/file": "^11.2.0",
     "@tailwindcss/postcss": "^4.0.0",
     "@testing-library/react": "^16.1.0",
