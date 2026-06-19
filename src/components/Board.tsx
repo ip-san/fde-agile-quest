@@ -57,6 +57,7 @@ export function Board() {
     repoCoverage,
     repoDebt,
     backlogDone,
+    sprintForecast,
     sprintGoals,
     spin,
     arrive,
@@ -218,6 +219,16 @@ export function Board() {
                   className="rounded-lg border border-sky-500/40 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-200 transition hover:bg-sky-500/20 active:scale-95"
                 >
                   📋 スプリントバックログに予測を入れる
+                </button>
+              )}
+              {/* デイリーでは、回す前にバックログ（着手・レビュー）を進められる。発見性のための誘導。 */}
+              {ceremony === 'daily' && sprintForecast.some((id) => !backlogDone.includes(id)) && (
+                <button
+                  type="button"
+                  onClick={() => setBacklogOpen(true)}
+                  className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-500/20 active:scale-95"
+                >
+                  📋 バックログを進める（着手 / レビュー）
                 </button>
               )}
             </>

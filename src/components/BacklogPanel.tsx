@@ -10,7 +10,6 @@ import {
   type ProposalVerdict,
   REVIEW_CAPACITY,
   reviewBacklogProposal,
-  sprintCapacity,
   WIP_LIMIT,
 } from '../engine/backlog'
 import type { ProgressCore } from '../engine/progression'
@@ -150,7 +149,9 @@ function PlanningView({
   commitBacklogOrder,
   toggleForecast,
 }: PlanningProps) {
-  const capacity = sprintCapacity({ sprintIndex, velocity })
+  // 予測の“目安”＝今スプリントで実際に終わらせられる量。律速は人のレビュー容量なので
+  // それを基準にする（前回ベロシティではなく、真のボトルネックに合わせる）。
+  const capacity = REVIEW_CAPACITY
   const fpts = forecastPoints({ sprintForecast })
   const over = fpts > capacity
   const doneSet = new Set(backlogDone)
@@ -194,7 +195,7 @@ function PlanningView({
 
       <div className={`rounded-xl px-3 py-2.5 ${over ? 'bg-rose-500/10 ring-1 ring-rose-500/40' : 'bg-slate-800/40'}`}>
         <div className="mb-1 flex items-center justify-between text-xs">
-          <span className="text-slate-300">🧮 予測 / 目安（前回{<RichText text="{{ベロシティ}}" />}）</span>
+          <span className="text-slate-300">🧮 予測 / 今スプリントで終わらせられる目安</span>
           <span className={`tabular-nums ${over ? 'text-rose-300' : 'text-slate-300'}`}>
             {fpts} / {capacity} pt
           </span>
@@ -206,8 +207,8 @@ function PlanningView({
           />
         </div>
         <p className="mt-1 text-xs text-slate-400">
-          目安を超える予測も可。だが実際に Done にできるのは、スプリント中の{<RichText text="{{レビュー}}" />}
-          容量しだい。
+          目安＝人の{<RichText text="{{レビュー}}" />}容量（{capacity}pt/スプリント）。これを超えて予測しても、
+          終わらせられるのはレビューできた分だけ＝残りは{<RichText text="{{キャリーオーバー}}" />}になる。
         </p>
       </div>
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BASE_CAPACITY, PRODUCT_BACKLOG, STARTING_METERS } from '../data/chapters/chapter-01'
+import { PRODUCT_BACKLOG, STARTING_METERS } from '../data/chapters/chapter-01'
 import type { Choice, GameEvent } from '../types'
 import {
   canReview,
@@ -13,7 +13,6 @@ import {
   resolveSprintBacklog,
   reviewBacklogProposal,
   reviewItem,
-  sprintCapacity,
   startItem,
   toggleForecast,
   WIP_LIMIT,
@@ -28,18 +27,6 @@ const ID = {
 } as const
 
 const core = (over: Partial<ProgressCore> = {}): ProgressCore => ({ ...freshCore(STARTING_METERS), ...over })
-
-describe('sprintCapacity', () => {
-  it('初回（sprintIndex=0）は基準値 BASE_CAPACITY', () => {
-    expect(sprintCapacity(core())).toBe(BASE_CAPACITY)
-  })
-  it('2スプリント目以降は前スプリントのベロシティ（昨日の天気）', () => {
-    expect(sprintCapacity(core({ sprintIndex: 1, velocity: [6] }))).toBe(6)
-  })
-  it('前回ベロシティが0なら基準値に戻す（容量0ロックを避ける）', () => {
-    expect(sprintCapacity(core({ sprintIndex: 1, velocity: [0] }))).toBe(BASE_CAPACITY)
-  })
-})
 
 describe('toggleForecast', () => {
   it('プランニング中（freshCore=beat0）は予測に出し入れできる', () => {
@@ -213,6 +200,20 @@ describe('resolveSprintBacklog（カンバン精算）', () => {
     expect(review.cultureDelta).toBe(0)
     expect(review.velocity).toBe(0)
     expect(next.meters.culture).toBe(STARTING_METERS.culture)
+  })
+
+  it('予測しただけで未着手（カンバンに触っていない）なら罰しない＝ナッジ0', () => {
+    // 予測はあるが Done も In Progress も無い＝engaged でない
+    const c = core({ sprintForecast: [ID.floor, ID.veteran], backlogDone: [], inProgress: [] })
+    const { review } = resolveSprintBacklog(c)
+    expect(review.carryover.length).toBe(2)
+    expect(review.cultureDelta).toBe(0) // “使わなかった”は減点しない
+  })
+
+  it('着手したが終わらず持ち越し＝engaged で未完 → culture −1', () => {
+    const c = core({ sprintForecast: [ID.floor, ID.veteran], backlogDone: [], inProgress: [ID.floor] })
+    const { review } = resolveSprintBacklog(c)
+    expect(review.cultureDelta).toBe(-1)
   })
 
   it('culture 上限10はクランプし実差分を報告', () => {

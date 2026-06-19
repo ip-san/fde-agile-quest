@@ -4,7 +4,7 @@
 // ProgressCore は型のみ import（progression.ts との実行時循環を避ける）。
 // 現在ビートの判定は SPRINTS を chapter-01 から直接読む。
 // ───────────────────────────────────────────────────────────
-import { BASE_CAPACITY, PRODUCT_BACKLOG, SPRINTS } from '../data/chapters/chapter-01'
+import { PRODUCT_BACKLOG, SPRINTS } from '../data/chapters/chapter-01'
 import type { BacklogItem, BacklogReview, ExecTier, ReviewDepth } from '../types'
 import { coverageDrag } from './game'
 import type { ProgressCore } from './progression'
@@ -52,13 +52,6 @@ export function isKnownPbi(id: string): boolean {
 /** 現在ビートがプランニングか（予測の編集はプランニング中のみ許可する）。 */
 function isPlanningBeat(core: Pick<ProgressCore, 'sprintIndex' | 'beatIndex'>): boolean {
   return SPRINTS[core.sprintIndex]?.beats[core.beatIndex] === 'planning'
-}
-
-/** 今スプリントのキャパシティ（容量）。“昨日の天気”＝前スプリントのベロシティ。
- *  初回（または前回が0）は基準値 BASE_CAPACITY。決定的・UIに表示する。 */
-export function sprintCapacity(core: Pick<ProgressCore, 'sprintIndex' | 'velocity'>): number {
-  const prev = core.velocity[core.sprintIndex - 1]
-  return core.sprintIndex > 0 && Number.isFinite(prev) && prev > 0 ? prev : BASE_CAPACITY
 }
 
 /** 予測（スプリントバックログ）の見積り合計。容量メーター/警告表示用。 */
@@ -222,12 +215,13 @@ export function resolveSprintBacklog(core: ProgressCore): { core: ProgressCore; 
   const velocity = [...core.velocity]
   velocity[core.sprintIndex] = velocityPts
 
-  // culture ナッジ: 予測したものを WIP を守って完遂（未Done無し＆1件以上Done）→ +1 /
-  //                 未完を抱えて持ち越し → −1 / そもそも予測ゼロ → 0
-  let cultureDelta = 0
-  if (core.sprintForecast.length > 0) {
-    cultureDelta = carryIds.length === 0 && doneThisSprint.length > 0 ? 1 : carryIds.length > 0 ? -1 : 0
-  }
+  // culture ナッジは「実際にカンバンに手を付けた（engaged）」場合だけ働かせる。
+  //   engaged＝今スプリントに Done したか、着手中(In Progress)を抱えている。
+  //   ・engaged で全部完遂（持ち越し無し）→ +1（WIP を守って終わらせた）
+  //   ・engaged だが未完を持ち越し → −1
+  //   ・未着手のまま（予測しただけ/そもそも触っていない）→ 0（“使わなかった”を罰しない）
+  const engaged = doneThisSprint.length > 0 || core.inProgress.length > 0
+  const cultureDelta = engaged ? (carryIds.length === 0 ? 1 : -1) : 0
   const culture = Math.max(0, Math.min(10, core.meters.culture + cultureDelta))
   const meters = cultureDelta ? { ...core.meters, culture } : core.meters
   const appliedCultureDelta = meters.culture - core.meters.culture
@@ -240,7 +234,6 @@ export function resolveSprintBacklog(core: ProgressCore): { core: ProgressCore; 
     done: doneThisSprint.map(toView),
     carryover: carryIds.map(toView),
     velocity: velocityPts,
-    capacity: REVIEW_CAPACITY,
     cultureDelta: appliedCultureDelta,
   }
   // 精算後は次スプリントへ：予測/In Progress/進捗をクリア、レビュー容量を満タンに戻す

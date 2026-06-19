@@ -151,9 +151,7 @@ export interface BacklogReview {
   carryover: { id: string; title: string; estimate: number }[]
   /** 今スプリントのベロシティ（完了ポイント合計） */
   velocity: number
-  /** このスプリントの容量（キャパシティ。＝予測の物差し） */
-  capacity: number
-  /** 予測の健全さに応じた culture の増減（+1/0/−1） */
+  /** 着手の完遂度に応じた culture の増減（+1/0/−1） */
   cultureDelta: number
 }
 

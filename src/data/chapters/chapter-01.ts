@@ -112,10 +112,6 @@ export const EVENTS: GameEvent[] = localizeDeep([...SPRINT1_EVENTS, ...SPRINT2_E
 // プロダクトバックログ（PBI）。配列順＝POの初期優先順位。固有名詞は表示名へ置換して公開する。
 export const PRODUCT_BACKLOG: BacklogItem[] = localizeDeep(PRODUCT_BACKLOG_RAW)
 
-/** スプリント1の基準キャパシティ（“昨日の天気”がまだ無い初回の見込み）。
- *  PBI の見積りに対し、おおむね2〜3項目が収まる量。以降は前スプリントのベロシティを使う。 */
-export const BASE_CAPACITY = 8
-
 export const ENDINGS: Ending[] = [
   {
     id: 'disliked',

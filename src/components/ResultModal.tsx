@@ -84,7 +84,7 @@ function BacklogReviewBlock({ review }: { review: BacklogReview }) {
       <div className="flex items-center justify-between">
         <p className="text-[11px] font-semibold text-slate-400">📋 スプリントバックログの精算</p>
         <span className="tabular-nums text-xs text-emerald-300">
-          📈 ベロシティ {review.velocity} / 容量 {review.capacity}pt
+          📈 ベロシティ {review.velocity}pt（完了 {review.done.length}件）
         </span>
       </div>
 
@@ -124,8 +124,8 @@ function BacklogReviewBlock({ review }: { review: BacklogReview }) {
       {cd !== 0 && (
         <p className={`text-xs ${cd > 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
           {cd > 0
-            ? '巻込 ▲ +1：容量に見合う予測を守り切った（持続可能なペース）。'
-            : '巻込 ▼ −1：容量を超えて欲張り、終わらなかった。'}
+            ? '巻込 ▲ +1：着手したものを WIP を守って終わらせた（持続可能なペース）。'
+            : '巻込 ▼ −1：着手したものを終わらせきれず、持ち越した。'}
         </p>
       )}
     </div>
