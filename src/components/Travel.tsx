@@ -46,9 +46,9 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
           </span>
         </div>
         <p className="mb-2.5 px-1 text-[11px] text-slate-400">
-          本社{displayName('lumen')}のチームが、今日それぞれ別の優先を推す。
-          <span className="text-slate-300">あなたが動けるのは1箇所だけ</span>
-          ——どの声に賭ける？（選ばなかった方は見送りになる）
+          本社{displayName('lumen')}のチームが、各自の観点（価値／プロセス／技術）で気づきを共有する。
+          <span className="text-slate-300">今日どこへ向かうかを決めるのは、開発者であるあなた自身だ</span>
+          ——どれを採る？（動けるのは1箇所。選ばなかった方は見送りになる）
         </p>
 
         {/* 役割タイル（それぞれ別の候補を主張） */}
