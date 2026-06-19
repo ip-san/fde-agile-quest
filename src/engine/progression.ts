@@ -534,7 +534,7 @@ export function canAfford(aiTokens: number, choice: Choice): boolean {
 }
 
 /** AIトークンを 0..MAX の整数に丸める */
-export function clampTokens(v: number): number {
+function clampTokens(v: number): number {
   if (!Number.isFinite(v)) return AI_TOKENS_MAX
   return Math.max(0, Math.min(AI_TOKENS_MAX, Math.floor(v)))
 }

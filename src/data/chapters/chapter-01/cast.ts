@@ -171,8 +171,6 @@ export const CAST: Character[] = localizeDeep(RAW_CAST).map((c) =>
   c.id in NAMES ? { ...c, name: nameWithReading(c.id as NameId) } : c
 )
 
-export const CAST_BY_ID: Record<string, Character> = Object.fromEntries(CAST.map((c) => [c.id, c]))
-
 /** Prologue（オープニング）のパネル。難しい用語は避け、短い文で情景から掴む。
  *  image は public/img/{key}.jpg のキー。images.ts の AVAILABLE_IMAGES に登録された
  *  ものだけ描画される（未登録は出さない＝生成前でも崩れない）。 */

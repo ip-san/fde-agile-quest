@@ -114,7 +114,7 @@ export const LOCATION_ORDER: LocationId[] = [
 // ───────────────────────────────────────────────────────────
 // リモート朝会の役割（ルーメンのチーム）。役割ごとに「観点（レンズ）」が違う。
 // ───────────────────────────────────────────────────────────
-export interface DailyRoleDef {
+interface DailyRoleDef {
   role: DailyRole
   /** 役割の表示名 */
   label: string
@@ -127,7 +127,7 @@ export interface DailyRoleDef {
   lens: string
 }
 
-export const DAILY_ROLES: Record<DailyRole, DailyRoleDef> = localizeDeep({
+const DAILY_ROLES: Record<DailyRole, DailyRoleDef> = localizeDeep({
   po: {
     role: 'po',
     label: 'PO（プロダクトオーナー）',

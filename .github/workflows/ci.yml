@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# 同一ブランチで連続実行されたら古い run を打ち切る（無駄なCI時間を省く）
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # 型チェック → lint(biome) → テスト → 循環依存 → デッドコード → 型カバレッジ
+      - run: npm run check:all
+      # 本番ビルドが通ることまで確認（デプロイ前の最終ゲート）
+      - run: npm run build

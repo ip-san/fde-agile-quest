@@ -12,7 +12,7 @@ import type {
   Segment,
 } from '../types'
 
-export const METER_MIN = 0
+const METER_MIN = 0
 export const METER_MAX = 10
 
 /** メーターを 0..10 に丸める */
