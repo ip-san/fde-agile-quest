@@ -49,4 +49,25 @@ describe('伏線レジストリ（threads）の整合性', () => {
     const unknown = [...choiceSet, ...missedSet, ...eventPayoff].filter((f) => !known.has(f))
     expect([...new Set(unknown)], `レジストリ未登録のフラグ: ${unknown.join(', ')}`).toEqual([])
   })
+
+  // Phase 2（回収保証・作問レベル）: フラグはスプリントをまたいで保持され、requiresFlag イベントは
+  // 「フラグが立った後」のスプリントでしか出ない。回収イベントが“仕掛けより前のスプリント”に置かれていると
+  // 構造的に永久到達不能（宙づり）になる。これを作問時に弾く。
+  it('イベントで回収する伏線は、回収イベントのスプリントが最初の仕掛けスプリント以降にある（構造的到達可能）', () => {
+    const minSprintOf = (pred: (e: (typeof EVENTS)[number]) => boolean): number | null => {
+      const ss = EVENTS.filter(pred).map((e) => e.sprint)
+      return ss.length ? Math.min(...ss) : null
+    }
+    const unreachable: string[] = []
+    for (const f of flags) {
+      if (!THREADS[f].payoffVia.includes('event')) continue
+      const minSetter = minSprintOf((e) => e.missedFlag === f || e.choices.some((c) => c.setsFlag === f))
+      const minPayoff = minSprintOf((e) => e.requiresFlag === f)
+      // event payoff があるのに setter が無い／回収が仕掛けより前 → 到達不能
+      if (minPayoff !== null && (minSetter === null || minPayoff < minSetter)) {
+        unreachable.push(`${f}(setter:S${minSetter ?? '∅'}/payoff:S${minPayoff})`)
+      }
+    }
+    expect(unreachable, `回収イベントが構造的に到達不能: ${unreachable.join(', ')}`).toEqual([])
+  })
 })
