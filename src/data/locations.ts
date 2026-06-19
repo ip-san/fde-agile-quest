@@ -212,6 +212,27 @@ function isSensitiveEvent(event: GameEvent): boolean {
   return fraud(event.requiresFlag) || event.choices.some((c) => fraud(c.setsFlag))
 }
 
+/** sensitive 題材で出してはいけない語（称揚＝価値/障害/コード化、または“粉飾・リストラを進める”系）。
+ *  テンプレ(SENSITIVE_LINES)は元から避けるが、イベント固有の advocacy/hints 上書きが sensitive 事案で
+ *  この語を含む場合に備え、standupFor で実行時にも中立テンプレへ差し戻す（テストだけに頼らない）。
+ *  単一の真実源として locations.test もこれを参照する。 */
+export const SENSITIVE_FORBIDDEN = [
+  'KPIに効く',
+  '価値の大きい順',
+  '価値を、今スプリント',
+  '価値に直結',
+  '障害になる',
+  '片づければ',
+  'リポジトリで直し',
+  'コードに反映',
+  'リファクタ',
+  // “不正を進める/数字を盛る”系（denylist の穴を塞ぐ強化）
+  '盛る',
+  '進めて',
+  '立てる',
+  '片付け',
+]
+
 type Line = (t: string, l: string) => string
 // 鷹野（PO）＝決断の経営者。顧客の痛みと価値に直球で、押しは強いが情がある。
 const PO_LINES: Line[] = [
@@ -335,9 +356,12 @@ export function standupFor(candidates: GameEvent[]): StandupVoice[] {
       const short = LOCATIONS[loc].short
       // 口上は優先順: ①イベント固有の advocacy 上書き → ②イベント固有の role別 hints（手書きの
       // 具体的な観点。テンプレより人間味がある） → ③役割テンプレ(advocacyLine)。
-      // ※ sensitive 題材の中立性は、locations.test の neutrality テストが standupFor の最終出力
-      //   （この上書き込み）を検査して担保する（不適切な語が混じれば落ちる）。
-      const line = c.advocacy?.[role] ?? c.hints?.[role] ?? advocacyLine(role, c, short, idSeed(c.id))
+      let line = c.advocacy?.[role] ?? c.hints?.[role] ?? advocacyLine(role, c, short, idSeed(c.id))
+      // 実行時の中立ネット: sensitive 事案で上書きが禁止語を含むなら、中立テンプレへ差し戻す。
+      // → 称揚/不正助長の語が朝会に出ない保証を、テストだけでなく実行時にも持つ（著者規律に依存しない）。
+      if (isSensitiveEvent(c) && SENSITIVE_FORBIDDEN.some((w) => line.includes(w))) {
+        line = advocacyLine(role, c, short, idSeed(c.id))
+      }
       return {
         role,
         name: def.name,
