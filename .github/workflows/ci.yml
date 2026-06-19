@@ -21,7 +21,9 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      # 型チェック → lint(biome) → テスト → 循環依存 → デッドコード → 型カバレッジ
+      # 型チェック → lint(biome) → テスト → 循環依存 → デッドコード → 型カバレッジ → 重複コード
       - run: npm run check:all
       # 本番ビルドが通ることまで確認（デプロイ前の最終ゲート）
       - run: npm run build
+      # バンドルサイズ予算（build 後の dist を計測。超過で失敗）
+      - run: npm run size
