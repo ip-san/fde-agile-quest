@@ -192,7 +192,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'team',
     title: 'AIが書いたコードのバグ',
-    narrative: 'AIに量産させたコードを、レビューせず本番に出していた。現場から「在庫数が時々ずれる」と苦情が来た。',
+    narrative: 'AIに量産させたコードを、{{レビュー}}せず本番に出していた。現場から「在庫数が時々ずれる」と苦情が来た。',
     choices: [
       {
         id: 'a',
@@ -209,7 +209,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         effects: { insight: 1, culture: 1 },
         repo: { coverage: 15 },
         resultText:
-          'レビューを挟むぶん一時的に速度は落ちた（速く出す信頼+は取り逃す＝機会コスト）。だが「AIが書いてもレビューは人」がチームの作法になった。',
+          '{{レビュー}}を挟むぶん一時的に速度は落ちた（速く出す信頼+は取り逃す＝機会コスト）。だが「AIが書いてもレビューは人」がチームの作法になった。',
       },
       {
         id: 'c',
@@ -217,7 +217,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         effects: { trust: 1, insight: 1 },
         repo: { coverage: 20 },
         resultText:
-          '“評価なき生成は祈り”——今度は評価基準をAIに書かせ、人が検証した。在庫ズレが止まり、現場の信頼が戻った（実害を止めて信頼+）。AIトークンは要るが、これがAIとの正しい働き方だ。',
+          '“評価なき生成は祈り”——今度は{{評価基準}}をAIに書かせ、人が検証した。在庫ズレが止まり、現場の信頼が戻った（実害を止めて信頼+）。AIトークンは要るが、これがAIとの正しい働き方だ。',
         tokenCost: 250,
       },
     ],
@@ -244,7 +244,8 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         id: 'b',
         label: '社外にデータを出さない構成を、最初から設計条件にする',
         effects: { insight: 1, culture: 1, trust: -1 },
-        resultText: '制約に合わせる手間で着手は遅れた（信頼−）。だが顧客の制約を設計条件にすると、後の地雷が消える。',
+        resultText:
+          '制約に合わせる手間で着手は遅れた（信頼−）。だが顧客の{{ガバナンス}}を設計条件にすると、後の地雷が消える。',
       },
     ],
   },
@@ -266,9 +267,9 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       },
       {
         id: 'b',
-        label: 'PMとして誤出荷KPIに照らし優先順位を裁き、決めたら自分も手を動かす',
+        label: 'PMとして誤出荷{{KPI}}に照らし優先順位を裁き、決めたら自分も手を動かす',
         effects: { culture: 1, insight: 1 },
-        resultText: 'FDEはPMでもあり、最後はエンジニア。決めて、自ら作る背中が、チームを前に動かした。',
+        resultText: '{{FDE}}はPMでもあり、最後はエンジニア。決めて、自ら作る背中が、チームを前に動かした。',
       },
     ],
   },
@@ -291,7 +292,8 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         id: 'b',
         label: '決まったことを一行のメモにして共有し、合意を形に残す',
         effects: { insight: 1, culture: 1 },
-        resultText: '文書は官僚仕事でなく外部記憶。一行の記録が、後の「言った・言わない」を未然に防いだ。',
+        resultText:
+          '文書は官僚仕事でなく外部記憶。一行の記録が{{バックログ}}に残り、後の「言った・言わない」を未然に防いだ。',
       },
     ],
   },
@@ -301,7 +303,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'team',
     title: '結論の出ない打ち合わせ',
-    narrative: '30分の打ち合わせ。議論は盛り上がったが、結論が出ないまま終わりそうだ。',
+    narrative: '30分の{{タイムボックス}}を切った打ち合わせ。議論は盛り上がったが、結論が出ないまま終わりそうだ。',
     choices: [
       {
         id: 'a',
@@ -336,7 +338,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       },
       {
         id: 'b',
-        label: '5分の動くデモを見せ、納品は“資料”でなく“業務の変化”だと示す',
+        label: '5分の動く{{インクリメント}}をデモし、納品は“資料”でなく“業務の変化”だと示す',
         effects: { insight: 1, culture: 1 },
         resultText: 'デモは百枚の資料に勝つ。成果物でなく業務の変化を語ったことで、経営の目が変わった。',
       },
@@ -361,7 +363,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         id: 'b',
         label: '例外を一つずつ分類し、顧客の矛盾は責めず設計で受け止める',
         effects: { insight: 1, culture: 1 },
-        resultText: '例外は潰すな、分類しろ。矛盾を設計で吸収すると、現場が回り続け、当事者意識が増した。',
+        resultText: '例外は潰すな、分類しろ。{{複雑系}}の矛盾を設計で吸収すると、現場が回り続け、当事者意識が増した。',
       },
     ],
   },
@@ -410,7 +412,8 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         id: 'b',
         label: '迷ったら本番利用と最短学習ループに戻る、と現場の利用を確かめる',
         effects: { insight: 1, culture: 1 },
-        resultText: '迷ったら本番利用に戻れ、最短学習ループに戻れ。立ち返ると、次の一手が明確になった。',
+        resultText:
+          '迷ったら本番利用に戻れ、最短の{{フィードバックループ}}に戻れ。立ち返ると、次の一手が明確になった。',
       },
     ],
   },
@@ -433,7 +436,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         id: 'b',
         label: '「検討します」の前に仮説を出し、「確認します」の前に観測点を置く',
         effects: { insight: 1, culture: 1 },
-        resultText: '検討の前に仮説、確認の前に観測点。その場が、止まらず前に進んだ。',
+        resultText: '検討の前に仮説、確認の前に観測点。{{経験主義}}でその場が、止まらず前に進んだ。',
       },
     ],
   },
@@ -457,7 +460,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         id: 'b',
         label: '業務上の許容誤差（誤出荷が許せる範囲）を現場と決め、そこで止める',
         effects: { insight: 1, culture: 1 },
-        resultText: '精度より、業務上の許容誤差。「どこまでで現場が回るか」が、止め時を教えてくれた。',
+        resultText: '精度より、業務上の許容誤差を{{評価基準}}に。「どこまでで現場が回るか」が、止め時を教えてくれた。',
       },
     ],
   },
@@ -480,7 +483,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         id: 'b',
         label: '深く潜れと伝え、自分だけの専門性を現場で鍛える方針にする',
         effects: { insight: 1, culture: 1 },
-        resultText: '深く潜れ。浅い万能はAIに飲まれる。現場で鍛えた専門性が、AIに代えがたい武器になった。',
+        resultText: '深く潜れ。浅い万能はAIに飲まれる。{{現場主義}}で鍛えた専門性が、AIに代えがたい武器になった。',
       },
     ],
   },
@@ -560,7 +563,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         effects: { trust: 1, insight: -1 },
         repo: { debt: 2, coverage: -10 },
         resultText:
-          '数分でPRが上がり、すぐ動いた（速さが見えて信頼+）。だが中身は誰も分かっていない。技術的負債が静かに積もり、トークンも減った。',
+          '数分でPRが上がり、すぐ動いた（速さが見えて信頼+）。だが中身は誰も分かっていない。{{技術的負債}}が静かに積もり、トークンも減った。',
         warn: true,
         setsFlag: 'aiOverreliance',
         tokenCost: 500,
@@ -884,7 +887,8 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         id: 'b',
         label: '橋本さんに敬意を払いつつ、権限と知識を分ける提案を切り出す',
         effects: { insight: 1, culture: 1 },
-        resultText: '「正直、しんどかった」と橋本さんは漏らした。勇気を出した一言が、属人化をほどく糸口になった。',
+        resultText:
+          '「正直、しんどかった」と橋本さんは漏らした。勇気を出した一言が、属人化をほどき{{自己組織化}}へ向かう糸口になった。',
       },
     ],
   },
@@ -990,7 +994,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         effects: { insight: 2, trust: -1 },
         repo: { coverage: 5, debt: -1 },
         resultText:
-          '手戻りは痛い（やり直しで信頼−）。だが遅れて拾った一次情報で、ようやく現場に噛み合い始めた。答えは、やはり資料の外にあった。',
+          '手戻りは痛い（やり直しで信頼−）。だが遅れて拾った一次情報で、ようやく現場に噛み合い始めた。答えは、やはり資料の外——{{現場主義}}の中にあった。',
       },
     ],
   },
@@ -1016,7 +1020,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         label: '「誰の責任か」でなく「仕組みのどこが弱いか」に話を移し、両部門を同じ事実に立たせる',
         effects: { insight: 1, culture: 1 },
         resultText:
-          '入力と連携の境目に落ちた穴が、両者の前で可視化された。犯人でなく原因を見ると、対立は協力に変わる。',
+          '入力と連携の境目に落ちた穴が、両者の前で可視化された。犯人でなく{{制約理論}}でいう一番弱い結び目を見ると、対立は協力に変わる。',
       },
     ],
   },
@@ -1047,7 +1051,8 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         id: 'b',
         label: '間宮さんの違和感をメモし、現場の実数と突き合わせる約束をする',
         effects: { insight: 1 },
-        resultText: '事実・推測・願望を分けて書き留めた。会計の側に、一人の味方ができた。数字と現場が、繋がり始める。',
+        resultText:
+          '事実・推測・願望を分けて書き留めた。会計の側に、一人の味方ができた。{{KPI}}の数字と現場が、繋がり始める。',
         setsFlag: 'fraudClue',
       },
     ],
@@ -1112,7 +1117,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         label: '橋本さんの貢献を、事実と数字で総務・経営に示す',
         effects: { culture: 1, insight: 1 },
         resultText:
-          '「彼が止まれば全部止まる」を数字で見せた。理不尽が一つ覆り、現場は「見てくれている」と感じた。誰の仕事でもないことを、拾った。（中立を装う信頼+は取り逃す）',
+          '「彼が止まれば全部止まる」を{{KPI}}の数字で見せた。理不尽が一つ覆り、現場は「見てくれている」と感じた。誰の仕事でもないことを、拾った。（中立を装う信頼+は取り逃す）',
       },
     ],
   },
@@ -1233,7 +1238,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         label: '実物と帳簿のズレの出所を、現場と一台ずつ突き合わせて追う',
         effects: { insight: 1 },
         resultText:
-          '「この型番、見たことないっすね」と現場。導入されたはずの機材が、最初から無い。これは棚卸差異じゃない。何か、もっと大きなものの尻尾だ。',
+          '「この型番、見たことないっすね」と現場。導入されたはずの機材が、最初から無い。これは{{棚卸}}差異じゃない。何か、もっと大きなものの尻尾だ。',
         setsFlag: 'fraudClue',
       },
     ],
@@ -1304,7 +1309,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
         label: '今からでもゴールを立て直し、「なぜ使われないか」に立ち返る',
         effects: { insight: 1, culture: 1 },
         resultText:
-          '遠回りに見えて、ここが分かれ道だった。約束より先に、現場の沈黙の理由へ。立てたゴールは間違えても、立て直せる。（押し通せば得られた信頼+は取り逃す）',
+          '遠回りに見えて、ここが分かれ道だった。約束より先に、現場の沈黙の理由へ。立てた{{スプリントゴール}}は間違えても、立て直せる。（押し通せば得られた信頼+は取り逃す）',
       },
     ],
   },

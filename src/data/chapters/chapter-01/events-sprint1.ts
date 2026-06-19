@@ -114,7 +114,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         label: '掴んだ現場の文脈ごと共有し、別途{{リファインメント}}で一緒に並べ替える',
         effects: { culture: 1 },
         resultText:
-          '別途リファインメントの時間を取ったぶん着手は遅れたが、チームが「なぜ」を理解して自走し始めた。（速く見せる信頼+は取り逃す＝機会コスト）',
+          '別途{{リファインメント}}の時間を取ったぶん着手は遅れたが、チームが「なぜ」を理解して自走し始めた。（速く見せる信頼+は取り逃す＝機会コスト）',
       },
     ],
   },
@@ -234,7 +234,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'chance',
     title: 'AIで空いた時間',
-    narrative: '定型の集計レポート作成をAIに任せたら、毎日1時間が浮いた。この時間をどう使う？',
+    narrative: '定型の集計レポート作成を{{エージェント}}に任せたら、毎日1時間が浮いた。この時間をどう使う？',
     choices: [
       {
         id: 'a',
@@ -266,7 +266,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         label: '{{プロンプト}}に言葉を足し、呪文のように調整し続ける',
         effects: { insight: -1 },
         repo: { debt: 1 },
-        resultText: 'プロンプトは呪文ではない。前提知識が無いまま言い回しをいじっても、的は外れたまま。',
+        resultText: '{{プロンプト}}は呪文ではない。前提知識が無いまま言い回しをいじっても、的は外れたまま。',
         warn: true,
       },
       {
@@ -340,7 +340,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'genba',
     title: '頭の中の在庫フロー',
-    narrative: '入庫・出庫・返品が絡む在庫の流れは複雑で、口頭で説明すると毎回こんがらがる。',
+    narrative: '入庫・出庫・返品が絡む在庫の流れは{{複雑系}}で、口頭で説明すると毎回こんがらがる。',
     choices: [
       {
         id: 'a',
@@ -379,7 +379,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         label: '「見える化」が現場で何を指すか、動作レベルまで細かく翻訳する',
         effects: { insight: 2, culture: -1 },
         resultText:
-          '顧客の言葉を業務に翻訳し、細かく潜る。「本当は“出荷ミスに気づける”ことだ」と分かった。ただし細かく潜るぶんチームの開発は止まった（巻き込み−）。',
+          '顧客の言葉を業務に翻訳し、細かく潜る。「本当は“出荷ミスに気づける”ことだ」と{{成果の定義}}が定まった。ただし細かく潜るぶんチームの開発は止まった（巻き込み−）。',
       },
     ],
   },
@@ -389,7 +389,8 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'genba',
     title: '巨大なExcel',
-    narrative: '現場は在庫をマクロだらけの巨大なExcelで管理していた。複雑だが、ちゃんと回ってはいる。',
+    narrative:
+      '現場は在庫をマクロだらけの巨大なExcelで管理していた。立派な{{レガシー}}だ。複雑だが、ちゃんと回ってはいる。',
     choices: [
       {
         id: 'a',
@@ -425,7 +426,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       },
       {
         id: 'b',
-        label: '最初の解は雑でいい。動く粗いものを今日、現場に当てる',
+        label: '最初の解は雑でいい。動く粗い{{MVP}}を今日、現場に当てる',
         effects: { insight: 1, culture: 1, trust: -1 },
         resultText: '粗さに結城さんは少し不安顔（信頼−）。だが本番に当てて初めて、仮説が学びに変わる。',
       },
@@ -451,7 +452,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         id: 'b',
         label: '「できません」の前に最小版を作り、難所を分解して見せる',
         effects: { insight: 1, culture: 1 },
-        resultText: 'できませんの前に最小版、難しいの前に分解。無理筋が、やれる形に変わった。',
+        resultText: 'できませんの前に{{MVP}}、難しいの前に分解。無理筋が、やれる形に変わった。',
       },
     ],
   },
@@ -474,7 +475,8 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         id: 'b',
         label: 'まず自分が量をこなして触り倒し、勘所を掴んでチームに渡す',
         effects: { insight: 1, culture: 1 },
-        resultText: '独学を止めるな、量をこなせ。手を動かしたぶんだけ、教えられることが増えた。',
+        resultText:
+          '独学を止めるな、量をこなせ。手を動かしたぶんだけ、チームへの{{オンボーディング}}で教えられることが増えた。',
       },
     ],
   },
@@ -484,7 +486,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'kokyaku',
     title: '厳しいダメ出し',
-    narrative: 'レビューで現場から厳しいダメ出し。「これ、全然使えない」と。',
+    narrative: '{{レビュー}}で現場から厳しいダメ出し。「これ、全然使えない」と。',
     choices: [
       {
         id: 'a',
@@ -518,7 +520,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         label: '予測機能のモック画面を見せ、進んでいる風に取り繕う',
         effects: { trust: 1, insight: -1 },
         resultText:
-          'それらしい画面に結城さんは安心（見栄えで信頼+）。だがレビューは“動く成果物を検査する場”。モックでの取り繕いは趣旨に反し、誤解だけが温存された。',
+          'それらしい画面に結城さんは安心（見栄えで信頼+）。だが{{レビュー}}は“動く成果物を検査する場”。モックでの取り繕いは趣旨に反し、誤解だけが温存された。',
       },
       {
         id: 'b',
@@ -710,7 +712,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     segment: 'trouble',
     title: '出荷直前のフリーズ',
     narrative:
-      '夕方、出荷直前にWMSが固まった。橋本さんは外出中。現場がざわつく。自分が飛び込めば、たぶん今日は間に合う。',
+      '夕方、出荷直前に{{WMS}}が固まった。橋本さんは外出中。現場がざわつく。自分が飛び込めば、たぶん今日は間に合う。',
     choices: [
       {
         id: 'a',
@@ -747,7 +749,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       },
       {
         id: 'b',
-        label: '二度手間の正体——WMSと手書きの二重入力を、田淵さんと再現してみる',
+        label: '二度手間の正体——{{WMS}}と手書きの二重入力を、田淵さんと再現してみる',
         effects: { insight: 1 },
         resultText: 'システムが、現場の最後の一歩に届いていなかった。沈黙は、まだ見つかっていない要件だった。',
       },
@@ -760,7 +762,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     segment: 'genba',
     title: '「これは、見て覚えるもん」',
     narrative:
-      '自動化の鍵は、田淵さんや山田さんの“勘”だ。だが、コツを聞くと決まって同じ言葉が返る。「これは見て覚えるもんだ」「言葉になんかできんよ」。——彼らは、自動化が自分の仕事を奪うと気づいている。だから、ノウハウを隠している。',
+      '{{フィジカルAI}}による自動化の鍵は、田淵さんや山田さんの“勘”だ。だが、コツを聞くと決まって同じ言葉が返る。「これは見て覚えるもんだ」「言葉になんかできんよ」。——彼らは、自動化が自分の仕事を奪うと気づいている。だから、ノウハウを隠している。',
     choices: [
       {
         id: 'a',
@@ -811,7 +813,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         label: '「実証の前に、まず基本のIT化と自動化が要る」と現実を正直に上げる',
         effects: { insight: 1, culture: 1 },
         resultText:
-          '見栄えのデモで上を一時的に安心させる信頼+は取り逃した。だが結城さんと「本物の一歩」を約束した。フィジカルAIは、地に足のついたIT化の、その先にしかない。',
+          '見栄えのデモで上を一時的に安心させる信頼+は取り逃した。だが結城さんと「本物の一歩」を約束した。{{フィジカルAI}}は、地に足のついたIT化の、その先にしかない。',
         setsFlag: 'showcasePressure',
       },
     ],
