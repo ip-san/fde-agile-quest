@@ -28,8 +28,16 @@ import type {
   Segment,
   Status,
 } from '../types'
-import { isKnownPbi, resolveSprintBacklog } from './backlog'
-import { amplifyEffects, availableEvents, drawEvent, evaluateEnding, miniGameKindFor, resolveChoice } from './game'
+import { isKnownPbi, REVIEW_CAPACITY, resolveSprintBacklog, WIP_LIMIT } from './backlog'
+import {
+  amplifyEffects,
+  availableEvents,
+  coverageDrag,
+  drawEvent,
+  evaluateEnding,
+  miniGameKindFor,
+  resolveChoice,
+} from './game'
 
 /** 進行の中核状態（永続化対象＋導出フィールド）。UIアクション関数は含まない */
 export interface ProgressCore {
@@ -68,8 +76,14 @@ export interface ProgressCore {
   sprintForecast: string[]
   /** DoD 達成済み PBI id（キャンペーン通算） */
   backlogDone: string[]
-  /** スプリントごとの完了ポイント（ベロシティ。index=sprintIndex）。容量算出と推移表示に使う */
+  /** スプリントごとの完了ポイント（ベロシティ。index=sprintIndex）。推移表示に使う */
   velocity: number[]
+  /** カンバンの In Progress 列（着手済み・未Done の PBI id。WIP=2 上限） */
+  inProgress: string[]
+  /** In Progress 各項目の累積レビュー点（id→点）。見積りに達すると Done */
+  reviewProgress: Record<string, number>
+  /** 今スプリントの残レビュー容量（人の希少資源。毎スプリント REVIEW_CAPACITY にリセット） */
+  reviewCapacity: number
 }
 
 export const REPO_COVERAGE_MAX = 100
@@ -99,6 +113,9 @@ export interface Persisted {
   sprintForecast?: string[]
   backlogDone?: string[]
   velocity?: number[]
+  inProgress?: string[]
+  reviewProgress?: Record<string, number>
+  reviewCapacity?: number
 }
 
 const METER_KEYS: MeterKey[] = ['trust', 'insight', 'culture']
@@ -139,6 +156,9 @@ export function freshCore(starting: Meters): ProgressCore {
     sprintForecast: [],
     backlogDone: [],
     velocity: [],
+    inProgress: [],
+    reviewProgress: {},
+    reviewCapacity: REVIEW_CAPACITY,
   }
 }
 
@@ -148,7 +168,9 @@ export function freshCore(starting: Meters): ProgressCore {
  *  - debt: 技術的負債のレベル＝累積負債(repoDebt)＋過信/誤KPIフラグから判定（質の負の側）
  *  - tokensUsed/Left: 生成AIトークン */
 export function repoStats(
-  core: Pick<ProgressCore, 'resolvedIds' | 'flags' | 'aiTokens' | 'repoCoverage' | 'repoDebt'>
+  core: Pick<ProgressCore, 'resolvedIds' | 'flags' | 'aiTokens' | 'repoCoverage' | 'repoDebt'> & {
+    backlogDone?: string[]
+  }
 ): {
   mergedPrs: number
   coverage: number
@@ -156,6 +178,7 @@ export function repoStats(
   tokensUsed: number
   tokensLeft: number
   debt: 'low' | 'mid' | 'high'
+  deliveredItems: number
 } {
   let mergedPrs = 0
   for (const ev of EVENTS) {
@@ -178,6 +201,8 @@ export function repoStats(
     tokensUsed: AI_TOKENS_MAX - core.aiTokens,
     tokensLeft: core.aiTokens,
     debt,
+    // 届けたインクリメント＝DoD 達成のバックログ項目（カンバンの Done 通算）
+    deliveredItems: core.backlogDone?.length ?? 0,
   }
 }
 
@@ -506,7 +531,10 @@ export function restoreCore(p: Persisted): ProgressCore {
  *  - velocity: 各枠を有限・非負の数へ正規化（index 整合のため詰めない） */
 function restoreBacklog(
   p: Persisted
-): Pick<ProgressCore, 'backlogOrder' | 'sprintForecast' | 'backlogDone' | 'velocity'> {
+): Pick<
+  ProgressCore,
+  'backlogOrder' | 'sprintForecast' | 'backlogDone' | 'velocity' | 'inProgress' | 'reviewProgress' | 'reviewCapacity'
+> {
   const seedOrder = PRODUCT_BACKLOG.map((q) => q.id)
   const savedOrder = (Array.isArray(p.backlogOrder) ? p.backlogOrder : []).filter(
     (id): id is string => typeof id === 'string' && isKnownPbi(id)
@@ -524,7 +552,22 @@ function restoreBacklog(
   const velocity = (Array.isArray(p.velocity) ? p.velocity : []).map((v) =>
     typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0
   )
-  return { backlogOrder, sprintForecast, backlogDone: [...done], velocity }
+  // In Progress は「既知∧今スプリント対象∧未done」のみ。WIP 上限超過は先頭から詰める
+  const forecastSet = new Set(sprintForecast)
+  const inProgress = (Array.isArray(p.inProgress) ? p.inProgress : [])
+    .filter((id): id is string => typeof id === 'string' && isKnownPbi(id) && forecastSet.has(id) && !done.has(id))
+    .slice(0, WIP_LIMIT)
+  const rawProg = p.reviewProgress && typeof p.reviewProgress === 'object' ? p.reviewProgress : {}
+  const reviewProgress: Record<string, number> = {}
+  for (const id of inProgress) {
+    const v = (rawProg as Record<string, unknown>)[id]
+    reviewProgress[id] = typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : 0
+  }
+  const reviewCapacity =
+    typeof p.reviewCapacity === 'number' && Number.isFinite(p.reviewCapacity)
+      ? Math.max(0, Math.min(REVIEW_CAPACITY, p.reviewCapacity))
+      : REVIEW_CAPACITY
+  return { backlogOrder, sprintForecast, backlogDone: [...done], velocity, inProgress, reviewProgress, reviewCapacity }
 }
 
 /** その選択が生成AIトークン残量で「選べる」か（tokenCost が残量以下）。
@@ -555,12 +598,8 @@ export function customerValue(meters: Meters, coverage: number, debtScore: numbe
   return Math.max(0, Math.min(100, Math.round(v)))
 }
 
-/** 技術的負債が高いほど“良いコードが積み上がりにくい”ドラッグ係数（0.3..1.0）。
- *  負債スコア(repoDebt + 過信/誤KPI 加点) が大きいほどカバレッジの伸びが鈍る。 */
-export function coverageDrag(repoDebt: number, flags: Set<GameFlag>): number {
-  const score = Math.max(0, repoDebt) + (flags.has('aiOverreliance') ? 4 : 0) + (flags.has('wrongKpi') ? 2 : 0)
-  return Math.max(0.3, 1 - score * 0.1)
-}
+// coverageDrag は game.ts に移設（chooseCore と backlog のレビューで共用・循環回避）。互換のため再エクスポート。
+export { coverageDrag }
 
 /** 永続データを書き出し用の最小形へ */
 export function toPersisted(core: ProgressCore): Persisted {
@@ -579,5 +618,8 @@ export function toPersisted(core: ProgressCore): Persisted {
     sprintForecast: core.sprintForecast,
     backlogDone: core.backlogDone,
     velocity: core.velocity,
+    inProgress: core.inProgress,
+    reviewProgress: core.reviewProgress,
+    reviewCapacity: core.reviewCapacity,
   }
 }

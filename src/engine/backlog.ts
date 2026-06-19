@@ -5,10 +5,34 @@
 // 現在ビートの判定は SPRINTS を chapter-01 から直接読む。
 // ───────────────────────────────────────────────────────────
 import { BASE_CAPACITY, PRODUCT_BACKLOG, SPRINTS } from '../data/chapters/chapter-01'
-import type { BacklogItem, BacklogReview } from '../types'
+import type { BacklogItem, BacklogReview, ExecTier, ReviewDepth } from '../types'
+import { coverageDrag } from './game'
 import type { ProgressCore } from './progression'
 
 const PBI_BY_ID = new Map<string, BacklogItem>(PRODUCT_BACKLOG.map((p) => [p.id, p]))
+
+// ── カンバン／レビューのバランス定数（暫定・調整可）──
+/** 同時着手の上限（In Progress 列の WIP 制限。仕掛りを学ぶ） */
+export const WIP_LIMIT = 2
+/** 1スプリントの人間レビュー容量（毎スプリントこの値にリセット＝ボトルネック資源） */
+export const REVIEW_CAPACITY = 6
+/** 着手1回（AIにドラフト生成させる）の生成トークンコスト（安い） */
+export const GEN_TOKEN_COST = 80
+/** レビュー深さごとの容量コスト */
+const REVIEW_COST: Record<ReviewDepth, number> = { quick: 1, thorough: 2 }
+/** レビュー深さごとの基礎進捗（見積りポイントに対して積む量） */
+const REVIEW_GAIN: Record<ReviewDepth, number> = { quick: 1, thorough: 2 }
+/** ミニゲームの出来による倍率 */
+const TIER_MULT: Record<'great' | 'good' | 'poor', number> = { great: 1.5, good: 1, poor: 0.5 }
+/** 深いレビューで積むテストカバレッジ(%)／浅いレビューで増える技術的負債 */
+const COVERAGE_PER_THOROUGH = 4
+const DEBT_PER_QUICK = 1
+const REPO_COVERAGE_CAP = 100
+
+/** 現在ビートが“作業中（デイリー）”か。着手/レビューはこの間だけ可能。 */
+function isWorkBeat(core: Pick<ProgressCore, 'sprintIndex' | 'beatIndex'>): boolean {
+  return SPRINTS[core.sprintIndex]?.beats[core.beatIndex] === 'daily'
+}
 
 /** PBI の元データ（表示用）。未知 id は undefined。 */
 export function backlogItem(id: string): BacklogItem | undefined {
@@ -123,54 +147,111 @@ export function moveBacklogItem(core: ProgressCore, id: string, dir: -1 | 1): Pr
   return { ...core, backlogOrder: order }
 }
 
-/** スプリント末（レビュー）のバックログ精算。
- *  予測項目を backlogOrder の優先順に走査し、累積見積り ≤ 容量の間だけ done（DoD は二値）。
- *  超過分はキャリーオーバー。ベロシティを記録し、予測の健全さで culture を ±1 ナッジ。純粋。 */
-export function resolveSprintBacklog(core: ProgressCore): { core: ProgressCore; review: BacklogReview } {
-  const capacity = sprintCapacity(core)
-  const orderIndex = new Map(core.backlogOrder.map((id, i) => [id, i]))
-  const forecast = core.sprintForecast
-    .filter((id) => PBI_BY_ID.has(id) && !core.backlogDone.includes(id))
-    .slice()
-    .sort((a, b) => (orderIndex.get(a) ?? Number.MAX_SAFE_INTEGER) - (orderIndex.get(b) ?? Number.MAX_SAFE_INTEGER))
+/** 着手できるか（To Do→In Progress）。作業中ビート・予測内・未done・未着手・WIP余裕・生成トークンあり。 */
+export function canStart(
+  core: Pick<ProgressCore, 'sprintIndex' | 'beatIndex' | 'sprintForecast' | 'backlogDone' | 'inProgress' | 'aiTokens'>,
+  pbiId: string
+): boolean {
+  return (
+    isWorkBeat(core) &&
+    PBI_BY_ID.has(pbiId) &&
+    core.sprintForecast.includes(pbiId) &&
+    !core.backlogDone.includes(pbiId) &&
+    !core.inProgress.includes(pbiId) &&
+    core.inProgress.length < WIP_LIMIT &&
+    core.aiTokens >= GEN_TOKEN_COST
+  )
+}
 
-  const doneIds: string[] = []
-  const carryIds: string[] = []
-  let acc = 0
-  for (const id of forecast) {
-    const pts = estimateOf(id)
-    if (acc + pts <= capacity) {
-      acc += pts
-      doneIds.push(id)
-    } else {
-      carryIds.push(id)
-    }
+/** 着手：AI にドラフトを生成させて In Progress へ。生成トークンを消費（安い）。 */
+export function startItem(core: ProgressCore, pbiId: string): ProgressCore {
+  if (!canStart(core, pbiId)) return core
+  return {
+    ...core,
+    inProgress: [...core.inProgress, pbiId],
+    reviewProgress: { ...core.reviewProgress, [pbiId]: 0 },
+    aiTokens: Math.max(0, core.aiTokens - GEN_TOKEN_COST),
   }
+}
 
-  const velocityPts = doneIds.reduce((s, id) => s + estimateOf(id), 0)
+/** レビューできるか（In Progress→Done へ進める）。作業中ビート・着手中・レビュー容量あり。 */
+export function canReview(
+  core: Pick<ProgressCore, 'sprintIndex' | 'beatIndex' | 'inProgress' | 'reviewCapacity'>,
+  pbiId: string
+): boolean {
+  return isWorkBeat(core) && core.inProgress.includes(pbiId) && core.reviewCapacity > 0
+}
+
+/** レビュー：人間のレビュー容量を消費して In Progress 項目の進捗を積む。
+ *  深さ×ミニゲーム出来×負債ドラッグで進む。深い→coverage+、浅い→debt+。見積り到達で Done。 */
+export function reviewItem(core: ProgressCore, pbiId: string, depth: ReviewDepth, tier: ExecTier): ProgressCore {
+  if (!isWorkBeat(core) || !core.inProgress.includes(pbiId) || core.reviewCapacity <= 0) return core
+  const reviewCapacity = Math.max(0, core.reviewCapacity - REVIEW_COST[depth])
+  const drag = coverageDrag(core.repoDebt, core.flags)
+  const gain = REVIEW_GAIN[depth] * TIER_MULT[tier] * drag
+  const prog = (core.reviewProgress[pbiId] ?? 0) + gain
+
+  // リポジトリ品質：深いレビュー＝テストで coverage を積む（負債ドラッグ込み）／浅い＝負債が増える
+  let repoCoverage = core.repoCoverage
+  let repoDebt = core.repoDebt
+  if (depth === 'thorough')
+    repoCoverage = Math.min(REPO_COVERAGE_CAP, repoCoverage + Math.round(COVERAGE_PER_THOROUGH * drag))
+  else repoDebt = repoDebt + DEBT_PER_QUICK
+
+  const reviewProgress: Record<string, number> = { ...core.reviewProgress, [pbiId]: prog }
+  let inProgress = core.inProgress
+  let backlogDone = core.backlogDone
+  if (prog >= estimateOf(pbiId)) {
+    // DoD 達成＝Done。In Progress から外し、通算 Done（インクリメント）へ
+    delete reviewProgress[pbiId]
+    inProgress = core.inProgress.filter((x) => x !== pbiId)
+    backlogDone = [...core.backlogDone, pbiId]
+  }
+  return { ...core, reviewCapacity, reviewProgress, inProgress, backlogDone, repoCoverage, repoDebt }
+}
+
+/** スプリント末（レビュー）の精算。スプリント中に Done した分を確定し、未Done（To Do+In Progress）を
+ *  キャリーオーバー。ベロシティを記録し、WIP規律＝着手を終わらせたかで culture を ±1 ナッジ。
+ *  次スプリントに向けレビュー容量・In Progress・進捗をリセット。純粋。 */
+export function resolveSprintBacklog(core: ProgressCore): { core: ProgressCore; review: BacklogReview } {
+  const doneSet = new Set(core.backlogDone)
+  const doneThisSprint = core.sprintForecast.filter((id) => doneSet.has(id))
+  const carryIds = core.sprintForecast.filter((id) => !doneSet.has(id))
+
+  const velocityPts = doneThisSprint.reduce((s, id) => s + estimateOf(id), 0)
   const velocity = [...core.velocity]
   velocity[core.sprintIndex] = velocityPts
-  const backlogDone = [...core.backlogDone, ...doneIds]
 
-  // culture ナッジ: 予測ありで全部 done（健全・持続可能ペース）→ +1 / 過剰予測で持ち越し → −1 / 予測ゼロ → 0
+  // culture ナッジ: 予測したものを WIP を守って完遂（未Done無し＆1件以上Done）→ +1 /
+  //                 未完を抱えて持ち越し → −1 / そもそも予測ゼロ → 0
   let cultureDelta = 0
-  if (forecast.length > 0) cultureDelta = carryIds.length === 0 ? 1 : -1
+  if (core.sprintForecast.length > 0) {
+    cultureDelta = carryIds.length === 0 && doneThisSprint.length > 0 ? 1 : carryIds.length > 0 ? -1 : 0
+  }
   const culture = Math.max(0, Math.min(10, core.meters.culture + cultureDelta))
   const meters = cultureDelta ? { ...core.meters, culture } : core.meters
-  // 実際に動いた量（クランプで頭打ちなら0になりうる。表示はこの実差分で）
   const appliedCultureDelta = meters.culture - core.meters.culture
 
   const toView = (id: string) => {
-    const p = PBI_BY_ID.get(id)!
-    return { id, title: p.title, estimate: p.estimate }
+    const p = PBI_BY_ID.get(id)
+    return { id, title: p?.title ?? id, estimate: p?.estimate ?? 0 }
   }
   const review: BacklogReview = {
-    done: doneIds.map(toView),
+    done: doneThisSprint.map(toView),
     carryover: carryIds.map(toView),
     velocity: velocityPts,
-    capacity,
+    capacity: REVIEW_CAPACITY,
     cultureDelta: appliedCultureDelta,
   }
-  const next: ProgressCore = { ...core, meters, velocity, backlogDone, sprintForecast: [] }
+  // 精算後は次スプリントへ：予測/In Progress/進捗をクリア、レビュー容量を満タンに戻す
+  const next: ProgressCore = {
+    ...core,
+    meters,
+    velocity,
+    sprintForecast: [],
+    inProgress: [],
+    reviewProgress: {},
+    reviewCapacity: REVIEW_CAPACITY,
+  }
   return { core: next, review }
 }

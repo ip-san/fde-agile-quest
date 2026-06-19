@@ -21,6 +21,14 @@ export function clampMeters(m: Meters): Meters {
   return { trust: c(m.trust), insight: c(m.insight), culture: c(m.culture) }
 }
 
+/** 技術的負債が高いほど“良いコードが積み上がりにくい”ドラッグ係数（0.3..1.0）。
+ *  負債スコア(repoDebt + 過信/誤KPI 加点) が大きいほどカバレッジ/レビューの伸びが鈍る。
+ *  リポジトリ品質を扱う複数層（chooseCore のカバレッジ・backlog のレビュー）で共用する純粋関数。 */
+export function coverageDrag(repoDebt: number, flags: Set<GameFlag>): number {
+  const score = Math.max(0, repoDebt) + (flags.has('aiOverreliance') ? 4 : 0) + (flags.has('wrongKpi') ? 2 : 0)
+  return Math.max(0.3, 1 - score * 0.1)
+}
+
 /** 効果をメーターへ適用（clamp込み） */
 export function applyEffects(m: Meters, e: Effects): Meters {
   return clampMeters({

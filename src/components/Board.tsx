@@ -56,6 +56,7 @@ export function Board() {
     flags,
     repoCoverage,
     repoDebt,
+    backlogDone,
     sprintGoals,
     spin,
     arrive,
@@ -113,7 +114,7 @@ export function Board() {
 
         {/* HUD：北極星＝顧客価値（目標・大）→ 3メーター（手段・0ルール対象）→ 従ゲージは1行に圧縮 */}
         {(() => {
-          const rs = repoStats({ resolvedIds, flags, aiTokens, repoCoverage, repoDebt })
+          const rs = repoStats({ resolvedIds, flags, aiTokens, repoCoverage, repoDebt, backlogDone })
           return (
             <>
               <CustomerValueBar value={customerValue(meters, rs.coverage, rs.debtScore)} />
@@ -323,7 +324,7 @@ export function Board() {
       {/* コードリポジトリ状態パネル */}
       {repoOpen && (
         <RepoPanel
-          stats={repoStats({ resolvedIds, flags, aiTokens, repoCoverage, repoDebt })}
+          stats={repoStats({ resolvedIds, flags, aiTokens, repoCoverage, repoDebt, backlogDone })}
           onClose={() => setRepoOpen(false)}
         />
       )}

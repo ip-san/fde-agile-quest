@@ -8,6 +8,7 @@ interface RepoStats {
   tokensUsed: number
   tokensLeft: number
   debt: 'low' | 'mid' | 'high'
+  deliveredItems: number
 }
 
 interface Props {
@@ -63,6 +64,10 @@ export function RepoPanel({ stats, onClose }: Props) {
 
           <Row icon="✅" label="マージ済みPR（開発の活動量）">
             <span className="tabular-nums text-slate-100">{stats.mergedPrs}</span>
+          </Row>
+
+          <Row icon="📦" label="届けたインクリメント（Done項目）">
+            <span className="tabular-nums text-slate-100">{stats.deliveredItems}</span>
           </Row>
 
           {/* テストカバレッジ＝良い開発の積み上げ（拡充の質） */}

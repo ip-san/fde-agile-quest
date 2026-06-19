@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { CEREMONY_ORDER, CHAPTER_TITLE, SPRINTS, STARTING_METERS } from '../data/chapters/chapter-01'
 import { PRECEPT_BY_ID } from '../data/precepts'
-import { reorderBacklog, toggleForecast } from '../engine/backlog'
+import { reorderBacklog, reviewItem, startItem, toggleForecast } from '../engine/backlog'
 import {
   arriveCore,
   ceremonyAt,
@@ -16,7 +16,7 @@ import {
   spinCore,
   toPersisted,
 } from '../engine/progression'
-import type { Ceremony, Choice, ExecTier, GameFlag, LocationId, Segment } from '../types'
+import type { Ceremony, Choice, ExecTier, GameFlag, LocationId, ReviewDepth, Segment } from '../types'
 
 const STORAGE_KEY = 'fde-agile-quest:chapter-01-v2'
 // 心得手帳は「周回をまたいで集める」コレクションなので別キーで保存し、reset では消さない
@@ -46,6 +46,10 @@ interface EngagementState extends ProgressCore {
   commitBacklogOrder: (ids: string[]) => void
   /** PBI を今スプリントの予測に出し入れ（プランニング中・未done のみ有効） */
   toggleForecast: (pbiId: string) => void
+  /** 着手：To Do→In Progress（AI生成・トークン消費・WIP上限） */
+  startItem: (pbiId: string) => void
+  /** レビュー：In Progress を進める（レビュー容量消費・深さ×ミニゲーム出来）。Done で完了 */
+  reviewItem: (pbiId: string, depth: ReviewDepth, tier: ExecTier) => void
   reset: () => void
 }
 
@@ -100,6 +104,9 @@ function coreOf(s: EngagementState): ProgressCore {
     sprintForecast: s.sprintForecast,
     backlogDone: s.backlogDone,
     velocity: s.velocity,
+    inProgress: s.inProgress,
+    reviewProgress: s.reviewProgress,
+    reviewCapacity: s.reviewCapacity,
   }
 }
 
@@ -172,13 +179,30 @@ export function isValidPersisted(x: unknown): x is Persisted {
   }
   // バックログ状態も任意（旧セーブは欠落 → restore で補完・正規化）。寛容に検証し、
   // 型が明確に壊れている時だけ弾く（未知 id・index ズレ等は restoreBacklog が吸収する）。
-  for (const k of ['backlogOrder', 'sprintForecast', 'backlogDone'] as const) {
+  for (const k of ['backlogOrder', 'sprintForecast', 'backlogDone', 'inProgress'] as const) {
     const v = o[k]
     if (v !== undefined && (!Array.isArray(v) || !v.every((id) => typeof id === 'string'))) return false
   }
   if (o.velocity !== undefined) {
     if (!Array.isArray(o.velocity)) return false
     if (!o.velocity.every((n) => typeof n === 'number' && Number.isFinite(n) && n >= 0)) return false
+  }
+  // reviewProgress は id→数値のオブジェクト、reviewCapacity は数値（範囲は restore でクランプ）
+  if (o.reviewProgress !== undefined) {
+    if (typeof o.reviewProgress !== 'object' || o.reviewProgress === null || Array.isArray(o.reviewProgress))
+      return false
+    if (
+      !Object.values(o.reviewProgress as Record<string, unknown>).every(
+        (n) => typeof n === 'number' && Number.isFinite(n) && n >= 0
+      )
+    )
+      return false
+  }
+  if (
+    o.reviewCapacity !== undefined &&
+    (typeof o.reviewCapacity !== 'number' || !Number.isFinite(o.reviewCapacity) || o.reviewCapacity < 0)
+  ) {
+    return false
   }
   const si = o.sprintIndex as number
   const bi = o.beatIndex as number
@@ -274,6 +298,18 @@ export const useEngagement = create<EngagementState>((set, get) => ({
 
   toggleForecast: (pbiId) => {
     const next = toggleForecast(coreOf(get()), pbiId)
+    set(next)
+    persistCore(next)
+  },
+
+  startItem: (pbiId) => {
+    const next = startItem(coreOf(get()), pbiId)
+    set(next)
+    persistCore(next)
+  },
+
+  reviewItem: (pbiId, depth, tier) => {
+    const next = reviewItem(coreOf(get()), pbiId, depth, tier)
     set(next)
     persistCore(next)
   },

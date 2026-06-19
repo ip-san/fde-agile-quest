@@ -63,6 +63,9 @@ export type MiniGameKind = 'dev' | 'hearing'
 /** ミニゲームの出来。倍率＝選択の主正メーターを great:+1 / good:±0 / poor:-1 する */
 export type ExecTier = 'great' | 'good' | 'poor'
 
+/** スプリントバックログ項目のレビュー深さ。浅い＝速いが負債、深い＝テストで品質を積む */
+export type ReviewDepth = 'quick' | 'thorough'
+
 /** メーターへの効果（指定キーのみ加算） */
 export type Effects = Partial<Meters>
 
