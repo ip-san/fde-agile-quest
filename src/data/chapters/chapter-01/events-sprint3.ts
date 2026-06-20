@@ -323,6 +323,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'chance',
+    hearingTheme: 'inin',
     title: 'AIに任せきるか',
     narrative: '横展開の設計を、{{エージェント}}にほぼ丸投げすれば、自分は別案件に動ける。',
     hearingOptions: [
