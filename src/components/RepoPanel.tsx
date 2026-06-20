@@ -37,7 +37,7 @@ const DEBT_VIEW: Record<RepoStats['debt'], { label: string; tone: string; note: 
   },
 }
 
-/** コードリポジトリの“状態パネル”。心得手帳と同じく、積み上がった開発の健康度を見る画面。
+/** コードリポジトリの"状態パネル"。心得手帳と同じく、積み上がった開発の健康度を見る画面。
  *  新規の永続フィールドを増やさず、既存状態（解決数・フラグ・AIトークン）から導出して表示する。 */
 export function RepoPanel({ stats, foundSeeds, onClose }: Props) {
   const ref = useFocusTrap<HTMLDivElement>(onClose)
@@ -55,28 +55,28 @@ export function RepoPanel({ stats, foundSeeds, onClose }: Props) {
       >
         <header className="flex items-center justify-between gap-3 border-b border-slate-800 px-5 py-3">
           <h2 id="repo-panel-title" className="text-base font-bold text-slate-100">
-            <span aria-hidden="true">🗂️</span> コードリポジトリ
+            コードリポジトリ
           </h2>
           <span className="rounded bg-slate-800 px-2 py-0.5 text-xs font-mono text-slate-400">main</span>
         </header>
 
         <div className="space-y-3 overflow-y-auto px-5 py-4">
           <p className="text-xs leading-relaxed text-slate-400">
-            開発の“量”と“質”。PRが増え、カバレッジが上がり、負債が低いほど——健全に開発が進んでいる。
+            開発の量と質。PRが増え、カバレッジが上がり、負債が低いほど健全に開発が進んでいる。
           </p>
 
-          <Row icon="✅" label="マージ済みPR（開発の活動量）">
+          <Row label="マージ済みPR（開発の活動量）">
             <span className="tabular-nums text-slate-100">{stats.mergedPrs}</span>
           </Row>
 
-          <Row icon="📦" label="届けたインクリメント（Done項目）">
+          <Row label="届けたインクリメント（Done項目）">
             <span className="tabular-nums text-slate-100">{stats.deliveredItems}</span>
           </Row>
 
           {/* テストカバレッジ＝良い開発の積み上げ（拡充の質） */}
           <div className="rounded-xl bg-slate-800/40 px-3 py-2.5">
             <div className="mb-1 flex items-center justify-between text-xs">
-              <span className="text-slate-300">🧪 テストカバレッジ</span>
+              <span className="text-slate-300">テストカバレッジ</span>
               <span className="tabular-nums text-slate-400">{stats.coverage}%</span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-slate-700">
@@ -90,7 +90,7 @@ export function RepoPanel({ stats, foundSeeds, onClose }: Props) {
 
           <div className="rounded-xl bg-slate-800/40 px-3 py-2.5">
             <div className="mb-1 flex items-center justify-between text-xs">
-              <span className="text-slate-300">🔋 生成AIトークン残量</span>
+              <span className="text-slate-300">生成AIトークン残量</span>
               <span className="tabular-nums text-slate-400">
                 {stats.tokensLeft}/{AI_TOKENS_MAX}
               </span>
@@ -106,7 +106,7 @@ export function RepoPanel({ stats, foundSeeds, onClose }: Props) {
             </p>
           </div>
 
-          <Row icon="▲" label="技術的負債">
+          <Row label="技術的負債">
             <span className={`font-semibold ${debt.tone}`}>
               {debt.label}
               {stats.debtScore > 0 && (
@@ -119,7 +119,7 @@ export function RepoPanel({ stats, foundSeeds, onClose }: Props) {
           {/* 次の機能の種＝現場でしか掴めないプロダクトの種を吸い上げ、自社SaaSへ還元する（FDEの本懐）。 */}
           <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-3 py-2.5">
             <div className="mb-1.5 flex items-center justify-between text-xs">
-              <span className="font-semibold text-emerald-300">🌱 次の機能の種（現場発 → StockPilot）</span>
+              <span className="font-semibold text-emerald-300">次の機能の種（現場発 → StockPilot）</span>
               <span className="tabular-nums text-slate-400">
                 {foundSeeds.size}/{SEEDS.length}
               </span>
@@ -130,7 +130,7 @@ export function RepoPanel({ stats, foundSeeds, onClose }: Props) {
                 return (
                   <li key={s.id} className="flex items-start gap-1.5 text-xs">
                     <span aria-hidden="true" className="shrink-0">
-                      {found ? '🌱' : '🔒'}
+                      {found ? '○' : '—'}
                     </span>
                     {found ? (
                       <span className="text-slate-200">
@@ -145,7 +145,7 @@ export function RepoPanel({ stats, foundSeeds, onClose }: Props) {
               })}
             </ul>
             <p className="mt-1.5 text-[11px] leading-relaxed text-slate-400">
-              現場を観る判断で見つかる。AIで誰でも作れる時代に、現場のFDEだけが掴める“次の一手”。
+              現場を観る判断で見つかる。AIで誰でも作れる時代に、現場のFDEだけが掴める"次の一手"。
             </p>
           </div>
         </div>
@@ -164,11 +164,12 @@ export function RepoPanel({ stats, foundSeeds, onClose }: Props) {
   )
 }
 
-function Row({ icon, label, children }: { icon: string; label: string; children: React.ReactNode }) {
+function Row({ icon, label, children }: { icon?: string; label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between rounded-lg bg-slate-800/40 px-3 py-2 text-sm">
       <span className="text-slate-300">
-        <span aria-hidden="true">{icon}</span> {label}
+        {icon && <span aria-hidden="true">{icon} </span>}
+        {label}
       </span>
       {children}
     </div>

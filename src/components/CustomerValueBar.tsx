@@ -47,7 +47,7 @@ export function CustomerValueBar({ value, breakdown }: Props) {
     <div className={`rounded-xl border border-amber-500/30 bg-slate-900/40 px-4 py-3 ring-1 ${tone.ring}`}>
       <div className="mb-1.5 flex items-center justify-between">
         <span className="flex items-center gap-1.5 text-sm font-bold text-amber-100">
-          <span aria-hidden="true">🎯</span> 顧客価値
+          顧客価値
           <span className="ml-1 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300">
             北極星
           </span>
@@ -105,9 +105,9 @@ export function CustomerValueBar({ value, breakdown }: Props) {
 
       <p className="mt-1.5 text-xs leading-snug text-amber-200/70">
         {breakdown ? (
-          <>🎲 ルーレットの判断と 📋 バックログの実装——両方がこの一本に集まる。これを上げるのが基本目標。</>
+          <>判断と実装、両方の成果がここに集まる。</>
         ) : (
-          <>信頼を築き・現場を理解し・文化を残し・良いコードを積むほど高まる。これを上げるのが基本目標。</>
+          <>信頼を築き・現場を理解し・文化を残し・良いコードを積むほど高まる。</>
         )}
       </p>
     </div>

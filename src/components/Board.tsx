@@ -187,12 +187,12 @@ export function Board() {
           {/* プロダクトゴール＝章全体の到達点（PO所有・不変）。各スプリントゴールはこれに連なる。
               スプリントゴールの上に置いて「ゴールの階層（Product→Sprint）」を見せる。 */}
           <p className="mt-1 text-xs text-slate-400">
-            🧭 <RichText text="{{プロダクトゴール}}" />：<span className="text-violet-300">{PRODUCT_GOAL}</span>
+            <RichText text="{{プロダクトゴール}}" />：<span className="text-violet-300">{PRODUCT_GOAL}</span>
           </p>
           {/* スプリントゴールはプランニングの"成果"。プレイヤーがプランニングで選んだ狙いを表示する。
             未決定（プランニング中）は伏せ、選んだら現す（Scrum: ゴールはプランニングで決まる）。 */}
           <p className="mt-0.5 text-xs text-slate-400">
-            ↳ 🎯 スプリントゴール：
+            ↳ スプリントゴール：
             {(() => {
               const chosen = sprintGoals[sprintIndex]
               if (chosen) return <span className="text-sky-300">{chosen}</span>
@@ -223,15 +223,14 @@ export function Board() {
                   role="status"
                   aria-label={`会心の連鎖 ${greatStreak} 回。次の会心でコード品質ボーナスが増える`}
                 >
-                  🔥 会心 {greatStreak} 連鎖中 — 次も会心ならコード品質ボーナス増
+                  会心 {greatStreak} 連鎖中 — 次も会心ならコード品質ボーナス増
                 </p>
               )}
             </>
           )
         })()}
         <p className="-mt-2 text-center text-xs leading-snug text-slate-400">
-          ⚠ 3つのゲージは、どれか1つでも <span className="text-rose-400">0</span> になると案件は終了。
-          差し引きプラスでも、削りすぎは命取り。
+          どれか1つでも <span className="text-rose-400">0</span> になると案件は終了。削りすぎは命取り。
         </p>
 
         {/* スプリント進捗ドット */}
@@ -305,9 +304,6 @@ export function Board() {
                   aria-label="開発未着手の注意"
                   className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-sm text-amber-300"
                 >
-                  <span aria-hidden="true" className="mt-0.5 shrink-0">
-                    🔧
-                  </span>
                   <span>今日はまだ開発に手をつけていない。回すと今日が終わる。</span>
                 </div>
               )}
@@ -331,7 +327,7 @@ export function Board() {
                   onClick={() => setBacklogOpen(true)}
                   className="rounded-lg border border-sky-500/40 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-200 transition hover:bg-sky-500/20 active:scale-95"
                 >
-                  📋 プロダクトバックログから予測を選ぶ
+                  プロダクトバックログから予測を選ぶ
                 </button>
               )}
               {/* デイリーでは、回す前にバックログ（着手・レビュー）を進められる。
@@ -347,7 +343,7 @@ export function Board() {
                       : 'rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-500/20 active:scale-95'
                   }
                 >
-                  📋 バックログを進める（着手 / レビュー）
+                  バックログを進める（着手 / レビュー）
                 </button>
               )}
             </>
@@ -360,9 +356,7 @@ export function Board() {
           if (open.length === 0) return null
           return (
             <section className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-3">
-              <h2 className="mb-1.5 px-1 text-xs font-semibold text-amber-300">
-                <span aria-hidden="true">🧵</span> 未回収の伏線（{open.length}）
-              </h2>
+              <h2 className="mb-1.5 px-1 text-xs font-semibold text-amber-300">未回収の伏線（{open.length}）</h2>
               <ul className="space-y-1 px-1">
                 {open.map((t) => (
                   <li key={t.flag} className="text-xs leading-snug text-slate-300">
@@ -394,9 +388,6 @@ export function Board() {
               onClick={() => setRepoOpen(true)}
               className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-cyan-200 transition hover:bg-slate-800 active:scale-95"
             >
-              <span className="text-base" aria-hidden="true">
-                🗂️
-              </span>
               リポジトリ
             </button>
             <button
@@ -404,9 +395,6 @@ export function Board() {
               onClick={() => setBacklogOpen(true)}
               className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-emerald-200 transition hover:bg-slate-800 active:scale-95"
             >
-              <span className="text-base" aria-hidden="true">
-                📋
-              </span>
               バックログ
             </button>
             <button
@@ -414,9 +402,6 @@ export function Board() {
               onClick={() => setBookOpen(true)}
               className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-sky-200 transition hover:bg-slate-800 active:scale-95"
             >
-              <span className="text-base" aria-hidden="true">
-                📖
-              </span>
               心得 {seenPrecepts.size}/{PRECEPTS.length}
             </button>
             <button
@@ -424,9 +409,6 @@ export function Board() {
               onClick={() => setPrologueOpen(true)}
               className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-slate-300 transition hover:bg-slate-800 active:scale-95"
             >
-              <span className="text-base" aria-hidden="true">
-                📜
-              </span>
               あらすじ
             </button>
             <button

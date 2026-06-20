@@ -66,9 +66,7 @@ export function DeductionModal({ event, onResolve }: Props) {
           >
             {SEGMENT_LABELS[event.segment]}
           </span>
-          <span className="rounded-full bg-amber-400/20 px-2.5 py-0.5 text-xs font-bold text-amber-200">
-            <span aria-hidden="true">🔍</span> 推理
-          </span>
+          <span className="rounded-full bg-amber-400/20 px-2.5 py-0.5 text-xs font-bold text-amber-200">推理</span>
           <h2 id={titleId} className="w-full text-base font-bold text-slate-100">
             {event.title}
           </h2>
@@ -110,13 +108,7 @@ export function DeductionModal({ event, onResolve }: Props) {
                 }`}
               >
                 <p className={`text-sm font-bold ${correct ? 'text-amber-200' : 'text-rose-200'}`}>
-                  {correct ? (
-                    <>
-                      <span aria-hidden="true">🔍</span> 見抜いた！
-                    </>
-                  ) : (
-                    '— 読み違えた'
-                  )}
+                  {correct ? <>見抜いた！</> : '— 読み違えた'}
                 </p>
                 <p className="mt-1 text-sm text-slate-200">
                   {correct ? (

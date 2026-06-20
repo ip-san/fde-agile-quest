@@ -100,7 +100,7 @@ export function EventModal({ event, unexpected, aiTokens, revealHint, timed, onC
         <div className="space-y-4 px-5 pt-4 pb-safe">
           {unexpected && (
             <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
-              ⚡ 想定外の展開——現場は狙い通りには動かない。
+              想定外の展開。現場は狙い通りには動かない。
             </p>
           )}
 
@@ -108,11 +108,9 @@ export function EventModal({ event, unexpected, aiTokens, revealHint, timed, onC
           {timerOn && (
             <div>
               <div className="mb-1 flex items-center justify-between gap-2 text-[11px] font-semibold text-amber-300">
-                <span>
-                  <span aria-hidden="true">⏱</span> 時限選択
-                </span>
+                <span>時限選択</span>
                 <span className="flex items-center gap-2">
-                  <span className="tabular-nums">残り {remaining}秒（時間切れ＝🕯 静観）</span>
+                  <span className="tabular-nums">残り {remaining}秒（時間切れ＝静観）</span>
                   {/* WCAG 2.2.1: 本人操作で制限時間を解除できる */}
                   <button
                     type="button"
@@ -150,7 +148,7 @@ export function EventModal({ event, unexpected, aiTokens, revealHint, timed, onC
           {/* 推理で見抜いた本音（核心が“開く”）。手探りで選ぶのと、本音を掴んで選ぶのとの差。 */}
           {revealHint && (
             <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
-              <span aria-hidden="true">🔍</span> 見抜いた本音：
+              見抜いた本音：
               <RichText text={revealHint} />
             </p>
           )}
@@ -192,7 +190,7 @@ export function EventModal({ event, unexpected, aiTokens, revealHint, timed, onC
                   {/* 「静観」スタンス＝今は動かない選択を識別表示（LIPSの「沈黙も選択」の移植）。 */}
                   {c.restraint && (
                     <span className="mb-1 inline-block rounded bg-slate-700/60 px-1.5 py-0.5 text-[10px] font-semibold text-slate-300">
-                      <span aria-hidden="true">🕯</span> 静観
+                      静観
                     </span>
                   )}
                   <span className="block text-sm font-medium text-slate-100">
@@ -208,7 +206,7 @@ export function EventModal({ event, unexpected, aiTokens, revealHint, timed, onC
                           locked ? 'bg-rose-500/15 text-rose-300' : 'bg-cyan-500/15 text-cyan-300'
                         }`}
                       >
-                        🔋 AI −{cost}
+                        AI −{cost}
                         {locked && '（残量不足）'}
                       </span>
                     </span>

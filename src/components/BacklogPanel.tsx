@@ -80,7 +80,7 @@ export function BacklogPanel({ onClose }: Props) {
       >
         <header className="flex items-center justify-between gap-3 border-b border-slate-800 px-5 py-3">
           <h2 id="backlog-panel-title" className="text-base font-bold text-slate-100">
-            <span aria-hidden="true">📋</span> {isPlanning ? 'スプリント計画' : 'スプリントバックログ'}
+            {isPlanning ? 'スプリント計画' : 'スプリントバックログ'}
           </h2>
           <span className="rounded bg-slate-800 px-2 py-0.5 text-xs text-slate-400">
             Sprint {SPRINTS[Math.min(sprintIndex, SPRINTS.length - 1)]?.n}
@@ -205,7 +205,7 @@ function PlanningView({
       {/* 🗂 元：プロダクトバックログ（選ぶ側） */}
       <section className="rounded-xl bg-slate-900/40 p-2">
         <h3 className="mb-1 px-1 text-xs font-bold text-slate-300">
-          🗂 <RichText text="{{プロダクトバックログ}}" />
+          <RichText text="{{プロダクトバックログ}}" />
           <span className="ml-1 font-normal text-slate-400">価値順・上位から選ぶ</span>
         </h3>
 
@@ -362,7 +362,7 @@ function PlanningView({
       <section className="rounded-xl border border-sky-500/30 bg-sky-500/5 p-3">
         <div className="mb-2 flex items-center justify-between">
           <h3 className="px-0.5 text-xs font-bold text-sky-300">
-            🎯 <RichText text="{{スプリントバックログ}}" />
+            <RichText text="{{スプリントバックログ}}" />
             <span className="ml-1 font-normal text-sky-400/70">今スプリントに入れた予測</span>
           </h3>
           <span className={`text-xs font-bold tabular-nums ${over ? 'text-rose-300' : 'text-sky-200'}`}>
@@ -480,7 +480,7 @@ function KanbanView({
       <div className="flex gap-2">
         <div className="flex-1 rounded-xl bg-slate-800/40 px-3 py-2">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-300">🔎 レビュー容量</span>
+            <span className="text-slate-300">レビュー容量</span>
             <span className="tabular-nums text-slate-300">
               {reviewCapacity} / {REVIEW_CAPACITY}
             </span>
@@ -582,7 +582,7 @@ function KanbanView({
                       title={!reviewable && reviewCapacity <= 0 ? 'レビュー容量切れ（次スプリントで回復）' : undefined}
                       className="self-start rounded-lg bg-emerald-700 px-2.5 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-emerald-600 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
                     >
-                      🔎 レビューする
+                      レビューする
                     </button>
                   )}
                 </div>
@@ -645,11 +645,11 @@ function ProductBacklogReadOnly({ backlogOrder, doneSet }: { backlogOrder: strin
         className="flex min-h-[44px] w-full items-center justify-between gap-2 px-3 py-2 transition hover:bg-slate-800 active:scale-95 rounded-xl"
       >
         <span className="text-xs font-bold text-slate-300">
-          <span aria-hidden="true">🗂</span> <RichText text="{{プロダクトバックログ}}" />
+          <RichText text="{{プロダクトバックログ}}" />
           <span className="ml-1 font-normal text-slate-400">全体を参照（読取専用）</span>
           {hasDisc && (
             <span className="ml-2 rounded bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-rose-300">
-              🔎 発見あり
+              発見あり
             </span>
           )}
         </span>
@@ -677,7 +677,7 @@ function ProductBacklogReadOnly({ backlogOrder, doneSet }: { backlogOrder: strin
                 </span>
                 {disc && !done && (
                   <span className="shrink-0 rounded bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-rose-300">
-                    🔎 現場で発見
+                    現場で発見
                   </span>
                 )}
               </li>
@@ -754,7 +754,7 @@ function VelocityChart({ velocity }: { velocity: number[] }) {
   return (
     <div className="rounded-xl bg-slate-800/40 px-3 py-2.5">
       <div className="mb-1 text-xs text-slate-300">
-        📈 <RichText text="{{ベロシティ}}" />
+        <RichText text="{{ベロシティ}}" />
         （完了pt）
       </div>
       <div className="flex items-end gap-2">

@@ -28,7 +28,7 @@ describe('dealHearing', () => {
     expect(same).toBe(false)
   })
   it('テーマ指定でも良2・悪3を保ち、テーマが違えば問いが変わる（ワンパターン回避）', () => {
-    const themes: HearingTheme[] = ['genba', 'kokyaku', 'chance', 'team']
+    const themes: HearingTheme[] = ['genba', 'kokyaku', 'chance', 'team', 'chousa']
     for (const t of themes) {
       const r = dealHearing(7, t)
       expect(r.filter((o) => o.good)).toHaveLength(2)
@@ -53,11 +53,11 @@ describe('dealHearing', () => {
 })
 
 describe('ヒアリングの見出し・設問リード・確定ラベル（相手/場面で出し分け）', () => {
-  const themes: HearingTheme[] = ['genba', 'kokyaku', 'chance', 'team']
-  it('テーマごとに4種とも文言が異なる（“現場”固定の解消）', () => {
+  const themes: HearingTheme[] = ['genba', 'kokyaku', 'chance', 'team', 'chousa']
+  it('テーマごとに5種とも文言が異なる（“現場”固定の解消）', () => {
     for (const fn of [hearingTitleFor, hearingPromptFor, hearingCtaFor]) {
       const set = new Set(themes.map((t) => fn(t)))
-      expect(set.size).toBe(4)
+      expect(set.size).toBe(5)
     }
   })
   it('未指定（theme=undefined）は現場主義の標準にフォールバック', () => {

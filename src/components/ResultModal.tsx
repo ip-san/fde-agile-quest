@@ -61,7 +61,7 @@ function ExecBadge({ result }: { result: ResultView }) {
     skillCov > 0 ? `コード品質を ＋${skillCov}%` : null,
   ].filter(Boolean)
   // 2連鎖以上は“実装の波”を頭に出して、続けて会心するほど効くことを体感させる。
-  const streakLabel = streak >= 2 ? `🔥${streak}連鎖！ ` : ''
+  const streakLabel = streak >= 2 ? `${streak}連鎖！ ` : ''
   const conf =
     tier === 'great'
       ? {
@@ -69,7 +69,7 @@ function ExecBadge({ result }: { result: ResultView }) {
             streak >= 2
               ? 'border-amber-500/50 bg-amber-500/10 text-amber-200'
               : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
-          icon: streak >= 2 ? '🔥' : '◎',
+          icon: '◎',
           text:
             greatGains.length > 0
               ? `${streakLabel}会心の${kind}！ ${greatGains.join('、')} 上乗せ`
@@ -105,9 +105,9 @@ function BacklogReviewBlock({ review }: { review: BacklogReview }) {
   return (
     <div className="space-y-2 rounded-xl border border-slate-700 bg-slate-800/40 px-4 py-3">
       <div className="flex items-center justify-between">
-        <p className="text-[11px] font-semibold text-slate-400">📋 スプリントバックログの精算</p>
+        <p className="text-[11px] font-semibold text-slate-400">スプリントバックログの精算</p>
         <span className="tabular-nums text-xs text-emerald-300">
-          📈 ベロシティ {review.velocity}pt（完了 {review.done.length}件）
+          ベロシティ {review.velocity}pt（完了 {review.done.length}件）
         </span>
       </div>
 
@@ -118,9 +118,7 @@ function BacklogReviewBlock({ review }: { review: BacklogReview }) {
             vg > 0 ? 'bg-amber-400/10 ring-1 ring-amber-400/30' : 'bg-slate-800/60'
           }`}
         >
-          <span className="text-xs font-semibold text-amber-100">
-            <span aria-hidden="true">🎯</span> このスプリントで伸ばした顧客価値
-          </span>
+          <span className="text-xs font-semibold text-amber-100">このスプリントで伸ばした顧客価値</span>
           <span
             className={`text-base font-extrabold tabular-nums ${
               vg > 0 ? 'text-amber-300' : vg < 0 ? 'text-rose-300' : 'text-slate-400'
@@ -190,7 +188,7 @@ function TradeoffNote({ effects }: { effects: Effects }) {
   if (gained.length === 0 || lost.length === 0) return null
   return (
     <p className="rounded-lg bg-violet-500/10 px-3 py-2 text-xs text-violet-200">
-      <span aria-hidden="true">🔁</span> トレードオフ：{gained.map((k) => METER_FULL_LABEL[k]).join('・')}
+      トレードオフ：{gained.map((k) => METER_FULL_LABEL[k]).join('・')}
       を得る代わりに、
       {lost.map((k) => METER_FULL_LABEL[k]).join('・')}を手放した。
     </p>
@@ -204,7 +202,7 @@ function SeedReveal({ seedId, seedNew }: { seedId?: string; seedNew?: boolean })
   return (
     <div className="space-y-1 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-2.5">
       <p className="text-[11px] font-semibold text-emerald-300">
-        <span aria-hidden="true">🌱</span> 次の機能の種を{seedNew ? '発見' : '再確認'}（StockPilotへ還元）
+        次の機能の種を{seedNew ? '発見' : '再確認'}（StockPilotへ還元）
       </p>
       <p className="text-sm font-medium text-slate-100">{seed.title}</p>
       <p className="text-[11px] text-slate-400">現場から：{seed.from}</p>
@@ -361,9 +359,7 @@ export function ResultModal({ result, meters, onContinue }: Props) {
           {/* 見抜きボーナス（推理で本音を当てた報酬。その選択の主正メーターに別枠で +）。 */}
           {result.deductionBonus && result.execPrimary ? (
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold text-amber-300">
-                <span aria-hidden="true">🔍</span> 見抜きボーナス
-              </span>
+              <span className="text-[11px] font-semibold text-amber-300">見抜きボーナス</span>
               <span className="rounded-lg bg-amber-500/15 px-2.5 py-1 text-sm font-bold tabular-nums text-amber-200">
                 {EFFECT_LABEL[result.execPrimary]} ▲ +{result.deductionBonus}
               </span>
@@ -376,9 +372,7 @@ export function ResultModal({ result, meters, onContinue }: Props) {
           {/* ヒアリングで掘り当てた発見可PBI：プロダクトバックログに新たな項目が加わった。 */}
           {result.discoveredPbi && (
             <div className="space-y-1 rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-2.5">
-              <p className="text-[11px] font-semibold text-rose-300">
-                <span aria-hidden="true">🔎</span> 現場の声から、新しいバックログ項目が見つかった
-              </p>
+              <p className="text-[11px] font-semibold text-rose-300">現場の声から、新しいバックログ項目が見つかった</p>
               <p className="text-sm font-medium text-slate-100">『{result.discoveredPbi.title}』</p>
               <p className="text-[11px] text-slate-400">
                 プロダクトバックログに追加。次のプランニングで優先順位を検討しましょう。
@@ -391,7 +385,7 @@ export function ResultModal({ result, meters, onContinue }: Props) {
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-semibold text-slate-400">AIトークン</span>
               <span className="rounded-lg bg-cyan-500/15 px-2.5 py-1 text-sm font-bold tabular-nums text-cyan-300">
-                🔋 ▼ −{result.tokenSpent}
+                ▼ −{result.tokenSpent}
               </span>
             </div>
           ) : null}
@@ -404,7 +398,7 @@ export function ResultModal({ result, meters, onContinue }: Props) {
                 <span
                   className={`rounded-lg px-2.5 py-1 text-sm font-bold tabular-nums ${result.coverageDelta > 0 ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'}`}
                 >
-                  🗂️ コード {result.coverageDelta > 0 ? '▲ +' : '▼ '}
+                  コード {result.coverageDelta > 0 ? '▲ +' : '▼ '}
                   {result.coverageDelta}%
                 </span>
               ) : null}
@@ -432,7 +426,7 @@ export function ResultModal({ result, meters, onContinue }: Props) {
                 <div className="space-y-2 border-t border-slate-800 pt-3">
                   {newIds.length > 0 && (
                     <div className="space-y-1.5">
-                      <span className="text-[11px] font-semibold text-amber-300">✨ 心得を獲得</span>
+                      <span className="text-[11px] font-semibold text-amber-300">心得を獲得</span>
                       {newIds.map((id) => {
                         const p = PRECEPT_BY_ID[id]
                         if (!p) return null
@@ -441,9 +435,7 @@ export function ResultModal({ result, meters, onContinue }: Props) {
                             key={id}
                             className="flex items-start gap-2 rounded-lg bg-amber-400/10 px-2.5 py-1.5 text-sm ring-1 ring-amber-400/30"
                           >
-                            <span className="mt-0.5 shrink-0 tabular-nums text-[11px] text-amber-300/80">
-                              <span aria-hidden="true">🧭</span> #{id}
-                            </span>
+                            <span className="mt-0.5 shrink-0 tabular-nums text-[11px] text-amber-300/80">#{id}</span>
                             <span className="text-slate-100">{p.text}</span>
                           </div>
                         )
@@ -459,7 +451,7 @@ export function ResultModal({ result, meters, onContinue }: Props) {
                           title={PRECEPT_BY_ID[id]?.text}
                           className="rounded bg-slate-800/60 px-1.5 py-0.5 text-[11px] tabular-nums text-slate-400"
                         >
-                          🧭 #{id}
+                          #{id}
                         </span>
                       ))}
                     </div>

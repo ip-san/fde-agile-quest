@@ -63,7 +63,7 @@ export type MiniGameKind = 'dev' | 'hearing' | 'review'
 
 /** ヒアリングの問いを「相手・場面」で変えるテーマ（現場/依頼主/機会/チーム）。
  *  既定はイベントの segment から導出（hearingThemeFor）。問いプール・見出しは minigames.ts。 */
-export type HearingTheme = 'genba' | 'kokyaku' | 'chance' | 'team'
+export type HearingTheme = 'genba' | 'kokyaku' | 'chance' | 'team' | 'chousa'
 
 /** ミニゲームの出来。倍率＝選択の主正メーターを great:+1 / good:±0 / poor:-1 する */
 export type ExecTier = 'great' | 'good' | 'poor'

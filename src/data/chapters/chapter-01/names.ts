@@ -65,8 +65,8 @@ export const NAMES: Record<NameId, NameDef> = {
     kind: 'company',
     also: ['カルゴ'],
   },
-  parent: { canonical: 'ジェネリック電機', name: 'ジェネリック電機', kind: 'company' },
-  grandparent: { canonical: 'ジェネリックロジスティクス', name: 'ジェネリックロジスティクス', kind: 'company' },
+  parent: { canonical: 'ジェネリック電機', name: '東邦重電', kind: 'company' },
+  grandparent: { canonical: 'ジェネリックロジスティクス', name: '東邦ロジスティクス', kind: 'company' },
   product: { canonical: 'StockPilot', name: 'StockPilot', kind: 'company' },
   // ── 人物（hero=「あなた」は固有名を持たないので登録しない） ──
   kuon: { canonical: '久遠', name: '久遠', reading: 'くおん', kind: 'person' },

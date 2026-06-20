@@ -12,7 +12,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     segment: 'kokyaku',
     title: '本番化の構え',
     narrative:
-      '前スプリントで終わらせきれなかった分は{{プロダクトバックログ}}に戻り、改めて並べ替えられた。今回の{{フォーキャスト}}は、その上から組み直す。写真入力の叩き台は現場に渡り始めた。{{PoC}}で終わらせず本番に根付かせる、最後のスプリントだ。ゴールは？',
+      '終わらなかった分が{{プロダクトバックログ}}に戻ってきた。並べ直して、今回の{{フォーキャスト}}を上から組む。写真入力の叩き台は、もう現場の手に渡っている。{{PoC}}で終わらせるな。本番に根付かせる最後のスプリント。ゴールは？',
     hearingOptions: [
       { text: '結城さんは、自分が抜けたあとこの運用を誰に握っていてほしいと思ってます？', good: true },
       { text: '写真入力の叩き台、現場では今どこまで触ってもらえてますか。詰まってる箇所はあります？', good: true },
@@ -27,7 +27,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         sprintGoal: '自分が運用の頼れる窓口であり続ける',
         effects: { trust: 1, culture: -1 },
         resultText:
-          '「あなたがいれば安心」と結城さんは頼り切る（信頼+）。だが自分が抜けたら止まる仕組みになっていく。このゴールは、後で属人化となって跳ね返る。',
+          '「あなたがいれば安心」。結城さんは頼り切る（信頼+）。頼られるほど、自分が抜けたら止まる仕組みが太る。',
         setsFlag: 'soloHero',
         warn: true,
       },
@@ -52,7 +52,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     requiresFlag: 'wrongKpi',
     title: '手戻り——使われない新機能',
     narrative:
-      '「機能数を増やす」KPIに沿って予測タブを足したが、現場は相変わらずメモのまま。上位の仮説が間違っていたので、下位の作業がまるごと無駄になった。',
+      '「機能数を増やす」KPIに沿って予測タブを足した。現場は、相変わらずメモのままだ。狙ったWhyが外れていた。積み上げた作業が、まるごと宙に浮く。',
     choices: [
       {
         id: 'a',
@@ -60,7 +60,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         effects: { insight: 1, trust: -1 },
         repo: { coverage: 5, debt: -1 },
         resultText:
-          '「作り直し…？」と結城さんは渋い顔（前提の誤りを認めて信頼−）。痛い手戻りだが軌道修正した。上が崩れたら下は全部やり直す。',
+          '「作り直し…？」。結城さんが渋い顔をする（前提の誤りを認めて信頼−）。痛い手戻りだが、ここで向きを変えた。',
       },
       {
         id: 'b',
@@ -68,7 +68,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         effects: { trust: -2, insight: -1 },
         repo: { debt: 2 },
         resultText:
-          '使われない機能を重ねるうち、成果の出なさに結城さんの失望が深まる（信頼−−）。沈黙する画面に沈黙する機能が積み上がる。',
+          '使われない機能をまた一つ。成果は出ず、結城さんの失望が深まる（信頼−−）。沈黙する画面の上に、沈黙する機能が積み上がっていく。',
         warn: true,
       },
     ],
@@ -79,13 +79,13 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'team',
     title: '引き継ぎのデイリー',
-    narrative: '社内の若手が運用を引き取ろうとしている。',
+    narrative: '社内の若手が、おずおずと運用に手を伸ばしている。キーボードの前で、こちらをちらちら見る。',
     choices: [
       {
         id: 'a',
         label: '自分でやった方が速いので巻き取る',
         effects: { trust: 1, culture: -1 },
-        resultText: '今日は速く回り、結城さんも安心（信頼+）。だが運用が自分に依存し、組織は賢くならない。',
+        resultText: '今日は速く回った。結城さんも安心（信頼+）。だが運用は自分に張り付いたまま、誰も育たない。',
         warn: true,
       },
       {
@@ -93,7 +93,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         label: '任せて、詰まったところだけ支える',
         effects: { culture: 1 },
         resultText:
-          '若手が運用を語れるようになった。{{オンボーディング}}が実を結び、文化が人に宿る。（自分が握る安心の信頼+は取り逃す）',
+          'たどたどしくても、若手が運用を自分の言葉で語り始めた。{{オンボーディング}}が、人に根を下ろす。（自分が握る安心の信頼+は取り逃す）',
         seedId: 'guided-onboarding',
       },
     ],
@@ -104,7 +104,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'genba',
     title: '定着の確認',
-    narrative: '新しいやり方が本当に根付いたか。現場へ確かめに行くか。',
+    narrative: '新しいやり方は、本当に現場に根付いたのか。画面の数字は知らない。確かめるなら、足で。',
     hearingOptions: [
       { text: '新しいやり方、いま実際にどう回してます？一回やって見せてもらえますか', good: true },
       { text: '前のやり方に戻したくなる瞬間って、一日のどこで出ます？', good: true },
@@ -125,7 +125,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         label: '現場に通い、定着を肌で確かめ微調整する',
         effects: { insight: 1, trust: 1, culture: -1 },
         resultText:
-          '「最後まで見てくれた」と現場は信頼を寄せる（信頼+）。{{現場主義}}で細かな使いづらさも潰した。ただし丸一日チームを離れた（巻き込み−）。',
+          '「最後まで見てくれたな」。現場が信頼を寄せる（信頼+）。{{現場主義}}で、小さな使いづらさを一つずつ潰した。代わりに丸一日、チームを空けた（巻き込み−）。',
       },
     ],
   },
@@ -175,7 +175,8 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: '期待に応え、今の成功をそのまま全拠点にコピーする',
         effects: { trust: 1, insight: -1 },
-        resultText: 'スピード感に経営は満足（信頼+）。だが拠点差を無視したコピーは、また別の「沈黙」を生むかも。',
+        resultText:
+          'スピード感に経営は満足（信頼+）。だが各拠点の現場は、ここと同じ顔をしていない。コピーが、別の場所で黙り込む。',
         warn: true,
       },
       {
@@ -193,7 +194,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'kokyaku',
     title: '広がる評判',
-    narrative: '誤出荷が減ったと評判が立ち、別部署の部長が「うちにも来てくれ」と接触してきた。',
+    narrative: '誤出荷が減った、と評判が立った。別部署の部長が廊下で袖を引く。「うちにも来てくれよ」。',
     hearingOptions: [
       {
         text: '別部署の部長さんは、うちの何を見て「来てくれ」と言ってるんでしょう。本当の困りごとは何ですか',
@@ -210,14 +211,14 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         label: '今の案件を放って、すぐ新しい部署に乗り換える',
         effects: { trust: -1, culture: -1, insight: -1 },
         resultText:
-          '目新しさに飛びつき、今の現場の定着を置き去りに。「もう興味ないのか」と熱が冷め、信頼が削れた。これが{{チャーン}}の入口だ。',
+          '目新しさに飛びつき、今の現場を置き去りにした。「もう興味ないのか」。冷めた熱が、信頼を削る（信頼−）。{{チャーン}}は、こういう顔で始まる。',
         warn: true,
       },
       {
         id: 'b',
         label: '今の定着を見届けつつ、紹介は次の入口として丁寧に繋ぐ',
         effects: { trust: 1, culture: 1 },
-        resultText: '最後までやり切る姿勢が信頼を呼ぶ（信頼+）。「太く残す」が評判になって広がる。',
+        resultText: '最後までやり切る背中を、現場は見ている（信頼+）。その評判が、次の入口を連れてくる。',
       },
     ],
   },
@@ -227,9 +228,16 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'trouble',
     minigame: 'hearing',
-    hearingTheme: 'team',
+    hearingTheme: 'genba',
     title: '誰がダッシュボードを見るか',
     narrative: '誤出荷率の{{ダッシュボード}}を作ったが、自分が抜けたら誰も見ない懸念がある。',
+    hearingOptions: [
+      { text: 'このダッシュボード、いま誰が・どの場面で実際に開いていますか', good: true },
+      { text: '自分が抜けた後にこれを見て動く人は誰か、その人に必要な形になっていますか', good: true },
+      { text: '立派な画面を作ったんだから、見てもらえますよね？', good: false },
+      { text: '見ないのは現場の意識の問題なので、こちらは関係ないですよね？', good: false },
+      { text: 'とりあえず置いておけば、そのうち誰か見ますよね？', good: false },
+    ],
     deduction: {
       prompt: 'このダッシュボードの“本当の懸念”はどれだ？',
       reveal:
@@ -280,17 +288,25 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
-    minigame: 'review',
+    minigame: 'hearing',
+    hearingTheme: 'team',
     title: 'AIエージェントに権限を渡すか',
     narrative:
       '在庫の補正を{{エージェント}}に自動でやらせれば運用はぐっと楽になる。だが在庫データへの書き込み権限を渡すことになる。',
+    hearingOptions: [
+      { text: 'このエージェントが間違えたとき、戻せる（{{ロールバック}}）経路は用意できていますか', good: true },
+      { text: '書き込みを許す前に、失敗の影響が及ぶ範囲はどこまでか線を引けますか', good: true },
+      { text: '速くて優秀なんだから、全権限を渡してしまっていいですよね？', good: false },
+      { text: '失敗したらその時考えればいいので、まず全部任せませんか？', good: false },
+      { text: 'AIが自動でやってくれるなら、もう人が見る必要はないですよね？', good: false },
+    ],
     choices: [
       {
         id: 'a',
         label: '全権限を与え、丸ごと自動化して一気に楽にする',
         effects: { trust: 1, culture: -1 },
         resultText:
-          '一気に自動化して見せたので結城さんは「運用が楽になった」と一旦満足（信頼+）。だが暴走時に戻せない。{{エージェント}}より先に、権限の境界を設計すべきだった。',
+          '一気に自動化して見せた。「運用が楽になった」と結城さんは一旦満足（信頼+）。だが暴走したとき、戻す道がない。渡したのは権限で、設計すべきはその境界だった。',
         warn: true,
       },
       {
@@ -298,7 +314,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         label: '権限を最小に絞り、失敗時の{{ロールバック}}を先に用意する',
         effects: { insight: 1, culture: 1 },
         resultText:
-          '自動化より先に“戻し方”を用意した。一気に楽にして見せる進捗（信頼+）は取り逃すが、暴走時に戻せる安心が本番運用の土台になる。',
+          '自動化より先に、“戻し方”を置いた。一気に楽にして見せる進捗（信頼+）は取り逃す。だが戻せるという安心が、本番を支える。',
       },
     ],
   },
@@ -323,7 +339,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         effects: { trust: 1, insight: -1 },
         repo: { debt: 2 },
         resultText:
-          '速く仕上げて見せたので顧客は一旦満足（信頼+）。だが現場差をAIは知らない。「AIを使う」だけでは、また別の沈黙を生む。',
+          '速く仕上げて見せた。顧客は一旦満足（信頼+）。だが現場差を、AIは知らない。「使った」つもりが、別の場所で黙り込む画面を増やす。',
         warn: true,
       },
       {
@@ -331,7 +347,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         label: 'AIと協働し、現場知の部分は自分が判断して仕上げる',
         effects: { insight: 1, culture: 1 },
         repo: { coverage: 10 },
-        resultText: 'AIを“使う”でなく“共に働く”。速度はAI、判断は人。これが{{FDE}}のAIとの距離感だ。',
+        resultText: '速度はAIに、判断は自分の手に。“使う”のでなく、共に働く。AIとの距離は、これくらいがいい。',
       },
     ],
   },
@@ -378,7 +394,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: '「自分の担当範囲外」として、朝の出社まで待つ',
         effects: { trust: -2, culture: -1 },
-        resultText: '朝、出荷が止まり現場は混乱（信頼−−）。{{FDE}}はSREでもある。火が出たら、まず消すのが筋だ。',
+        resultText: '朝、出荷が止まった。現場は大混乱（信頼−−）。担当範囲という線を、火の手は読まない。',
         warn: true,
         restraint: true,
       },
@@ -403,7 +419,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       dev: '「で、いくらで売れる？」って言われると…僕ら技術の言葉しか持ってなくて。会議室で、伝え方を一緒に。',
     },
     narrative:
-      '成果を見た経営が「これ、他社にも売れるんじゃないか？ いくらの価値がある？」と聞いてきた。エンジニアの自分には畑違いに感じる。',
+      '成果を見た経営が身を乗り出す。「これ、他社にも売れるんじゃないか？ いくらの価値がある？」。値段の話。エンジニアの自分には、畑が違う。',
     hearingOptions: [
       {
         text: '経営の方は「いくらの価値」を、何と比べて測りたいんでしょう。コスト減ですか、止まらない安心ですか',
@@ -422,15 +438,15 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: '「営業の領域なので」と話を技術に戻す',
         effects: { trust: -1 },
-        resultText:
-          '境界線の上に立てなかった（信頼−）。{{FDE}}は営業でもコンサルでもある。価値を語れる人が信頼を得る。',
+        resultText: '「営業の領域なので」。境界の手前で、足を止めた（信頼−）。値で語れない技術屋に、経営は背を向ける。',
         warn: true,
       },
       {
         id: 'b',
         label: '{{誤出荷率}}削減の効果額を試算し、営業・コンサルとして価値を言葉にする',
         effects: { trust: 1, insight: 1 },
-        resultText: '{{FDE}}は営業でもコンサルでもある。成果を“いくらの価値か”で語れたことが、次の案件を呼んだ。',
+        resultText:
+          '{{誤出荷率}}の削減を、金額に翻訳した。「それなら話が早い」。値で語れたその一言が、次の案件を呼んだ（信頼+）。',
       },
     ],
   },
@@ -455,7 +471,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         label: '景気のいい見込みも交えて、力強く報告する',
         effects: { trust: 1, insight: -1 },
         resultText:
-          '景気のいい報告に経営はその場で沸いた（威勢で信頼+）。だが願望を事実のように語った以上、後で数字がズレた時、信頼は一気に崩れる火種になる。',
+          '威勢のいい報告に、経営はその場で沸いた（信頼+）。だが願望を事実の顔で語った。数字がズレた日、その威勢が一気に裏返る。',
         warn: true,
       },
       {
@@ -463,7 +479,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         label: '事実・推測・願望を分けて報告する（実績／見込み／目標）',
         effects: { insight: 1, culture: 1 },
         resultText:
-          '事実と推測と願望を切り分けた報告は、地味だが信頼に足る。{{経験主義}}——観察された事実から判断する構えが、経営の意思決定の土台になった。',
+          '実績、見込み、目標。三つに仕分けた報告は、地味だ。だが地味なぶん、信頼に足る。{{経験主義}}が、経営の足場になった。',
       },
     ],
   },
@@ -474,13 +490,14 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'team',
     title: '宙に浮くデータ移行',
-    narrative: 'データ移行が必要だが、「それは情シスの仕事」「いや業者の仕事」と誰も手を付けない。',
+    narrative:
+      'データ移行が要る。「それは情シスの仕事」「いや業者の仕事」。テーブルの上に、誰も拾わない球が転がっている。',
     choices: [
       {
         id: 'a',
         label: '自分の担当でもないので、決まるまで待つ',
         effects: { culture: -1, insight: -1 },
-        resultText: '誰の仕事でもないものは、お前の仕事。境界線の上に立てず、移行は宙に浮いた。',
+        resultText: '球は転がったまま。誰の仕事でもないものは、結局あなたの仕事だった。移行は宙に浮いた。',
         warn: true,
       },
       {
@@ -488,7 +505,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         label: '境界線の上に立ち、誰も拾わない移行を自分が引き取る',
         effects: { insight: 1, culture: 1, trust: 1 },
         resultText:
-          '境界線の上に立つ。誰も拾わなかった移行を引き取ったことで「この人は最後まで前に進める」と顧客の信頼が増した（信頼+）。隙間のタスクを拾う{{FDE}}が、案件を前に進める。',
+          '転がった球を、自分で拾った。「この人は、最後まで前に進める」。誰も拾わない隙間を埋める者に、顧客は信頼を寄せる（信頼+）。',
       },
     ],
   },
@@ -500,14 +517,20 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     minigame: 'hearing',
     hearingTheme: 'team',
     title: '空いたままの椅子',
-    narrative: '本番切り替えの判断。「最終的に誰が責任を持つ？」と全員が顔を見合わせる。',
+    narrative: '本番切り替えの判断。「最終的に、誰が責任を持つ？」。全員が、隣の顔を見た。',
+    hearingOptions: [
+      { text: 'この切り替え、最初に試すなら一番小さく戻せる単位はどこからですか', good: true },
+      { text: '「最終的に誰が責任を持つ」を、いまこの場で一人に置けますか', good: true },
+      { text: '責任が曖昧なので、誰かが決めるのを待ちましょうか？', good: false },
+      { text: '揉めたくないので、判断は先送りにしませんか？', good: false },
+      { text: 'みんなで決めれば、誰の責任でもなくなりますよね？', good: false },
+    ],
     choices: [
       {
         id: 'a',
         label: '責任が曖昧なので、誰かが決めるのを待つ',
         effects: { trust: -1, culture: -1 },
-        resultText:
-          'ラストマンの椅子が空いたまま、本番切り替えは延期。前に進まない案件に顧客は苛立つ（停滞で信頼−）。その場で試す者がいなかった。',
+        resultText: '椅子は空いたまま。本番切り替えは延期になった。動かない案件に、顧客が苛立つ（停滞で信頼−）。',
         warn: true,
       },
       {
@@ -515,7 +538,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         label: 'ラストマンとして座り、小さく切り替えてその場で試す',
         effects: { trust: 1, insight: 1 },
         resultText:
-          'ラストマンとして座り、その場で試す。責任を引き受けた瞬間、場が動き出した。{{自己組織化}}したチームにも、最後に決める一点は要る。',
+          'その椅子に、自分が座った。「責任は取る」。言った瞬間、止まっていた場が動き出す。{{自己組織化}}したチームにも、最後に決める一点は要る。',
       },
     ],
   },
@@ -525,7 +548,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'kokyaku',
     title: '紛糾する会議',
-    narrative: '関係者会議が紛糾。皆が様子を見て、誰も決めようとしない。',
+    narrative: '関係者会議が紛糾した。誰もが様子をうかがい、誰も口火を切らない。時計の針だけが進む。',
     hearingOptions: [
       { text: 'この会議で、実は譲れない一点を抱えてるのは誰で、それは何ですか', good: true },
       { text: '皆が決めかねてるのは、何が決まれば前に進むか、論点がどこでぼやけてるからですか', good: true },
@@ -538,7 +561,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: '空気を読んで、結論は次回に持ち越す',
         effects: { culture: -1 },
-        resultText: 'その場で動かす者が主導権を握る。動かなかったあなたから、主導権は静かに離れた。',
+        resultText: '次回送りで、その場は収まった。だが動かさなかったあなたから、主導権は静かに離れていった。',
         warn: true,
       },
       {
@@ -546,7 +569,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         label: '最後に責任を取る前提で、その場で決めて動かす',
         effects: { trust: 1, insight: 1 },
         resultText:
-          'その場で動かす者が主導権を握る。最後は自分が責任を取る、と決めた人に皆が従った。紛糾していた{{ステークホルダー}}会議が結論に至り、顧客は前に進む手応えを得た（信頼+）。',
+          '「最後は自分が責任を取る」。そう決めた一人に、皆が従った。紛糾していた{{ステークホルダー}}会議が、結論に着地する。顧客は前に進む手応えを得た（信頼+）。',
       },
     ],
   },
@@ -561,13 +584,13 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       sm: '「それ、おかしくないですか」。その違和感こそ、チームの財産だ。開発室で、拾ってこい。',
       dev: '「それ、おかしくないですか」って言える空気、僕は守りたいです。開発室で、ちゃんと聞いてきてほしいです。',
     },
-    narrative: 'あなたの設計に、若手が「それ、おかしくないですか」と反論し、別の人が次々質問してくる。',
+    narrative: '若手が、あなたの設計に手を挙げた。「それ、おかしくないですか」。続けて別の一人が、次々と質問を重ねる。',
     choices: [
       {
         id: 'a',
         label: '面倒なので「決まったことだから」と議論を打ち切る',
         effects: { culture: -1, insight: -1 },
-        resultText: '反論と質問を歓迎しなかった。以後、誰も異論を言わなくなり、欠陥が放置された。',
+        resultText: '「決まったことだから」。その一言で、口が閉じた。以後、誰も異論を出さない。欠陥は、静かに残る。',
         warn: true,
       },
       {
@@ -575,7 +598,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         label: '反論を歓迎し、質問を喜んで、設計を一緒に鍛える',
         effects: { culture: 1, insight: 1 },
         resultText:
-          '反論を歓迎しろ、質問されたら喜べ。異論が飛び交う{{自己組織化}}したチームでは、叩かれた設計は一人で考えたものより強くなる。',
+          '異論を歓迎し、質問に礼を言った。叩かれた設計は、一人で抱えていたものより明らかに強い。{{自己組織化}}したチームの強さだ。',
       },
     ],
   },
@@ -586,14 +609,14 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     segment: 'trouble',
     title: 'ぶっつけ本番',
     narrative:
-      'これまでは小さな写真入力だけだった。今回は基幹を含む大規模な本番切り替え。ぶっつけで行くか、手を動かして備えるか。',
+      'これまでは小さな写真入力だけ。今回は基幹を含む大規模な切り替えだ。ぶっつけで行くか、リハーサルで手を動かして備えるか。',
     choices: [
       {
         id: 'a',
         label: '大規模な切り替えは初めてだが、その場で考えれば何とかなる',
         effects: { trust: -1, insight: -1 },
         resultText:
-          '練習しろ、本番で初めて考えるな。案の定、想定外で本番切り替えが炎上し、現場の出荷が一時止まって顧客に迷惑をかけた（炎上で信頼−）——が、授業料は払った。',
+          '本番で初めて考えた。案の定、想定外で炎上し、現場の出荷が一時止まった（炎上で信頼−）。高い授業料だった。',
         warn: true,
       },
       {
@@ -601,7 +624,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         label: 'リハーサルで練習し、炎上を“授業料つきの実地訓練”として記録する',
         effects: { insight: 1, culture: 1 },
         resultText:
-          '練習しろ。小さな炎上は授業料つきの実地訓練。{{経験主義}}——やって観察し記録した教訓が、次の現場で効く。',
+          '本番の前に、一度通した。小さな炎上は授業料つきの実地訓練。やって、見て、書き留めた教訓が、次の現場で効く。{{経験主義}}だ。',
       },
     ],
   },
@@ -611,7 +634,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'chance',
     title: '次の現場へ',
-    narrative: '案件は終わりに近づいた。次に向けて、自分は何を磨くべきか。',
+    narrative: '案件の終わりが見えてきた。次の現場で、自分は何を武器にできるだろう。',
     hearingOptions: [
       { text: 'この現場で、自分のどの一手が効いて、どこで空回りしたか——一緒に振り返ってもらえますか', good: true },
       {
@@ -627,14 +650,15 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: '案件が終われば一区切り。特に振り返らず次へ',
         effects: { insight: -1 },
-        resultText: '自分の道具を磨かなければ、次の現場では通用しない。{{FDE}}の旅はここで止まる。',
+        resultText: '振り返らず、次へ。だが磨かない道具は、次の現場で鈍る。今回の手応えが、指の間からこぼれていく。',
         warn: true,
       },
       {
         id: 'b',
         label: '自分の道具（専門性・型）を磨き、次の現場へデプロイする準備をする',
         effects: { insight: 1, culture: 1 },
-        resultText: '自分の道具を磨け。{{FDE}}とは、未来を現場にデプロイする仕事。次の現場が待っている。',
+        resultText:
+          'この現場で効いた一手、空回りした一手を書き留めた。研いだ道具を抱えて、次の現場へ。{{FDE}}の旅は続く。',
       },
     ],
   },
@@ -820,14 +844,14 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: '成功を自分の手柄としてまとめ、経営に売り込む',
         effects: { trust: 1, culture: -1 },
-        resultText: '個人の評価は上がった（信頼+）。だが学びは自分に閉じ、チームには残らない。',
+        resultText: '個人の評価は上がった（信頼+）。だが学びは自分の中に閉じ、チームには一行も残らない。',
         warn: true,
       },
       {
         id: 'b',
         label: 'チームと組織の学びとして言語化し残す',
         effects: { culture: 2 },
-        resultText: '現場の学びがプロダクトと人に残った。「太く残す」一手。（手柄にする信頼+は取り逃す）',
+        resultText: '掴んだ学びを、プロダクトと人の側に置いた。これが「太く残す」だ。（手柄にする信頼+は取り逃す）',
       },
     ],
   },
@@ -906,7 +930,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       },
       {
         id: 'b',
-        label: '{{成果の定義}}——田淵さんが手書きをやめたか——まで見届ける',
+        label: '{{成果の定義}}——田淵さんが手書きをやめたか、まで見届ける',
         effects: { insight: 1, culture: 1 },
         resultText: '画面に一手間足したら、ついに手書きが消えた。出力でなく、現場に起きた変化が“完了”だ。',
       },
@@ -932,7 +956,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         good: true,
       },
       { text: 'コストとKPIが一発で良くなるなら、まるごと{{3PL}}に出すのが正解ですよね？', good: false },
-      { text: '現場の知恵なんて、手順書にすれば外注先でも再現できる。', good: false },
+      { text: '現場の勘なんて手順書に落とせる。まるごと外注先へ移しても何も困らない。', good: false },
       { text: '赤城部長がそう言うなら、もう移管で話を進めていいですよね', good: false },
     ],
     choices: [
@@ -960,13 +984,13 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     segment: 'team',
     title: '手順書か、橋本さんか',
     narrative:
-      '橋本さんの手順書ができ始めた。だが「結局あの人に聞くのが速い」と、みんなまた橋本さんに駆け寄る。仕組みは作っても、習慣が戻る。',
+      '橋本さんの手順書が、ようやく形になってきた。なのに何かあると、みんなまた橋本さんの席へ駆け寄る。「結局あの人に聞くのが速い」。仕組みは作った。習慣が、戻る。',
     choices: [
       {
         id: 'a',
         label: '急ぎだから、今日もまた橋本さんに直接聞いて済ませる',
         effects: { culture: -1 },
-        resultText: '今日は速かった。だが手順書は使われず埃をかぶる。仕組みは、使う習慣まで作って初めて根付く。',
+        resultText: '今日も速かった。そして手順書は、また埃をかぶる。使われない仕組みは、無いのと同じだ。',
         warn: true,
       },
       {
@@ -974,7 +998,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         label: 'あえて橋本さん抜きで、手順書を見ながらチームで対応してみる',
         effects: { culture: 1, insight: 1 },
         resultText:
-          'つっかえながらも、チームだけで捌けた。橋本さんが「もう俺いらんかもな」と笑った。手順書による{{オンボーディング}}が回り始め、属人化がほどけ始めた。',
+          'つっかえながらも、橋本さん抜きで捌けた。「もう俺、いらんかもな」。本人が、少し寂しそうに笑う。手順書を回す{{オンボーディング}}で、固まった属人化がほどけ始めた。',
       },
     ],
   },
@@ -1016,6 +1040,13 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     title: '誰が決めるのか',
     narrative:
       '本番直前、重大な判断が要る局面。全員が当事者として意見を出すが、誰が最終決定をするのかが曖昧で、時間だけが過ぎていく。',
+    hearingOptions: [
+      { text: 'この判断、いつまでに・誰の決めで動くのか、その場で確かめられますか', good: true },
+      { text: '決めるために、あと何の事実が揃えば踏み切れるのか出し切れますか', good: true },
+      { text: '角が立つので、全員一致するまで待ちましょうか？', good: false },
+      { text: '誰かが決めてくれるはずなので、それまで様子を見ませんか？', good: false },
+      { text: 'いま決めなくても、なんとかなりますよね？', good: false },
+    ],
     choices: [
       {
         id: 'a',
@@ -1040,7 +1071,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     segment: 'genba',
     title: 'もう少し磨いてから？',
     narrative:
-      '改善した在庫最適化は、検証環境では完璧に回っている。「もう少し磨いてから本番に」という声。だが現場が本当に使うのは、本番に出てからだ。',
+      '改善した在庫最適化は、検証環境では完璧に回る。「もう少し磨いてから本番に」という声が上がった。だが磨いている間、現場は一度もそれに触れない。',
     hearingOptions: [
       { text: 'この在庫最適化、田淵さんが本番で最初に触るのはどの作業のときですか', good: true },
       { text: '検証環境では出てこない“現場あるある”って、どんな例外があります？', good: true },
@@ -1053,7 +1084,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: 'もう少し作り込んでから、と本番投入を先送りする',
         effects: { insight: -1 },
-        resultText: '磨きは進んだが、現場の反応は得られないまま。{{PoC}}で満足する“あと一歩”が、いちばん遠い。',
+        resultText: '磨きは進んだ。だが現場の反応は、ゼロのまま。{{PoC}}で立ち止まる“あと一歩”が、いちばん遠い。',
         warn: true,
       },
       {
@@ -1061,7 +1092,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         label: '荒削りでも本番に出し、現場の反応で次を決める',
         effects: { insight: 1 },
         resultText:
-          '本番に出した瞬間、検証環境では見えなかった例外が噴き出した。ユーザーが使って、初めて設計が始まる。',
+          '本番に出した途端、検証では見えなかった例外が噴き出した。これでいい。設計は、ユーザーが触ったところから始まる。',
       },
     ],
   },
@@ -1126,7 +1157,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: '良い数字だけをきれいに並べ、成功として締める',
         effects: { insight: -1 },
-        resultText: '数字は拍手を呼んだ。だが理由を語らなかったぶん、再現性は残らない。定量は方向、定性は理由なのに。',
+        resultText: '数字は拍手を呼んだ。だが「なぜ下がったか」を飲み込んだぶん、誰も次に再現できない。',
         warn: true,
       },
       {
@@ -1150,14 +1181,20 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       sm: '「誰のミスだ」——その問いを、「何が起きたか」に変えろ。電算室で、事実を見てこい。',
       dev: '「誰のミスだ」って空気になると、誰も本当のこと言わなくなるんです。電算室で、まず何が起きたか見させてください。',
     },
-    narrative: '本番で小さな事故が出た。経営は「誰のミスだ」と犯人を探したがる。チームは萎縮し始めている。',
+    narrative: '本番で小さな事故が出た。「誰のミスだ」。経営が犯人を探し始めると、チームの背中がすっと縮こまった。',
+    hearingOptions: [
+      { text: 'その事故、同じ条件なら誰がやっても起きたのか、再現する道筋を追えますか', good: true },
+      { text: '事故の前後で、仕組みのどこに穴があったのか一緒に見られますか', good: true },
+      { text: '経営が納得するよう、まず原因者を一人決めて報告しませんか？', good: false },
+      { text: '萎縮させないために、いったん誰かのミスにして丸く収めましょうか？', good: false },
+      { text: 'どうせ操作ミスですよね、犯人を特定して終わりにしませんか？', good: false },
+    ],
     choices: [
       {
         id: 'a',
         label: '経営の手前、原因者を特定して報告し、収拾を図る',
         effects: { culture: -1 },
-        resultText:
-          '犯人は見つかった。だが次から誰も失敗を言わなくなり、小さな火種が水面下に潜った。責任追及は、透明性を殺す。',
+        resultText: '犯人は見つかった。代わりに、次から誰も失敗を口にしなくなる。小さな火種が、水面下へ潜った。',
         warn: true,
       },
       {
@@ -1165,7 +1202,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         label: '個人でなく仕組みの欠陥として扱い、再発防止に振り向ける',
         effects: { culture: 1, insight: 1 },
         resultText:
-          '「誰が、ではなく、なぜ起きたか」。安心して失敗を出せる場が、{{経験主義}}でいちばん早く学ぶ。炎上は授業料つきの実地訓練だ。',
+          '「誰が、ではなく、なぜ起きたか」。そう問い直した。安心して失敗を出せる場ほど、{{経験主義}}は速く学ぶ。',
       },
     ],
   },
@@ -1188,7 +1225,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: '機運に乗って、出てきた要望を全部この案件に詰め込む',
         effects: { insight: -1 },
-        resultText: '欲張ったぶん、どれも中途半端になった。成功の勢いは、焦点を溶かす毒にもなる。',
+        resultText: '全部に手を出して、全部が中途半端になった。成功の勢いは、焦点を溶かす毒でもある。',
         warn: true,
       },
       {
@@ -1304,7 +1341,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'trouble',
     minigame: 'hearing',
-    hearingTheme: 'genba',
+    hearingTheme: 'chousa',
     location: 'keiri',
     requiresFlag: 'fraudClue',
     hints: {
@@ -1336,7 +1373,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         label: '間宮さんと、決算と現場実数の食い違いを記録に残す',
         effects: { insight: 1 },
         resultText:
-          '数字で語れ——会計の帳尻と現場の実数を、間宮さんと静かに突き合わせた。これは{{ガバナンス}}そのものが問われる話だが、一介の{{FDE}}が今この場で告発して済む話ではない。あまりに大きい。あなたは見たものを胸に刻み、記録だけを残した。この違和感は、まだ終わらない。（波風を立てない信頼+は取り逃す）',
+          '会計の帳尻と現場の実数を、間宮さんと静かに突き合わせた。{{ガバナンス}}そのものが揺らぐ話。だが一介の{{FDE}}が、今この場で告発して済む大きさではない。見たものを胸に刻み、記録だけ残す。この違和感は、まだ終わらない。（波風を立てない信頼+は取り逃す）',
         setsFlag: 'fraudCase',
       },
     ],
@@ -1347,7 +1384,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'trouble',
     minigame: 'hearing',
-    hearingTheme: 'genba',
+    hearingTheme: 'chousa',
     location: 'soumu',
     hints: {
       po: '経費まわりの統制が気になる。総務部で精算のフローを見てきて。',
@@ -1387,7 +1424,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'trouble',
     minigame: 'hearing',
-    hearingTheme: 'genba',
+    hearingTheme: 'chousa',
     location: 'soumu',
     requiresFlag: 'fraudClue',
     hints: {
@@ -1461,7 +1498,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'trouble',
     minigame: 'hearing',
-    hearingTheme: 'genba',
+    hearingTheme: 'chousa',
     location: 'serverroom',
     hints: {
       po: 'お客さんの数字の裏が気になる。電算室で取引データに当たってきて。',
@@ -1471,7 +1508,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     requiresFlag: 'fraudClue',
     title: '書類の上だけ、ぐるぐる回る',
     narrative:
-      '“在るはずの無い機材”を追い、組織の壁を壊して本社の取引データに繋いだ。すると見えてきた——同じシリアルの{{フィジカルAI}}機材が、グループ各社を書類の上だけで巡り、一周するたびに売上が立っている。架空の循環取引。カルゴ物流は、その踏み台にされていた。',
+      '“在るはずの無い機材”を追い、組織の壁を壊して本社の取引データに繋ぐ。見えてきたのは、同じシリアルの{{フィジカルAI}}機材だった。グループ各社を書類の上だけで巡り、一周するたびに売上が立つ。架空の循環取引。カルゴ物流は、その踏み台にされていた。',
     hearingOptions: [
       { text: '同じシリアルがどの会社を・どんな順で巡っているのか、一周たどれますか', good: true },
       { text: '実物が動いた記録はありますか。動いているのが数字だけか確かめられますか', good: true },
@@ -1520,7 +1557,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         label: '取引データを突き合わせ、循環取引の輪郭を記録に残す',
         effects: { insight: 1 },
         resultText:
-          '伝票・在庫・入出庫のログが、一本の輪につながった。架空の循環取引の影——だがこれは、たった一人の{{FDE}}が今この場で告発して終わる話ではない。あまりに、大きすぎる。あなたは見たものを胸に刻み、静かに記録を残した。この違和感は、まだ終わらない。',
+          '伝票・在庫・入出庫のログが、一本の輪につながった。架空の循環取引の影。だがこれは、たった一人の{{FDE}}が今この場で告発して終わる話ではない。あまりに、大きすぎる。見たものを胸に刻み、静かに記録だけ残した。この違和感は、まだ終わらない。',
         setsFlag: 'fraudCase',
       },
     ],
@@ -1589,7 +1626,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     },
     title: '窓口が、あなたで止まる',
     narrative:
-      'プランニングで「自分が運用の頼れる窓口であり続ける」をゴールに置いた。その通り、問い合わせはすべてあなたに集まる。だが——あなたが一日離れた途端、すべてが止まった。あなた自身が{{制約理論}}でいう全体の制約（ボトルネック）になっていた。社内メンバーは指示待ちになり、組織は賢くならないまま。属人化というゴールのツケが、最終盤で跳ね返ってきた。',
+      '「自分が運用の頼れる窓口であり続ける」。そうゴールに置いた通り、問い合わせはすべてあなたに集まった。便利だ。ただし、あなたが一日離れた途端、すべてが止まる。{{制約理論}}でいう全体の制約は、いつの間にかあなた自身だった。社内メンバーは指示を待つだけ。最終盤で、属人化のツケが跳ね返ってきた。',
     choices: [
       {
         id: 'a',
@@ -1604,7 +1641,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         label: '今からでも、窓口と運用を社内メンバーへ移し始める',
         effects: { culture: 1, insight: 1 },
         resultText:
-          '見せ場は減る。だが、あなたが抜けても回る形へ一歩動いた。{{FDE}}の仕事は、組織を賢くするところまで。ゴールは終盤でも立て直せる。（抱え続ければ得た信頼+は取り逃す）',
+          '見せ場は減る。だが、あなたが抜けても回る形へ一歩。{{FDE}}の仕事は、組織を賢くするところまでだ。ゴールは、終盤でも立て直せる。（抱え続ければ得た信頼+は取り逃す）',
       },
     ],
   },

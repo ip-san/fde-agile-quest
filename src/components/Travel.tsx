@@ -165,9 +165,7 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
       {/* リモート朝会パネル（競合する主張） */}
       <section className="rounded-2xl border border-slate-700 bg-slate-900/60 p-3">
         <div className="mb-2 flex items-center justify-between px-1">
-          <h2 className="text-sm font-bold text-slate-100">
-            <span aria-hidden="true">📡</span> リモート・デイリースクラム
-          </h2>
+          <h2 className="text-sm font-bold text-slate-100">リモート・デイリースクラム</h2>
           <span className="flex items-center gap-1 text-[11px] font-semibold text-rose-300">
             <span
               className={`inline-block h-2 w-2 rounded-full bg-rose-500 ${reduceMotion ? '' : 'animate-pulse'}`}
@@ -242,9 +240,7 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
         className="rounded-2xl border-2 border-dashed border-sky-700/60 bg-slate-950/40 p-3"
       >
         <div className="mb-2 flex items-center justify-between gap-2 px-1">
-          <h2 className="text-sm font-bold text-sky-100">
-            <span aria-hidden="true">🗺️</span> 現地マップ — どこへ向かう？
-          </h2>
+          <h2 className="text-sm font-bold text-sky-100">現地マップ — どこへ向かう？</h2>
           <span className="shrink-0 rounded-full border border-sky-700/60 bg-slate-900/70 px-2 py-0.5 text-[10px] text-sky-300">
             ★＝今日の論点
           </span>
@@ -270,7 +266,6 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
               aria-hidden="true"
             >
               <span className="text-[8px] font-bold text-sky-300">N</span>
-              <span className="text-[12px]">🧭</span>
             </span>
             {/* 拠点ピン */}
             {floorRooms.map((id, i) => renderMapPin(id, i === 0))}
@@ -299,7 +294,6 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
               </span>
               <span className="flex flex-col items-center leading-none text-slate-500" aria-hidden="true">
                 <span className="text-[8px] font-bold text-sky-400">N</span>
-                <span className="text-[11px]">🧭</span>
               </span>
             </div>
 
@@ -331,7 +325,6 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
           <div className="mt-2.5">
             <div className="flex w-full items-center gap-2 px-2 text-[10px] font-semibold text-emerald-300/80">
               <span className="h-px flex-1 border-t border-dashed border-emerald-700/50" />
-              <span aria-hidden="true">🖥️</span>
               <span>画面の中（コード／リモート・歩いては行けない）</span>
               <span className="h-px flex-1 border-t border-dashed border-emerald-700/50" />
             </div>

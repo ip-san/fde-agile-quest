@@ -23,16 +23,12 @@ export function SecondaryStats({ aiTokens, coverage, debt, onOpenDetail }: Props
       aria-label="リポジトリの詳細（AIトークン・カバレッジ・技術的負債）を開く"
       className="flex min-h-[40px] w-full items-center gap-1 rounded-lg bg-slate-800/40 px-3 py-1.5 text-xs transition hover:bg-slate-800/70"
     >
-      <span className={`flex items-center gap-1 tabular-nums ${tokenTone}`}>
-        <span aria-hidden="true">🔋</span>
-        {aiTokens}
-      </span>
+      <span className={`flex items-center gap-1 tabular-nums ${tokenTone}`}>AI {aiTokens}</span>
       <span className="text-slate-600" aria-hidden="true">
         ·
       </span>
       <span className="flex items-center gap-1 tabular-nums text-slate-300">
-        <span aria-hidden="true">🗂️</span>
-        {coverage}
+        Coverage {coverage}
         <span className="text-slate-400">/{REPO_COVERAGE_MAX}</span>
       </span>
       <span className="text-slate-600" aria-hidden="true">

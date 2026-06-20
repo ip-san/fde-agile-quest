@@ -60,6 +60,12 @@ const THEME_GOOD: Record<HearingTheme, string[]> = {
     'もう一度やり直せるなら、どこを変えますか？',
     '言いそびれていること、ありませんか？',
   ],
+  chousa: [
+    'それ、最後に“現物”で確かめられたのはいつですか？',
+    '同じことが、いつ・どこで・誰の時に起きていますか？',
+    '原票（契約書や請求書）まで、ひとつずつ照らせますか？',
+    '事実・推測・願望——どこまでが確かめられた話ですか？',
+  ],
 }
 
 const THEME_BAD: Record<HearingTheme, string[]> = {
@@ -85,6 +91,11 @@ const THEME_BAD: Record<HearingTheme, string[]> = {
     'まあ、いつも通りで問題ないですよね？',
     '誰のせいで遅れたか、はっきりさせません？',
     'もっと頑張れば終わる、ってことでいいですか？',
+  ],
+  chousa: [
+    '面倒なので、見なかったことにしておきましょうか？',
+    '数字が合っているなら、裏まで確かめなくていいですよね？',
+    'もう不正だと決めて、いますぐ上に上げてしまいませんか？',
   ],
 }
 
@@ -142,10 +153,24 @@ export function dealHearing(seed: number, theme?: HearingTheme): HearingOption[]
 }
 
 function allGood(): string[] {
-  return [...GENERAL_GOOD, ...THEME_GOOD.genba, ...THEME_GOOD.kokyaku, ...THEME_GOOD.chance, ...THEME_GOOD.team]
+  return [
+    ...GENERAL_GOOD,
+    ...THEME_GOOD.genba,
+    ...THEME_GOOD.kokyaku,
+    ...THEME_GOOD.chance,
+    ...THEME_GOOD.team,
+    ...THEME_GOOD.chousa,
+  ]
 }
 function allBad(): string[] {
-  return [...GENERAL_BAD, ...THEME_BAD.genba, ...THEME_BAD.kokyaku, ...THEME_BAD.chance, ...THEME_BAD.team]
+  return [
+    ...GENERAL_BAD,
+    ...THEME_BAD.genba,
+    ...THEME_BAD.kokyaku,
+    ...THEME_BAD.chance,
+    ...THEME_BAD.team,
+    ...THEME_BAD.chousa,
+  ]
 }
 
 /** イベントのセグメントからヒアリングのテーマを決める（hearing は genba/kokyaku/chance/team で発火）。
@@ -162,6 +187,7 @@ const HEARING_TITLE: Record<HearingTheme, string> = {
   kokyaku: '依頼主の期待を確かめる',
   chance: '価値の在処を探る',
   team: 'チームの本音を引き出す',
+  chousa: '事実の裏を取る',
 }
 
 /** ヒアリング・ミニゲームの見出し（テーマ＝相手・場面で出し分け。未指定は現場主義の標準） */
@@ -175,6 +201,7 @@ const HEARING_PROMPT: Record<HearingTheme, string> = {
   kokyaku: '依頼主に、どの問いを投げる？',
   chance: '機会の芽に、どの問いを当てる？',
   team: 'チームに、どの問いを投げる？',
+  chousa: '原票と現物に、どの問いを当てる？',
 }
 
 /** ヒアリング・ミニゲームの設問リード文（相手・場面で出し分け。未指定は現場主義の標準） */
@@ -188,6 +215,7 @@ const HEARING_CTA: Record<HearingTheme, string> = {
   kokyaku: 'この2つで確かめる',
   chance: 'この2つで見極める',
   team: 'この2つで掘り下げる',
+  chousa: 'この2つで裏を取る',
 }
 
 /** ヒアリング確定ボタンのラベル（相手・場面で出し分け。未指定は現場主義の標準） */
