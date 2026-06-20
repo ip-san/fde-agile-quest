@@ -151,6 +151,7 @@ export const AVAILABLE_IMAGES = new Set<string>([
   'prologue-summons', // 呼び出し：会議後の廊下で社長(鷹野)が主人公に語りかける、横に久遠
   'prologue-assignment', // 送り込まれる先：棚の端末が使われず手書き台帳を書くベテラン
   'prologue-firstday', // 最初の一日：早朝の通用口に立つ主人公、倉庫の喧騒が始まる
+  'map-cargo', // 現地マップの俯瞰イラスト背景（Travel の背景画像マップ）
 ])
 
 export function imageUrl(key: string): string {

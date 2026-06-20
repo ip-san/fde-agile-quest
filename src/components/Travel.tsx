@@ -31,13 +31,13 @@ const MAP_IMG = 'map-cargo'
 // 物理6拠点＋現在地の、画像上の位置（%）。生成画像の部屋配置（奥3／手前3）に合わせる。
 // 取り込み後に実物を見ながら微調整する前提の初期値。
 const MAP_PIN_COORDS: Record<string, { x: number; y: number }> = {
-  warehouse: { x: 19, y: 30 },
-  serverroom: { x: 50, y: 27 },
-  client: { x: 81, y: 30 },
-  soumu: { x: 19, y: 72 },
-  jinji: { x: 50, y: 75 },
-  keiri: { x: 81, y: 72 },
-  you: { x: 50, y: 52 },
+  warehouse: { x: 30, y: 22 },
+  serverroom: { x: 57, y: 20 },
+  client: { x: 80, y: 19 },
+  soumu: { x: 16, y: 77 },
+  jinji: { x: 41, y: 81 },
+  keiri: { x: 87, y: 80 },
+  you: { x: 50, y: 56 },
 }
 
 /** リモート・デイリースクラム（競合する主張）＋現地マップ。
