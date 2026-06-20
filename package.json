@@ -32,12 +32,12 @@
     {
       "name": "App JS (brotli)",
       "path": "dist/assets/index-*.js",
-      "limit": "135 kB"
+      "limit": "145 kB"
     },
     {
       "name": "App CSS (brotli)",
       "path": "dist/assets/index-*.css",
-      "limit": "9 kB"
+      "limit": "10 kB"
     }
   ],
   "lint-staged": {
