@@ -65,9 +65,8 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       {
         id: 'a',
         label: '完璧な予測エンジンまで作り込んでから出す',
-        effects: { trust: 2, culture: -1, insight: -1 },
-        resultText:
-          '作り込みの完成度に、結城さんは強く満足（信頼++）。完璧を待つあいだ、現場はまだ一度も触っていない。',
+        effects: { trust: 1, culture: -1, insight: -1 },
+        resultText: '作り込みの完成度に、結城さんは満足（信頼+）。完璧を待つあいだ、現場はまだ一度も触っていない。',
         warn: true,
       },
       {
