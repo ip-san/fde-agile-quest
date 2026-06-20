@@ -58,14 +58,31 @@
 判断に迷ったら: **単発の手作業＝skill、夜間 loop の自動運用＝agent**。各 agent の description は
 「loop運用での委任を想定」と明記してあり、キーワードでの直接起動より loop からの委任を優先する。
 
+## 仕事のキュー＝GitHub Issue / Projects ボード
+
+仕事は**コードより先に Issue として立つ**（テンプレ「loop タスク」）。loop が拾ってよいのは、総監督が
+ボードで `Approved`(GO) 列へドラッグした Issue **だけ**。これにより「総監督の GO の有無」をボード上の
+ステートで管理し、GO が無い限り loop は動かない。
+
+- 列(Stage): `Backlog`→`Approved`(GO)→`In progress`→`In review`→`Blocked`/`Done`（詳細は `loop-runbook.md`）。
+- ボード操作はスクリプトに閉じる（指揮者はコマンド1発＝トークンを使わない）:
+  - 取得 `node .claude/agents/loop/next-task.mjs`（`Approved` 先頭を1行 JSON）
+  - 移動 `node .claude/agents/loop/move-card.mjs <issue#> <inProgress|inReview|blocked>`
+  - 初期化 `node .claude/agents/loop/setup-board.mjs`（1回だけ・要 `project` スコープ）
+- **トークン空回り防止**: loop は起動直後に `next-task.mjs` を1回叩き、`Approved` が空なら
+  **エージェントを1体も起動せず即スリープ**。GO がある時だけ全パイプラインを回す。
+- **台帳の併用**: Issue/ボード＝仕事の真実源（総監督が触る）。`ledger/findings.md`＝loop 内部メモ（細かい🟡の
+  持ち越し）、`ledger/RUNLOG.md`＝作業記録。Issue には要約だけコメントし、細粒度はファイルに残す。
+
 ## loop runbook（1イテレーション）
 
 サブエージェントは他のサブエージェントを起動できないため、各 agent を `Agent` ツールで委任して繋ぐのは
 **指揮者＝メインスレッド**の役目。実行手順の正本は **`loop-runbook.md`**（`/loop` に渡す or 夜間スケジュール）。
 
-1. **準備**: 指揮者が `ledger/findings.md`（指摘台帳）と `ledger/RUNLOG.md`（作業記録）を読む。
-2. `showrunner` が「今夜の一手＋作業指示書」を作る（**feature ブランチを切る**）。人間承認が要る判定なら
-   ここで止めて findings に人間提案を残す。
+1. **GO ゲート**: 指揮者が `next-task.mjs` を叩く。`Approved` が空なら即スリープして終了（空回りゼロ）。
+   取れたらその Issue が今夜の一手。`move-card.mjs <#> inProgress` で着手宣言＋feature ブランチを切る。
+2. `showrunner` が **承認済み Issue を読み解いて**作業指示書に落とす（探索はしない）。正本改変/破壊的なら
+   着手せず `Blocked` へ移し Issue にコメント。
 3. 指示の maker（`narrative-designer` か `ux-engineer`）が草稿を実装。
 4. **考証＋監修を、指摘が無くなるまで反復（loop-until-dry）**:
    - 物語: 召集された専門家を並列委任 → `narrative-designer` が最終セリフ確定。監修 = `story-reviewer` +
@@ -76,11 +93,13 @@
    - 収束しない（round > 5）なら人間にエスカレーション。
 5. `quality-gatekeeper` が `check:all` ＋ build/size/lighthouse/e2e を**緩めずに**緑にする。緑にできなければ
    人間にエスカレーション。
-6. **PR 可否ゲート**: 「全ゲート緑 ∧ 🔴ゼロ ∧ 対応すべき🟡ゼロ ∧ 非破壊 ∧ 正本未改変」を満たすか判定。
-   満たせば **feature ブランチに commit → push → PR を作成/更新**（＝提案）。`RUNLOG.md` に PR URL・差分要約・
-   残🟡を記録。欠けたら理由を記して人間にエスカレーション。**main への直接 land・force-push・自動マージはしない**。
-7. `ScheduleWakeup` で次イテレーションへ（毎回 1. から）。**朝に人間が** PR をレビュー → 良ければ**マージ**、
-   要修正なら `director-feedback` で観点を learnings に残す。
+6. **PR 可否ゲート**: 「全ゲート緑 ∧ 🔴ゼロ ∧ 対応すべき🟡ゼロ ∧ 非破壊 ∧ 正本未改変 ∧ 受け入れ条件充足」
+   を満たすか判定。満たせば **feature ブランチに commit → push → PR（本文に `Closes #<#>`）を作成/更新**し、
+   `move-card.mjs <#> inReview` ＋ Issue に PR URL をコメント。`RUNLOG.md` にも記録。欠けたら `Blocked` へ移し
+   理由をコメント。**main 直 land・force-push・自動マージはしない**。
+7. `ScheduleWakeup` で次イテレーションへ（毎回 GO ゲートから）。**朝に総監督が** ボードの `In review` を見て
+   PR をレビュー → 良ければ**マージ**（Issue が閉じ→`Done` 自動移動）、要修正なら `director-feedback` で
+   観点を learnings に残す。`Blocked` は判断を仰いでいる Issue。
 
 ### 高自律の安全弁
 作業は常に feature ブランチ・**PR で提案（main 直 land / force-push / 自動マージは capability で禁止）**・

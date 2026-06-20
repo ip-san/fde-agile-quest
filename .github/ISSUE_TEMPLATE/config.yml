@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: loop の運用手順（総監督向け）
+    url: https://github.com/ip-san/fde-agile-quest/blob/main/.claude/agents/loop-runbook.md
+    about: GO サインの出し方・ボードのステート・朝の引き継ぎはこちら。
