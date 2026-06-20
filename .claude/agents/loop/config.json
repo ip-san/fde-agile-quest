@@ -1,0 +1,15 @@
+{
+  "owner": "ip-san",
+  "ownerType": "user",
+  "repo": "fde-agile-quest",
+  "projectNumber": 1,
+  "stageField": "Stage",
+  "stages": {
+    "backlog": "Backlog",
+    "approved": "Approved",
+    "inProgress": "In progress",
+    "inReview": "In review",
+    "blocked": "Blocked",
+    "done": "Done"
+  }
+}

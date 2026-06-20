@@ -1,0 +1,76 @@
+name: "loop タスク（改善の一手）"
+description: "夜間 loop に拾わせたい改善を1件。承認（GO）はボードで Approved 列へドラッグして出す。"
+title: "[loop] "
+labels: ["loop"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        このフォームの内容が、そのまま loop の **作業指示書** になります（showrunner の探索を省きトークンを節約）。
+        起票しただけでは loop は動きません。**総監督がボードで `Approved` 列へドラッグした時だけ** loop が着手します。
+  - type: dropdown
+    id: axis
+    attributes:
+      label: 軸
+      description: 1イテレーション=1テーマ。複数にまたがるなら issue を分けてください。
+      options:
+        - 物語拡張（events / cast / glossary）
+        - 学習設計（用語・トレードオフ・KPI 志向）
+        - UX（components / 操作感 / a11y / 演出）
+        - コード品質（設計・可読性・リファクタ）
+    validations:
+      required: true
+  - type: dropdown
+    id: maker
+    attributes:
+      label: 担当 maker（任せるなら「おまかせ」）
+      options:
+        - おまかせ（showrunner が判断）
+        - narrative-designer
+        - ux-engineer
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: 狙い・背景（なぜ今これか）
+      placeholder: 例) 第2章のヒアリング描写が薄く、KPI 設定の失敗が学びにつながっていない。
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 受け入れ条件（満たせば完成）
+      description: 箇条書き or チェックボックスで。loop はこれを満たすまで回します。
+      placeholder: |
+        - [ ] 〇〇のイベントに分岐が1つ増える
+        - [ ] 用語「リードタイム」が glossary に追加され、本文から参照される
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: 触れてよいファイル / 触れてはいけない範囲（スコープ）
+      placeholder: |
+        触れてよい: src/data/chapters/chapter-01/events-sprint2.ts, glossary.ts
+        触れない: cast.ts の既存キャラ設定 / STORY.md（正本）
+    validations:
+      required: true
+  - type: checkboxes
+    id: experts
+    attributes:
+      label: 召集する専門家（物語テーマで該当するもの）
+      options:
+        - label: ai-dx-expert（AI 過信 / KPI 誤設定 / データ活用）
+        - label: fde-expert（FDE 心得 / 顧客折衝 / 現場展開）
+        - label: agile-expert（スクラム / セレモニー / 見積り）
+        - label: logistics-expert（倉庫 / 在庫 / WMS / 属人化）
+        - label: robotics-expert（産業ロボット / フィジカル AI / 自動化）
+  - type: textarea
+    id: risk
+    attributes:
+      label: 想定リスク・承認境界
+      description: 正本（cast.ts 既存設定 / STORY.md）の改変・新キャラ・新章・大規模リファクタを含むなら、その旨を明記。loop は改変側には着手せず Blocked にします。
+      placeholder: 例) 既存枠内の追加のみ。正本改変なし。
+    validations:
+      required: false
