@@ -14,6 +14,7 @@ import {
 } from '../engine/backlog'
 import type { ProgressCore } from '../engine/progression'
 import { useFocusTrap } from '../hooks/useFocusTrap'
+import { seedFor } from '../lib/seed'
 import { useEngagement } from '../store/engagementStore'
 import type { ExecTier, ReviewDepth } from '../types'
 import { MiniGame } from './minigame/MiniGame'
@@ -30,13 +31,6 @@ interface Props {
 }
 
 const sameOrder = (a: string[], b: string[]) => a.length === b.length && a.every((x, i) => x === b[i])
-
-/** イベントID風の決定的シード（レビュー・ミニゲームの内容選択用） */
-function seedFor(id: string): number {
-  let s = 0
-  for (let i = 0; i < id.length; i++) s = (s * 31 + id.charCodeAt(i)) >>> 0
-  return s
-}
 
 /** スプリントバックログのカンバン操作パネル。
  *  - プランニング中：プロダクトバックログを並べ替え提案（PO承認）し、予測（フォーキャスト）で To Do を組む。

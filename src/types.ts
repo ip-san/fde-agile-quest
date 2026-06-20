@@ -75,8 +75,8 @@ export type ReviewDepth = 'quick' | 'thorough'
 export type Effects = Partial<Meters>
 
 /** ヒアリングの問いの選択肢。good:true＝核心に迫る良い問い／good:false＝場をズラす/誘導/決めつけ等の悪い問い。
- *  単一の真実源をこの低層モジュールに置き、ミニゲーム側（minigames.ts の同名 interface）と構造を揃える。 */
-interface HearingOption {
+ *  単一の真実源をこの低層モジュールに置き、minigames.ts と各ミニゲームはここを import/re-export する。 */
+export interface HearingOption {
   text: string
   good: boolean
 }

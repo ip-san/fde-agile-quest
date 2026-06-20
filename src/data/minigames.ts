@@ -1,6 +1,6 @@
-import type { ExecTier, HearingTheme } from '../types'
+import type { ExecTier, HearingOption, HearingTheme } from '../types'
 
-export type { HearingTheme }
+export type { HearingOption, HearingTheme }
 
 // ───────────────────────────────────────────────────────────
 // 選択後ミニゲームの汎用コンテンツ（“実行スキル”の抽象。イベント個別には書かない）。
@@ -110,11 +110,6 @@ const THEME_BAD: Record<HearingTheme, string[]> = {
   ],
 }
 
-export interface HearingOption {
-  text: string
-  good: boolean
-}
-
 /** 開発パズル：正しい順に組み直す“開発の手順”フロー（FDEらしい進め方の型）。 */
 const DEV_FLOWS: string[][] = [
   ['要件を掴む', '小さく設計する', '実装する', '現場で試す'],
@@ -138,7 +133,7 @@ function rng(seed: number) {
     return s / 2 ** 32
   }
 }
-function shuffle<T>(arr: T[], seed: number): T[] {
+export function shuffle<T>(arr: T[], seed: number): T[] {
   const a = [...arr]
   const r = rng(seed)
   for (let i = a.length - 1; i > 0; i--) {

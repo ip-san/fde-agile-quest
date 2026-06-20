@@ -6,6 +6,7 @@ import {
   hearingCtaFor,
   hearingPromptFor,
   scoreHearing,
+  shuffle,
 } from '../../data/minigames'
 import { sfxTick } from '../../engine/sfx'
 import type { ExecTier } from '../../types'
@@ -14,7 +15,7 @@ interface Props {
   seed: number
   theme?: HearingTheme
   /** イベント固有の問い（指定時は良問2以上＋悪問1以上を満たす場合に優先使用） */
-  hearingOptions?: { text: string; good: boolean }[]
+  hearingOptions?: HearingOption[]
   onResolve: (tier: ExecTier) => void
 }
 
@@ -29,18 +30,8 @@ export function MiniGameHearing({ seed, theme, hearingOptions, onResolve }: Prop
       hearingOptions.filter((o) => o.good).length >= 2 &&
       hearingOptions.filter((o) => !o.good).length >= 1
     ) {
-      // シード付きFisher-Yates（minigames.ts の shuffle と同一アルゴリズム・同一乱数分布）
-      const a = [...hearingOptions]
-      let s = seed >>> 0 || 1
-      const r = () => {
-        s = (s * 1664525 + 1013904223) >>> 0
-        return s / 2 ** 32
-      }
-      for (let i = a.length - 1; i > 0; i--) {
-        const j = Math.floor(r() * (i + 1))
-        ;[a[i], a[j]] = [a[j], a[i]]
-      }
-      return a
+      // 共通の shuffle（minigames.ts）でシードを揃え、dealHearing と同一分布にする
+      return shuffle(hearingOptions, seed)
     }
     return dealHearing(seed, theme)
   })

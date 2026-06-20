@@ -1,4 +1,4 @@
-import { type HearingTheme, hearingTitleFor } from '../../data/minigames'
+import { type HearingOption, type HearingTheme, hearingTitleFor } from '../../data/minigames'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
 import type { ExecTier, MiniGameKind } from '../../types'
 import { MiniGameDev } from './MiniGameDev'
@@ -11,7 +11,7 @@ interface Props {
   /** ヒアリングの問いを相手・場面で変えるテーマ（hearing のみ使用） */
   theme?: HearingTheme
   /** イベント固有のヒアリング問い（hearing のみ使用。あればシャッフルして優先提示） */
-  hearingOptions?: { text: string; good: boolean }[]
+  hearingOptions?: HearingOption[]
   onDone: (tier: ExecTier) => void
   onSkip: () => void
 }
