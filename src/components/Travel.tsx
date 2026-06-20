@@ -29,6 +29,41 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
     () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
   )
 
+  // マップは“地理”として読ませる：現地（歩いて回る）とリモート（画面越し）でゾーンを分ける。
+  const onsiteLocations = LOCATION_ORDER.filter((id) => !LOCATIONS[id].remote)
+  const remoteLocations = LOCATION_ORDER.filter((id) => LOCATIONS[id].remote)
+
+  /** マップのノード（行き先ボタン）。★＝今日の論点（朝会で誰かが推した場所）。 */
+  const renderNode = (id: LocationId, initialFocus: boolean) => {
+    const loc = LOCATIONS[id]
+    const live = liveLocations.has(id)
+    return (
+      <button
+        key={id}
+        type="button"
+        onClick={() => onTravel(id)}
+        data-initial-focus={initialFocus ? '' : undefined}
+        className={`flex flex-col gap-1 rounded-xl border p-3 text-left transition active:scale-95 ${
+          live
+            ? 'border-amber-500/50 bg-amber-950/20 hover:border-amber-300 hover:bg-amber-900/30'
+            : 'border-slate-700 bg-slate-900/50 hover:border-sky-400 hover:bg-slate-800/60'
+        }`}
+      >
+        <span className="flex items-center gap-1.5 text-sm font-bold text-slate-100">
+          {live && <span aria-hidden="true">★</span>}
+          <span aria-hidden="true">{loc.emoji}</span>
+          {loc.short}
+          {loc.remote && (
+            <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300">
+              リモート
+            </span>
+          )}
+        </span>
+        <span className="text-[11px] leading-snug text-slate-400">{loc.desc}</span>
+      </button>
+    )
+  }
+
   return (
     <div className="flex w-full flex-col gap-4">
       {/* リモート朝会パネル（競合する主張） */}
@@ -95,42 +130,57 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
         </p>
       )}
 
-      {/* 現地マップ：論点（候補）から1つ選ぶ */}
-      <section>
-        <h2 className="mb-2 px-1 text-xs font-semibold text-slate-400">
-          🗺️ どこへ向かう？（★＝今日の論点。1つ選ぶと他は見送り）
-        </h2>
-        <div className="grid grid-cols-2 gap-2">
-          {LOCATION_ORDER.map((id, i) => {
-            const loc = LOCATIONS[id]
-            const live = liveLocations.has(id)
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => onTravel(id)}
-                data-initial-focus={i === 0 ? '' : undefined}
-                className={`flex flex-col gap-1 rounded-xl border p-3 text-left transition active:scale-95 ${
-                  live
-                    ? 'border-amber-500/50 bg-amber-950/20 hover:border-amber-300 hover:bg-amber-900/30'
-                    : 'border-slate-700 bg-slate-900/50 hover:border-sky-400 hover:bg-slate-800/60'
-                }`}
-              >
-                <span className="flex items-center gap-1.5 text-sm font-bold text-slate-100">
-                  {live && <span aria-hidden="true">★</span>}
-                  <span aria-hidden="true">{loc.emoji}</span>
-                  {loc.short}
-                  {loc.remote && (
-                    <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300">
-                      リモート
-                    </span>
-                  )}
-                </span>
-                <span className="text-[11px] leading-snug text-slate-400">{loc.desc}</span>
-              </button>
-            )
-          })}
+      {/* 朝会→マップの転換。「声は聞いた、行き先はあなたが決める」を一目で。 */}
+      <div className="flex items-center gap-2 px-1 text-[10px] font-semibold text-slate-500">
+        <span className="h-px flex-1 bg-slate-700" />
+        <span aria-hidden="true">▼</span>
+        <span>声は聞いた。行き先を決める</span>
+        <span aria-hidden="true">▼</span>
+        <span className="h-px flex-1 bg-slate-700" />
+      </div>
+
+      {/* 現地マップ：朝会パネル（実線カード）と視覚言語を変える——設計図グリッド＋破線フレーム＝「地図」。
+          現在地ピンと現地／リモートのゾーン分けで“どこを歩くか”を空間として読ませる。 */}
+      <section
+        aria-label="現地マップ"
+        className="overflow-hidden rounded-2xl border-2 border-dashed border-sky-700/60 bg-slate-950/70 bg-[size:18px_18px] p-3 [background-image:linear-gradient(rgba(56,189,248,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(56,189,248,0.05)_1px,transparent_1px)]"
+      >
+        <div className="mb-2 flex items-center justify-between gap-2 px-1">
+          <h2 className="text-sm font-bold text-sky-100">
+            <span aria-hidden="true">🗺️</span> 現地マップ — どこへ向かう？
+          </h2>
+          <span className="shrink-0 rounded-full border border-sky-700/60 bg-slate-900/70 px-2 py-0.5 text-[10px] text-sky-300">
+            ★＝今日の論点 / 1つ選ぶと他は見送り
+          </span>
         </div>
+
+        {/* 現在地ピン（あなたはカルゴ物流に常駐している＝地図の起点） */}
+        <p className="mb-3 flex items-center gap-1.5 rounded-lg border border-sky-600/40 bg-sky-950/40 px-2 py-1.5 text-[11px] text-sky-200">
+          <span aria-hidden="true">📍</span>
+          <span>
+            現在地：<span className="font-bold">{displayName('cargo')}</span>に常駐中（あなた＝FDE）。
+            下のノードへ歩いて向かう。
+          </span>
+        </p>
+
+        {/* 現地ゾーン（歩いて回れる場所） */}
+        <p className="mb-1.5 px-1 text-[10px] font-semibold tracking-wide text-slate-400">
+          📍 現地（{displayName('cargo')}・歩いて移動）
+        </p>
+        <div className="grid grid-cols-2 gap-2">{onsiteLocations.map((id, i) => renderNode(id, i === 0))}</div>
+
+        {/* リモートゾーンへの接続線（物理的に離れた場所＝画面越しに“訪ねる”） */}
+        {remoteLocations.length > 0 && (
+          <>
+            <div className="my-2 flex items-center gap-2 px-1 text-[10px] font-semibold text-emerald-300/70">
+              <span className="h-px flex-1 border-t border-dashed border-emerald-700/50" />
+              <span aria-hidden="true">📡</span>
+              <span>リモート接続</span>
+              <span className="h-px flex-1 border-t border-dashed border-emerald-700/50" />
+            </div>
+            <div className="grid grid-cols-2 gap-2">{remoteLocations.map((id) => renderNode(id, false))}</div>
+          </>
+        )}
       </section>
     </div>
   )
