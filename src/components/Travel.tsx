@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { displayName } from '../data/chapters/chapter-01/names'
+import { AVAILABLE_IMAGES, imageUrl } from '../data/images'
 import { LOCATION_ORDER, LOCATIONS, QUIET_BY_LOCATION, type StandupVoice, standupFor } from '../data/locations'
 import type { GameEvent, LocationId } from '../types'
 import { RichText } from './RichText'
@@ -20,9 +21,24 @@ const TONE: Record<StandupVoice['tone'], { ring: string; badge: string; name: st
   emerald: { ring: 'border-emerald-500/40', badge: 'bg-emerald-500/15 text-emerald-300', name: 'text-emerald-200' },
 }
 
-// 設計図グリッド背景（朝会パネルの実線カードと視覚言語を変える＝「見取り図／地図」と認識させる）
+// 設計図グリッド背景（画像マップ未生成時のフォールバック＝見取り図に使う）
 const BLUEPRINT =
   'bg-[size:16px_16px] [background-image:linear-gradient(rgba(56,189,248,0.11)_1px,transparent_1px),linear-gradient(90deg,rgba(56,189,248,0.11)_1px,transparent_1px)]'
+
+// 俯瞰イラストマップ（public/img/map-cargo.jpg）。生成・取り込み・AVAILABLE_IMAGES 登録が済むと
+// 背景画像マップに自動で切り替わる（未登録ならフォールバックの見取り図）。
+const MAP_IMG = 'map-cargo'
+// 物理6拠点＋現在地の、画像上の位置（%）。生成画像の部屋配置（奥3／手前3）に合わせる。
+// 取り込み後に実物を見ながら微調整する前提の初期値。
+const MAP_PIN_COORDS: Record<string, { x: number; y: number }> = {
+  warehouse: { x: 19, y: 30 },
+  serverroom: { x: 50, y: 27 },
+  client: { x: 81, y: 30 },
+  soumu: { x: 19, y: 72 },
+  jinji: { x: 50, y: 75 },
+  keiri: { x: 81, y: 72 },
+  you: { x: 50, y: 52 },
+}
 
 /** リモート・デイリースクラム（競合する主張）＋現地マップ。
  *  3役がそれぞれ別の場所のイベントを推す。1つだけ選べる——見送った重要事は後で響く。 */
@@ -86,7 +102,58 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
     )
   }
 
-  // 見取り図の行：上段＝奥の3部屋、下段＝手前の3部屋（倉庫/電算室/会議室 ｜ 総務/人事/経理）
+  // 俯瞰イラストマップ画像が取り込み済みなら背景画像マップ、無ければ見取り図にフォールバック。
+  const hasMapImg = AVAILABLE_IMAGES.has(MAP_IMG)
+
+  /** 画像マップ上の“ピン”。背景イラストの上に重ねる。タップ→詳細、選択中の再タップで向かう。 */
+  const renderMapPin = (id: LocationId, initialFocus: boolean) => {
+    const loc = LOCATIONS[id]
+    const live = liveLocations.has(id)
+    const selected = id === selectedId
+    const c = MAP_PIN_COORDS[id] ?? { x: 50, y: 50 }
+    return (
+      <button
+        key={id}
+        type="button"
+        aria-pressed={selected}
+        aria-label={`${loc.label}${live ? '（今日の論点）' : ''}`}
+        data-initial-focus={initialFocus ? '' : undefined}
+        onClick={() => (selected ? onTravel(id) : setSelectedId(id))}
+        style={{ left: `${c.x}%`, top: `${c.y}%` }}
+        className="group absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-0.5 transition active:scale-95"
+      >
+        <span
+          className={`relative flex h-9 w-9 items-center justify-center rounded-full border-2 text-base shadow-lg backdrop-blur-sm transition ${
+            selected
+              ? 'border-sky-300 bg-sky-900/85 ring-2 ring-sky-400/50'
+              : live
+                ? 'border-amber-300 bg-amber-950/80 ring-2 ring-amber-400/50'
+                : 'border-slate-200/70 bg-slate-900/80 group-hover:border-sky-300'
+          }`}
+        >
+          <span aria-hidden="true">{loc.emoji}</span>
+          {live && (
+            <span aria-hidden="true" className="absolute -right-1 -top-2 text-xs leading-none text-amber-300">
+              ★
+            </span>
+          )}
+        </span>
+        <span
+          className={`max-w-[6rem] truncate rounded px-1 text-[10px] font-bold leading-tight shadow-sm ${
+            selected
+              ? 'bg-sky-500/30 text-sky-50'
+              : live
+                ? 'bg-amber-500/25 text-amber-100'
+                : 'bg-slate-950/70 text-slate-100'
+          }`}
+        >
+          {loc.short}
+        </span>
+      </button>
+    )
+  }
+
+  // 見取り図の行（フォールバック）：上段＝奥の3部屋、下段＝手前の3部屋（倉庫/電算室/会議室 ｜ 総務/人事/経理）
   const backRooms = floorRooms.slice(0, 3)
   const frontRooms = floorRooms.slice(3)
 
@@ -183,42 +250,81 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
           </span>
         </div>
 
-        {/* 見取り図キャンバス（建物の外壁＝太線、設計図グリッド背景） */}
-        <div
-          className={`relative overflow-hidden rounded-md border-[3px] border-slate-500/70 bg-slate-950/60 p-2 ${BLUEPRINT}`}
-        >
-          {/* 図面の見出し（カルトゥーシュ）と方位 */}
-          <div className="mb-1.5 flex items-center justify-between px-0.5">
-            <span className="text-[9px] font-semibold tracking-wide text-slate-500">
-              🏭 {displayName('cargo')}・見取り図
+        {hasMapImg ? (
+          /* 俯瞰イラストマップ：背景画像そのものが地図。拠点はその上のピン。 */
+          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-md border-[3px] border-slate-500/70 bg-slate-950/60">
+            <img
+              src={imageUrl(MAP_IMG)}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            {/* ピンの可読性のための薄い暗幕 */}
+            <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-b from-slate-950/10 to-slate-950/40" />
+            {/* 図面の見出しと方位 */}
+            <span className="absolute left-2 top-1.5 rounded bg-slate-950/60 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-slate-200 backdrop-blur-sm">
+              🏭 {displayName('cargo')}
             </span>
-            <span className="flex flex-col items-center leading-none text-slate-500" aria-hidden="true">
-              <span className="text-[8px] font-bold text-sky-400">N</span>
-              <span className="text-[11px]">🧭</span>
+            <span
+              className="absolute right-2 top-1.5 flex flex-col items-center leading-none text-slate-200"
+              aria-hidden="true"
+            >
+              <span className="text-[8px] font-bold text-sky-300">N</span>
+              <span className="text-[12px]">🧭</span>
             </span>
-          </div>
-
-          {/* 奥の3部屋（壁を共有して間取り図に） */}
-          <div className="grid grid-cols-3">{backRooms.map((id, i) => renderRoom(id, i === 0))}</div>
-
-          {/* 廊下（部屋をつなぐ通路）＋現在地 */}
-          <div className="my-1.5 flex items-center justify-center gap-2 rounded border border-dashed border-slate-600/60 bg-slate-800/30 py-1 text-[9px] font-semibold text-slate-400">
-            <span className="h-px w-4 bg-slate-600" aria-hidden="true" />
-            <span className="relative flex items-center gap-1 text-sky-200">
-              <span className="relative flex h-3 w-3 items-center justify-center" aria-hidden="true">
+            {/* 拠点ピン */}
+            {floorRooms.map((id, i) => renderMapPin(id, i === 0))}
+            {/* 現在地ピン（あなた） */}
+            <div
+              className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center"
+              style={{ left: `${MAP_PIN_COORDS.you.x}%`, top: `${MAP_PIN_COORDS.you.y}%` }}
+            >
+              <span className="relative flex h-7 w-7 items-center justify-center" aria-hidden="true">
                 <span
-                  className={`absolute inline-flex h-3 w-3 rounded-full bg-sky-400/40 ${reduceMotion ? '' : 'animate-ping'}`}
+                  className={`absolute inline-flex h-7 w-7 rounded-full bg-sky-400/40 ${reduceMotion ? '' : 'animate-ping'}`}
                 />
-                <span className="relative h-1.5 w-1.5 rounded-full bg-sky-300" />
+                <span className="relative text-base drop-shadow">📍</span>
               </span>
-              現在地（あなた）— 廊下
-            </span>
-            <span className="h-px w-4 bg-slate-600" aria-hidden="true" />
+              <span className="rounded bg-sky-500/40 px-1 text-[9px] font-bold text-sky-50 shadow-sm">あなた</span>
+            </div>
           </div>
+        ) : (
+          /* フォールバック：見取り図（壁線＋設計図グリッド）。画像マップ未生成時のみ。 */
+          <div
+            className={`relative overflow-hidden rounded-md border-[3px] border-slate-500/70 bg-slate-950/60 p-2 ${BLUEPRINT}`}
+          >
+            <div className="mb-1.5 flex items-center justify-between px-0.5">
+              <span className="text-[9px] font-semibold tracking-wide text-slate-500">
+                🏭 {displayName('cargo')}・見取り図
+              </span>
+              <span className="flex flex-col items-center leading-none text-slate-500" aria-hidden="true">
+                <span className="text-[8px] font-bold text-sky-400">N</span>
+                <span className="text-[11px]">🧭</span>
+              </span>
+            </div>
 
-          {/* 手前の3部屋（壁を共有して間取り図に） */}
-          <div className="grid grid-cols-3">{frontRooms.map((id) => renderRoom(id, false))}</div>
-        </div>
+            {/* 奥の3部屋（壁を共有して間取り図に） */}
+            <div className="grid grid-cols-3">{backRooms.map((id, i) => renderRoom(id, i === 0))}</div>
+
+            {/* 廊下（部屋をつなぐ通路）＋現在地 */}
+            <div className="my-1.5 flex items-center justify-center gap-2 rounded border border-dashed border-slate-600/60 bg-slate-800/30 py-1 text-[9px] font-semibold text-slate-400">
+              <span className="h-px w-4 bg-slate-600" aria-hidden="true" />
+              <span className="relative flex items-center gap-1 text-sky-200">
+                <span className="relative flex h-3 w-3 items-center justify-center" aria-hidden="true">
+                  <span
+                    className={`absolute inline-flex h-3 w-3 rounded-full bg-sky-400/40 ${reduceMotion ? '' : 'animate-ping'}`}
+                  />
+                  <span className="relative h-1.5 w-1.5 rounded-full bg-sky-300" />
+                </span>
+                現在地（あなた）— 廊下
+              </span>
+              <span className="h-px w-4 bg-slate-600" aria-hidden="true" />
+            </div>
+
+            {/* 手前の3部屋（壁を共有して間取り図に） */}
+            <div className="grid grid-cols-3">{frontRooms.map((id) => renderRoom(id, false))}</div>
+          </div>
+        )}
 
         {/* 画面の中（デジタル）ゾーン：建物の部屋ではなく“画面越し”のコード／開発。物理マップと分離する。 */}
         {digitalLocations.length > 0 && (
