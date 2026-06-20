@@ -74,6 +74,21 @@
 - **台帳の併用**: Issue/ボード＝仕事の真実源（総監督が触る）。`ledger/findings.md`＝loop 内部メモ（細かい🟡の
   持ち越し）、`ledger/RUNLOG.md`＝作業記録。Issue には要約だけコメントし、細粒度はファイルに残す。
 
+## 無人夜間運用（自走ドライバ）
+
+就寝前にこれを実行すると、`Approved`(GO) の Issue を空になるまで自動で処理し、あとは GO 待ちでアイドルする:
+```
+/loop @.claude/agents/loop-autonomous.md
+```
+- **ローカル方式**＝このセッション/PC を起動したままにする（クラウド cron ではない）。止めるときは `/loop` 停止。
+- 1ティック: ①GO ゲート(`next-task.mjs`) → ②空なら**エージェント0体で 30 分スリープ**（空回りゼロ） →
+  ③GO があれば `loop-runbook.md` を1回実行し、**スリープせず次の GO を即処理**（Approved が空になるまで連続）。
+- 上限なし（Approved を空にするまで）。収束しない Issue（review round>5 / ゲート緑化不可 / 正本改変）は
+  `Blocked` にコメントして次へ進み、無人でも1件で全体を止めない。
+- **品質ゲートは指揮者が直接 Bash で回す**（gatekeeper 委任時にワークツリーが reset される事故を避ける。
+  委任する場合は委任後に `git status` で差分保持を必ず検証）。詳細は `loop-autonomous.md`。
+- 朝は ボードの `In review`（レビュー待ち PR）と `Blocked`（判断待ち）を見る。
+
 ## loop runbook（1イテレーション）
 
 サブエージェントは他のサブエージェントを起動できないため、各 agent を `Agent` ツールで委任して繋ぐのは
