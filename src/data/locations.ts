@@ -213,6 +213,7 @@ function cleanTitle(t: string): string {
 /** “価値/障害/コード”の語彙が不適切になる題材（人事・総務・経理・不正・社内政治）か。
  *  中立バンクで「筋を通す/事実と記録を確かめる」として扱い、称揚・矮小化を避ける。 */
 function isSensitiveEvent(event: GameEvent): boolean {
+  if (event.sensitive) return true
   const loc = locationOf(event)
   if (loc === 'soumu' || loc === 'jinji' || loc === 'keiri') return true
   const fraud = (f?: GameFlag) => f === 'fraudClue' || f === 'fraudCase'

@@ -117,6 +117,7 @@ describe('standupFor（朝会＝競合する主張）', () => {
       const loc = locationOf(e)
       const fraud = (f?: string) => f === 'fraudClue' || f === 'fraudCase'
       return (
+        e.sensitive ||
         loc === 'soumu' ||
         loc === 'jinji' ||
         loc === 'keiri' ||
@@ -129,6 +130,16 @@ describe('standupFor（朝会＝競合する主張）', () => {
       const line = standupFor([e])[0].line
       for (const bad of SENSITIVE_FORBIDDEN) expect(line, `${e.id}: ${line}`).not.toContain(bad)
     }
+  })
+
+  it('sensitive:true は場所に依らず中立ルーティングを起動する（コスト圧力・本社通達・下請け値下げ等）', () => {
+    // 人事/総務/経理でも不正フラグでもない（場所=client既定）が、明示マークで中立に回る。
+    // 禁止語入りの hints を与えても採用されず、SENSITIVE_LINES へ差し戻る。
+    const v = standupFor([
+      synth({ id: 'cc', segment: 'kokyaku', sensitive: true, hints: { po: 'コストを片付けて価値に直結させる。' } }),
+    ])
+    expect(v[0].line).not.toBe('コストを片付けて価値に直結させる。')
+    for (const bad of SENSITIVE_FORBIDDEN) expect(v[0].line).not.toContain(bad)
   })
 
   it('sensitive 事案で上書き(hints/advocacy)が禁止語を含んでも、実行時に中立テンプレへ差し戻す', () => {

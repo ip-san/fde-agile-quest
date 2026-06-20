@@ -147,6 +147,10 @@ export interface GameEvent {
   missedFlag?: GameFlag
   /** 朝会で各役割がこの候補を推す“主張”（任意）。未指定なら役割×場所テンプレから自動生成 */
   advocacy?: Partial<Record<DailyRole, string>>
+  /** 人員削減・コスト圧力・社内政治など、「価値/障害/コード」の語彙で語ると称揚・矮小化に
+   *  なる題材。場所（人事/総務/経理）や不正フラグで拾えないもの（本社通達・下請け値下げ等）を
+   *  明示マークし、朝会を中立バンク＋禁止語フォールバックに回す（isSensitiveEvent の単一の真実源）。 */
+  sensitive?: boolean
 }
 
 /** スプリント定義 */
