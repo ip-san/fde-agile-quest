@@ -402,7 +402,9 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         label: 'レガシーと承認フローを“前提”として受け入れ、設計条件にする',
         effects: { insight: 1, culture: 1 },
         repo: { coverage: 10 },
-        resultText: '{{ガバナンス}}は敵でなく入場券。古い仕組みを笑わず読み解くと、本当の制約と業務の理由が見えた。',
+        resultText:
+          '{{ガバナンス}}は敵でなく入場券。承認フローを設計条件に組み込むと、20年ものの基幹を捨てず安全に橋渡しする道筋が立った。',
+        seedId: 'legacy-bridge',
       },
     ],
   },
