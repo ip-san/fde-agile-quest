@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { SPRINTS } from '../data/chapters/chapter-01'
 import {
   backlogItem,
@@ -169,9 +169,12 @@ function PlanningView({
 
   const [draft, setDraft] = useState<string[]>(officialActive)
   const [verdict, setVerdict] = useState<ProposalVerdict | null>(null)
-  useEffect(() => {
+  const [prevOfficialActive, setPrevOfficialActive] = useState<string[]>(officialActive)
+  if (prevOfficialActive !== officialActive) {
+    setPrevOfficialActive(officialActive)
     setDraft(officialActive)
-  }, [officialActive])
+    setVerdict(null)
+  }
 
   const dirty = !sameOrder(draft, officialActive)
   const move = (id: string, dir: -1 | 1) => {

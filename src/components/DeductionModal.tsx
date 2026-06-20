@@ -26,11 +26,6 @@ export function DeductionModal({ event, onResolve }: Props) {
   const ref = useFocusTrap<HTMLDivElement>()
   const correct = !!picked?.truth
 
-  // 推理が無いイベントに誤って表示された場合は素通り（防御的）。
-  useEffect(() => {
-    if (!d) onResolve(false)
-  }, [d, onResolve])
-
   // 解答した瞬間に決定的瞬間の音（当たり＝突き上げる一撃／外し＝下降）。
   // biome-ignore lint/correctness/useExhaustiveDependencies: 解答（picked）が確定した一度だけ鳴らす
   useEffect(() => {

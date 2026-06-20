@@ -38,21 +38,26 @@ export function EventModal({ event, unexpected, aiTokens, revealHint, timed, onC
   const timerOn = !!timed && !!restraintChoice && !timerOff
   const [remaining, setRemaining] = useState(TIMED_SECONDS)
   const firedRef = useRef(false)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: イベントごとに一度だけ仕掛ける（key 再マウント前提。restraintChoice/onChoose は event から導出）
+  // ref で最新の restraintChoice/onChoose を追跡し、deps に含めなくても stale にならない
+  // （timerOn が変化した時点の最新値が ref に入っているため）
+  const restraintChoiceRef = useRef(restraintChoice)
+  restraintChoiceRef.current = restraintChoice
+  const onChooseRef = useRef(onChoose)
+  onChooseRef.current = onChoose
   useEffect(() => {
-    if (!timerOn || !restraintChoice) return
+    if (!timerOn || !restraintChoiceRef.current) return
     const tick = setInterval(() => setRemaining((r) => Math.max(0, r - 1)), 1000)
     const fire = setTimeout(() => {
-      if (firedRef.current) return
+      if (firedRef.current || !restraintChoiceRef.current) return
       firedRef.current = true
       sfxDecide()
-      onChoose(restraintChoice)
+      onChooseRef.current(restraintChoiceRef.current)
     }, TIMED_SECONDS * 1000)
     return () => {
       clearInterval(tick)
       clearTimeout(fire)
     }
-  }, [timerOn, event.id])
+  }, [timerOn])
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:px-safe sm:pt-safe sm:pb-safe">

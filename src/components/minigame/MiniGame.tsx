@@ -18,7 +18,8 @@ interface Props {
 
 const HEADING: Record<MiniGameKind, { tag: string; title: string }> = {
   dev: { tag: '実行：開発', title: '手を動かす' },
-  hearing: { tag: '実行：ヒアリング', title: '現場の声を掘る' },
+  // title は hearingTitleFor(theme) で必ず上書きされるため空文字（デフォルト値は使われない）
+  hearing: { tag: '実行：ヒアリング', title: '' },
   review: { tag: '実行：レビュー', title: 'AIの差分を点検する' },
 }
 
