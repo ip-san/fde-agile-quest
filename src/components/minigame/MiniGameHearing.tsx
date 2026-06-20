@@ -6,13 +6,34 @@ import type { ExecTier } from '../../types'
 interface Props {
   seed: number
   theme?: HearingTheme
+  /** イベント固有の問い（指定時は良問2以上＋悪問1以上を満たす場合に優先使用） */
+  hearingOptions?: { text: string; good: boolean }[]
   onResolve: (tier: ExecTier) => void
 }
 
 /** ヒアリング・ミニゲーム：5つの問いから「深掘りになる質問」を2つ選ぶ（現場主義）。
- *  theme で相手・場面に応じた問いを出す（毎回同じにならないように）。 */
-export function MiniGameHearing({ seed, theme, onResolve }: Props) {
-  const [options] = useState<HearingOption[]>(() => dealHearing(seed, theme))
+ *  hearingOptions がある場合はイベント固有の問いを（良問2+悪問1以上を満たすとき）シードでシャッフルして使用。
+ *  条件を満たさなければ従来の dealHearing(seed, theme) にフォールバック。 */
+export function MiniGameHearing({ seed, theme, hearingOptions, onResolve }: Props) {
+  const [options] = useState<HearingOption[]>(() => {
+    // イベント固有の問いが十分（良問2以上かつ悪問1以上）なら優先使用
+    if (
+      hearingOptions &&
+      hearingOptions.filter((o) => o.good).length >= 2 &&
+      hearingOptions.filter((o) => !o.good).length >= 1
+    ) {
+      // シード付きFisher-Yates（minigames.tsのshuffleと同アルゴリズム・インライン化してimport増加を避ける）
+      const a = [...hearingOptions]
+      let s = seed >>> 0 || 1
+      for (let i = a.length - 1; i > 0; i--) {
+        s = (s * 1664525 + 1013904223) >>> 0
+        const j = s % (i + 1)
+        ;[a[i], a[j]] = [a[j], a[i]]
+      }
+      return a
+    }
+    return dealHearing(seed, theme)
+  })
   const [picked, setPicked] = useState<number[]>([])
   const ready = picked.length === 2
 

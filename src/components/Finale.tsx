@@ -27,7 +27,6 @@ export function Finale({ onResolve }: Props) {
             key={c.id}
             type="button"
             onClick={() => onResolve(c.flag)}
-            // biome-ignore lint/a11y/noAutofocus: フィナーレ単独画面の初期フォーカス
             autoFocus={i === 0}
             className={`block w-full rounded-xl border px-4 py-3 text-left text-sm font-medium transition active:scale-95 ${
               c.warn

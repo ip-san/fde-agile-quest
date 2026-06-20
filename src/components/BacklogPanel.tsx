@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { SPRINTS } from '../data/chapters/chapter-01'
 import {
   backlogItem,
@@ -6,6 +6,7 @@ import {
   canStart,
   forecastPoints,
   GEN_TOKEN_COST,
+  isDiscoverablePbi,
   type ProposalVerdict,
   REVIEW_CAPACITY,
   reviewBacklogProposal,
@@ -54,6 +55,7 @@ export function BacklogPanel({ onClose }: Props) {
     reviewCapacity,
     velocity,
     aiTokens,
+    lastCarryover,
     commitBacklogOrder,
     toggleForecast,
     startItem,
@@ -93,6 +95,7 @@ export function BacklogPanel({ onClose }: Props) {
               sprintForecast={sprintForecast}
               backlogDone={backlogDone}
               velocity={velocity}
+              lastCarryover={lastCarryover}
               commitBacklogOrder={commitBacklogOrder}
               toggleForecast={toggleForecast}
             />
@@ -100,6 +103,7 @@ export function BacklogPanel({ onClose }: Props) {
             <KanbanView
               isWork={isWork}
               sprintForecast={sprintForecast}
+              backlogOrder={backlogOrder}
               doneSet={doneSet}
               inProgSet={inProgSet}
               inProgress={inProgress}
@@ -135,6 +139,7 @@ interface PlanningProps {
   sprintForecast: string[]
   backlogDone: string[]
   velocity: number[]
+  lastCarryover: string[]
   commitBacklogOrder: (ids: string[]) => void
   toggleForecast: (id: string) => void
 }
@@ -145,26 +150,28 @@ function PlanningView({
   sprintForecast,
   backlogDone,
   velocity,
+  lastCarryover,
   commitBacklogOrder,
   toggleForecast,
 }: PlanningProps) {
-  // 予測の“目安”＝今スプリントで実際に終わらせられる量。律速は人のレビュー容量なので
+  // 予測の”目安”＝今スプリントで実際に終わらせられる量。律速は人のレビュー容量なので
   // それを基準にする（前回ベロシティではなく、真のボトルネックに合わせる）。
   const capacity = REVIEW_CAPACITY
+  // 前回スプリントから持ち越された PBI のうち、まだ未 done のもの
+  const carryoverSet = useMemo(() => new Set(lastCarryover), [lastCarryover])
   const fpts = forecastPoints({ sprintForecast })
   const over = fpts > capacity
-  const doneSet = new Set(backlogDone)
-  const forecastSet = new Set(sprintForecast)
+  const doneSet = useMemo(() => new Set(backlogDone), [backlogDone])
+  const forecastSet = useMemo(() => new Set(sprintForecast), [sprintForecast])
 
-  const officialActive = backlogOrder.filter((id) => !doneSet.has(id))
-  const doneList = backlogOrder.filter((id) => doneSet.has(id))
+  const officialActive = useMemo(() => backlogOrder.filter((id) => !doneSet.has(id)), [backlogOrder, doneSet])
+  const doneList = useMemo(() => backlogOrder.filter((id) => doneSet.has(id)), [backlogOrder, doneSet])
 
   const [draft, setDraft] = useState<string[]>(officialActive)
   const [verdict, setVerdict] = useState<ProposalVerdict | null>(null)
   useEffect(() => {
     setDraft(officialActive)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [backlogOrder])
+  }, [officialActive])
 
   const dirty = !sameOrder(draft, officialActive)
   const move = (id: string, dir: -1 | 1) => {
@@ -201,6 +208,17 @@ function PlanningView({
           🗂 <RichText text="{{プロダクトバックログ}}" />
           <span className="ml-1 font-normal text-slate-400">価値順・上位から選ぶ</span>
         </h3>
+
+        {/* 持ち越しがある場合だけ注意書きを出す */}
+        {carryoverSet.size > 0 && (
+          <p
+            role="note"
+            className="mb-2 rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs leading-relaxed text-rose-300"
+          >
+            ↪ 前回終わらなかった項目がバックログに戻っています。今回の予測に組み直しましょう。
+          </p>
+        )}
+
         <ul className="space-y-1.5">
           {rows.map((id) => {
             const item = backlogItem(id)
@@ -249,6 +267,15 @@ function PlanningView({
                     <span className="rounded bg-slate-700 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-slate-300">
                       {item.estimate}pt
                     </span>
+                    {/* 前回持ち越し・未done の項目にバッジ表示 */}
+                    {carryoverSet.has(id) && !isDone && (
+                      <span
+                        aria-label="前回持ち越し"
+                        className="ml-1.5 rounded bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-rose-300"
+                      >
+                        ↪ 前回持ち越し
+                      </span>
+                    )}
                     <p className={`mt-1 text-sm ${isDone ? 'text-slate-400 line-through' : 'text-slate-100'}`}>
                       <RichText text={item.title} />
                     </p>
@@ -278,7 +305,11 @@ function PlanningView({
 
         <div className="mt-2 space-y-2 rounded-xl border border-slate-700 bg-slate-800/30 px-3 py-2.5">
           {verdict && (
-            <p className={`text-xs leading-relaxed ${verdict.accepted ? 'text-emerald-300' : 'text-amber-300'}`}>
+            <p
+              role="status"
+              aria-live="polite"
+              className={`text-xs leading-relaxed ${verdict.accepted ? 'text-emerald-300' : 'text-amber-300'}`}
+            >
               <span className="font-semibold">プロダクトオーナー：</span>
               {verdict.accepted ? (
                 'いい並びだ。今のゴールに効く順になっている。これで行こう。'
@@ -291,11 +322,17 @@ function PlanningView({
               )}
             </p>
           )}
+          {!dirty && !verdict && (
+            <p id="propose-hint" className="text-xs text-slate-500">
+              ▲▼で並び替えると提案できます
+            </p>
+          )}
           <div className="flex gap-2">
             <button
               type="button"
               onClick={submitProposal}
               disabled={!dirty}
+              aria-describedby={!dirty && !verdict ? 'propose-hint' : undefined}
               className="flex-1 rounded-lg bg-amber-500/90 py-2 text-sm font-bold text-slate-950 transition hover:bg-amber-400 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
             >
               並びをPOに提案する
@@ -390,6 +427,8 @@ function PlanningView({
 interface KanbanProps {
   isWork: boolean
   sprintForecast: string[]
+  /** 見えているプロダクトバックログ全体（read-only 参照用） */
+  backlogOrder: string[]
   doneSet: Set<string>
   inProgSet: Set<string>
   inProgress: string[]
@@ -404,6 +443,7 @@ interface KanbanProps {
 function KanbanView({
   isWork,
   sprintForecast,
+  backlogOrder,
   doneSet,
   inProgSet,
   inProgress,
@@ -569,6 +609,9 @@ function KanbanView({
         {done.length === 0 && <Empty />}
       </Column>
 
+      {/* プロダクトバックログ全体の参照（read-only）。スプリント中でも全体像を把握できる。 */}
+      <ProductBacklogReadOnly backlogOrder={backlogOrder} doneSet={doneSet} />
+
       {/* レビュー・ミニゲーム（深さ確定後） */}
       {pending && (
         <MiniGame
@@ -585,6 +628,65 @@ function KanbanView({
         />
       )}
     </>
+  )
+}
+
+/** スプリント中にプロダクトバックログ全体を read-only で参照するセクション（折りたたみ式）。
+ *  発見可PBI（ヒアリングで掘り当てた項目）には「🔎 現場で発見」バッジを付ける。 */
+function ProductBacklogReadOnly({ backlogOrder, doneSet }: { backlogOrder: string[]; doneSet: Set<string> }) {
+  const [open, setOpen] = useState(false)
+  const hasDisc = backlogOrder.some(isDiscoverablePbi)
+  return (
+    <section className="rounded-xl border border-slate-700 bg-slate-900/40">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="flex min-h-[44px] w-full items-center justify-between gap-2 px-3 py-2 transition hover:bg-slate-800 active:scale-95 rounded-xl"
+      >
+        <span className="text-xs font-bold text-slate-300">
+          <span aria-hidden="true">🗂</span> <RichText text="{{プロダクトバックログ}}" />
+          <span className="ml-1 font-normal text-slate-400">全体を参照（読取専用）</span>
+          {hasDisc && (
+            <span className="ml-2 rounded bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-rose-300">
+              🔎 発見あり
+            </span>
+          )}
+        </span>
+        <span className="text-xs text-slate-500" aria-hidden="true">
+          {open ? '▲' : '▼'}
+        </span>
+      </button>
+      {open && (
+        <ul className="space-y-1.5 border-t border-slate-800 px-3 py-2">
+          {backlogOrder.map((id) => {
+            const item = backlogItem(id)
+            if (!item) return null
+            const done = doneSet.has(id)
+            const disc = isDiscoverablePbi(id)
+            return (
+              <li
+                key={id}
+                className={`flex items-start gap-2 rounded-lg border px-2.5 py-1.5 ${done ? 'border-slate-800 bg-slate-800/20 opacity-70' : 'border-slate-700 bg-slate-800/40'}`}
+              >
+                <span className="shrink-0 rounded bg-slate-700 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-slate-300">
+                  {item.estimate}pt
+                </span>
+                <span className={`min-w-0 flex-1 text-sm ${done ? 'text-slate-400 line-through' : 'text-slate-100'}`}>
+                  <RichText text={item.title} />
+                </span>
+                {disc && !done && (
+                  <span className="shrink-0 rounded bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-rose-300">
+                    🔎 現場で発見
+                  </span>
+                )}
+              </li>
+            )
+          })}
+          {backlogOrder.length === 0 && <li className="px-1 py-1 text-xs text-slate-400">— なし —</li>}
+        </ul>
+      )}
+    </section>
   )
 }
 

@@ -6,7 +6,7 @@ const METER_ORDER: MeterKey[] = ['trust', 'insight', 'culture']
 
 export function MeterHUD({ meters }: { meters: Meters }) {
   return (
-    <div className="grid grid-cols-3 gap-2" role="group" aria-label="3つのメーター">
+    <fieldset className="grid grid-cols-3 gap-2" aria-label="3つのメーター">
       {METER_ORDER.map((k) => (
         <Pips
           key={k}
@@ -16,7 +16,7 @@ export function MeterHUD({ meters }: { meters: Meters }) {
           color={METER_META[k].bar}
         />
       ))}
-    </div>
+    </fieldset>
   )
 }
 

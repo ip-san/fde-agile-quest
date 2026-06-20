@@ -3,8 +3,9 @@ import { CEREMONY_LABELS, CEREMONY_SHORT, EVENTS, PRODUCT_GOAL, SPRINTS } from '
 import { hearingThemeFor } from '../data/minigames'
 import { PRECEPTS } from '../data/precepts'
 import { openThreads } from '../data/threads'
+import { GEN_TOKEN_COST } from '../engine/backlog'
 import { miniGameKindFor } from '../engine/game'
-import { customerValue, isRouletteCeremony, repoStats } from '../engine/progression'
+import { customerValueBreakdown, isRouletteCeremony, repoStats } from '../engine/progression'
 import { isMuted, toggleMuted } from '../engine/sfx'
 import { useEngagement } from '../store/engagementStore'
 import type { Ceremony, Choice } from '../types'
@@ -83,6 +84,8 @@ export function Board() {
     backlogDone,
     sprintForecast,
     sprintGoals,
+    inProgress,
+    greatStreak,
     spin,
     arrive,
     proceed,
@@ -100,7 +103,7 @@ export function Board() {
   // 選択 → 実行ミニゲーム → 結果。選んだ choice を保持し、ミニゲームの出来を tier として渡す
   const [pendingChoice, setPendingChoice] = useState<Choice | null>(null)
   // 「本音を見抜く」推理の解決状態（イベントIDで管理＝イベントが変われば自動リセット）。
-  // 当てると reveal ヒントを選択画面に渡す＝核心が“開く”。
+  // 当てると reveal ヒントを選択画面に渡す＝核心が"開く"。
   const [deduction, setDeduction] = useState<{ id: string; correct: boolean } | null>(null)
   // 初回はプロローグを自動表示。以降は「あらすじ」から再生できる
   const [prologueOpen, setPrologueOpen] = useState(prologueSeen() === false)
@@ -117,6 +120,14 @@ export function Board() {
   const ceremony: Ceremony = sprint.beats[Math.min(beatIndex, sprint.beats.length - 1)]
   const useRoulette = isRouletteCeremony(ceremony)
 
+  // デイリー未着手リマインダーの条件
+  // 「To Do が残っている」= sprintForecast に未 done の id がある
+  // 「まだ着手していない」= inProgress が空
+  // 「打つ手がある」= aiTokens >= GEN_TOKEN_COST（着手できるトークンがある）または inProgress に着手済みがある
+  const hasTodo = sprintForecast.some((id) => !backlogDone.includes(id))
+  const canStart = aiTokens >= GEN_TOKEN_COST
+  const showDevReminder = ceremony === 'daily' && hasTodo && inProgress.length === 0 && canStart
+
   // イベントに推理があり、まだこのイベントで解いていなければ、選択の前に推理ステップを挟む
   const needsDeduction =
     status === 'event' &&
@@ -125,7 +136,7 @@ export function Board() {
     !pendingChoice &&
     !!currentEvent.deduction &&
     deduction?.id !== currentEvent.id
-  // 推理を当てて選択へ来た場合、本音ヒント（reveal）を選択画面に渡す＝核心が“開く”
+  // 推理を当てて選択へ来た場合、本音ヒント（reveal）を選択画面に渡す＝核心が"開く"
   const deducedCorrect = !!currentEvent?.deduction && deduction?.id === currentEvent.id && deduction.correct
   const revealHint = deducedCorrect ? currentEvent?.deduction?.reveal : undefined
   // 本音を見抜けた判断には「見抜きボーナス」として理解 +1（store 側で別枠加算・表示）
@@ -178,7 +189,7 @@ export function Board() {
           <p className="mt-1 text-xs text-slate-400">
             🧭 <RichText text="{{プロダクトゴール}}" />：<span className="text-violet-300">{PRODUCT_GOAL}</span>
           </p>
-          {/* スプリントゴールはプランニングの“成果”。プレイヤーがプランニングで選んだ狙いを表示する。
+          {/* スプリントゴールはプランニングの"成果"。プレイヤーがプランニングで選んだ狙いを表示する。
             未決定（プランニング中）は伏せ、選んだら現す（Scrum: ゴールはプランニングで決まる）。 */}
           <p className="mt-0.5 text-xs text-slate-400">
             ↳ 🎯 スプリントゴール：
@@ -194,9 +205,10 @@ export function Board() {
         {/* HUD：北極星＝顧客価値（目標・大）→ 3メーター（手段・0ルール対象）→ 従ゲージは1行に圧縮 */}
         {(() => {
           const rs = repoStats({ resolvedIds, flags, aiTokens, repoCoverage, repoDebt, backlogDone })
+          const bd = customerValueBreakdown(meters, rs.coverage, rs.debtScore, rs.deliveredItems)
           return (
             <>
-              <CustomerValueBar value={customerValue(meters, rs.coverage, rs.debtScore)} />
+              <CustomerValueBar value={bd.total} breakdown={bd} />
               <MeterHUD meters={meters} />
               <SecondaryStats
                 aiTokens={aiTokens}
@@ -204,6 +216,16 @@ export function Board() {
                 debt={rs.debt}
                 onOpenDetail={() => setRepoOpen(true)}
               />
+              {/* 会心の連鎖中（2以上）だけ“実装の波”を持続表示。続けて会心するほどコード品質ボーナスが増す。 */}
+              {greatStreak >= 2 && (
+                <p
+                  className="-mt-1 text-center text-xs font-semibold text-amber-300"
+                  role="status"
+                  aria-label={`会心の連鎖 ${greatStreak} 回。次の会心でコード品質ボーナスが増える`}
+                >
+                  🔥 会心 {greatStreak} 連鎖中 — 次も会心ならコード品質ボーナス増
+                </p>
+              )}
             </>
           )
         })()}
@@ -276,6 +298,19 @@ export function Board() {
                   {useRoulette ? '— 回して、その日の出来事を見る' : '— 進めて始める'}
                 </span>
               </p>
+              {/* デイリー未着手リマインダー: ルーレットの直上に表示（非ブロッキング・情報提供のみ） */}
+              {showDevReminder && (
+                <div
+                  role="note"
+                  aria-label="開発未着手の注意"
+                  className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-sm text-amber-300"
+                >
+                  <span aria-hidden="true" className="mt-0.5 shrink-0">
+                    🔧
+                  </span>
+                  <span>今日はまだ開発に手をつけていない。回すと今日が終わる。</span>
+                </div>
+              )}
               {useRoulette ? (
                 <Roulette key={generation} disabled={status !== 'playing' || !!result} onResult={spin} />
               ) : (
@@ -289,7 +324,7 @@ export function Board() {
                   ▶ 進める
                 </button>
               )}
-              {/* プランニングでは“予測（スプリントバックログ）”を組み立てられる。非ブロッキングの誘導。 */}
+              {/* プランニングでは"予測（スプリントバックログ）"を組み立てられる。非ブロッキングの誘導。 */}
               {ceremony === 'planning' && (
                 <button
                   type="button"
@@ -299,12 +334,18 @@ export function Board() {
                   📋 プロダクトバックログから予測を選ぶ
                 </button>
               )}
-              {/* デイリーでは、回す前にバックログ（着手・レビュー）を進められる。発見性のための誘導。 */}
-              {ceremony === 'daily' && sprintForecast.some((id) => !backlogDone.includes(id)) && (
+              {/* デイリーでは、回す前にバックログ（着手・レビュー）を進められる。
+                  未着手（showDevReminder）のときは"推奨アクション"として塗りボタン＋パルスで格上げ。
+                  既に着手中のときは控えめなアウトライン表示のまま（しつこくしない）。 */}
+              {ceremony === 'daily' && hasTodo && (
                 <button
                   type="button"
                   onClick={() => setBacklogOpen(true)}
-                  className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-500/20 active:scale-95"
+                  className={
+                    showDevReminder
+                      ? 'rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-slate-100 transition hover:bg-emerald-500 active:scale-95'
+                      : 'rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-500/20 active:scale-95'
+                  }
                 >
                   📋 バックログを進める（着手 / レビュー）
                 </button>
@@ -427,6 +468,7 @@ export function Board() {
           kind={miniGameKindFor(currentEvent)}
           seed={seedFor(currentEvent.id)}
           theme={hearingThemeFor(currentEvent.segment)}
+          hearingOptions={currentEvent.hearingOptions}
           onDone={(tier) => {
             choose(pendingChoice, tier, deductionBonus)
             setPendingChoice(null)

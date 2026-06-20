@@ -95,6 +95,20 @@ body {
   animation: check-unpop 0.18s ease-out both;
 }
 
+/* 北極星（顧客価値）の変化量バッジが現れる瞬間のポップ。
+ * 判断のたびに ▲+N/▼−N がフェードインして北極星が”反応した”手応えを与える。
+ * animate-[value-pop_...] でTailwindから参照する（クラスは定義しない）。 */
+@keyframes value-pop {
+  from {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 /* 上限到達後に3つ目をタップしたときのシェイク演出。
  * 横に数px 揺れて「これ以上は無理」を体感させる。 */
 @keyframes shake {

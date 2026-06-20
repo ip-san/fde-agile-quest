@@ -7,10 +7,13 @@ import {
   estimateOf,
   forecastPoints,
   GEN_TOKEN_COST,
+  isDiscoverablePbi,
+  isKnownPbi,
   moveBacklogItem,
   REVIEW_CAPACITY,
   reorderBacklog,
   resolveSprintBacklog,
+  revealPbi,
   reviewBacklogProposal,
   reviewItem,
   startItem,
@@ -27,6 +30,9 @@ const ID = {
 } as const
 
 const core = (over: Partial<ProgressCore> = {}): ProgressCore => ({ ...freshCore(STARTING_METERS), ...over })
+
+// 発見可（初期は伏せ）PBI。ヒアリングで掘り当てるまでプロダクトバックログに出ない。
+const DISC = 'pbi-disc-label-misread'
 
 describe('toggleForecast', () => {
   it('プランニング中（freshCore=beat0）は予測に出し入れできる', () => {
@@ -225,6 +231,69 @@ describe('resolveSprintBacklog（カンバン精算）', () => {
     const { core: next, review } = resolveSprintBacklog(c)
     expect(next.meters.culture).toBe(10)
     expect(review.cultureDelta).toBe(0)
+  })
+})
+
+describe('発見可PBI（ヒアリングで掘り当てる）', () => {
+  it('発見可PBIは既知だが初期のプロダクトバックログ（backlogOrder）には現れない', () => {
+    expect(isKnownPbi(DISC)).toBe(true)
+    expect(isDiscoverablePbi(DISC)).toBe(true)
+    expect(core().backlogOrder).not.toContain(DISC)
+    expect(PRODUCT_BACKLOG.map((p) => p.id)).not.toContain(DISC)
+  })
+
+  it('revealPbi で末尾に追加され、revealed を返す。既出/未知では no-op', () => {
+    const c = core()
+    const r1 = revealPbi(c, DISC)
+    expect(r1.revealed?.id).toBe(DISC)
+    expect(r1.core.backlogOrder.at(-1)).toBe(DISC)
+    // 既に出ていれば再追加しない
+    expect(revealPbi(r1.core, DISC).revealed).toBeNull()
+    expect(revealPbi(r1.core, DISC).core.backlogOrder.filter((id) => id === DISC)).toHaveLength(1)
+    // 未知 id は no-op
+    expect(revealPbi(c, 'nope').revealed).toBeNull()
+  })
+
+  it('ヒアリング選択(discoversPbi)を good/great で解決すると掘り当ててバックログに加わる', () => {
+    const ev: GameEvent = {
+      id: 's1-hearing',
+      sprint: 1,
+      ceremony: 'daily',
+      segment: 'genba',
+      title: '聞き取り',
+      narrative: 'N',
+      choices: [],
+    }
+    const ch: Choice = { id: 'a', label: 'L', effects: {}, resultText: 'R', discoversPbi: DISC }
+    const c = core({ status: 'event', currentEvent: ev })
+    const next = chooseCore(c, ch, 'good')
+    expect(next.backlogOrder).toContain(DISC)
+    expect(next.result?.discoveredPbi).toEqual({ id: DISC, title: expect.any(String) })
+  })
+
+  it('ヒアリングの出来が poor だと掘り当てられない（バックログに加わらない）', () => {
+    const ev: GameEvent = {
+      id: 's1-hearing',
+      sprint: 1,
+      ceremony: 'daily',
+      segment: 'genba',
+      title: '聞き取り',
+      narrative: 'N',
+      choices: [],
+    }
+    const ch: Choice = { id: 'a', label: 'L', effects: {}, resultText: 'R', discoversPbi: DISC }
+    const next = chooseCore(core({ status: 'event', currentEvent: ev }), ch, 'poor')
+    expect(next.backlogOrder).not.toContain(DISC)
+    expect(next.result?.discoveredPbi).toBeUndefined()
+  })
+
+  it('掘り当て済みの発見可PBIは永続化往復で保たれ、未発見のものは復元で勝手に現れない', () => {
+    const revealed = revealPbi(core(), DISC).core
+    const round = restoreCore(toPersisted(revealed))
+    expect(round.backlogOrder).toContain(DISC) // 発見済みは残る
+    // 未発見状態のセーブを復元しても、発見可PBIは補完で混入しない
+    const fresh = restoreCore(toPersisted(core()))
+    expect(fresh.backlogOrder).not.toContain(DISC)
   })
 })
 

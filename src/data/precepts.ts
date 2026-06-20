@@ -156,9 +156,12 @@ export const EVENT_PRECEPTS: Record<string, number[]> = {
   // 買収の皮肉アーク（親会社の実証ショーケース圧力 vs 現場の現実）
   's1-daily-showcase-order': [73, 52], // 事実・推測・願望を分けろ / メトリクスは飾るな
   's2-daily-showcase-visit': [62, 64], // レガシーを笑うな / 現場の手作業は未来のプロダクト仕様
+  's2-physical-ai-showcase': [1, 19], // 現場に行け答えは資料の外 / 使われない高機能より毎日使われる小機能（試作ロボの実物を見て、土台が先と気づく）
   's3-daily-showcase-report': [52, 89], // メトリクスは飾るな / 失敗を隠すな
   // プランニング分岐の回収（決めたゴールが後で響く）
   's2-daily-promise-gap': [1, 10], // 現場に行け、答えは資料の外 / 課題は掘り当てるもの
+  's2-daily-grounded-core': [6, 9], // 沈黙は見つかっていない要件 / ログより手元の操作を見ろ（把握パスの回収）
+  's1-daily-refine-grounded': [10, 6], // 課題は掘り当てるもの / 沈黙は見つかっていない要件（把握パスの途中）
   's3-daily-bottleneck': [98, 99], // 小さく作り大きく学び太く残せ / 組織を賢くしろ
   's1-plan-goal': [10, 37],
   's1-daily-warehouse': [1, 3, 9],

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { ValueBreakdown } from '../engine/progression'
 import type { Epilogue, LogEntry, Meters } from '../types'
 import { CustomerValueBar } from './CustomerValueBar'
 import { MeterHUD } from './MeterHUD'
@@ -7,8 +8,14 @@ interface Props {
   ending: Epilogue
   meters: Meters
   customerValue: number
+  /** 顧客価値の内訳（積み上げバー用。判断×実装の合流を見せる） */
+  valueBreakdown: ValueBreakdown
   /** 届けたインクリメント＝DoD 達成のバックログ項目（カンバンの Done 通算） */
   deliveredItems: number
+  /** 開始時の顧客価値（成長曲線の起点） */
+  valueBaseline: number
+  /** スプリント末ごとに記録した顧客価値（index=sprintIndex。成長曲線に使う） */
+  valueHistory: number[]
   /** 第1章で掴んだ不正の“伏線”の深さ（次章への引き）。none=気づかず / clue=違和感 / case=輪郭 */
   fraudHint?: 'none' | 'clue' | 'case'
   log: LogEntry[]
@@ -87,11 +94,69 @@ function valueRank(v: number): { grade: string; label: string; cls: string } {
   return { grade: 'D', label: '価値を残せなかった', cls: 'text-rose-300 border-rose-400/40 bg-rose-400/10' }
 }
 
+/** 顧客価値の成長曲線（開始 → 各スプリント末）。「案件を通じてどれだけ価値を伸ばしたか」を
+ *  右肩上がり（であってほしい）の一枚絵で見せる。北極星は手段の結実なので、ここが物語の総括になる。 */
+function ValueTrend({ baseline, history }: { baseline: number; history: number[] }) {
+  // 起点（開始時）＋スプリント末ごとの記録値。未記録（undefined）は曲線から落とす。
+  const points: { label: string; v: number }[] = [{ label: '開始', v: baseline }]
+  history.forEach((v, i) => {
+    if (typeof v === 'number' && Number.isFinite(v)) points.push({ label: `S${i + 1}`, v })
+  })
+  if (points.length < 2) return null // スプリント末の記録が無ければ曲線にならない
+
+  const W = 100
+  const H = 34
+  const pad = 3
+  const n = points.length
+  const x = (i: number) => pad + (i * (W - pad * 2)) / (n - 1)
+  const y = (v: number) => pad + (1 - Math.max(0, Math.min(100, v)) / 100) * (H - pad * 2)
+  const line = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${x(i).toFixed(1)} ${y(p.v).toFixed(1)}`).join(' ')
+  const net = points[n - 1].v - points[0].v
+
+  return (
+    <div className="rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-3">
+      <div className="mb-1.5 flex items-center justify-between">
+        <p className="text-xs font-semibold text-amber-200">
+          <span aria-hidden="true">📈</span> 顧客価値の歩み
+        </p>
+        <span
+          className={`text-xs font-bold tabular-nums ${net > 0 ? 'text-emerald-300' : net < 0 ? 'text-rose-300' : 'text-slate-400'}`}
+        >
+          通算 {net > 0 ? `▲ +${net}` : net < 0 ? `▼ ${net}` : '±0'}
+        </span>
+      </div>
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="h-16 w-full"
+        preserveAspectRatio="none"
+        role="img"
+        aria-label={`顧客価値の推移：${points.map((p) => `${p.label} ${p.v}`).join('、')}`}
+      >
+        <path d={line} fill="none" stroke="#fbbf24" strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
+        {points.map((p, i) => (
+          <circle key={p.label} cx={x(i)} cy={y(p.v)} r={1.6} fill="#fbbf24" />
+        ))}
+      </svg>
+      <div className="mt-0.5 flex justify-between text-[10px] tabular-nums text-slate-400">
+        {points.map((p) => (
+          <span key={p.label}>
+            {p.label}
+            <span className="ml-0.5 text-slate-300">{p.v}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function EndingScreen({
   ending,
   meters,
   customerValue,
+  valueBreakdown,
   deliveredItems,
+  valueBaseline,
+  valueHistory,
   fraudHint = 'none',
   log,
   onReset,
@@ -144,7 +209,9 @@ export function EndingScreen({
             <p className="text-xs opacity-80">最終顧客価値 {customerValue} / 100</p>
           </div>
         </div>
-        <CustomerValueBar value={customerValue} />
+        <CustomerValueBar value={customerValue} breakdown={valueBreakdown} />
+        {/* 開始 → 各スプリント末の顧客価値の歩み（成長曲線）。案件の総括として右肩上がりを見せる。 */}
+        <ValueTrend baseline={valueBaseline} history={valueHistory} />
         <MeterHUD meters={meters} />
         {/* 届けたインクリメント＝スプリントバックログを Done にした成果。0 は“使わなかった機会損失”として可視化 */}
         <div className="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-2.5 text-sm">

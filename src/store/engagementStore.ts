@@ -134,9 +134,13 @@ function coreOf(s: EngagementState): ProgressCore {
     sprintForecast: s.sprintForecast,
     backlogDone: s.backlogDone,
     velocity: s.velocity,
+    valueHistory: s.valueHistory,
+    valueBaseline: s.valueBaseline,
+    greatStreak: s.greatStreak,
     inProgress: s.inProgress,
     reviewProgress: s.reviewProgress,
     reviewCapacity: s.reviewCapacity,
+    lastCarryover: s.lastCarryover,
   }
 }
 
@@ -156,6 +160,7 @@ const VALID_FLAGS = {
   missedUpgrade: true,
   showcasePressure: true,
   chasedPromise: true,
+  groundedGoal: true,
   soloHero: true,
 } satisfies Record<GameFlag, true>
 const FLAG_SET = new Set<string>(Object.keys(VALID_FLAGS))
@@ -213,9 +218,28 @@ export function isValidPersisted(x: unknown): x is Persisted {
     const v = o[k]
     if (v !== undefined && (!Array.isArray(v) || !v.every((id) => typeof id === 'string'))) return false
   }
+  // velocity/valueHistory は index=sprintIndex を保つ sparse 配列になりうる（スプリントを飛ばすと穴が空く）。
+  // JSON.stringify は穴を null にシリアライズするため、要素検証は null を許す（restore が 0 に正規化する）。
+  // ここで null を弾くと、健全なセーブを「壊れている」と誤判定して全消ししてしまう。
+  const isFiniteNonNegOrNull = (n: unknown) => n === null || (typeof n === 'number' && Number.isFinite(n) && n >= 0)
   if (o.velocity !== undefined) {
     if (!Array.isArray(o.velocity)) return false
-    if (!o.velocity.every((n) => typeof n === 'number' && Number.isFinite(n) && n >= 0)) return false
+    if (!o.velocity.every(isFiniteNonNegOrNull)) return false
+  }
+  // valueHistory/valueBaseline も任意（旧セーブは欠落 → restore で補完）。型が壊れている時だけ弾く
+  if (o.valueHistory !== undefined) {
+    if (!Array.isArray(o.valueHistory)) return false
+    if (!o.valueHistory.every(isFiniteNonNegOrNull)) return false
+  }
+  if (o.valueBaseline !== undefined && (typeof o.valueBaseline !== 'number' || !Number.isFinite(o.valueBaseline))) {
+    return false
+  }
+  // greatStreak は任意の非負整数（旧セーブは欠落 → 0 補完）。負・非整数・NaN は破損として弾く
+  if (
+    o.greatStreak !== undefined &&
+    (typeof o.greatStreak !== 'number' || !Number.isInteger(o.greatStreak) || o.greatStreak < 0)
+  ) {
+    return false
   }
   // reviewProgress は id→数値のオブジェクト、reviewCapacity は数値（範囲は restore でクランプ）
   if (o.reviewProgress !== undefined) {

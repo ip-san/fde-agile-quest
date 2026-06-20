@@ -4,12 +4,13 @@
 // ProgressCore は型のみ import（progression.ts との実行時循環を避ける）。
 // 現在ビートの判定は SPRINTS を chapter-01 から直接読む。
 // ───────────────────────────────────────────────────────────
-import { PRODUCT_BACKLOG, SPRINTS } from '../data/chapters/chapter-01'
+import { DISCOVERABLE_BACKLOG, PRODUCT_BACKLOG, SPRINTS } from '../data/chapters/chapter-01'
 import type { BacklogItem, BacklogReview, ExecTier, ReviewDepth } from '../types'
 import { coverageDrag } from './game'
 import type { ProgressCore } from './progression'
 
-const PBI_BY_ID = new Map<string, BacklogItem>(PRODUCT_BACKLOG.map((p) => [p.id, p]))
+// 既知 PBI＝初期の PRODUCT_BACKLOG ＋ 発見可の DISCOVERABLE_BACKLOG（後者は掘り当てて backlogOrder に入るまで“可視”にならない）。
+const PBI_BY_ID = new Map<string, BacklogItem>([...PRODUCT_BACKLOG, ...DISCOVERABLE_BACKLOG].map((p) => [p.id, p]))
 
 // ── カンバン／レビューのバランス定数（暫定・調整可）──
 /** 同時着手の上限（In Progress 列の WIP 制限。仕掛りを学ぶ） */
@@ -47,6 +48,20 @@ export function estimateOf(id: string): number {
 /** PBI として既知の id か。 */
 export function isKnownPbi(id: string): boolean {
   return PBI_BY_ID.has(id)
+}
+
+/** 発見可（初期は伏せ）の PBI か。 */
+export function isDiscoverablePbi(id: string): boolean {
+  return PBI_BY_ID.get(id)?.discoverable === true
+}
+
+/** 発見可 PBI を“掘り当てて”プロダクトバックログ（backlogOrder）の末尾に加える。
+ *  既知かつ未掲載のときだけ追加し、新しく現れた id を返す（既出/未知なら null）。
+ *  PO の優先順位付けは後でプレイヤーが提案できるので、ここでは素直に末尾へ。 */
+export function revealPbi(core: ProgressCore, id: string): { core: ProgressCore; revealed: BacklogItem | null } {
+  const item = PBI_BY_ID.get(id)
+  if (!item || core.backlogOrder.includes(id)) return { core, revealed: null }
+  return { core: { ...core, backlogOrder: [...core.backlogOrder, id] }, revealed: item }
 }
 
 /** 現在ビートがプランニングか（予測の編集はプランニング中のみ許可する）。 */
@@ -245,6 +260,8 @@ export function resolveSprintBacklog(core: ProgressCore): { core: ProgressCore; 
     inProgress: [],
     reviewProgress: {},
     reviewCapacity: REVIEW_CAPACITY,
+    // 次プランニングで「↪前回持ち越し」を示すため、終わらせきれなかった分を記録（done なら []）
+    lastCarryover: carryIds,
   }
   return { core: next, review }
 }
