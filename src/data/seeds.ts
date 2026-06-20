@@ -22,8 +22,8 @@ export const SEEDS: FeatureSeed[] = [
     from: '数字を読む役が一人に依存する運用',
   },
   { id: 'guided-onboarding', title: '新人向けのガイド付き手順', from: '運用を引き取ろうとする若手' },
-  // TODO(story-review): legacy-bridge は missedUpgrade（基盤更新を見送った懲罰分岐）の
-  // イベントでしか拾えず、他5種が良い選択で拾えるのと非対称。中立な出自イベントへの追加バインドを検討。
+  // legacy-bridge は中立な出自イベント s1-daily-legacy（choice b）と懲罰分岐 s3-daily-stuck-base（choice b）の
+  // 双方で拾える。源流で正しく向き合った player も種を得られ、他5種との非対称を解消（発見は集合追加で冪等）。
   { id: 'legacy-bridge', title: 'レガシー基盤との安全な橋渡し', from: '20年ものの基幹システム' },
 ]
 
