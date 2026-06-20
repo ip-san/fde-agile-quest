@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { type DiffLine, dealReview, type ReviewRound, scoreReview } from '../../data/minigames'
+import { sfxTick } from '../../engine/sfx'
 import type { ExecTier } from '../../types'
 
 interface Props {
@@ -14,7 +15,12 @@ export function MiniGameReview({ seed, onResolve }: Props) {
   const [picked, setPicked] = useState<number[]>([])
   const [tier, setTier] = useState<ExecTier | null>(null) // null＝選択中、確定後は答え合わせ表示
 
-  const toggle = (i: number) => setPicked((p) => (p.includes(i) ? p.filter((x) => x !== i) : [...p, i]))
+  const toggle = (i: number) => {
+    // 上限なし：0件(LGTM)含む任意件数を選べる
+    const has = picked.includes(i)
+    sfxTick(!has)
+    setPicked((p) => (has ? p.filter((x) => x !== i) : [...p, i]))
+  }
   const submit = () => setTier(scoreReview(picked.map((i) => round.options[i])))
 
   const revealed = tier !== null
@@ -47,7 +53,7 @@ export function MiniGameReview({ seed, onResolve }: Props) {
           const on = picked.includes(i)
           if (revealed) {
             const mark = o.issue ? (on ? '✓ 的確' : '! 見逃し') : on ? '✗ 空振り' : '— 不要'
-            const tone = o.issue
+            const cellStyle = o.issue
               ? on
                 ? 'border-emerald-400/60 bg-emerald-500/10 text-slate-100'
                 : 'border-amber-400/60 bg-amber-500/10 text-slate-100'
@@ -55,7 +61,7 @@ export function MiniGameReview({ seed, onResolve }: Props) {
                 ? 'border-rose-400/50 bg-rose-500/10 text-slate-300'
                 : 'border-slate-800 bg-slate-800/20 text-slate-500'
             return (
-              <li key={o.text} className={`rounded-xl border px-4 py-2.5 text-sm ${tone}`}>
+              <li key={o.text} className={`rounded-xl border px-4 py-2.5 text-sm ${cellStyle}`}>
                 <span className="mr-2 text-[11px] font-bold">{mark}</span>
                 {o.text}
               </li>
@@ -68,13 +74,17 @@ export function MiniGameReview({ seed, onResolve }: Props) {
                 aria-pressed={on}
                 onClick={() => toggle(i)}
                 data-initial-focus={i === 0 ? true : undefined}
-                className={`block w-full rounded-xl border px-4 py-3 text-left text-sm transition ${
+                className={`block w-full rounded-xl border px-4 py-3 text-left text-sm transition active:scale-[0.98] ${
                   on
-                    ? 'border-sky-400 bg-sky-500/15 text-slate-100'
+                    ? 'border-sky-400 bg-sky-500/20 text-slate-100 ring-1 ring-sky-400/60'
                     : 'border-slate-700 bg-slate-800/40 text-slate-200 hover:border-sky-500/50 hover:bg-slate-800'
                 }`}
               >
-                <span className="mr-1" aria-hidden="true">
+                <span
+                  key={on ? 'on' : 'off'}
+                  className={`mr-1.5 text-base ${on ? 'check-pop text-sky-300' : 'text-slate-400'}`}
+                  aria-hidden="true"
+                >
                   {on ? '☑' : '☐'}
                 </span>
                 {o.text}
