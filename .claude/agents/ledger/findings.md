@@ -24,6 +24,8 @@
 
 ### 2026-06-20 / loop/ux-select-feedback-20260620（選択フィードバック: tick音+check-pop）
 
+- [resolved] (🔴) code-reviewer / MiniGameHearing.tsx — 上限2ガードが stale クロージャの `picked.length` 依存で、連打（同一レンダー内の複数 toggle）で3件選択され得た。→ `setPicked` updater 内に `p.length >= 2` の二重ガードを追加し状態を権威化、`sfxTick` は updater 外維持で StrictMode 音重複も回避。（round1→2 / 2026-06-20 / PR #3）
+- [resolved] (🟡) ux-engineer+reviewer / minigame/*.tsx — ring 薄い(/40→/60)・OFFグリフ暗い(slate-500→400)・Review上限なしのコメント欠如・Review内 `tone` 変数名被り(→cellStyle)。in-scope の4件を修正。（round1→2 / 2026-06-20 / PR #3）
 - [open] (🟡) code-reviewer / minigame/*.tsx — `<span key={on?'on':'off'}>` のグリフ再マウントでアニメをリセットする手法は、SR（NVDA/VoiceOver）が button 内 DOM 変化をコンテンツ変更として通知する可能性。実機VoiceOver確認が必要。代替: `@starting-style`/`animation-play-state` で DOM 再マウントを避ける。（round1 / 静的判断の範囲、要実機）
 - [open] (🟡) ux-engineer / minigame/*.tsx — check-pop は ON 時のみ。OFF（チェック外し）時に視覚演出が無く色変化のみ。「外れた」手応えが1層弱い。OFF側に軽いフェード等を足す案（設計判断・必須でない）。（round1）
 - [open] (🟡) ux-engineer / MiniGameHearing.tsx — 上限2到達後の3つ目タップが完全無反応（音/視覚/aria 変化なし）で「バグかな」と誤認され得る。軽いシェイク＋"すでに2つ"の補足が親切だが、これは仕様・スコープ外。（round1）
