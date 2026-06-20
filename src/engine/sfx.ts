@@ -14,20 +14,14 @@
 // 注: jsdom（Vitest）や AudioContext 非対応環境では全 API が安全に no-op する。
 // ───────────────────────────────────────────────────────────
 
+import { readBool, writeBool } from '../lib/persist'
+
 const MUTE_KEY = 'fde-agile-quest:muted'
 
 type WebkitWindow = Window & { webkitAudioContext?: typeof AudioContext }
 
 let ctx: AudioContext | null = null
-let muted = readMuted()
-
-function readMuted(): boolean {
-  try {
-    return localStorage.getItem(MUTE_KEY) === '1'
-  } catch {
-    return false
-  }
-}
+let muted = readBool(MUTE_KEY)
 
 /** 現在ミュート中か */
 export function isMuted(): boolean {
@@ -37,11 +31,7 @@ export function isMuted(): boolean {
 /** ミュートを切り替えて、切替後の状態を返す（localStorage に永続化） */
 export function toggleMuted(): boolean {
   muted = !muted
-  try {
-    localStorage.setItem(MUTE_KEY, muted ? '1' : '0')
-  } catch {
-    /* noop */
-  }
+  writeBool(MUTE_KEY, muted)
   return muted
 }
 

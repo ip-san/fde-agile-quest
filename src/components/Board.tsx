@@ -7,6 +7,7 @@ import { GEN_TOKEN_COST } from '../engine/backlog'
 import { miniGameKindFor } from '../engine/game'
 import { customerValueBreakdown, isRouletteCeremony, repoStats } from '../engine/progression'
 import { isMuted, toggleMuted } from '../engine/sfx'
+import { readBool, writeBool } from '../lib/persist'
 import { useEngagement } from '../store/engagementStore'
 import type { Ceremony, Choice } from '../types'
 import { BacklogPanel } from './BacklogPanel'
@@ -33,32 +34,12 @@ function seedFor(id: string): number {
 }
 
 const PROLOGUE_SEEN_KEY = 'fde-agile-quest:prologue-seen'
-function prologueSeen(): boolean {
-  try {
-    return !!localStorage.getItem(PROLOGUE_SEEN_KEY)
-  } catch {
-    return false
-  }
-}
+const prologueSeen = (): boolean => readBool(PROLOGUE_SEEN_KEY)
 
 // 時限選択（LIPS）の設定。既定OFF（学習を妨げないため opt-in）。localStorage 永続。
-// TODO(quality): localStorage boolean の try/catch 定型が muted(sfx.ts)/prologueSeen/timed と4箇所目。
-// localStorageBool(key)/setLocalStorageBool(key,on) のヘルパー（例 lib/persist.ts）に集約余地あり。
 const TIMED_CHOICE_KEY = 'fde-agile-quest:timed-choice'
-function timedChoicePref(): boolean {
-  try {
-    return localStorage.getItem(TIMED_CHOICE_KEY) === '1'
-  } catch {
-    return false
-  }
-}
-function setTimedChoicePref(on: boolean): void {
-  try {
-    localStorage.setItem(TIMED_CHOICE_KEY, on ? '1' : '0')
-  } catch {
-    /* noop */
-  }
-}
+const timedChoicePref = (): boolean => readBool(TIMED_CHOICE_KEY)
+const setTimedChoicePref = (on: boolean): void => writeBool(TIMED_CHOICE_KEY, on)
 
 export function Board() {
   const {
@@ -108,11 +89,7 @@ export function Board() {
   // 初回はプロローグを自動表示。以降は「あらすじ」から再生できる
   const [prologueOpen, setPrologueOpen] = useState(prologueSeen() === false)
   const closePrologue = () => {
-    try {
-      localStorage.setItem(PROLOGUE_SEEN_KEY, '1')
-    } catch {
-      /* noop */
-    }
+    writeBool(PROLOGUE_SEEN_KEY, true)
     setPrologueOpen(false)
   }
 
