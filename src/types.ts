@@ -57,8 +57,8 @@ export type Ceremony = 'planning' | 'daily' | 'review' | 'retro'
 /** ルーレットのセグメント＝イベントの種類（現場の不確実性） */
 export type Segment = 'genba' | 'kokyaku' | 'team' | 'trouble' | 'chance'
 
-/** 選択後の「実行」ミニゲームの種類（開発＝タイミング型／ヒアリング＝選択型） */
-export type MiniGameKind = 'dev' | 'hearing'
+/** 選択後の「実行」ミニゲームの種類（開発＝タイミング型／ヒアリング＝選択型／レビュー＝AI差分の点検） */
+export type MiniGameKind = 'dev' | 'hearing' | 'review'
 
 /** ミニゲームの出来。倍率＝選択の主正メーターを great:+1 / good:±0 / poor:-1 する */
 export type ExecTier = 'great' | 'good' | 'poor'

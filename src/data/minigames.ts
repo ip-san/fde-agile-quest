@@ -166,3 +166,148 @@ export function scoreTiming(pos: number): ExecTier {
   const d = Math.abs(pos - 50)
   return d <= 8 ? 'great' : d <= 22 ? 'good' : 'poor'
 }
+
+// ───────────────────────────────────────────────────────────
+// レビュー（AI時代の人間レビュー）：開発そのものは AI が担う＝着手は生成。価値は人の点検にある。
+// AI が書いた差分＋「AI の自己申告メモ」を見せ、人間のレビュアーが拾うべき指摘を選ばせる。
+// 題材は Claude / Codex を使い込む人の失敗談から：秘密の直書き・流出、架空パッケージ
+// （slopsquatting＝もっともらしい嘘の依存）、WHERE 抜けの破壊的削除、動いて見えるが誤り
+// （代入/比較・境界）、過剰実装と既存破壊（理解負債）。ワナは「AI が言うなら通す」過信と瑣末な好み。
+// 各ケースは“拾うべき指摘”をちょうど2つ持つ（REVIEW_REAL_COUNT）。
+// ───────────────────────────────────────────────────────────
+export const REVIEW_REAL_COUNT = 2
+
+/** 差分の1行。add=AI が足した行／del=消した行／ctx=周辺の文脈。 */
+export interface DiffLine {
+  tag: 'add' | 'del' | 'ctx'
+  text: string
+}
+
+/** レビューで挙げうる指摘。issue=true は“この差分の本当の問題”（拾うのが正解）。 */
+export interface ReviewFlag {
+  text: string
+  /** true＝拾うべき本物の問題／false＝過信・論点ずれ・瑣末な好み（拾うと空振り） */
+  issue: boolean
+}
+
+interface ReviewCase {
+  /** AI に頼んだこと */
+  task: string
+  /** AI が書いた差分 */
+  diff: DiffLine[]
+  /** AI の自己申告（“動作確認OK”等の過信を誘うメモ） */
+  aiNote: string
+  /** 選択肢（issue=true をちょうど REVIEW_REAL_COUNT 個含む） */
+  options: ReviewFlag[]
+  /** 確定後に見せる気づき */
+  takeaway: string
+}
+
+const REVIEW_CASES: ReviewCase[] = [
+  {
+    task: '外部の配送APIに接続する処理を追加して',
+    diff: [
+      { tag: 'ctx', text: 'const url = "https://api.ship.example/v1"' },
+      { tag: 'add', text: 'const API_KEY = "sk-live-7Q2x...c91a" // とりあえず直書き' },
+      { tag: 'add', text: 'fetch(url, { headers: { Authorization: `Bearer ${API_KEY}` } })' },
+    ],
+    aiNote: '動作確認OK。すぐ使えます。',
+    options: [
+      { text: 'APIキーが直書き。環境変数へ出し、.gitignore とコミット前検知を確認したい', issue: true },
+      { text: 'この鍵、本物なら既に漏洩扱い。無効化とローテーションが要る', issue: true },
+      { text: 'AIが「動作確認OK」と言うなら、そのまま通していい', issue: false },
+      { text: 'fetch より axios に統一したい（好みの範囲）', issue: false },
+      { text: '変数名 API_KEY は分かりやすいので問題なし', issue: false },
+    ],
+    takeaway: '秘密の直書きとAIの「OK」を信じない。鍵は環境変数＋コミット前検知で止める。',
+  },
+  {
+    task: '日付を「2026年6月20日」形式に整える処理を追加して',
+    diff: [
+      { tag: 'add', text: "import { wareki } from 'jp-date-pretty'   // 提案された依存" },
+      { tag: 'add', text: "return wareki(d, 'YYYY年M月D日')" },
+    ],
+    aiNote: '定番ライブラリなので入れておきました。',
+    options: [
+      { text: 'jp-date-pretty が実在するか、公式レジストリで名前を目視確認したい', issue: true },
+      { text: 'install を AI に自動実行させない設定か。架空名に攻撃者が先回りする例がある', issue: true },
+      { text: '「定番」と書いてあるし実在するはず。そのまま通そう', issue: false },
+      { text: '書式は YYYY/MM/DD に統一したい（好み）', issue: false },
+      { text: 'import は1行にまとめた方が綺麗（瑣末）', issue: false },
+    ],
+    takeaway: 'AIは「もっともらしい嘘」の依存名を出す。名前の実在を人が確かめてから入れる。',
+  },
+  {
+    task: '退会済みのユーザー行を片付けて',
+    diff: [{ tag: 'add', text: 'DELETE FROM users;   -- 退会者を整理' }],
+    aiNote: 'シンプルに書きました。',
+    options: [
+      { text: 'WHERE 句が無い。全件消える。対象範囲とバックアップを先に確認したい', issue: true },
+      { text: '本番DBに直接つながっていないか、戻せる（可逆）か確認したい', issue: true },
+      { text: 'コメントは英語に統一したい（瑣末）', issue: false },
+      { text: '速度のためインデックスを足すべき（論点ずれ）', issue: false },
+      { text: 'AIが書いたSQLなら、条件は合っているはず', issue: false },
+    ],
+    takeaway: '消す系は範囲と可逆性を最優先で見る。WHERE 抜けはAIの典型的な事故。',
+  },
+  {
+    task: '在庫が0以下なら表示を「品切れ」にして',
+    diff: [
+      { tag: 'add', text: 'if (stock = 0) {' },
+      { tag: 'add', text: "  label = '品切れ'" },
+      { tag: 'add', text: '}' },
+    ],
+    aiNote: 'テストも通したので大丈夫です。',
+    options: [
+      { text: 'stock = 0 は代入。比較は ===。常に真になり毎回書き換わる', issue: true },
+      { text: '「0以下」の指示なのに 0 だけ判定。マイナス在庫が漏れる（<= 0 では）', issue: true },
+      { text: "'品切れ' は定数 SOLD_OUT にすべき（好み）", issue: false },
+      { text: '波括弧の改行スタイルを揃えたい（瑣末）', issue: false },
+      { text: '「テストも通した」と書いてあるので信じてよい', issue: false },
+    ],
+    takeaway: '動いて見えても中身は別物。代入/比較や境界条件（0以下）は人が読んで確かめる。',
+  },
+  {
+    task: 'ログイン画面に「パスワードを表示」ボタンを1つ追加して',
+    diff: [
+      { tag: 'add', text: 'パスワード表示トグルを追加' },
+      { tag: 'add', text: 'ついでに認証モジュールを全面書き換え／キャッシュ層を新設' },
+      { tag: 'del', text: '既存の入力バリデーションを削除' },
+    ],
+    aiNote: 'まとめて整理しておきました。',
+    options: [
+      { text: '頼んだのはボタン1つ。認証の全面書き換えは過剰。差分を最小に戻したい', issue: true },
+      { text: '既存のバリデーションが消えている。意図せず壊していないか', issue: true },
+      { text: 'キャッシュ層、良さそうなのでまとめて入れてしまおう', issue: false },
+      { text: 'ボタンのラベルは「表示/非表示」が親切（好み）', issue: false },
+      { text: '行は増えたが、AIが書いたなら整合は取れているはず', issue: false },
+    ],
+    takeaway: '指示より大きい差分は赤信号。過剰実装と「自分が理解できない変更」を通さない。',
+  },
+]
+
+/** レビューの1ラウンド：AI差分＋点検すべき選択肢（提示順はシードでシャッフル）。 */
+export interface ReviewRound {
+  task: string
+  diff: DiffLine[]
+  aiNote: string
+  options: ReviewFlag[]
+  takeaway: string
+}
+
+/** レビューの1ラウンドをシードで選ぶ。選択肢はシャッフルして提示（毎回同じ並びを避ける）。 */
+export function dealReview(seed: number): ReviewRound {
+  const c = REVIEW_CASES[((seed % REVIEW_CASES.length) + REVIEW_CASES.length) % REVIEW_CASES.length]
+  const options = shuffle(c.options, seed + 5)
+  return { task: c.task, diff: c.diff, aiNote: c.aiNote, options, takeaway: c.takeaway }
+}
+
+/** レビューの採点：本物の指摘を拾えたか／空振り（過信・瑣末）を出していないか。
+ *  great＝本物2つを的確に・空振り0／good＝1つ以上拾い空振り1まで／poor＝それ未満（＝AIを素通し）。 */
+export function scoreReview(picked: ReviewFlag[]): ExecTier {
+  const caught = picked.filter((o) => o.issue).length
+  const wrong = picked.filter((o) => !o.issue).length
+  if (caught >= REVIEW_REAL_COUNT && wrong === 0) return 'great'
+  if (caught >= 1 && wrong <= 1) return 'good'
+  return 'poor'
+}

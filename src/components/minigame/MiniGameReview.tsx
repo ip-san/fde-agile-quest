@@ -1,0 +1,137 @@
+import { useState } from 'react'
+import { type DiffLine, dealReview, type ReviewRound, scoreReview } from '../../data/minigames'
+import type { ExecTier } from '../../types'
+
+interface Props {
+  seed: number
+  onResolve: (tier: ExecTier) => void
+}
+
+/** レビュー・ミニゲーム：AI が書いた差分を点検し、人が拾うべき指摘を選ぶ（AI時代の人間レビュー）。
+ *  選択 → 答え合わせ（拾えた/見逃し/空振り＋気づき）→ 確定、の2段。LGTM（0件）も“出せる”。 */
+export function MiniGameReview({ seed, onResolve }: Props) {
+  const [round] = useState<ReviewRound>(() => dealReview(seed))
+  const [picked, setPicked] = useState<number[]>([])
+  const [tier, setTier] = useState<ExecTier | null>(null) // null＝選択中、確定後は答え合わせ表示
+
+  const toggle = (i: number) => setPicked((p) => (p.includes(i) ? p.filter((x) => x !== i) : [...p, i]))
+  const submit = () => setTier(scoreReview(picked.map((i) => round.options[i])))
+
+  const revealed = tier !== null
+  const n = picked.length
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-slate-300">
+        AIが書いた差分を点検する。{' '}
+        <span className="text-slate-400">人が拾うべき指摘を選ぶ（複数可・無ければLGTM）</span>
+      </p>
+
+      {/* AI に頼んだこと */}
+      <div className="rounded-lg border border-slate-700 bg-slate-800/40 px-3 py-2 text-xs">
+        <span className="font-semibold text-slate-400">頼んだこと：</span>
+        <span className="text-slate-200">{round.task}</span>
+      </div>
+
+      {/* AI が書いた差分 */}
+      <DiffView diff={round.diff} />
+
+      {/* AI の自己申告（過信を誘うメモ） */}
+      <p className="rounded-lg bg-slate-800/40 px-3 py-1.5 text-xs text-slate-400">
+        <span className="font-semibold text-sky-400">🤖 AI：</span> {round.aiNote}
+      </p>
+
+      {/* 点検項目 */}
+      <ul className="space-y-2">
+        {round.options.map((o, i) => {
+          const on = picked.includes(i)
+          if (revealed) {
+            const mark = o.issue ? (on ? '✓ 的確' : '! 見逃し') : on ? '✗ 空振り' : '— 不要'
+            const tone = o.issue
+              ? on
+                ? 'border-emerald-400/60 bg-emerald-500/10 text-slate-100'
+                : 'border-amber-400/60 bg-amber-500/10 text-slate-100'
+              : on
+                ? 'border-rose-400/50 bg-rose-500/10 text-slate-300'
+                : 'border-slate-800 bg-slate-800/20 text-slate-500'
+            return (
+              <li key={o.text} className={`rounded-xl border px-4 py-2.5 text-sm ${tone}`}>
+                <span className="mr-2 text-[11px] font-bold">{mark}</span>
+                {o.text}
+              </li>
+            )
+          }
+          return (
+            <li key={o.text}>
+              <button
+                type="button"
+                aria-pressed={on}
+                onClick={() => toggle(i)}
+                data-initial-focus={i === 0 ? true : undefined}
+                className={`block w-full rounded-xl border px-4 py-3 text-left text-sm transition ${
+                  on
+                    ? 'border-sky-400 bg-sky-500/15 text-slate-100'
+                    : 'border-slate-700 bg-slate-800/40 text-slate-200 hover:border-sky-500/50 hover:bg-slate-800'
+                }`}
+              >
+                <span className="mr-1" aria-hidden="true">
+                  {on ? '☑' : '☐'}
+                </span>
+                {o.text}
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+
+      {revealed ? (
+        <>
+          <p className="rounded-lg border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-xs leading-relaxed text-slate-200">
+            <span className="font-semibold text-sky-300">気づき：</span> {round.takeaway}
+          </p>
+          <button
+            type="button"
+            onClick={() => onResolve(tier)}
+            data-initial-focus
+            className="min-h-[44px] w-full rounded-xl bg-sky-500 py-3 font-bold text-slate-950 transition hover:bg-sky-400 active:scale-95"
+          >
+            確定する
+          </button>
+        </>
+      ) : (
+        <button
+          type="button"
+          onClick={submit}
+          className="min-h-[44px] w-full rounded-xl bg-sky-500 py-3 font-bold text-slate-950 transition hover:bg-sky-400 active:scale-95"
+        >
+          {n === 0 ? '問題なし（LGTM）として出す' : `${n}件 指摘してレビューを出す`}
+        </button>
+      )}
+    </div>
+  )
+}
+
+/** AI が書いた差分の表示（add=緑/del=赤取り消し/ctx=灰）。等幅で読みやすく。 */
+function DiffView({ diff }: { diff: DiffLine[] }) {
+  return (
+    <div className="overflow-x-auto rounded-lg border border-slate-700 bg-slate-950/60 p-2.5 font-mono text-[11px] leading-relaxed">
+      {diff.map((l, i) => {
+        const sign = l.tag === 'add' ? '+' : l.tag === 'del' ? '-' : ' '
+        const tone =
+          l.tag === 'add'
+            ? 'text-emerald-300'
+            : l.tag === 'del'
+              ? 'text-rose-300 line-through decoration-rose-400/40'
+              : 'text-slate-500'
+        return (
+          <div key={`${i}-${l.text}`} className={`whitespace-pre ${tone}`}>
+            <span className="mr-2 select-none opacity-70" aria-hidden="true">
+              {sign}
+            </span>
+            {l.text}
+          </div>
+        )
+      })}
+    </div>
+  )
+}

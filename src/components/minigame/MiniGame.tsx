@@ -3,6 +3,7 @@ import { useFocusTrap } from '../../hooks/useFocusTrap'
 import type { ExecTier, MiniGameKind } from '../../types'
 import { MiniGameDev } from './MiniGameDev'
 import { MiniGameHearing } from './MiniGameHearing'
+import { MiniGameReview } from './MiniGameReview'
 
 interface Props {
   kind: MiniGameKind
@@ -16,6 +17,7 @@ interface Props {
 const HEADING: Record<MiniGameKind, { tag: string; title: string }> = {
   dev: { tag: '実行：開発', title: '手を動かす' },
   hearing: { tag: '実行：ヒアリング', title: '現場の声を掘る' },
+  review: { tag: '実行：レビュー', title: 'AIの差分を点検する' },
 }
 
 /** 選択後に挟む「実行」ミニゲーム。出来が選択の主正メーターを倍率調整する。Esc/スキップで標準(good)。 */
@@ -49,6 +51,8 @@ export function MiniGame({ kind, seed, theme, onDone, onSkip }: Props) {
         <div className="px-5 pt-4 pb-safe">
           {kind === 'dev' ? (
             <MiniGameDev seed={seed} onResolve={onDone} />
+          ) : kind === 'review' ? (
+            <MiniGameReview seed={seed} onResolve={onDone} />
           ) : (
             <MiniGameHearing seed={seed} theme={theme} onResolve={onDone} />
           )}

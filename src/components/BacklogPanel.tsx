@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { SPRINTS } from '../data/chapters/chapter-01'
-import { hearingThemeFor } from '../data/minigames'
 import {
   backlogItem,
   canReview,
@@ -573,9 +572,8 @@ function KanbanView({
       {/* レビュー・ミニゲーム（深さ確定後） */}
       {pending && (
         <MiniGame
-          kind="dev"
+          kind="review"
           seed={seedFor(pending.id)}
-          theme={hearingThemeFor('team')}
           onDone={(tier) => {
             reviewItem(pending.id, pending.depth, tier)
             setPending(null)

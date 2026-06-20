@@ -2,9 +2,12 @@ import { describe, expect, it } from 'vitest'
 import {
   dealDevFlow,
   dealHearing,
+  dealReview,
   type HearingTheme,
   hearingThemeFor,
+  REVIEW_REAL_COUNT,
   scoreHearing,
+  scoreReview,
   scoreSequence,
   scoreTiming,
 } from './minigames'
@@ -82,5 +85,38 @@ describe('scoreSequence', () => {
     expect(scoreSequence(['a', 'b', 'd', 'c'], correct)).toBe('good') // 2/4
     expect(scoreSequence(['b', 'a', 'd', 'c'], correct)).toBe('poor') // 0/4
     expect(scoreSequence(['a', 'c', 'b', 'd'], correct)).toBe('good') // 2/4（境界 ceil(4/2)=2）
+  })
+})
+
+describe('dealReview', () => {
+  it('差分・AIメモ・5択を返し、拾うべき指摘をちょうど2つ含む（決定的）', () => {
+    const r = dealReview(4)
+    expect(r.diff.length).toBeGreaterThan(0)
+    expect(r.aiNote).toBeTruthy()
+    expect(r.options).toHaveLength(5)
+    expect(r.options.filter((o) => o.issue)).toHaveLength(REVIEW_REAL_COUNT)
+    expect(r.takeaway).toBeTruthy()
+    expect(dealReview(4)).toEqual(r) // 決定的
+  })
+  it('seed が違えば題材/並びが変わりうる', () => {
+    const same = [1, 2, 3, 4, 5].every((s) => JSON.stringify(dealReview(s)) === JSON.stringify(dealReview(0)))
+    expect(same).toBe(false)
+  })
+})
+
+describe('scoreReview', () => {
+  const real = { text: 'r', issue: true }
+  const noise = { text: 'n', issue: false }
+  it('本物2つ的確・空振り0で great', () => {
+    expect(scoreReview([real, real])).toBe('great')
+  })
+  it('1つ以上拾い空振り1までは good', () => {
+    expect(scoreReview([real])).toBe('good')
+    expect(scoreReview([real, noise])).toBe('good')
+  })
+  it('素通し（0件）や空振り過多は poor', () => {
+    expect(scoreReview([])).toBe('poor') // LGTMで見逃し＝AIを素通し
+    expect(scoreReview([noise, noise])).toBe('poor')
+    expect(scoreReview([real, noise, noise])).toBe('poor') // 拾えても空振り2は poor
   })
 })
