@@ -60,10 +60,31 @@ body {
   animation: decisive-flash 0.55s ease-out forwards;
 }
 
+/* チェックを入れた瞬間の“弾む”手応え（チェックボックスのONフィードバック）。
+ * グリフが一度大きく跳ねてから戻る。外した時は再生しない（キーが付け替わらないため）。 */
+@keyframes check-pop {
+  0% {
+    transform: scale(0.6);
+  }
+  45% {
+    transform: scale(1.4);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.check-pop {
+  display: inline-block;
+  animation: check-pop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
 /* モーション過敏設定では閃光・回転などの動きを無効化する（アクセシビリティ）。 */
 @media (prefers-reduced-motion: reduce) {
   .decisive-flash {
     animation: none;
     opacity: 0;
+  }
+  .check-pop {
+    animation: none;
   }
 }

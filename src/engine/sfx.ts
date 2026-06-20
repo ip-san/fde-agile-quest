@@ -89,6 +89,16 @@ function tone(ac: AudioContext, { freq, dur, t0 = 0, type = 'triangle', gain = 0
   osc.stop(start + dur + 0.02)
 }
 
+/**
+ * 項目を選んだ／外した瞬間の軽いカチッ音（チェックボックスの触感）。
+ * 確定（sfxDecide）より控えめな単発。on は明るく上、off は低く下げて操作方向を音で区別する。
+ */
+export function sfxTick(on: boolean): void {
+  const ac = audio()
+  if (!ac) return
+  tone(ac, { freq: on ? 880 : 440, dur: 0.045, type: 'square', gain: 0.05 })
+}
+
 /** 選択を確定した瞬間の“決め”の合図（短い二連符＝本作のシグネチャ音）。 */
 export function sfxDecide(): void {
   const ac = audio()
