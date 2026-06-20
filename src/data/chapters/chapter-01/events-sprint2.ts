@@ -18,7 +18,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: '誤出荷が減ったかどうか、現場では実際どこの数字を見れば分かりますか', good: true },
       { text: 'とりあえず画面の機能数を増やすのを成功の指標にしておけば無難ですよね？', good: false },
       { text: 'KPIは結城さんが約束した内容に合わせておけば間違いないですよね？', good: false },
-      { text: '細かい指標は走りながら決めるとして、まず作り始めちゃっていいですか？', good: false },
+      { text: '良し悪しの基準なんて、走りながら決めればいい。まず作り始めよう。', good: false },
     ],
     choices: [
       {
@@ -58,7 +58,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: '田淵さんがいま手書きメモを撮るとしたら、どの瞬間に撮るのが一番自然ですか', good: true },
       { text: '写真で在庫に反映されたとして、田淵さんはどこで「合ってる」と確かめたいですか', good: true },
       { text: 'まず完璧な予測エンジンまで作り込んでから出した方が安心ですよね？', good: false },
-      { text: 'メモを写真で撮るだけなら、現場は何も困らないですよね？', good: false },
+      { text: 'メモを写真で撮るだけなんだから、現場は何も困らない。', good: false },
       { text: '叩き台の細かい使い勝手は、後で直せばいいから今は気にしなくていいですか？', good: false },
     ],
     choices: [
@@ -117,7 +117,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: 'その直し方、田淵さんは普段どんな時に「あればな」と思ってたんですか', good: true },
       { text: 'でも設計はこっちで考えてあるので、口出しは控えてもらっていいですか？', good: false },
       { text: '田淵さんの案、いいと思うので全部そのまま入れちゃっていいですよね？', good: false },
-      { text: '現場の思いつきって結局その場限りなので、聞き流して大丈夫ですよね？', good: false },
+      { text: '現場の思いつきなんて、どうせその場限りだ。聞き流しておけばいい。', good: false },
     ],
     choices: [
       {
@@ -146,7 +146,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: '結城さん、経営からは具体的にいつ何を見せろと詰められてるんですか', good: true },
       { text: '予測機能そのものより、経営に見せたい「成果」って本当は何ですか', good: true },
       { text: '予測機能さえ作れば経営の催促は止まりますよね？', good: false },
-      { text: '結城さんも予測機能が必要だと思ってるんですよね？だから急かしてるんですよね？', good: false },
+      { text: '結城さんが急かす以上、欲しいのは予測機能そのものに決まってる。', good: false },
       { text: 'とにかく何か動くものを早く見せれば、中身は何でもいいですよね？', good: false },
     ],
     deduction: {
@@ -223,6 +223,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     sprint: 2,
     ceremony: 'daily',
     segment: 'trouble',
+    minigame: 'review',
     title: '評価基準を書く前に',
     narrative: '「誤出荷チェック」をAIに作らせたい。チームは「とりあえず生成して、動いたら採用しよう」と言う。',
     choices: [
@@ -248,6 +249,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     sprint: 2,
     ceremony: 'daily',
     segment: 'team',
+    minigame: 'review',
     title: 'AIが書いたコードのバグ',
     narrative: 'AIに量産させたコードを、{{レビュー}}せず本番に出していた。現場から「在庫数が時々ずれる」と苦情が来た。',
     choices: [
@@ -346,7 +348,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: '結城さん、いまの「いいよ」は、具体的にどの画面のどの挙動までを指してますか', good: true },
       { text: 'この仕様、結城さんが後で経営に説明する時に困らない言い方になってますか', good: true },
       { text: '口頭でOKもらったので、もう書き残さなくて大丈夫ですよね？', good: false },
-      { text: '結城さんが「いいよ」と言った以上、後から覆ることはないですよね？', good: false },
+      { text: '結城さんが「いいよ」と言った以上、後から覆ることはない。', good: false },
       { text: '急いでるので細かい確認は省いて、このまま進めちゃっていいですか？', good: false },
     ],
     choices: [
@@ -401,7 +403,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: '経営は「進捗」と言いますが、本当はどの業務がどう変わったかを知りたいんじゃないですか', good: true },
       { text: 'その会議に出る人たちは、何が見えれば「進んでる」と納得しそうですか', good: true },
       { text: 'やっぱり40枚くらいの立派なスライドを作っておけば安心ですよね？', good: false },
-      { text: '経営は数字さえ並べておけば中身は見ないですよね？', good: false },
+      { text: '経営なんて数字さえ並べておけば中身までは見ない。', good: false },
       { text: '動くデモは準備が大変なので、資料だけで済ませちゃっていいですよね？', good: false },
     ],
     choices: [
@@ -425,6 +427,8 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     sprint: 2,
     ceremony: 'daily',
     segment: 'trouble',
+    minigame: 'hearing',
+    hearingTheme: 'genba',
     title: '矛盾だらけの例外ルール',
     narrative: '現場の運用には矛盾した例外が山ほどある。「火曜だけ手順が違う」等。',
     choices: [
@@ -453,7 +457,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     hearingOptions: [
       { text: 'もしこれが上手くいかなかったら、結城さんは誰に何を言われる立場ですか', good: true },
       { text: '様子見の人たちは、何が変わるのを一番怖がってると思います？', good: true },
-      { text: 'みんな賛成って言ってるんだから、もう不安はないですよね？', good: false },
+      { text: 'みんな賛成って言ってるんだから、もう不安はない。', good: false },
       { text: '反対する人がいたら、誰か名前を挙げてもらえます？', good: false },
       { text: '不安なのは慣れてないだけなので、使えば消えますよね？', good: false },
     ],
@@ -486,7 +490,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: '田淵さん、いま出してる画面、実際の作業のどこかで一度でも開きましたか', good: true },
       { text: '昨日の出荷で、この機能が役に立った場面か、邪魔だった場面はありましたか', good: true },
       { text: 'もっと高機能にすれば現場も使ってくれますよね？', good: false },
-      { text: '作り込んだ機能なので、現場はもう満足してるはずですよね？', good: false },
+      { text: 'これだけ作り込んだんだから、現場はもう満足しているはずだ。', good: false },
       { text: '使われてるかどうかは、アクセス数さえ伸びてれば確かめなくていいですよね？', good: false },
     ],
     choices: [
@@ -576,7 +580,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: 'AIが詰まって、現場の人にしか捌けなかった例外って最近ありましたか', good: true },
       { text: 'AIが何でもやってくれるなら、もう深い専門性は要らないですよね？', good: false },
       { text: 'いろんなツールを広く浅く触っておけば、それで十分ですよね？', good: false },
-      { text: '現場の細かい勘どころは、AIに学習させれば全部置き換わりますよね？', good: false },
+      { text: '現場の細かい勘どころなんて、AIに学習させれば全部置き換わる。', good: false },
     ],
     choices: [
       {
@@ -608,7 +612,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: '田淵さん、この写真入力、ふだんの流れのどこで使ってみてもらえますか', good: true },
       { text: '触ってみて、手書きメモに戻りたくなった瞬間はどこでしたか', good: true },
       { text: 'アンケートで満足度の点数さえ取れれば、反応は分かりますよね？', good: false },
-      { text: '完成した分なので、もう現場は満足してくれてますよね？', good: false },
+      { text: '完成した分なんだから、現場はもう満足してくれている。', good: false },
       { text: 'キャリーオーバーした分の話は、レビューでは触れなくていいですよね？', good: false },
     ],
     choices: [
@@ -662,6 +666,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     sprint: 2,
     ceremony: 'daily',
     segment: 'team',
+    minigame: 'review',
     location: 'repo',
     hints: {
       po: '需要予測の小さな機能を実装する番だ。リポジトリで作り方を決めてきて。',
@@ -698,6 +703,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     sprint: 2,
     ceremony: 'daily',
     segment: 'chance',
+    minigame: 'review',
     location: 'devroom',
     hints: {
       po: 'スピードは魅力だけど、丸投げの価値は怪しい。開発室で受託のAIを見極めて。',
@@ -712,7 +718,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: 'いま一人で抱えてる作業のうち、AIに渡しても怖くないのはどこからですか', good: true },
       { text: 'これだけ速いんだから、レビューも{{完成の定義}}も省いて全部任せていいですよね？', good: false },
       { text: '橋本さんがそう言うなら、中身は確かめず丸投げで大丈夫ですよね？', good: false },
-      { text: 'AIが書いたコードなら、後で問題が出ても責任はAI側ですよね？', good: false },
+      { text: 'AIが書いたコードなんだから、後で問題が出ても責任はAI側だ。', good: false },
     ],
     choices: [
       {
@@ -780,7 +786,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: 'その「今期に」って、経営は具体的にいつまでに何が見たいんですか', good: true },
       { text: '結城さんの頼みなので、今のゴールに足して両方やっちゃっていいですよね？', good: false },
       { text: '経営が言ってることなんだから、断らず入れるのが正解ですよね？', good: false },
-      { text: 'ゴールがぶれるかは気にせず、頼まれたものは全部詰め込んでいいですよね？', good: false },
+      { text: 'ゴールがぶれようと、頼まれたものは全部詰め込んでおけばいい。', good: false },
     ],
     choices: [
       {
@@ -812,7 +818,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: '田淵さん、{{欠品}}を出すと現場では誰にどう叱られるんですか', good: true },
       { text: '在庫を絞れない品って、過去にどの品目でどんな失敗があったからですか', good: true },
       { text: '経営が回転率を上げろと言うなら、一律で在庫を絞ればいいですよね？', good: false },
-      { text: '{{充足率}}は現場の言い訳なので、回転率だけ見ておけばいいですよね？', good: false },
+      { text: '{{充足率}}なんて現場の言い訳だ。回転率だけ見ておけばいい。', good: false },
       { text: '品目ごとの違いは細かすぎるので、全部同じ基準で削っていいですよね？', good: false },
     ],
     choices: [
@@ -851,7 +857,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: '入荷が遅れた日、いまは荷をどこにどう逃がして回してるんですか', good: true },
       { text: '理屈で在庫ゼロになるんだから、全品クロスドッキングに切り替えていいですよね？', good: false },
       { text: '赤城部長が乗り気なんだから、現場の時刻のズレは気にしなくていいですよね？', good: false },
-      { text: '日々のズレは細かい例外なので、無視して一律でやれば回りますよね？', good: false },
+      { text: '日々のズレなんて細かい例外だ。無視して一律でやれば回る。', good: false },
     ],
     choices: [
       {
@@ -931,7 +937,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: '田淵さんにとって「入力が減る」って、一日のどの作業がなくなることですか', good: true },
       { text: '声が大きい赤城部長の「コスト」に全部寄せておけば丸く収まりますよね？', good: false },
       { text: '三人とも結局は同じことを言ってるんだから、まとめて満たせますよね？', good: false },
-      { text: '誰の成果を優先するかは決めずに、全員分やればいいだけですよね？', good: false },
+      { text: '誰の成果を優先するかなんて決めなくていい。全員分やればいいだけだ。', good: false },
     ],
     choices: [
       {
@@ -987,7 +993,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: '需要予測が外れて先に積みすぎた品、過去にどれくらい痛い目を見ましたか', good: true },
       { text: '予測を全面的に信じて、全品先回りで在庫を積んでおけばいいですよね？', good: false },
       { text: '結城さんの目が輝いてるんだから、予測の精度は気にしなくていいですよね？', good: false },
-      { text: '外れる品のことは考えず、とにかく前倒しすればリードタイムは縮みますよね？', good: false },
+      { text: '外れる品のことなんて考えなくていい。前倒しすればリードタイムは縮む。', good: false },
     ],
     choices: [
       {
@@ -1020,7 +1026,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: '新しい人が入った時、最初につまずくのはセット組みのどの工程ですか', good: true },
       { text: '山田さんの勘は本人がいれば回るので、マニュアル化は後回しでいいですよね？', good: false },
       { text: '「見て覚えるもんだ」と言うなら、手順に起こすのは諦めていいですよね？', good: false },
-      { text: '手作業の細かいコツは言葉にできないので、放っておいていいですよね？', good: false },
+      { text: '手作業の細かいコツなんて言葉にできない。放っておけばいい。', good: false },
     ],
     choices: [
       {
@@ -1076,9 +1082,9 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       'AIの予測精度を上げるには、カルゴ物流の取引先の出荷データが効く。だがそれは取引先の機微情報だ。赤城部長は「使えるものは使え」と言う。',
     hearingOptions: [
       { text: 'その取引先の出荷データ、契約上どこまで二次利用していいことになってますか', good: true },
-      { text: '間宮さんや法務に、このデータを学習に回す件を一度通した方がいいですか', good: true },
+      { text: '間宮さんや現場は、このデータの何を学習に回されると困ると感じてますか', good: true },
       { text: '赤城部長が「使え」と言うんだから、同意の確認は飛ばしていいですよね？', good: false },
-      { text: '手元にあるデータなんだから、全部学習に回して問題ないですよね？', good: false },
+      { text: '手元にあるデータなんだから、全部学習に回して問題ない。', good: false },
       { text: '機微情報かどうかは後で考えるとして、まず精度を上げちゃっていいですよね？', good: false },
     ],
     choices: [
@@ -1113,7 +1119,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: 'どこまでなら結城さんが「これなら預けられる」と思える範囲ですか', good: true },
       { text: '権限が無いなら、古いコピーと勘で進めるしかないですよね？', good: false },
       { text: '結城さんが渋ってるだけなので、上から言って権限を出させればいいですよね？', good: false },
-      { text: '監査ログとか面倒なので、まず全権限もらってから考えればいいですよね？', good: false },
+      { text: '監査ログなんて面倒だ。まず全権限もらってから考えればいい。', good: false },
     ],
     choices: [
       {
@@ -1137,6 +1143,8 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     sprint: 2,
     ceremony: 'daily',
     segment: 'trouble',
+    minigame: 'hearing',
+    hearingTheme: 'team',
     location: 'serverroom',
     title: '見つかった野良ツール',
     narrative:
@@ -1173,7 +1181,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: 'ほんとうの流れを、いまの作業をなぞりながら一度見せてもらえますか', good: true },
       { text: '仕様通りに作ったので、現場の方が合わせてくれればいいですよね？', good: false },
       { text: '田淵さん一人がそう言ってるだけなので、気にしなくていいですよね？', good: false },
-      { text: 'もう作っちゃったので、流れの違いは今さら聞かなくていいですよね？', good: false },
+      { text: 'もう作ったんだから、流れの違いなんて今さら聞くまでもない。', good: false },
     ],
     choices: [
       {
@@ -1198,6 +1206,8 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     sprint: 2,
     ceremony: 'daily',
     segment: 'trouble',
+    minigame: 'hearing',
+    hearingTheme: 'team',
     title: '責任の押し付け合い',
     narrative:
       '出荷遅延が起きた途端、会議室は犯人探しの場になった。結城さん（情シス）は「現場の入力ミスだ」、業務側は「システムが落ちたからだ」と譲らない。郷田専務の機嫌が、刻一刻と悪くなる。',
@@ -1224,6 +1234,8 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     sprint: 2,
     ceremony: 'daily',
     segment: 'trouble',
+    minigame: 'hearing',
+    hearingTheme: 'genba',
     location: 'keiri',
     hints: {
       po: 'お客さんの数字の信頼性が気になる。経理部で売上の中身を確かめてきて。',
@@ -1257,6 +1269,8 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     sprint: 2,
     ceremony: 'daily',
     segment: 'trouble',
+    minigame: 'hearing',
+    hearingTheme: 'genba',
     location: 'soumu',
     hints: {
       po: '中に入れないと手が止まる。総務部で、入館証を再発行できるか確かめてきて。',
@@ -1303,7 +1317,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: '橋本さんが止まったら何が止まるか、数字で示せば評価会議で効きますか', good: true },
       { text: '評価は会社の問題なので、外から入ってきた自分は黙ってればいいですよね？', good: false },
       { text: '赤城部長の差し金なら、逆らわず流れに任せるのが無難ですよね？', good: false },
-      { text: '橋本さんが慎重なのは事実だし、低い評価でも仕方ないですよね？', good: false },
+      { text: '橋本さんが慎重なのは事実だ。低い評価でも仕方ない。', good: false },
     ],
     choices: [
       {
@@ -1342,7 +1356,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: 'この稟議、どの欄をどう埋めれば守屋さんが安心して回せますか', good: true },
       { text: '小さいツール一つなので、口頭OKだけで先に入れちゃっていいですよね？', good: false },
       { text: '守屋さんが慎重なだけなので、稟議は飛ばして後で出せばいいですよね？', good: false },
-      { text: '押印なんて形式なので、無視して進めても誰も困らないですよね？', good: false },
+      { text: '押印なんてただの形式だ。無視して進めても誰も困らない。', good: false },
     ],
     choices: [
       {
@@ -1381,7 +1395,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: '人を削る代わりに{{動線}}や手順でムダを減らせる余地、現場に残ってますか', good: true },
       { text: '赤城部長の指示なので、言われた通り2割減の計画を出せばいいですよね？', good: false },
       { text: '数字上は利益が出るんだから、現場がギリギリでも実行していいですよね？', good: false },
-      { text: '誤出荷が増えるかは後で見るとして、まず人数だけ削っていいですよね？', good: false },
+      { text: '誤出荷が増えるかは後で見ればいい。まず人数だけ削ろう。', good: false },
     ],
     choices: [
       {
@@ -1420,7 +1434,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: 'この通達、本社は「一律」と「実態に合わせて」のどちらまで本気で求めてますか', good: true },
       { text: '本社の通達なんだから、品目を見ずに一律3割で飲ませればいいですよね？', good: false },
       { text: '赤城部長も「言う通りに」と言ってるし、現場のざわつきは無視でいいですよね？', good: false },
-      { text: '欠品が出るかは現場の問題なので、こちらは数字だけ作ればいいですよね？', good: false },
+      { text: '欠品が出るかどうかは現場の問題だ。こちらは数字だけ作ればいい。', good: false },
     ],
     choices: [
       {
@@ -1461,7 +1475,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: '「導入済み」と帳簿に入った日、現場では誰が受け入れの検品をしたんですか', good: true },
       { text: 'ただの{{棚卸}}差異でしょうから、帳簿に合わせておけばいいですよね？', good: false },
       { text: '高額機材が無いのは面倒な話なので、見なかったことにしていいですよね？', good: false },
-      { text: 'どこかに移しただけでしょうから、現物を探さず帳簿を信じていいですよね？', good: false },
+      { text: 'どこかに移しただけだ。現物を探すまでもなく、帳簿を信じればいい。', good: false },
     ],
     deduction: {
       prompt: 'この“在るはずの機材が無い”違和感の正体はどれだ？',
@@ -1532,7 +1546,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: '結城さん、視察団は上に何を報告できれば「来た甲斐があった」となりますか', good: true },
       { text: '手書き台帳は見栄えが悪いので、隠してデモ画面だけ見せればいいですよね？', good: false },
       { text: '視察団は“動くAI”が見たいんだから、それらしく取り繕えばいいですよね？', good: false },
-      { text: '現実の運用は地味なので、見せずに上を満足させればいいですよね？', good: false },
+      { text: '現実の運用なんて地味なものだ。見せずに上を満足させればいい。', good: false },
     ],
     choices: [
       {
@@ -1576,7 +1590,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: '田淵さん、うちの通路でこのロボットを走らせたら、最初にどこで止まりますか', good: true },
       { text: '親会社が本気の技術なんだから、棚やデータの整備より先に入れちゃっていいですよね？', good: false },
       { text: 'デモ機がこれだけ動くんだから、うちでもそのまま動きますよね？', good: false },
-      { text: '通路をフォークが横切る細かい話は、ロボットが賢いので気にしなくていいですよね？', good: false },
+      { text: '通路をフォークが横切る程度、ロボットが賢いんだから止まりはしない。', good: false },
     ],
     choices: [
       {
@@ -1627,7 +1641,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: '結城さん、経営への約束は「予測機能」そのものですか、それとも誤出荷が減ることですか', good: true },
       { text: 'ここまで作ったんだから、引かずに予測機能を作り込めば使われますよね？', good: false },
       { text: '結城さんへの約束が予測機能なら、現場の反応は気にしなくていいですよね？', good: false },
-      { text: 'なぜ使われないかは今さらなので、機能を足して押し通せばいいですよね？', good: false },
+      { text: 'なぜ使われないかなんて今さらだ。機能を足して押し通せばいい。', good: false },
     ],
     choices: [
       {
@@ -1670,7 +1684,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       { text: '「これが満たせたら使う」と言える線は、田淵さんにとってどこですか', good: true },
       { text: '芯は掴めたので、もう確かめずに一気に作り込んでいいですよね？', good: false },
       { text: '田淵さんが顔を上げてくれた以上、要件はもう固まってますよね？', good: false },
-      { text: '夜勤明けのミスの話だけ分かれば、他の場面は聞かなくていいですよね？', good: false },
+      { text: '夜勤明けのミスの話だけ分かれば十分だ。他の場面は聞かなくていい。', good: false },
     ],
     choices: [
       {

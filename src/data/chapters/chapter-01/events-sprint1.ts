@@ -15,9 +15,9 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       'あなたは{{FDE}}として、物流会社カルゴ物流の現場に降り立った。情シスの結城係長は「予測機能を経営に約束した」と急かす。この{{スプリント}}のゴールを何に置く？',
     hearingOptions: [
       { text: '結城さんが経営に「予測機能」を約束したのは、もともと何を解決したかったからですか', good: true },
-      { text: '今このスプリントで一番マズいのは何だと、結城さんは感じてます？', good: true },
+      { text: '経営への約束と、現場の沈黙——この一週間で先に動かすべきは、結城さんはどっちだと見てます？', good: true },
       { text: '約束した予測機能、まず着手しちゃえば結城さんも安心ですよね？', good: false },
-      { text: '経営への約束なんだから、ゴールはもう予測機能で固まってますよね？', good: false },
+      { text: '経営に約束した以上、このスプリントのゴールは予測機能で固まりだ。', good: false },
       { text: '細かい背景は置いといて、とにかく早く動き出したほうがいいですよね？', good: false },
     ],
     choices: [
@@ -57,7 +57,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       { text: 'この手書きメモ、どんな時に書くんですか。一日のどこで使います？', good: true },
       { text: '出荷でヒヤッとするのって、だいたいどの時間帯ですか', good: true },
       { text: '画面、使いにくいですよね。新しく作り直したら使ってもらえます？', good: false },
-      { text: 'やっぱり紙より画面のほうが正確ですよね？', good: false },
+      { text: '手書きなんてもう時代遅れだ。画面に揃えてもらうしかない。', good: false },
       { text: 'お忙しいですよね、要点だけで結構です。困ってることは特にない、で合ってます？', good: false },
     ],
     choices: [
@@ -220,7 +220,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       { text: 'いま足された帳票、結城さんは誰に・いつ見せるために要るんですか', good: true },
       { text: 'この中で、今スプリントのゴールに本当に効くのはどれだと思います？', good: true },
       { text: '角を立てたくないので、ぜんぶ引き受けちゃっていいですよね？', good: false },
-      { text: '帳票なんて後でまとめて作れるから、全部足しても問題ないですよね？', good: false },
+      { text: '帳票くらい後でまとめて作れる。全部足しても大した負荷じゃない。', good: false },
       { text: '結城さんが言うなら優先度はもう決まってる、ということでいいですか？', good: false },
     ],
     choices: [
@@ -255,9 +255,9 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       '常駐初日。倉庫の奥に入るには総務部の承認が要ると言われた。総務部の守屋さんは「規程ですので」と杓子定規だ。ここを敵に回すと、この先ずっとやりにくい。{{ガバナンス}}は、越えるべき壁か、それとも——。',
     hearingOptions: [
       { text: '倉庫の奥に入るには、守屋さんとしては具体的にどんな手続きが要るんですか', good: true },
-      { text: 'この立ち入りの規程は、もともと何を守るために決まったものですか', good: true },
+      { text: '守屋さんがこの立ち入り規程を一番きっちり通すのは、過去に何かあったからですか', good: true },
       { text: '規程って言っても、現場に入るだけなら大目に見てもらえますよね？', good: false },
-      { text: '総務を通すと遅くなるので、先に入っちゃっていいですよね？', good: false },
+      { text: '総務の杓子定規につき合う暇はない。先に入ってしまえばいい。', good: false },
       { text: '手続きの細かい話は要らないので、ハンコだけもらえますか？', good: false },
     ],
     choices: [
@@ -323,7 +323,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       { text: '橋本さんの残業が突出してますけど、その時間に彼は実際どんな仕事を引き受けてます？', good: true },
       { text: '橋本さんに用事が集中するのは、誰が・どんな時に頼んでいるからですか', good: true },
       { text: 'これはもう人を一人増やせば片付く話、ということでいいですよね？', good: false },
-      { text: '残業が多いのは橋本さん本人が抱え込みがちだから、で合ってますよね？', good: false },
+      { text: '残業がこれだけ多いのは、橋本さん本人が抱え込みがちなだけだ。', good: false },
       { text: '勤怠の数字を見れば原因は分かるので、現場までは聞かなくていいですか？', good: false },
     ],
     choices: [
@@ -356,7 +356,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       { text: 'その不便、まわりのパートさんも同じように困ってる感じですか', good: true },
       { text: '不便って言っても、慣れればそんなに困らないですよね？', good: false },
       { text: 'お忙しいでしょうし、また手が空いたときでいいですか？', good: false },
-      { text: 'たぶん画面を新しくすれば全部解決する話ですよね？', good: false },
+      { text: 'どうせ画面を新しくすれば全部片付く話だ。', good: false },
     ],
     choices: [
       {
@@ -385,7 +385,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       { text: 'この浮いた1時間を、今いちばん見えてない所——たとえば倉庫に使うとしたら何が掴めそう？', good: true },
       { text: 'いま自分が一次情報を取りきれてないのは、どの現場ですか', good: true },
       { text: '時間が浮いたんだから、その分もう機能を作り込んだほうが得ですよね？', good: false },
-      { text: 'AIに任せられたなら、もう現場には行かなくて大丈夫ですよね？', good: false },
+      { text: 'AIが集計まで回せるなら、もう現場に足を運ぶ必要はない。', good: false },
       { text: '浮いた時間は成果が見える開発に回したほうが、結城さんも喜びますよね？', good: false },
     ],
     choices: [
@@ -419,7 +419,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       { text: '田淵さんたちが普段使う言葉と、システムの画面の言葉、食い違ってる用語ってあります？', good: true },
       { text: 'これは{{プロンプト}}の書き方をもっと工夫すれば直りますよね？', good: false },
       { text: '言葉の細かい違いは気にせず、だいたい合ってればいいですよね？', good: false },
-      { text: '最新のAIなら現場用語くらい勝手に分かってくれますよね？', good: false },
+      { text: '最新のAIなんだから、現場用語くらい黙っていても汲み取って当然だ。', good: false },
     ],
     choices: [
       {
@@ -454,7 +454,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       { text: '過去に何か、ツールを入れて痛い目に遭った前例があったりします？', good: true },
       { text: 'セキュリティって言っても、小さいツール一個なら問題ないですよね？', good: false },
       { text: '情シスを通すと遅いので、現場にこっそり入れちゃっていいですよね？', good: false },
-      { text: '前例がないだけなら、こっちが前例を作ればいいだけですよね？', good: false },
+      { text: '前例がないだけだ。こっちが先に入れて前例を作ってしまえばいい。', good: false },
     ],
     choices: [
       {
@@ -515,7 +515,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       { text: '返品が来たとき、現物はどこに、誰が、いつ戻すんですか', good: true },
       { text: '入庫・出庫はフローが見えますけど、返品だけ流れが描けない。どう動いてます？', good: true },
       { text: '返品なんて滅多に来ないから、フローに描かなくていいですよね？', good: false },
-      { text: 'この流れ、結局ぜんぶ自動化すれば描かなくて済みますよね？', good: false },
+      { text: '返品の流れなんて例外だ。フローからは外して作っていい。', good: false },
       { text: 'だいたい合ってますよね、細かい例外は気にしなくて大丈夫ですか？', good: false },
     ],
     choices: [
@@ -554,8 +554,8 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     hearingOptions: [
       { text: '「見える化」できたら、結城さんは何をやめられて、何ができるようになります？', good: true },
       { text: 'その画面を一番見るのは誰で、その人は今どこで困ってますか', good: true },
-      { text: 'グラフとKPIが並んだ立派な{{ダッシュボード}}、ありますよね？', good: false },
-      { text: '在庫が一覧で見えれば十分ですよね、それで合ってますか？', good: false },
+      { text: '{{ダッシュボード}}にグラフとKPIをずらっと並べれば、見える化できたことになりますよね？', good: false },
+      { text: '見える化なんて、要するに在庫の一覧画面を出せば済む話だ。', good: false },
       { text: '見える化はもう当たり前なので、要件は固まってるとみていいですか？', good: false },
     ],
     choices: [
@@ -587,7 +587,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       { text: 'このExcel、どんな時に手で直したり、特別な処理をしたりしてます？', good: true },
       { text: 'このマクロを作った人は誰で、いまは誰がメンテしてるんですか', good: true },
       { text: 'Excel管理なんて限界なので、新システムに丸ごと置き換えていいですよね？', good: false },
-      { text: 'マクロの中身は読まなくても、画面の見た目だけ真似れば大丈夫ですよね？', good: false },
+      { text: 'マクロの中身まで読む必要はない。画面の見た目さえ真似れば足りる。', good: false },
       { text: 'こんな複雑なの、例外処理は無視してシンプルに作り直していいですよね？', good: false },
     ],
     choices: [
@@ -618,7 +618,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       { text: 'この粗い{{MVP}}を現場に当てて、いちばん確かめたい仮説は何ですか', good: true },
       { text: 'これを誰に見てもらえば、合ってるか外してるかが一番早く分かります？', good: true },
       { text: 'やっぱり人に見せるなら、完成度を上げてから出すべきですよね？', good: false },
-      { text: '粗いものを見せると恥ずかしいので、もう少し磨いてからにしますか？', good: false },
+      { text: '粗いものを現場に出すのは失礼だ。きちんと仕上げてから見せるべきだ。', good: false },
       { text: 'アイデアは固まってるんだから、当てて確かめなくても大丈夫ですよね？', good: false },
     ],
     choices: [
@@ -702,7 +702,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       { text: '「全然使えない」って、具体的にどの場面で手が止まりました？', good: true },
       { text: 'これを使うはずの作業の流れの中で、いちばん噛み合わなかったのはどこですか', good: true },
       { text: '使いにくいだけなら、慣れてもらえば解決しますよね？', good: false },
-      { text: '現場の感想なので、そこまで真に受けなくていいですよね？', good: false },
+      { text: 'しょせん現場の感想だ。いちいち真に受ける必要はない。', good: false },
       { text: 'ダメ出しの中身は後で資料にまとめるので、今は聞き流していいですか？', good: false },
     ],
     choices: [
@@ -736,7 +736,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       { text: '結城さんはこのレビューで、経営に対して本当は何を示せると安心できますか', good: true },
       { text: '今回掴んだ「画面が使われていない事実」、結城さんにはどう響きそうですか', good: true },
       { text: 'とりあえず予測機能のモックを見せれば、進んでる風に見えますよね？', good: false },
-      { text: '成果が無いとは言えないので、それらしい画面を用意しておきますか？', good: false },
+      { text: '成果が無いとは言えない。それらしい画面を用意して場をしのぐしかない。', good: false },
       { text: '都合の悪い事実は、わざわざレビューで出さなくていいですよね？', good: false },
     ],
     choices: [
@@ -786,6 +786,8 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     sprint: 1,
     ceremony: 'daily',
     segment: 'trouble',
+    minigame: 'hearing',
+    hearingTheme: 'team',
     title: '何でも屋の橋本さん',
     narrative:
       'WMSの不具合も、棚番の変更も、配車の調整も——気づけば全部「橋本さんに聞いて」で回っている。{{制約理論}}でいう詰まりの一点が、彼一人に集中していた。今日も彼の前に小さな行列ができている。',
@@ -820,7 +822,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       { text: 'その棚から間違って取っちゃうこと、ピッキングで実際にありますか', good: true },
       { text: '数えるのが面倒だから合わないだけ、ということはないですか？', good: false },
       { text: 'これはもう{{棚卸}}を全部システム化すれば解決しますよね？', good: false },
-      { text: 'とりあえず数字さえ合えば、原因は後回しでいいですよね？', good: false },
+      { text: '数字さえ合わせれば帳尻は付く。原因なんて後回しでいい。', good: false },
     ],
     choices: [
       {
@@ -881,7 +883,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       { text: '在庫の引当ルール、部署ごとにどう違うのか、一部署ずつ見せてもらえますか', good: true },
       { text: 'この画面を実際に使う場面で、例外的な引当が起きるのはどんな時ですか', good: true },
       { text: 'ただの画面追加なんだから、見積もり通り一気に作っていいですよね？', good: false },
-      { text: '部署ごとの違いは細かい例外なので、共通ルールに寄せていいですよね？', good: false },
+      { text: '部署ごとの引当の違いなど些末な例外だ。共通ルールに寄せてしまえばいい。', good: false },
       { text: '結城さんが簡単って言うなら、深く確かめなくても大丈夫ですよね？', good: false },
     ],
     choices: [
@@ -913,7 +915,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       { text: 'よく出る品が遠い棚にあるのは、もともとどういう経緯でそこに置かれたんですか', good: true },
       { text: '誤出荷は入力チェックを足せば防げますよね、それでいいですか？', good: false },
       { text: '{{動線}}まで見直すのは大変なので、画面側で止めれば十分ですよね？', good: false },
-      { text: '取り違えは作業者の不注意なので、注意喚起すれば済みますよね？', good: false },
+      { text: '取り違えなんて作業者の不注意だ。注意喚起の貼り紙で済む話だ。', good: false },
     ],
     choices: [
       {
@@ -1008,7 +1010,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       { text: 'その二度手間、実際の作業のどの順番で起きてるのか一度やって見せてもらえますか', good: true },
       { text: '二度手間でも、慣れればそんなに苦じゃないですよね？', good: false },
       { text: '仕様通りに作ってあるので、運用でカバーしてもらえますよね？', good: false },
-      { text: '紙をなくして画面に一本化すれば、それで解決ですよね？', good: false },
+      { text: '紙を取り上げて画面に一本化すれば、二度手間など消える。', good: false },
     ],
     choices: [
       {
@@ -1046,7 +1048,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       { text: '「見て覚えろ」って言う時、田淵さん自身は何を見て判断してるんですか', good: true },
       { text: 'コツを全部教えてもらえれば、あとはこっちで自動化しますよね？', good: false },
       { text: '言葉にできないなら、見える動きだけ真似して作っちゃっていいですよね？', good: false },
-      { text: '自動化で楽になるんだから、ノウハウは出してくれて当然ですよね？', good: false },
+      { text: '自動化で楽になるんだから、ノウハウは黙って出してくれて当然だ。', good: false },
     ],
     choices: [
       {
@@ -1088,7 +1090,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       { text: '結城さんが「何も無いとは言えない」と感じるのは、上から何を背負わされてるからですか', good: true },
       { text: 'とりあえずAIらしい画面を急ごしらえすれば、視察は乗り切れますよね？', good: false },
       { text: '現場の実態は見せず、見栄えのデモだけ整えればいいですよね？', good: false },
-      { text: '実証の場として買われたんだから、何かそれっぽく作るしかないですよね？', good: false },
+      { text: '実証の場として買われた以上、何かそれっぽく作って見せるしかない。', good: false },
     ],
     choices: [
       {

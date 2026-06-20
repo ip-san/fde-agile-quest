@@ -95,15 +95,16 @@ describe('miniGameKindFor', () => {
     choices: [],
     minigame,
   })
-  it('作る/直す系(team,trouble)は dev、人と現場系は hearing', () => {
-    expect(miniGameKindFor(ev('team'))).toBe('dev')
+  it('障害=trouble は dev（直す）、チーム/人と現場は hearing（問いを選ぶ）', () => {
     expect(miniGameKindFor(ev('trouble'))).toBe('dev')
+    expect(miniGameKindFor(ev('team'))).toBe('hearing')
     expect(miniGameKindFor(ev('genba'))).toBe('hearing')
     expect(miniGameKindFor(ev('kokyaku'))).toBe('hearing')
     expect(miniGameKindFor(ev('chance'))).toBe('hearing')
   })
-  it('event.minigame があればセグメント既定より優先', () => {
-    expect(miniGameKindFor(ev('team', 'hearing'))).toBe('hearing')
+  it('event.minigame があればセグメント既定より優先（例: trouble の調査回を hearing、AI点検回を review に）', () => {
+    expect(miniGameKindFor(ev('trouble', 'hearing'))).toBe('hearing')
+    expect(miniGameKindFor(ev('trouble', 'review'))).toBe('review')
   })
 })
 

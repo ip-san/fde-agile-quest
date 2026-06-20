@@ -48,10 +48,21 @@ function parseBlock(block) {
   const segment = /segment:\s*'(\w+)'/.exec(text)?.[1]
   const title = /title:\s*'([^']+)'/.exec(text)?.[1] ?? ''
   const requiresFlag = /requiresFlag:\s*'([^']+)'/.exec(text)?.[1]
-  // 選択肢サブブロック（6スペースの { … }）
+  // 選択肢サブブロック（choices 配列内の 6スペース { … } のみ）。
+  // hearingOptions 等、他の 6スペース { } を誤検出しないよう choices スコープに限定する
+  // （長文の hearingOptions を biome が複数行に折り返すと、選択肢と同じ 6スペースの { が生じるため）。
   const choices = []
   let cb = null
+  let inChoices = false
   for (const line of block) {
+    if (!inChoices) {
+      if (/^ {4}choices:\s*\[/.test(line)) inChoices = true
+      continue
+    }
+    if (!cb && /^ {4}\],?$/.test(line)) {
+      inChoices = false // choices 配列の終端で離脱
+      continue
+    }
     if (!cb && /^ {6}\{$/.test(line)) {
       cb = []
       continue

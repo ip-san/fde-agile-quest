@@ -34,6 +34,7 @@ export type NameId =
   | 'yuki'
   | 'tabuchi'
   | 'hashimoto'
+  | 'yamada'
   | 'goda'
   | 'akagi'
   | 'moriya'
@@ -74,6 +75,7 @@ export const NAMES: Record<NameId, NameDef> = {
   yuki: { canonical: '結城', name: '結城', reading: 'ゆうき', kind: 'person' },
   tabuchi: { canonical: '田淵', name: '田淵', reading: 'たぶち', kind: 'person' },
   hashimoto: { canonical: '橋本', name: '橋本', reading: 'はしもと', kind: 'person' },
+  yamada: { canonical: '山田', name: '山田', reading: 'やまだ', kind: 'person' },
   goda: { canonical: '郷田', name: '郷田', reading: 'ごうだ', kind: 'person' },
   akagi: { canonical: '赤城', name: '赤城', reading: 'あかぎ', kind: 'person' },
   moriya: { canonical: '守屋', name: '守屋', reading: 'もりや', kind: 'person' },

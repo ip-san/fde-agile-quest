@@ -17,7 +17,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       { text: '結城さんは、自分が抜けたあとこの運用を誰に握っていてほしいと思ってます？', good: true },
       { text: '写真入力の叩き台、現場では今どこまで触ってもらえてますか。詰まってる箇所はあります？', good: true },
       { text: '本番化は、結城さんの窓口に私が居続ければ安心ですよね？', good: false },
-      { text: '叩き台はもう渡したんで、あとは本番に乗せるだけですよね', good: false },
+      { text: '叩き台はもう渡したんだから、あとは本番に乗せるだけだ。', good: false },
       { text: '最後のスプリントだし、移譲の話は今回は省いて進めていいですよね', good: false },
     ],
     choices: [
@@ -47,6 +47,8 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
+    minigame: 'hearing',
+    hearingTheme: 'genba',
     requiresFlag: 'wrongKpi',
     title: '手戻り——使われない新機能',
     narrative:
@@ -108,7 +110,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       { text: '前のやり方に戻したくなる瞬間って、一日のどこで出ます？', good: true },
       { text: '新しいやり方、もう完全に定着しましたよね？', good: false },
       { text: '数字は良くなってるんで、現場も満足してますよね', good: false },
-      { text: '細かい使いづらさは、慣れれば消えますよね', good: false },
+      { text: '定着したかは現場に通うまでもなく、利用ログを見れば分かる。', good: false },
     ],
     choices: [
       {
@@ -138,7 +140,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       { text: '他拠点だと、ここの田淵さんに当たる人は誰で、どんな回し方をしてます？', good: true },
       { text: 'この拠点で効いた一手が、別の拠点では刺さらないとしたら、どこが違うからだと思います？', good: true },
       { text: 'うまくいった形をそのままコピーすれば、横展開は早いですよね？', good: false },
-      { text: '拠点ごとの細かい違いは、後で吸収すればいいですよね', good: false },
+      { text: '拠点ごとの細かい違いは、後で吸収すればいい。', good: false },
       { text: '一拠点で成功したんだから、全拠点も同じ結果になりますよね', good: false },
     ],
     deduction: {
@@ -197,9 +199,9 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         text: '別部署の部長さんは、うちの何を見て「来てくれ」と言ってるんでしょう。本当の困りごとは何ですか',
         good: true,
       },
-      { text: '今の現場の定着、結城さんから見てまだ手が要るのはどこですか', good: true },
+      { text: 'この紹介を受けると、いまの現場に張ってる手は誰の分が薄くなりますか', good: true },
       { text: '評判が立ってるうちに、すぐ別部署に乗り換えた方が得ですよね？', good: false },
-      { text: '誤出荷が減ったんだから、今の現場はもう放っておいても回りますよね', good: false },
+      { text: '誤出荷が減ったんだから、今の現場はもう放っておいても回る。', good: false },
       { text: '紹介の話なんで、中身は聞かずに受けてしまっていいですよね', good: false },
     ],
     choices: [
@@ -224,6 +226,8 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
+    minigame: 'hearing',
+    hearingTheme: 'team',
     title: '誰がダッシュボードを見るか',
     narrative: '誤出荷率の{{ダッシュボード}}を作ったが、自分が抜けたら誰も見ない懸念がある。',
     deduction: {
@@ -276,6 +280,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
+    minigame: 'review',
     title: 'AIエージェントに権限を渡すか',
     narrative:
       '在庫の補正を{{エージェント}}に自動でやらせれば運用はぐっと楽になる。だが在庫データへの書き込み権限を渡すことになる。',
@@ -309,7 +314,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       { text: 'AIが出してきた設計、現場の誰に見てもらえば“嘘”を見抜けますか', good: true },
       { text: 'AIに丸投げすれば、もう自分が現場を見なくても回りますよね？', good: false },
       { text: '横展開なんだから、AIが過去の成功例を真似れば十分ですよね', good: false },
-      { text: '現場差みたいな細かいところは、AIが勝手に埋めてくれますよね', good: false },
+      { text: '現場差みたいな細かいところは、AIが勝手に埋めてくれる。', good: false },
     ],
     choices: [
       {
@@ -410,7 +415,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       },
       { text: '価値の話は営業の領域なので、私は技術の話に戻していいですよね？', good: false },
       { text: '成果が出てるんだから、値付けは適当に大きく言っておけばいいですよね', good: false },
-      { text: '他社にも売れるかは、現場を見なくても机上で試算できますよね', good: false },
+      { text: '他社にも売れるかは、現場を見なくても机上で試算できる。', good: false },
     ],
     choices: [
       {
@@ -442,7 +447,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       { text: '結城さんが経営に問われて、本当に困るのは見込みのどこがズレたときですか', good: true },
       { text: '景気のいい見込みも交えて、力強く報告した方が経営は喜びますよね？', good: false },
       { text: '「来期ゼロ」は、断言で書いておいた方が通りがいいですよね', good: false },
-      { text: '事実と願望の切り分けなんて、報告では気にしなくていいですよね', good: false },
+      { text: '事実と願望の切り分けなんて、報告では気にしなくていい。', good: false },
     ],
     choices: [
       {
@@ -492,6 +497,8 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
+    minigame: 'hearing',
+    hearingTheme: 'team',
     title: '空いたままの椅子',
     narrative: '本番切り替えの判断。「最終的に誰が責任を持つ？」と全員が顔を見合わせる。',
     choices: [
@@ -524,7 +531,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       { text: '皆が決めかねてるのは、何が決まれば前に進むか、論点がどこでぼやけてるからですか', good: true },
       { text: '紛糾してるし、結論は次回に持ち越して空気を収めましょうか？', good: false },
       { text: '声の大きい人の案に乗っておけば、丸く収まりますよね？', good: false },
-      { text: '関係者が多いんだから、誰も決めないのは仕方ないですよね', good: false },
+      { text: '関係者が多いんだから、誰も決めないのは仕方ない。', good: false },
     ],
     choices: [
       {
@@ -607,9 +614,12 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     narrative: '案件は終わりに近づいた。次に向けて、自分は何を磨くべきか。',
     hearingOptions: [
       { text: 'この現場で、自分のどの一手が効いて、どこで空回りしたか——一緒に振り返ってもらえますか', good: true },
-      { text: '次の現場で田淵さんみたいな人と最初に会うとき、今回の何が武器になると思います？', good: true },
+      {
+        text: '久遠さんに聞きたいんです。次の現場で田淵さんみたいな相手と最初に会うとき、今回の何が武器になりますか',
+        good: true,
+      },
       { text: '今回うまくいったやり方、次もそのまま当てはめれば大丈夫ですよね？', good: false },
-      { text: '案件が終わったら一区切りだし、振り返りは省いても問題ないですよね', good: false },
+      { text: '案件が終われば一区切り。振り返りは省いても次に困らない。', good: false },
       { text: '自分の型はもう固まったから、これ以上磨かなくていいですよね', good: false },
     ],
     choices: [
@@ -646,7 +656,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       { text: '号令で集めた手順から抜け落ちてた例外って、ほかにどんな場面で出ますか。見せてもらえますか', good: true },
       { text: 'デモが崩れたのは現場の入力ミスってことで、郷田専務には説明していいですよね？', good: false },
       { text: '例外なんて稀なんだから、本番ではほぼ起きないと言い切っていいですよね', good: false },
-      { text: '自動仕分けのロジックさえ直せば、現場には聞かなくても解決しますよね', good: false },
+      { text: '自動仕分けのロジックさえ直せば、現場に聞かなくても解決する。', good: false },
     ],
     choices: [
       {
@@ -683,7 +693,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       { text: 'この例外処理、田淵さんが休んだ日でも別の人が同じ勘で回せるようにするには何が要りますか', good: true },
       { text: 'デモが成功したんだから、設計は私の手柄として郷田専務に話していいですよね？', good: false },
       { text: 'うまく弾けてるんだから、例外処理はもうこれで完成でいいですよね', good: false },
-      { text: '現場の勘はもう全部システムに入ったから、田淵さんに確認しなくて大丈夫ですよね', good: false },
+      { text: '現場の勘はもう全部システムに入ったから、田淵さんに確認するまでもない。', good: false },
     ],
     choices: [
       {
@@ -722,7 +732,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       },
       { text: '数字は少し盛って、成功をきれいに見せた方が郷田専務は満足しますよね？', good: false },
       { text: '本番で回り始めたんだから、残課題は触れずに締めていいですよね', good: false },
-      { text: '誤出荷率が下がってる以上、理由は説明しなくても伝わりますよね', good: false },
+      { text: '誤出荷率が下がってる以上、理由は説明しなくても伝わる。', good: false },
     ],
     choices: [
       {
@@ -826,6 +836,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
+    minigame: 'review',
     location: 'repo',
     requiresFlag: 'aiOverreliance',
     hints: {
@@ -883,7 +894,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       { text: '手書きをやめてもいいと思える瞬間って、画面に何があれば来そうですか', good: true },
       { text: 'DoDは満たしてるんだから、手書きが残ってても「完了」でいいですよね？', good: false },
       { text: '画面はちゃんと動いてるんだから、メモは田淵さんの慣れの問題ですよね', good: false },
-      { text: '本番に乗ったし、あとは次の機能に進んでいいですよね', good: false },
+      { text: '本番に乗ったんだから、あとは次の機能に進んでいい。', good: false },
     ],
     choices: [
       {
@@ -921,7 +932,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         good: true,
       },
       { text: 'コストとKPIが一発で良くなるなら、まるごと{{3PL}}に出すのが正解ですよね？', good: false },
-      { text: '現場の知恵なんて、手順書にすれば外注先でも再現できますよね', good: false },
+      { text: '現場の知恵なんて、手順書にすれば外注先でも再現できる。', good: false },
       { text: '赤城部長がそう言うなら、もう移管で話を進めていいですよね', good: false },
     ],
     choices: [
@@ -1000,6 +1011,8 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
+    minigame: 'hearing',
+    hearingTheme: 'team',
     title: '誰が決めるのか',
     narrative:
       '本番直前、重大な判断が要る局面。全員が当事者として意見を出すが、誰が最終決定をするのかが曖昧で、時間だけが過ぎていく。',
@@ -1067,10 +1080,10 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       'プロジェクトの終わりが見えてきた。結城さんが不安げだ。「あなたが抜けたら、また元に戻るんじゃ…」。自分がいなくても回る形を、どう残すか。',
     hearingOptions: [
       { text: '結城さん、私が抜けたあと、いちばん不安なのは具体的にどの作業が止まることですか', good: true },
-      { text: '橋本さんと結城さんが二人で運用を回すとして、いま手元に無くて困る勘所はどこですか', good: true },
+      { text: '結城さんが橋本さんと二人で運用を回すとき、いま手元に無くて困る勘所はどこですか', good: true },
       { text: 'ご不安なら、私が居続けて手厚く面倒を見ると約束しましょうか？', good: false },
       { text: '私がいる間ちゃんと回ってたんだから、抜けても大丈夫ですよね？', good: false },
-      { text: '引き継ぎの細かい所は、困ったらまた呼んでもらえば済みますよね', good: false },
+      { text: '引き継ぎの細かい所は、困ったらまた呼んでもらえば済む。', good: false },
     ],
     choices: [
       {
@@ -1106,7 +1119,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       },
       { text: '良い数字だけきれいに並べれば、報告としては十分ですよね？', good: false },
       { text: '理由を語ると粗が見えるから、数字だけにしておきましょうか？', good: false },
-      { text: '数字が下がってる事実があれば、再現性の話はしなくていいですよね', good: false },
+      { text: '数字が下がってる事実があれば、再現性の話はしなくていい。', good: false },
     ],
     choices: [
       {
@@ -1129,6 +1142,8 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
+    minigame: 'hearing',
+    hearingTheme: 'team',
     title: '「誰のミスだ」',
     advocacy: {
       po: '「誰のミスだ」と犯人を探しても、出荷は戻らない。電算室で、まず事実を押さえてきてくれ。',
@@ -1166,7 +1181,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       { text: 'その「ついでに」の要望、実際に使うのは現場の誰で、いつ困ってる場面ですか', good: true },
       { text: '機運があるうちに、出てきた要望は全部この案件で巻き取りましょうか？', good: false },
       { text: '上機嫌なうちなら、優先度はあまり気にせず進めて大丈夫ですよね？', good: false },
-      { text: '要望はもう出尽くしたから、あとは詰め込むだけでいいですよね', good: false },
+      { text: '要望はもう出尽くしたから、あとは詰め込むだけでいい。', good: false },
     ],
     choices: [
       {
@@ -1197,7 +1212,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       { text: '久遠さんが過去の現場で“残った”と感じたのは、数字でしたか、それとも別の何かでしたか', good: true },
       { text: '{{誤出荷率}}をこれだけ下げたんだから、残せたと言って差し支えないですよね？', good: false },
       { text: '成果は数字で出てるんで、もうこの問いは答えが出てますよね', good: false },
-      { text: '自分がいる間に回ってたなら、抜けたあとも大丈夫ですよね', good: false },
+      { text: '自分がいる間に回ってたなら、抜けたあとも回り続ける。', good: false },
     ],
     choices: [
       {
@@ -1263,7 +1278,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       { text: '物量の波が平らになれば、御社の無駄はどのあたりが消えそうですか。一緒に見られますか', good: true },
       { text: 'うちの立場なら、1割の値下げは黙って飲んでもらえますよね？', good: false },
       { text: '長い付き合いだから、多少無理を言っても断られませんよね', good: false },
-      { text: '先方の事情は確かめなくても、社内のコスト目標を優先していいですよね', good: false },
+      { text: '先方の事情は確かめるまでもなく、社内のコスト目標を優先すればいい。', good: false },
     ],
     choices: [
       {
@@ -1288,6 +1303,8 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
+    minigame: 'hearing',
+    hearingTheme: 'genba',
     location: 'keiri',
     requiresFlag: 'fraudClue',
     hints: {
@@ -1322,6 +1339,8 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
+    minigame: 'hearing',
+    hearingTheme: 'genba',
     location: 'soumu',
     hints: {
       po: '経費まわりの統制が気になる。総務部で精算のフローを見てきて。',
@@ -1353,6 +1372,8 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
+    minigame: 'hearing',
+    hearingTheme: 'genba',
     location: 'soumu',
     requiresFlag: 'fraudClue',
     hints: {
@@ -1418,6 +1439,8 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
+    minigame: 'hearing',
+    hearingTheme: 'genba',
     location: 'serverroom',
     hints: {
       po: 'お客さんの数字の裏が気になる。電算室で取引データに当たってきて。',
@@ -1502,7 +1525,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
       },
       { text: 'グループの期待に合わせて「実証は順調」と書いておけば、角が立たなくていいですよね？', good: false },
       { text: '見栄えの数字を足しておけば、上は満足するから問題ないですよね', good: false },
-      { text: '現実との落差は、今は化粧して隠しておけばいいですよね', good: false },
+      { text: '現実との落差は、今は化粧して隠しておけばいい。', good: false },
     ],
     choices: [
       {

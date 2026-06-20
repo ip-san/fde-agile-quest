@@ -467,7 +467,7 @@ export function Board() {
         <MiniGame
           kind={miniGameKindFor(currentEvent)}
           seed={seedFor(currentEvent.id)}
-          theme={hearingThemeFor(currentEvent.segment)}
+          theme={currentEvent.hearingTheme ?? hearingThemeFor(currentEvent.segment)}
           hearingOptions={currentEvent.hearingOptions}
           onDone={(tier) => {
             choose(pendingChoice, tier, deductionBonus)
