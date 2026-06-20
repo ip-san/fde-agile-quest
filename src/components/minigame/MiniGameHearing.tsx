@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { dealHearing, type HearingOption, type HearingTheme, scoreHearing } from '../../data/minigames'
+import {
+  dealHearing,
+  type HearingOption,
+  type HearingTheme,
+  hearingPromptFor,
+  scoreHearing,
+} from '../../data/minigames'
 import { sfxTick } from '../../engine/sfx'
 import type { ExecTier } from '../../types'
 
@@ -79,7 +85,7 @@ export function MiniGameHearing({ seed, theme, hearingOptions, onResolve }: Prop
   return (
     <div className="space-y-3">
       <p className="text-sm text-slate-300">
-        現場に、どの問いを投げる？ <span className="text-slate-400">深掘りになる質問を2つ選ぶ</span>
+        {hearingPromptFor(theme)} <span className="text-slate-400">深掘りになる質問を2つ選ぶ</span>
       </p>
       <ul className="space-y-2">
         {options.map((o, i) => {

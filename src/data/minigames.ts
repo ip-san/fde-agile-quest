@@ -137,6 +137,30 @@ export function hearingThemeFor(segment: string): HearingTheme {
   return segment === 'genba' || segment === 'kokyaku' || segment === 'chance' ? segment : 'kokyaku'
 }
 
+// ヒアリングの見出しは相手・場面で変える（“現場”固定だと顧客/機会の場面と噛み合わないため）。
+const HEARING_TITLE: Record<HearingTheme, string> = {
+  genba: '現場の声を掘る',
+  kokyaku: '依頼主の期待を確かめる',
+  chance: '価値の在処を探る',
+}
+
+/** ヒアリング・ミニゲームの見出し（テーマ＝相手・場面で出し分け。未指定は現場主義の標準） */
+export function hearingTitleFor(theme?: HearingTheme): string {
+  return theme ? HEARING_TITLE[theme] : HEARING_TITLE.genba
+}
+
+// 「誰に問いを投げるのか」もテーマで変える（“現場に”固定だと顧客/機会と噛み合わない）。
+const HEARING_PROMPT: Record<HearingTheme, string> = {
+  genba: '現場に、どの問いを投げる？',
+  kokyaku: '依頼主に、どの問いを投げる？',
+  chance: '機会の芽に、どの問いを当てる？',
+}
+
+/** ヒアリング・ミニゲームの設問リード文（相手・場面で出し分け。未指定は現場主義の標準） */
+export function hearingPromptFor(theme?: HearingTheme): string {
+  return theme ? HEARING_PROMPT[theme] : HEARING_PROMPT.genba
+}
+
 /** ヒアリングの採点：選んだ2問のうち良問の数で great/good/poor。 */
 export function scoreHearing(picked: HearingOption[]): ExecTier {
   const good = picked.filter((o) => o.good).length

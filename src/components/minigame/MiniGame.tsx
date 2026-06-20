@@ -1,4 +1,4 @@
-import type { HearingTheme } from '../../data/minigames'
+import { type HearingTheme, hearingTitleFor } from '../../data/minigames'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
 import type { ExecTier, MiniGameKind } from '../../types'
 import { MiniGameDev } from './MiniGameDev'
@@ -25,7 +25,8 @@ const HEADING: Record<MiniGameKind, { tag: string; title: string }> = {
 /** 選択後に挟む「実行」ミニゲーム。出来が選択の主正メーターを倍率調整する。Esc/スキップで標準(good)。 */
 export function MiniGame({ kind, seed, theme, hearingOptions, onDone, onSkip }: Props) {
   const ref = useFocusTrap<HTMLDivElement>(onSkip)
-  const h = HEADING[kind]
+  // ヒアリングは相手・場面（テーマ）で見出しを出し分ける（“現場”固定を回避）。
+  const h = kind === 'hearing' ? { ...HEADING.hearing, title: hearingTitleFor(theme) } : HEADING[kind]
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:px-safe sm:pt-safe sm:pb-safe">
