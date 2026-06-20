@@ -80,6 +80,17 @@ describe('isValidPersisted', () => {
     expect(isValidPersisted({ ...valid, aiTokens: 12.5 })).toBe(false)
     expect(isValidPersisted({ ...valid, aiTokens: Number.NaN })).toBe(false)
   })
+  it('velocity / valueHistory の sparse な穴（JSON往復の null）は通す（restore で 0 に正規化）', () => {
+    // index=sprintIndex を保つ sparse 配列は JSON.stringify で穴が null になる。これで全消ししない。
+    expect(isValidPersisted({ ...valid, velocity: [null, null, 8] })).toBe(true)
+    expect(isValidPersisted({ ...valid, valueHistory: [null, 40, null] })).toBe(true)
+  })
+  it('velocity / valueHistory は型が壊れた要素（非数値・負・非配列）なら弾く', () => {
+    expect(isValidPersisted({ ...valid, valueHistory: ['x'] })).toBe(false)
+    expect(isValidPersisted({ ...valid, valueHistory: [-1] })).toBe(false)
+    expect(isValidPersisted({ ...valid, valueHistory: 'nope' })).toBe(false)
+    expect(isValidPersisted({ ...valid, valueBaseline: 'x' })).toBe(false)
+  })
 })
 
 describe('sanitizeSeenPrecepts', () => {

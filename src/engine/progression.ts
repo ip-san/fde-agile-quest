@@ -9,6 +9,7 @@ import {
   FINALE_EPILOGUES,
   PRODUCT_BACKLOG,
   SPRINTS,
+  STARTING_METERS,
 } from '../data/chapters/chapter-01'
 import { LOCATION_ORDER, locationOf } from '../data/locations'
 import { preceptsForEvent } from '../data/precepts'
@@ -28,7 +29,7 @@ import type {
   Segment,
   Status,
 } from '../types'
-import { isKnownPbi, REVIEW_CAPACITY, resolveSprintBacklog, WIP_LIMIT } from './backlog'
+import { isKnownPbi, REVIEW_CAPACITY, resolveSprintBacklog, revealPbi, WIP_LIMIT } from './backlog'
 import {
   amplifyEffects,
   availableEvents,
@@ -78,15 +79,43 @@ export interface ProgressCore {
   backlogDone: string[]
   /** スプリントごとの完了ポイント（ベロシティ。index=sprintIndex）。推移表示に使う */
   velocity: number[]
+  /** スプリント末（レビュー精算後）に記録した顧客価値（北極星。index=sprintIndex）。
+   *  「案件を通じて顧客価値がどう伸びたか」の成長曲線に使う。未到達スプリントの枠は undefined。 */
+  valueHistory: number[]
+  /** キャンペーン開始時の顧客価値（baseline）。第1スプリントの“伸び”をここからの差分で測る。 */
+  valueBaseline: number
+  /** 連続して会心(great)実行した回数（“実装の波”）。great で +1、good/poor で 0 にリセット。
+   *  連鎖が伸びるほど会心のコード品質ボーナスが増す＝上手い実行を続けるほど成果が複利で伸びる。 */
+  greatStreak: number
   /** カンバンの In Progress 列（着手済み・未Done の PBI id。WIP=2 上限） */
   inProgress: string[]
   /** In Progress 各項目の累積レビュー点（id→点）。見積りに達すると Done */
   reviewProgress: Record<string, number>
   /** 今スプリントの残レビュー容量（人の希少資源。毎スプリント REVIEW_CAPACITY にリセット） */
   reviewCapacity: number
+  /** 直前スプリントのレビューで終わらせきれず持ち越した PBI id 群（次プランニングで「↪前回持ち越し」表示に使う）。
+   *  レビュー精算で carryIds を書き、次レビューで上書きされる。初期＝[]。 */
+  lastCarryover: string[]
 }
 
 export const REPO_COVERAGE_MAX = 100
+
+/** 会心(great)実行が“腕前”としてコードの質(coverage)に還元される基礎量(%)。
+ *  実際の付与は負債ドラッグで鈍る。会心を「被害軽減」でなく「純増の成果」に変えるための報酬。 */
+export const GREAT_SKILL_COVERAGE = 4
+
+/** 会心の連鎖（greatStreak）が会心コードボーナスに上乗せする1連鎖あたりの量(%)と、その上限。
+ *  連鎖2回目から効き始め(streak-1)、上限で頭打ち。複利で青天井にせず“波に乗る手応え”だけ与える。
+ *  PER はこのファイル内のみで使う（外部参照なし）ので非 export。CAP はテストが参照するので export。 */
+const STREAK_BONUS_PER = 1
+export const STREAK_BONUS_CAP = 4
+
+/** 会心連鎖を踏まえた、会心コードボーナスの基礎量(%)（ドラッグ適用前）。
+ *  greatStreak=1（初回会心）は GREAT_SKILL_COVERAGE のまま＝従来挙動と後方互換。 */
+export function greatSkillBase(greatStreak: number): number {
+  const bonus = Math.min(Math.max(0, greatStreak - 1) * STREAK_BONUS_PER, STREAK_BONUS_CAP)
+  return GREAT_SKILL_COVERAGE + bonus
+}
 
 /** 生成AIトークンの初期予算（キャンペーンを通じた有限資源・自然回復なし）。
  *  消費源: 丸投げ s2-ai-handoff(700)/s2-repo-aicode(500)＝過信フラグ付き、賢い協働＝フラグ無しで小さく消費。
@@ -113,9 +142,17 @@ export interface Persisted {
   sprintForecast?: string[]
   backlogDone?: string[]
   velocity?: number[]
+  /** スプリント末に記録した顧客価値（旧セーブには無いので [] で補完） */
+  valueHistory?: number[]
+  /** 開始時の顧客価値 baseline（旧セーブには無いので開始メーターから再計算して補完） */
+  valueBaseline?: number
+  /** 会心の連鎖（旧セーブには無いので 0 で補完） */
+  greatStreak?: number
   inProgress?: string[]
   reviewProgress?: Record<string, number>
   reviewCapacity?: number
+  /** 直前スプリントの持ち越し（旧セーブには無いので [] で補完） */
+  lastCarryover?: string[]
 }
 
 const METER_KEYS: MeterKey[] = ['trust', 'insight', 'culture']
@@ -156,9 +193,14 @@ export function freshCore(starting: Meters): ProgressCore {
     sprintForecast: [],
     backlogDone: [],
     velocity: [],
+    valueHistory: [],
+    // 開始時の顧客価値（カバレッジ0・負債0・未デリバリ）。第1スプリントの伸びをここから測る。
+    valueBaseline: customerValue(starting, 0, 0, 0),
+    greatStreak: 0,
     inProgress: [],
     reviewProgress: {},
     reviewCapacity: REVIEW_CAPACITY,
+    lastCarryover: [],
   }
 }
 
@@ -410,8 +452,17 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
   const aiTokens = core.aiTokens - tokenSpent
   // リポジトリの健全度（開発の質）を選択で更新。
   // ★負債が高いほど“良いコードが積み上がりにくい”＝coverage の正の伸びをドラッグで鈍らせる（負の補正は不変）
+  const drag = coverageDrag(core.repoDebt, core.flags)
   const rawCov = choice.repo?.coverage ?? 0
-  const covDelta = rawCov > 0 ? Math.round(rawCov * coverageDrag(core.repoDebt, core.flags)) : rawCov
+  const eventCov = rawCov > 0 ? Math.round(rawCov * drag) : rawCov
+  // ★会心(great)実行は、伸ばせる主正メーターの有無に関わらず“腕前”をコードの質(coverage)に還元する。
+  //   上手い実行が必ず北極星に効く成果（coverage）として積む＝「会心＝純増」。代償(メーター負)も0ルールも不変。
+  //   負債が高いと腕前の伸びも鈍る（drag 適用＝雑なコードベースでは良い実装も効きにくい）。
+  // ★さらに会心を“連鎖”させるほどボーナスが増す（実装の波）。great で連鎖+1、good/poor で 0 にリセット。
+  //   初回会心(streak=1)は GREAT_SKILL_COVERAGE のままで従来挙動と後方互換。
+  const greatStreak = tier === 'great' ? core.greatStreak + 1 : 0
+  const skillCov = tier === 'great' ? Math.round(greatSkillBase(greatStreak) * drag) : 0
+  const covDelta = eventCov + skillCov
   const repoCoverage = clamp01(core.repoCoverage + covDelta, REPO_COVERAGE_MAX)
   const debtRaw = choice.repo?.debt ?? 0
   const repoDebt = Math.max(0, core.repoDebt + debtRaw)
@@ -433,7 +484,18 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
     },
   ]
 
-  const choiceBase = { ...core, meters, flags, resolvedIds, log, aiTokens, repoCoverage, repoDebt, sprintGoals }
+  const choiceBase = {
+    ...core,
+    meters,
+    flags,
+    resolvedIds,
+    log,
+    aiTokens,
+    repoCoverage,
+    repoDebt,
+    sprintGoals,
+    greatStreak,
+  }
 
   // スプリントレビューを解決した瞬間に、スプリントバックログ（別レイヤー）を精算する：
   // 予測を優先順に容量まで done、超過は持ち越し、ベロシティ記録、予測の健全さで culture を ±1 ナッジ。
@@ -443,7 +505,28 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
   if (event.ceremony === 'review') {
     const res = resolveSprintBacklog(choiceBase)
     base = res.core
-    backlogReview = res.review
+    // スプリント末の顧客価値（北極星）を記録し、前スプリント（無ければ baseline）からの“伸び”を測る。
+    // ＝「このスプリントで顧客価値をどれだけ伸ばしたか」をレビューで可視化する（成長の手応え）。
+    // 記録 index は精算前の現スプリントで固定（resolveSprintBacklog は sprintIndex を変えないが、明示する）。
+    const reviewSprint = choiceBase.sprintIndex
+    const rs = repoStats(base)
+    const value = customerValue(base.meters, rs.coverage, rs.debtScore, rs.deliveredItems)
+    const prevValue = lastValue(base.valueHistory, reviewSprint, base.valueBaseline)
+    const valueHistory = [...base.valueHistory]
+    valueHistory[reviewSprint] = value
+    base = { ...base, valueHistory }
+    backlogReview = { ...res.review, valueGain: value - prevValue }
+  }
+
+  // 発見：ヒアリングで現場の声を良く掘り当てた選択は、伏せられた発見可PBIをプロダクトバックログに加える。
+  // 出来が poor（聞けていない）だと掘り当てられない＝丁寧に聞くほど発見がある。
+  let discoveredPbi: { id: string; title: string } | undefined
+  if (choice.discoversPbi && tier !== 'poor') {
+    const rev = revealPbi(base, choice.discoversPbi)
+    if (rev.revealed) {
+      base = rev.core
+      discoveredPbi = { id: rev.revealed.id, title: rev.revealed.title }
+    }
   }
 
   const result: ResultView = {
@@ -464,8 +547,11 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
     minigameKind: miniGameKindFor(event),
     tokenSpent: tokenSpent || undefined,
     coverageDelta: covDelta || undefined,
+    skillCoverageBonus: skillCov || undefined, // 会心実行が腕前としてコード品質に上乗せした分（表示用）
+    greatStreak: tier === 'great' ? greatStreak : undefined, // 会心の連鎖数（2以上で“波”演出。great時のみ）
     debtDelta: debtRaw || undefined,
     backlogReview,
+    discoveredPbi, // ヒアリングで掘り当てた発見可PBI（あれば）。プロダクトバックログに新規追加された
     seedId: choice.seedId, // 「次の機能の種」（発見の新旧判定は store が foundSeeds と突き合わせて埋める）
   }
 
@@ -525,6 +611,8 @@ export function restoreCore(p: Persisted): ProgressCore {
     aiTokens: clampTokens(p.aiTokens ?? AI_TOKENS_MAX),
     repoCoverage: clamp01(p.repoCoverage ?? 0, REPO_COVERAGE_MAX),
     repoDebt: Math.max(0, Math.floor(p.repoDebt ?? 0)),
+    // 会心連鎖は非負整数。旧セーブ/破損は 0 で補完
+    greatStreak: Number.isFinite(p.greatStreak) ? Math.max(0, Math.floor(p.greatStreak as number)) : 0,
     // index=sprintIndex を保つため filter で詰めず、各枠を文字列か空文字に正規化（空＝未決定）
     sprintGoals: Array.isArray(p.sprintGoals) ? p.sprintGoals.map((g) => (typeof g === 'string' ? g : '')) : [],
     ...restoreBacklog(p),
@@ -540,7 +628,16 @@ function restoreBacklog(
   p: Persisted
 ): Pick<
   ProgressCore,
-  'backlogOrder' | 'sprintForecast' | 'backlogDone' | 'velocity' | 'inProgress' | 'reviewProgress' | 'reviewCapacity'
+  | 'backlogOrder'
+  | 'sprintForecast'
+  | 'backlogDone'
+  | 'velocity'
+  | 'valueHistory'
+  | 'valueBaseline'
+  | 'inProgress'
+  | 'reviewProgress'
+  | 'reviewCapacity'
+  | 'lastCarryover'
 > {
   const seedOrder = PRODUCT_BACKLOG.map((q) => q.id)
   const savedOrder = (Array.isArray(p.backlogOrder) ? p.backlogOrder : []).filter(
@@ -559,6 +656,15 @@ function restoreBacklog(
   const velocity = (Array.isArray(p.velocity) ? p.velocity : []).map((v) =>
     typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0
   )
+  // 顧客価値の推移は index=sprintIndex を保つため詰めない。各枠を 0..100 の整数へ正規化（未記録は0）
+  const valueHistory = (Array.isArray(p.valueHistory) ? p.valueHistory : []).map((v) =>
+    typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.min(100, Math.round(v))) : 0
+  )
+  // baseline は 0..100 の数。旧セーブ/破損なら開始メーターから再計算して補完
+  const valueBaseline =
+    typeof p.valueBaseline === 'number' && Number.isFinite(p.valueBaseline)
+      ? Math.max(0, Math.min(100, Math.round(p.valueBaseline)))
+      : customerValue(STARTING_METERS, 0, 0, 0)
   // In Progress は「既知∧今スプリント対象∧未done」のみ。WIP 上限超過は先頭から詰める
   const forecastSet = new Set(sprintForecast)
   const inProgress = (Array.isArray(p.inProgress) ? p.inProgress : [])
@@ -574,7 +680,22 @@ function restoreBacklog(
     typeof p.reviewCapacity === 'number' && Number.isFinite(p.reviewCapacity)
       ? Math.max(0, Math.min(REVIEW_CAPACITY, p.reviewCapacity))
       : REVIEW_CAPACITY
-  return { backlogOrder, sprintForecast, backlogDone: [...done], velocity, inProgress, reviewProgress, reviewCapacity }
+  // 持ち越しは既知 PBI のみ（表示用ヒント。done でも保持＝「前回終わらせた」とは別概念なので絞らない）
+  const lastCarryover = (Array.isArray(p.lastCarryover) ? p.lastCarryover : []).filter(
+    (id): id is string => typeof id === 'string' && isKnownPbi(id)
+  )
+  return {
+    backlogOrder,
+    sprintForecast,
+    backlogDone: [...done],
+    velocity,
+    valueHistory,
+    valueBaseline,
+    inProgress,
+    reviewProgress,
+    reviewCapacity,
+    lastCarryover,
+  }
 }
 
 /** その選択が生成AIトークン残量で「選べる」か（tokenCost が残量以下）。
@@ -595,14 +716,64 @@ function clamp01(v: number, max: number): number {
   return Math.max(0, Math.min(max, Math.round(v)))
 }
 
-/** 顧客価値（成果＝北極星指標・0..100）。FDEの働きの“結実”を導出する：
- *  3ゲージ(信頼/理解/巻き込み)の伸びを主軸(重み70)に、コードの健全度(カバレッジ・重み30)を足し、
- *  技術的負債が引く。＝信頼を築き・現場を理解し・文化を残し・良いコードを積むほど、顧客価値が上がる。
- *  これを高めることがゲームの基本目標。 */
-export function customerValue(meters: Meters, coverage: number, debtScore: number): number {
+/** 「顧客価値」で“届けきった”とみなすインクリメント数の目安（delivery 項の満点基準）。
+ *  3スプリント×レビュー容量(REVIEW_CAPACITY)から現実的に到達しうる本数に置く。
+ *  大きすぎると delivery 項が常に低空飛行で死に、小さすぎるとすぐ天井に張り付くため、
+ *  「強いプレイで届けきれる」ラインに調整する。 */
+export const DELIVERY_TARGET = 6
+
+/** valueHistory のうち、指定スプリントより前で最後に記録された顧客価値を返す（無ければ baseline）。
+ *  スプリントを飛ばして未記録の枠があっても、直近の実績値を辿って“伸び”の基準にする。 */
+function lastValue(history: number[], sprintIndex: number, baseline: number): number {
+  for (let i = sprintIndex - 1; i >= 0; i--) {
+    const v = history[i]
+    if (typeof v === 'number' && Number.isFinite(v)) return v
+  }
+  return baseline
+}
+
+/** 顧客価値の「内訳」（北極星が“どの働きで”構成されているか）。各値は顧客価値ポイント単位。
+ *  - means: 3ゲージ＝ルーレットの判断（イベント層）が積む分（0..60）
+ *  - delivery: 届けたインクリメント＝バックログの実装（カンバン層）が積む分（0..20）
+ *  - coverage: テストカバレッジ＝開発の質（カンバン層）が積む分（0..20）
+ *  - penalty: 技術的負債が削る分（>=0。表示は減算）
+ *  - total: 上記を合算しクランプした最終値（0..100）＝ customerValue と一致
+ *  ★「判断（ルーレット）」と「実装（バックログ）」の両レイヤーが一本の北極星に合流することを可視化する。 */
+export interface ValueBreakdown {
+  means: number
+  delivery: number
+  coverage: number
+  penalty: number
+  total: number
+}
+
+/** 顧客価値の内訳を算出（純粋）。customerValue はこの total を返す＝計算の単一の真実源。 */
+export function customerValueBreakdown(
+  meters: Meters,
+  coverage: number,
+  debtScore: number,
+  deliveredItems = 0
+): ValueBreakdown {
   const meansSum = meters.trust + meters.insight + meters.culture // 0..30
-  const v = (meansSum / 30) * 70 + (Math.max(0, Math.min(100, coverage)) / 100) * 30 - Math.max(0, debtScore) * 2
-  return Math.max(0, Math.min(100, Math.round(v)))
+  const delivered = Math.max(0, Math.min(1, deliveredItems / DELIVERY_TARGET)) // 0..1（目安到達で満点）
+  const means = (meansSum / 30) * 60
+  const delivery = delivered * 20
+  const cov = (Math.max(0, Math.min(100, coverage)) / 100) * 20
+  const penalty = Math.max(0, debtScore) * 2
+  const total = Math.max(0, Math.min(100, Math.round(means + delivery + cov - penalty)))
+  return { means, delivery, coverage: cov, penalty, total }
+}
+
+/** 顧客価値（成果＝北極星指標・0..100）。FDEの働きの“結実”を導出する：
+ *  3ゲージ(信頼/理解/巻き込み)の伸びを主軸(重み60)に、
+ *  顧客に実際に「届けたインクリメント」(重み20)＋コードの健全度(カバレッジ・重み20)を足し、
+ *  技術的負債が引く。＝信頼を築き・現場を理解し・文化を残し・良いコードを積み、
+ *  かつ“動く成果を届ける”ほど、顧客価値が上がる。これを高めることがゲームの基本目標。
+ *  ★届けたインクリメント(deliveredItems)を直接の加点にすることで、
+ *    「シップ＝北極星が目に見えて伸びる」という核心の手応えを作る。
+ *  内訳が要るときは customerValueBreakdown を使う（この関数はその total を返す）。 */
+export function customerValue(meters: Meters, coverage: number, debtScore: number, deliveredItems = 0): number {
+  return customerValueBreakdown(meters, coverage, debtScore, deliveredItems).total
 }
 
 // coverageDrag は game.ts に移設（chooseCore と backlog のレビューで共用・循環回避）。互換のため再エクスポート。
@@ -625,8 +796,12 @@ export function toPersisted(core: ProgressCore): Persisted {
     sprintForecast: core.sprintForecast,
     backlogDone: core.backlogDone,
     velocity: core.velocity,
+    valueHistory: core.valueHistory,
+    valueBaseline: core.valueBaseline,
+    greatStreak: core.greatStreak,
     inProgress: core.inProgress,
     reviewProgress: core.reviewProgress,
     reviewCapacity: core.reviewCapacity,
+    lastCarryover: core.lastCarryover,
   }
 }

@@ -88,3 +88,37 @@ export const PRODUCT_BACKLOG: BacklogItem[] = [
     sprintHint: 3,
   },
 ]
+
+// ───────────────────────────────────────────────────────────
+// 発見可バックログ（DISCOVERABLE）。
+// 初期のプロダクトバックログには現れない“現場に埋もれた候補”。
+// ヒアリングで現場の声を良く掘り当てる（Choice.discoversPbi）と、初めてプロダクトバックログに加わる。
+// ＝「現場の声 → バックログ項目」という発見→還元の筋を、ゲーム機構として体現する。
+// narrative-designer が各ヒアリングイベントの選択肢（discoversPbi）と本文を、ここの項目に結び付ける。
+// ───────────────────────────────────────────────────────────
+export const DISCOVERABLE_BACKLOG: BacklogItem[] = [
+  {
+    id: 'pbi-disc-label-misread',
+    title: '似た棚番の“見間違い”を減らす表示にする',
+    detail: '田淵さんの「いつもズレる棚」から判明：一桁違いの隣接棚番を急ぐと取り違える。表示の工夫で防ぐ。',
+    estimate: 2,
+    sprintHint: 2,
+    discoverable: true,
+  },
+  {
+    id: 'pbi-disc-night-shift',
+    title: '夜勤帯だけの“引き継ぎ漏れ”を埋める',
+    detail: '田淵さんへの聞き取りから判明：夜勤の申し送りが口頭だけで、抜けが出荷ミスに繋がる。',
+    estimate: 3,
+    sprintHint: 2,
+    discoverable: true,
+  },
+  {
+    id: 'pbi-disc-return-flow',
+    title: '返品の戻し入れ手順を決める',
+    detail: '在庫フローの図解から判明：返品だけ戻し先が宙に浮き在庫差異の一因に。誰も手順を持っていない。',
+    estimate: 3,
+    sprintHint: 3,
+    discoverable: true,
+  },
+]

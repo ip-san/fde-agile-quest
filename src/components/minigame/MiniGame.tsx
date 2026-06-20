@@ -10,6 +10,8 @@ interface Props {
   seed: number
   /** ヒアリングの問いを相手・場面で変えるテーマ（hearing のみ使用） */
   theme?: HearingTheme
+  /** イベント固有のヒアリング問い（hearing のみ使用。あればシャッフルして優先提示） */
+  hearingOptions?: { text: string; good: boolean }[]
   onDone: (tier: ExecTier) => void
   onSkip: () => void
 }
@@ -21,7 +23,7 @@ const HEADING: Record<MiniGameKind, { tag: string; title: string }> = {
 }
 
 /** 選択後に挟む「実行」ミニゲーム。出来が選択の主正メーターを倍率調整する。Esc/スキップで標準(good)。 */
-export function MiniGame({ kind, seed, theme, onDone, onSkip }: Props) {
+export function MiniGame({ kind, seed, theme, hearingOptions, onDone, onSkip }: Props) {
   const ref = useFocusTrap<HTMLDivElement>(onSkip)
   const h = HEADING[kind]
 
@@ -54,7 +56,7 @@ export function MiniGame({ kind, seed, theme, onDone, onSkip }: Props) {
           ) : kind === 'review' ? (
             <MiniGameReview seed={seed} onResolve={onDone} />
           ) : (
-            <MiniGameHearing seed={seed} theme={theme} onResolve={onDone} />
+            <MiniGameHearing seed={seed} theme={theme} hearingOptions={hearingOptions} onResolve={onDone} />
           )}
           <p className="mt-3 text-center text-xs text-slate-400">
             ※ 出来が、選んだ判断の伸びを上下させる（スキップ＝標準）

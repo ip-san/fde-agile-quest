@@ -10,7 +10,10 @@ import type {
   Segment,
   SprintDef,
 } from '../../types'
-import { PRODUCT_BACKLOG as PRODUCT_BACKLOG_RAW } from './chapter-01/backlog'
+import {
+  DISCOVERABLE_BACKLOG as DISCOVERABLE_BACKLOG_RAW,
+  PRODUCT_BACKLOG as PRODUCT_BACKLOG_RAW,
+} from './chapter-01/backlog'
 import { SPRINT1_EVENTS } from './chapter-01/events-sprint1'
 import { SPRINT2_EVENTS } from './chapter-01/events-sprint2'
 import { SPRINT3_EVENTS } from './chapter-01/events-sprint3'
@@ -115,6 +118,8 @@ export const EVENTS: GameEvent[] = localizeDeep([...SPRINT1_EVENTS, ...SPRINT2_E
 
 // プロダクトバックログ（PBI）。配列順＝POの初期優先順位。固有名詞は表示名へ置換して公開する。
 export const PRODUCT_BACKLOG: BacklogItem[] = localizeDeep(PRODUCT_BACKLOG_RAW)
+/** 発見可バックログ（初期は伏せ、ヒアリングで掘り当てると PRODUCT_BACKLOG に加わる候補）。 */
+export const DISCOVERABLE_BACKLOG: BacklogItem[] = localizeDeep(DISCOVERABLE_BACKLOG_RAW)
 
 export const ENDINGS: Ending[] = [
   {

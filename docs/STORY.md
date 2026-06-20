@@ -256,6 +256,7 @@ FDEの務めは現場を直すだけではない。**現場でしか掴めない
 | `fraudCase` | s3-daily-circular b（データ）／ s3-daily-soumu-paper b（紙）／ s3-daily-keiri-closing b（会計）（いずれも要fraudClue） | フィナーレ（§6.5） | “動かぬ証拠”（3ルートのいずれかで成立） |
 | `showcasePressure` | s1-daily-showcase-order（a/b 両方で立つ） | s2-daily-showcase-visit／s3-daily-showcase-report（要showcasePressure） | 買収の皮肉アーク（§6.6・親会社の登場） |
 | `chasedPromise` | s1-plan-goal a（背景を確かめず“予測機能”をゴールに） | s2-daily-promise-gap（要chasedPromise） | プランニング→分岐: 約束を追ったゴールが空回り→立て直す |
+| `groundedGoal` | s1-plan-goal b（現場の沈黙を起点に“なぜ使われないか”をゴールに） | s1-daily-refine-grounded（要groundedGoal・途中）／s2-daily-grounded-core（要groundedGoal・回収） | プランニング→分岐(chasedPromiseの対): 把握パスの途中で“何を確かめるか”を並べ替え→S2で沈黙の理由が要件に結実（前向き・芯を捉える）。トレードオフは残す |
 | `soloHero` | s3-plan-handoff a（移譲せず“自分が窓口”をゴールに） | s3-daily-bottleneck（要soloHero） | プランニング→分岐: 属人化のボトルネック→終盤でも移譲に転じられる |
 
 > プランニングの決定が後で響く分岐（プランニング→ストーリー展開）。プレイヤーがプランニングで選んだ
@@ -314,15 +315,25 @@ FDEの務めは現場を直すだけではない。**現場でしか掴めない
 §1の背景設定——「フィジカルAI実証の場として買ったのに、現場はIT化すらされていないアナログ」という
 **買収の皮肉**——を、親会社を“institutionalな圧力”として実イベントに出すアーク（深いキャラは作らず、
 **視察団・グループ通達・経営報告**という顔の見えない圧力として登場させる）。`showcasePressure` フラグで
-3イベントが連鎖し、**夢（実証）と現実（アナログ現場）の落差**を巡って毎回「取り繕う／正直に出す」を問う。
+連鎖し、**夢（実証）と現実（アナログ現場）の落差**を巡って毎回「取り繕う／正直に出す」を問う。
 
 - **起点 `s1-daily-showcase-order`（会議室）**: グループ経営企画から「フィジカルAI実証の視察に行く、デモを
   用意せよ」。だが現場は基本のIT化すらまだ。a=“AIらしい”画面を急ごしらえで取り繕う(warn, insight−)／
   b=「実証の前にまず基本のIT化が要る」と正直に上げる(insight+/culture+)。**a/b 両方が `showcasePressure` を立て**、
   視察→報告の連鎖が確実に続く（圧力は選択に関わらず存在する）。
-- **視察 `s2-daily-showcase-visit`（倉庫・要showcasePressure）**: 視察団が“動くAI”を期待して来るが、現実は
-  田淵さんの手書き台帳とフォークリフト。a=ベテランの手書きを隠してデモだけ見せ取り繕う(warn, culture−＝現場の
+- **見学 `s2-physical-ai-showcase`（倉庫・chance・要showcasePressure）**: 親会社が試作機を**持ち込んで**
+  グループ向けにお披露目している場へ主人公が足を運び、**フィジカルAIの実物を初めて目の当たりにする**回
+  （概念→目に見えるモノ）。実物は「誤りのないデータ・整った棚と動線・走る線」が前提でだけ動く＝**土台の
+  IT化が先**という芯。a=タイミングを逃さず上に同調(warn, trust+/insight−。乗ること自体は是・**順番**を誤る形に
+  して断罪を避ける)／b=データ・動線の構造から「土台が先」と気づく(insight+。AGV/AMRの違いが学びに)／
+  c=田淵さんの目を借りる(culture+。「線の上しか走れん」「棚が散ってる」＝seed photo-input を c で発見)。
+  **このデモ機は“持ち込み・持ち帰り”で、§6.5の幽霊機材（導入済みなのに実在しない）とは別物**（混線注意）。
+- **視察 `s2-daily-showcase-visit`（倉庫・要showcasePressure）**: 視察団が“動くAI／自動倉庫ロボット”を期待して
+  来るが（＝見る側の漠然とした期待。`s2-physical-ai-showcase` の実機描写と対）、現実は田淵さんの手書き台帳と
+  フォークリフト。a=ベテランの手書きを隠してデモだけ見せ取り繕う(warn, culture−＝現場の
   誇りを傷つける)／b=アナログの現実と地に足の改善を田淵さんと正直に見せる(insight+/culture+)。
+  > **見せる側 vs 見る側の2視点**: `s2-physical-ai-showcase`（実物を“見る”見学）と `s2-daily-showcase-visit`
+  > （視察団に“見せる”当日）は同一周回で連続提示されうる。両立する別イベントで矛盾しない。
 - **報告 `s3-daily-showcase-report`（会議室・要showcasePressure）**: グループへの実証報告。a=「実証は順調」と
   見栄えの数字で盛る(warn, insight−／「盛った数字はいつか誰かが帳尻を合わせる」＝§6.5不正の温床へ薄く接続)／
   b=「実証はまだ。だが現場は確かに動き始めた」と本物の進捗を正直に報告(insight+/culture+)。

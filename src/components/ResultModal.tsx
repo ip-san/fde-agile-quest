@@ -53,12 +53,27 @@ function ExecBadge({ result }: { result: ResultView }) {
   const kind = result.minigameKind ? KIND_LABEL[result.minigameKind] : '実行'
   const primary = result.execPrimary ? EFFECT_LABEL[result.execPrimary] : null
   const delta = result.execDelta ?? 0
+  const skillCov = result.skillCoverageBonus ?? 0
+  const streak = result.greatStreak ?? 0
+  // 会心の文言: 主正メーターの上乗せ＋会心の腕前がコード品質へ還元された分を、あるものだけ繋いで見せる。
+  const greatGains = [
+    primary && delta > 0 ? `${primary}の伸びを ＋${delta}` : null,
+    skillCov > 0 ? `コード品質を ＋${skillCov}%` : null,
+  ].filter(Boolean)
+  // 2連鎖以上は“実装の波”を頭に出して、続けて会心するほど効くことを体感させる。
+  const streakLabel = streak >= 2 ? `🔥${streak}連鎖！ ` : ''
   const conf =
     tier === 'great'
       ? {
-          cls: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
-          icon: '◎',
-          text: primary && delta > 0 ? `会心の${kind}！ ${primary}の伸びを ＋${delta} 上乗せ` : `会心の${kind}！`,
+          cls:
+            streak >= 2
+              ? 'border-amber-500/50 bg-amber-500/10 text-amber-200'
+              : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
+          icon: streak >= 2 ? '🔥' : '◎',
+          text:
+            greatGains.length > 0
+              ? `${streakLabel}会心の${kind}！ ${greatGains.join('、')} 上乗せ`
+              : `${streakLabel}会心の${kind}！`,
         }
       : tier === 'poor'
         ? {
@@ -86,6 +101,7 @@ function ExecBadge({ result }: { result: ResultView }) {
  *  容量を超えて予測した分はキャリーオーバーになり、健全な予測は culture を後押しする。 */
 function BacklogReviewBlock({ review }: { review: BacklogReview }) {
   const cd = review.cultureDelta
+  const vg = review.valueGain
   return (
     <div className="space-y-2 rounded-xl border border-slate-700 bg-slate-800/40 px-4 py-3">
       <div className="flex items-center justify-between">
@@ -94,6 +110,26 @@ function BacklogReviewBlock({ review }: { review: BacklogReview }) {
           📈 ベロシティ {review.velocity}pt（完了 {review.done.length}件）
         </span>
       </div>
+
+      {/* このスプリントで北極星（顧客価値）をどれだけ伸ばしたか＝“成果の前進”を主役級に見せる。 */}
+      {vg !== undefined && (
+        <div
+          className={`flex items-center justify-between rounded-lg px-3 py-2 ${
+            vg > 0 ? 'bg-amber-400/10 ring-1 ring-amber-400/30' : 'bg-slate-800/60'
+          }`}
+        >
+          <span className="text-xs font-semibold text-amber-100">
+            <span aria-hidden="true">🎯</span> このスプリントで伸ばした顧客価値
+          </span>
+          <span
+            className={`text-base font-extrabold tabular-nums ${
+              vg > 0 ? 'text-amber-300' : vg < 0 ? 'text-rose-300' : 'text-slate-400'
+            }`}
+          >
+            {vg > 0 ? `▲ +${vg}` : vg < 0 ? `▼ ${vg}` : '±0'}
+          </span>
+        </div>
+      )}
 
       {review.done.length > 0 ? (
         <div>
@@ -288,7 +324,7 @@ export function ResultModal({ result, meters, onContinue }: Props) {
               role="status"
               className={`rounded-xl border px-4 py-2.5 ${
                 onBrink
-                  ? 'border-rose-500/70 bg-rose-500/15 motion-safe:animate-pulse'
+                  ? 'border-rose-500/50 bg-rose-500/15 motion-safe:animate-pulse'
                   : 'border-amber-500/50 bg-amber-500/10'
               }`}
             >
@@ -336,6 +372,19 @@ export function ResultModal({ result, meters, onContinue }: Props) {
 
           {/* 次の機能の種：現場で掴んだプロダクトの種を発見＝自社SaaSへ還元できる（FDEの本懐）。 */}
           <SeedReveal seedId={result.seedId} seedNew={result.seedNew} />
+
+          {/* ヒアリングで掘り当てた発見可PBI：プロダクトバックログに新たな項目が加わった。 */}
+          {result.discoveredPbi && (
+            <div className="space-y-1 rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-2.5">
+              <p className="text-[11px] font-semibold text-rose-300">
+                <span aria-hidden="true">🔎</span> 現場の声から、新しいバックログ項目が見つかった
+              </p>
+              <p className="text-sm font-medium text-slate-100">『{result.discoveredPbi.title}』</p>
+              <p className="text-[11px] text-slate-400">
+                プロダクトバックログに追加。次のプランニングで優先順位を検討しましょう。
+              </p>
+            </div>
+          )}
 
           {/* 生成AIトークンの消費（AIに頼った選択のみ） */}
           {result.tokenSpent ? (

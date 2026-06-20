@@ -38,6 +38,7 @@ export type GameFlag =
   | 'showcasePressure'
   // プランニングの決定が後で響くアーク（プランニング→ストーリー分岐）:
   | 'chasedPromise' // S1: 背景を確かめず“約束（予測機能）”を追ってゴールにした → 後で空回り
+  | 'groundedGoal' // S1: 現場の沈黙を起点に“なぜ使われないか”をゴールに据えた → 後で芯を捉える
   | 'soloHero' // S3: 移譲せず“自分が運用の窓口”をゴールにした → 後で属人化のボトルネック
 
 /** 進行状態。travel＝デイリーでルーレット後、リモート朝会＋現地マップ移動の最中 */
@@ -88,6 +89,9 @@ export interface Choice {
   restraint?: boolean
   /** この選択で“発見”する「次の機能の種」のID（seeds.ts）。現場の観察から製品(StockPilot)へ還元する種。 */
   seedId?: string
+  /** この選択（主にヒアリング）で“掘り当てる”発見可PBIのID（DISCOVERABLE_BACKLOG）。
+   *  現場の声がプロダクトバックログの新項目になる＝発見をバックログへ還元する。ヒアリングの出来が poor だと掘り当てられない。 */
+  discoversPbi?: string
   /** 生成AIに頼る選択が消費するトークン量（消費型リソース）。残量が足りないと選べない＝AIショートカット封印 */
   tokenCost?: number
   /** リポジトリの健全度への影響（開発の質）。coverage=テストカバレッジ増減(%)、debt=技術的負債増減。
@@ -138,6 +142,11 @@ export interface GameEvent {
   pinned?: boolean
   /** 選択後の実行ミニゲームの種類。未指定なら segment から既定（作る/直す=dev、人と現場=hearing） */
   minigame?: MiniGameKind
+  /** ヒアリングのミニゲームで提示する“このイベント固有の現場の声”（任意）。
+   *  指定するとこのイベントの場面に合った問い（良問2＋悪問3 が目安）が出る。
+   *  未指定なら従来どおりテーマ別の汎用プール（dealHearing）にフォールバック。
+   *  good:true＝核心に迫る良い問い／good:false＝場をズラす/誘導/決めつけ等の悪い問い。 */
+  hearingOptions?: { text: string; good: boolean }[]
   /** このイベントが起きる場所。未指定なら segment から既定（locations.ts の LOCATION_BY_SEGMENT） */
   location?: LocationId
   /** リモート朝会の役割別ヒント（任意）。未指定の役割は場所テンプレから自動生成。
@@ -177,6 +186,9 @@ export interface BacklogItem {
   estimate: number
   /** 物語上どのスプリントに資するかのヒント（表示用。選択をハードロックはしない） */
   sprintHint?: number
+  /** 初期は伏せられた“発見可”PBI。プロダクトバックログには最初は出ず、ヒアリングで掘り当てると現れる
+   *  （DISCOVERABLE_BACKLOG に置く。通常の PRODUCT_BACKLOG とは別管理）。 */
+  discoverable?: boolean
 }
 
 /** スプリント末（レビュー）のバックログ精算結果。done は二値（DoD未達は部分点なし）。 */
@@ -189,6 +201,9 @@ export interface BacklogReview {
   velocity: number
   /** 着手の完遂度に応じた culture の増減（+1/0/−1） */
   cultureDelta: number
+  /** このスプリントで顧客価値（北極星）が前スプリント（初回は開始時）からどれだけ伸びたか。
+   *  ＝「成果がどれだけ前進したか」をレビューで可視化する（成長の手応え）。progression が埋める。 */
+  valueGain?: number
 }
 
 /** 用語集エントリ（従＝いつの間にか慣れる） */
@@ -250,6 +265,10 @@ export interface ResultView {
   seedNew?: boolean
   /** この選択で動いたテストカバレッジ（負債ドラッグ適用後の実値）／技術的負債の差分（表示用） */
   coverageDelta?: number
+  /** うち、会心(great)実行の“腕前”でコード品質に上乗せされた分（あれば。会心＝純増の演出用）。 */
+  skillCoverageBonus?: number
+  /** 会心(great)を連続した回数（great時のみ。2以上で“実装の波”を演出）。 */
+  greatStreak?: number
   debtDelta?: number
   /** このイベントが体現するFDE心得のID（手帳に集まる） */
   precepts: number[]
@@ -257,4 +276,6 @@ export interface ResultView {
   newPreceptIds: number[]
   /** スプリントレビューの結果に添える、バックログの精算（レビューのイベントのみ）。 */
   backlogReview?: BacklogReview
+  /** この選択（ヒアリング）で新たにプロダクトバックログに掘り当てた発見可PBI（表示用）。 */
+  discoveredPbi?: { id: string; title: string }
 }

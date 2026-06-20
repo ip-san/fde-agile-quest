@@ -100,6 +100,12 @@ export const THREADS: Record<GameFlag, Thread> = {
     note: '背景を確かめず約束を追う→後で空回りするイベント',
     teaser: '確かめずに追った約束が、宙に浮いている。',
   },
+  groundedGoal: {
+    setVia: ['choice'],
+    payoffVia: ['event'],
+    note: '現場の沈黙を起点にゴールを据える→S1で“確かめる”を並べ替える／S2で芯を捉える回収',
+    teaser: '現場の沈黙を起点に据えたゴールが、芽を探している。',
+  },
   soloHero: {
     setVia: ['choice'],
     payoffVia: ['event'],
