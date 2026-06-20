@@ -33,13 +33,16 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
     () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
   )
 
-  // マップは“地理”として読ませる：現地（歩いて回る）とリモート（画面越し）でゾーンを分ける。
-  const onsiteLocations = LOCATION_ORDER.filter((id) => !LOCATIONS[id].remote)
-  const remoteLocations = LOCATION_ORDER.filter((id) => LOCATIONS[id].remote)
+  // マップは“地理”として読ませる。ゾーンは2つ：
+  //  ・物理の建物（見取り図に描く部屋）＝歩いて回る
+  //  ・画面の中（デジタル）＝コードリポジトリと、リモートの開発室。物理の部屋とは別物。
+  // リポジトリは“社内の一室”ではなくコードの中なので、見取り図には入れない（存在の混同を防ぐ）。
+  const floorRooms = LOCATION_ORDER.filter((id) => !LOCATIONS[id].remote && id !== 'repo')
+  const digitalLocations = LOCATION_ORDER.filter((id) => id === 'repo' || LOCATIONS[id].remote)
 
   // 選択中の拠点（タップ→下に詳細→「向かう」で確定）。初期値は今日の論点があればそこ。
   const [selectedId, setSelectedId] = useState<LocationId>(
-    () => onsiteLocations.find((id) => liveLocations.has(id)) ?? onsiteLocations[0] ?? 'warehouse'
+    () => LOCATION_ORDER.find((id) => liveLocations.has(id)) ?? 'warehouse'
   )
 
   /** 見取り図の“部屋”。1度目のタップで選択（下に詳細）、選択中の部屋をもう一度押すと向かう。
@@ -83,9 +86,9 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
     )
   }
 
-  // 見取り図の行：上段＝奥の3部屋、下段＝手前の4部屋（current order: 倉庫/電算室/会議室 ｜ 総務/人事/経理/リポジトリ）
-  const backRooms = onsiteLocations.slice(0, 3)
-  const frontRooms = onsiteLocations.slice(3)
+  // 見取り図の行：上段＝奥の3部屋、下段＝手前の3部屋（倉庫/電算室/会議室 ｜ 総務/人事/経理）
+  const backRooms = floorRooms.slice(0, 3)
+  const frontRooms = floorRooms.slice(3)
 
   const selectedLoc = LOCATIONS[selectedId]
   const selectedLive = liveLocations.has(selectedId)
@@ -213,26 +216,20 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
             <span className="h-px w-4 bg-slate-600" aria-hidden="true" />
           </div>
 
-          {/* 手前の4部屋（壁を共有して間取り図に） */}
-          <div className="grid grid-cols-4">{frontRooms.map((id) => renderRoom(id, false))}</div>
+          {/* 手前の3部屋（壁を共有して間取り図に） */}
+          <div className="grid grid-cols-3">{frontRooms.map((id) => renderRoom(id, false))}</div>
         </div>
 
-        {/* リモートゾーン：物理的に離れた場所＝画面越しに“訪ねる”。破線で隔てる */}
-        {remoteLocations.length > 0 && (
-          <div className="mt-2.5 flex flex-col items-center">
-            <div className="flex w-full items-center gap-2 px-2 text-[10px] font-semibold text-emerald-300/70">
+        {/* 画面の中（デジタル）ゾーン：建物の部屋ではなく“画面越し”のコード／開発。物理マップと分離する。 */}
+        {digitalLocations.length > 0 && (
+          <div className="mt-2.5">
+            <div className="flex w-full items-center gap-2 px-2 text-[10px] font-semibold text-emerald-300/80">
               <span className="h-px flex-1 border-t border-dashed border-emerald-700/50" />
-              <span aria-hidden="true">📡</span>
-              <span>リモート接続（画面越し）</span>
+              <span aria-hidden="true">🖥️</span>
+              <span>画面の中（コード／リモート・歩いては行けない）</span>
               <span className="h-px flex-1 border-t border-dashed border-emerald-700/50" />
             </div>
-            <div className="mt-1.5 flex w-full justify-center gap-1.5">
-              {remoteLocations.map((id) => (
-                <div key={id} className="w-36">
-                  {renderRoom(id, false)}
-                </div>
-              ))}
-            </div>
+            <div className="mt-1.5 grid grid-cols-2 gap-1.5">{digitalLocations.map((id) => renderRoom(id, false))}</div>
           </div>
         )}
 
