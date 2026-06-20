@@ -170,7 +170,7 @@ function PlanningView({
   const [draft, setDraft] = useState<string[]>(officialActive)
   const [verdict, setVerdict] = useState<ProposalVerdict | null>(null)
   const [prevOfficialActive, setPrevOfficialActive] = useState<string[]>(officialActive)
-  if (prevOfficialActive !== officialActive) {
+  if (!sameOrder(prevOfficialActive, officialActive)) {
     setPrevOfficialActive(officialActive)
     setDraft(officialActive)
     setVerdict(null)

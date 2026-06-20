@@ -337,6 +337,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'chance',
+    minigame: 'hearing',
     hearingTheme: 'inin',
     title: 'AIに任せきるか',
     narrative:

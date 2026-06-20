@@ -74,6 +74,13 @@ export type ReviewDepth = 'quick' | 'thorough'
 /** メーターへの効果（指定キーのみ加算） */
 export type Effects = Partial<Meters>
 
+/** ヒアリングの問いの選択肢。good:true＝核心に迫る良い問い／good:false＝場をズラす/誘導/決めつけ等の悪い問い。
+ *  単一の真実源をこの低層モジュールに置き、ミニゲーム側（minigames.ts の同名 interface）と構造を揃える。 */
+interface HearingOption {
+  text: string
+  good: boolean
+}
+
 /** 1つの選択肢（トレードオフ。正解はない） */
 export interface Choice {
   id: string
@@ -150,7 +157,7 @@ export interface GameEvent {
    *  指定するとこのイベントの場面に合った問い（良問2＋悪問3 が目安）が出る。
    *  未指定なら従来どおりテーマ別の汎用プール（dealHearing）にフォールバック。
    *  good:true＝核心に迫る良い問い／good:false＝場をズラす/誘導/決めつけ等の悪い問い。 */
-  hearingOptions?: { text: string; good: boolean }[]
+  hearingOptions?: HearingOption[]
   /** ヒアリングの問いのテーマ（相手・場面）を明示する（任意）。未指定なら segment から既定（hearingThemeFor）。
    *  主に trouble セグメントをヒアリングにする時に使う：調査=genba／対人=team を意図どおり出すため。 */
   hearingTheme?: HearingTheme
