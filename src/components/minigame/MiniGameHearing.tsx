@@ -3,6 +3,7 @@ import {
   dealHearing,
   type HearingOption,
   type HearingTheme,
+  hearingCtaFor,
   hearingPromptFor,
   scoreHearing,
 } from '../../data/minigames'
@@ -132,7 +133,7 @@ export function MiniGameHearing({ seed, theme, hearingOptions, onResolve }: Prop
         onClick={() => onResolve(scoreHearing(picked.map((i) => options[i])))}
         className={`min-h-[44px] w-full rounded-xl bg-sky-500 py-3 font-bold text-slate-950 transition hover:bg-sky-400 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-600 disabled:text-slate-400 ${limitHit ? 'shake' : ''}`}
       >
-        {ready ? 'この2つで掘る' : `あと ${2 - picked.length} つ選ぶ`}
+        {ready ? hearingCtaFor(theme) : `あと ${2 - picked.length} つ選ぶ`}
       </button>
     </div>
   )

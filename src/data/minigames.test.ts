@@ -4,7 +4,10 @@ import {
   dealHearing,
   dealReview,
   type HearingTheme,
+  hearingCtaFor,
+  hearingPromptFor,
   hearingThemeFor,
+  hearingTitleFor,
   REVIEW_REAL_COUNT,
   scoreHearing,
   scoreReview,
@@ -45,6 +48,21 @@ describe('dealHearing', () => {
     expect(hearingThemeFor('kokyaku')).toBe('kokyaku')
     expect(hearingThemeFor('chance')).toBe('chance')
     expect(hearingThemeFor('trouble')).toBe('kokyaku')
+  })
+})
+
+describe('ヒアリングの見出し・設問リード・確定ラベル（相手/場面で出し分け）', () => {
+  const themes: HearingTheme[] = ['genba', 'kokyaku', 'chance']
+  it('テーマごとに3種とも文言が異なる（“現場”固定の解消）', () => {
+    for (const fn of [hearingTitleFor, hearingPromptFor, hearingCtaFor]) {
+      const set = new Set(themes.map((t) => fn(t)))
+      expect(set.size).toBe(3)
+    }
+  })
+  it('未指定（theme=undefined）は現場主義の標準にフォールバック', () => {
+    expect(hearingTitleFor()).toBe(hearingTitleFor('genba'))
+    expect(hearingPromptFor()).toBe(hearingPromptFor('genba'))
+    expect(hearingCtaFor()).toBe(hearingCtaFor('genba'))
   })
 })
 

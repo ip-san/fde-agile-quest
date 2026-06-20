@@ -161,6 +161,18 @@ export function hearingPromptFor(theme?: HearingTheme): string {
   return theme ? HEARING_PROMPT[theme] : HEARING_PROMPT.genba
 }
 
+// 確定ボタンの動詞も場面に合わせる（“掘る”は現場寄り。顧客＝確かめる／機会＝見極める）。
+const HEARING_CTA: Record<HearingTheme, string> = {
+  genba: 'この2つで掘る',
+  kokyaku: 'この2つで確かめる',
+  chance: 'この2つで見極める',
+}
+
+/** ヒアリング確定ボタンのラベル（相手・場面で出し分け。未指定は現場主義の標準） */
+export function hearingCtaFor(theme?: HearingTheme): string {
+  return theme ? HEARING_CTA[theme] : HEARING_CTA.genba
+}
+
 /** ヒアリングの採点：選んだ2問のうち良問の数で great/good/poor。 */
 export function scoreHearing(picked: HearingOption[]): ExecTier {
   const good = picked.filter((o) => o.good).length
