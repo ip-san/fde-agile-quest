@@ -712,6 +712,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     sprint: 2,
     ceremony: 'daily',
     segment: 'chance',
+    hearingTheme: 'inin',
     location: 'devroom',
     hints: {
       po: 'スピードは魅力だけど、丸投げの価値は怪しい。開発室で受託のAIを見極めて。',

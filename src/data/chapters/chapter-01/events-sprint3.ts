@@ -289,7 +289,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'trouble',
     minigame: 'hearing',
-    hearingTheme: 'team',
+    hearingTheme: 'inin',
     title: 'AIエージェントに権限を渡すか',
     narrative:
       '在庫の補正を{{エージェント}}に自動でやらせれば運用はぐっと楽になる。だが在庫データへの書き込み権限を渡すことになる。',

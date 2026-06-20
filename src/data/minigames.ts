@@ -66,6 +66,12 @@ const THEME_GOOD: Record<HearingTheme, string[]> = {
     '原票（契約書や請求書）まで、ひとつずつ照らせますか？',
     '事実・推測・願望——どこまでが確かめられた話ですか？',
   ],
+  inin: [
+    '間違えたとき、戻せる（ロールバック）経路は用意できていますか？',
+    '失敗したら、影響が及ぶ範囲はどこまでですか？',
+    'まず小さく任せて確かめるなら、どこからにしますか？',
+    '人が最後に確かめる関所は、どこに残しますか？',
+  ],
 }
 
 const THEME_BAD: Record<HearingTheme, string[]> = {
@@ -95,7 +101,12 @@ const THEME_BAD: Record<HearingTheme, string[]> = {
   chousa: [
     '面倒なので、見なかったことにしておきましょうか？',
     '数字が合っているなら、裏まで確かめなくていいですよね？',
-    'もう不正だと決めて、いますぐ上に上げてしまいませんか？',
+    '裏を取る前に、もう不正だと決めつけてしまいませんか？',
+  ],
+  inin: [
+    '速くて優秀なんだから、全部任せてしまっていいですよね？',
+    '失敗したら、その時に考えればよくないですか？',
+    'AIがやってくれるなら、もう人は見なくていいですよね？',
   ],
 }
 
@@ -160,6 +171,7 @@ function allGood(): string[] {
     ...THEME_GOOD.chance,
     ...THEME_GOOD.team,
     ...THEME_GOOD.chousa,
+    ...THEME_GOOD.inin,
   ]
 }
 function allBad(): string[] {
@@ -170,6 +182,7 @@ function allBad(): string[] {
     ...THEME_BAD.chance,
     ...THEME_BAD.team,
     ...THEME_BAD.chousa,
+    ...THEME_BAD.inin,
   ]
 }
 
@@ -188,6 +201,7 @@ const HEARING_TITLE: Record<HearingTheme, string> = {
   chance: '価値の在処を探る',
   team: 'チームの本音を引き出す',
   chousa: '事実の裏を取る',
+  inin: '任せる線を見極める',
 }
 
 /** ヒアリング・ミニゲームの見出し（テーマ＝相手・場面で出し分け。未指定は現場主義の標準） */
@@ -201,7 +215,8 @@ const HEARING_PROMPT: Record<HearingTheme, string> = {
   kokyaku: '依頼主に、どの問いを投げる？',
   chance: '機会の芽に、どの問いを当てる？',
   team: 'チームに、どの問いを投げる？',
-  chousa: '原票と現物に、どの問いを当てる？',
+  chousa: '事実の裏に、どの問いを当てる？',
+  inin: 'AIに任せる前に、どの問いを置く？',
 }
 
 /** ヒアリング・ミニゲームの設問リード文（相手・場面で出し分け。未指定は現場主義の標準） */
@@ -216,6 +231,7 @@ const HEARING_CTA: Record<HearingTheme, string> = {
   chance: 'この2つで見極める',
   team: 'この2つで掘り下げる',
   chousa: 'この2つで裏を取る',
+  inin: 'この2つで線を引く',
 }
 
 /** ヒアリング確定ボタンのラベル（相手・場面で出し分け。未指定は現場主義の標準） */
