@@ -31,9 +31,12 @@ export function EventModal({ event, unexpected, aiTokens, revealHint, timed, onC
   // 時限選択（LIPS の「無回答＝沈黙も選択」の移植）。静観の選択肢があるイベントだけ作動し、
   // 時間切れ＝その静観を自動選択する。迷っている間に「動かない」を選んだことになる。
   // ※ warn 付き静観（罠）は自動選択対象にしない（迷って時間切れで最悪手を強制しない）。
-  // ※ Board が key={event.id} で再マウントするので、remaining/firedRef はイベント毎にリセットされる。
   const restraintChoice = event.choices.find((c) => c.restraint && !c.warn)
   // 解除＝WCAG 2.2.1（Timing Adjustable）。本人操作でこの判断の制限時間を止められる。
+  // [外部依存の明示] timerOff・remaining・firedRef は useState/useRef の初期値によってリセットされる。
+  // このリセットは Board.tsx が <EventModal key={currentEvent.id} /> と渡すことで
+  // イベント切り替え時に再マウントを保証している。Board 側の key 付与をやめると
+  // 前イベントの timerOff=true や firedRef=true が次イベントに持ち越されるため注意。
   const [timerOff, setTimerOff] = useState(false)
   const timerOn = !!timed && !!restraintChoice && !timerOff
   const [remaining, setRemaining] = useState(TIMED_SECONDS)

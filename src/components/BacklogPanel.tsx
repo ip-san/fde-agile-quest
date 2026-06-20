@@ -167,31 +167,32 @@ function PlanningView({
   const officialActive = useMemo(() => backlogOrder.filter((id) => !doneSet.has(id)), [backlogOrder, doneSet])
   const doneList = useMemo(() => backlogOrder.filter((id) => doneSet.has(id)), [backlogOrder, doneSet])
 
-  const [draft, setDraft] = useState<string[]>(officialActive)
-  const [verdict, setVerdict] = useState<ProposalVerdict | null>(null)
+  const [editState, setEditState] = useState<{ draft: string[]; verdict: ProposalVerdict | null }>({
+    draft: officialActive,
+    verdict: null,
+  })
   const [prevOfficialActive, setPrevOfficialActive] = useState<string[]>(officialActive)
   if (!sameOrder(prevOfficialActive, officialActive)) {
     setPrevOfficialActive(officialActive)
-    setDraft(officialActive)
-    setVerdict(null)
+    setEditState({ draft: officialActive, verdict: null })
   }
 
+  const { draft, verdict } = editState
   const dirty = !sameOrder(draft, officialActive)
   const move = (id: string, dir: -1 | 1) => {
-    setVerdict(null)
-    setDraft((cur) => {
-      const arr = [...cur]
+    setEditState((cur) => {
+      const arr = [...cur.draft]
       const i = arr.indexOf(id)
       const j = i + dir
       if (i < 0 || j < 0 || j >= arr.length) return cur
       ;[arr[i], arr[j]] = [arr[j], arr[i]]
-      return arr
+      return { draft: arr, verdict: null }
     })
   }
   const submitProposal = () => {
     const v = reviewBacklogProposal({ sprintIndex, backlogDone, backlogOrder }, [...draft, ...doneList])
     commitBacklogOrder(v.order)
-    setVerdict(v)
+    setEditState((cur) => ({ ...cur, verdict: v }))
   }
 
   const rows = [...draft, ...doneList]
@@ -344,8 +345,7 @@ function PlanningView({
               <button
                 type="button"
                 onClick={() => {
-                  setDraft(officialActive)
-                  setVerdict(null)
+                  setEditState({ draft: officialActive, verdict: null })
                 }}
                 className="rounded-lg bg-slate-700 px-3 py-2 text-sm font-semibold text-slate-300 transition hover:bg-slate-600 active:scale-95"
               >

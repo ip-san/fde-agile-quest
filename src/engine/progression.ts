@@ -460,8 +460,9 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
   //   負債が高いと腕前の伸びも鈍る（drag 適用＝雑なコードベースでは良い実装も効きにくい）。
   // ★さらに会心を“連鎖”させるほどボーナスが増す（実装の波）。great で連鎖+1、good/poor で 0 にリセット。
   //   初回会心(streak=1)は GREAT_SKILL_COVERAGE のままで従来挙動と後方互換。
-  const greatStreak = tier === 'great' ? core.greatStreak + 1 : 0
-  const skillCov = tier === 'great' ? Math.round(greatSkillBase(greatStreak) * drag) : 0
+  // 以下 nextGreatStreak＝連鎖更新後の値（skillCov/保存/演出はこの更新後の値を使う）
+  const nextGreatStreak = tier === 'great' ? core.greatStreak + 1 : 0
+  const skillCov = tier === 'great' ? Math.round(greatSkillBase(nextGreatStreak) * drag) : 0
   const covDelta = eventCov + skillCov
   const repoCoverage = clamp01(core.repoCoverage + covDelta, REPO_COVERAGE_MAX)
   const debtRaw = choice.repo?.debt ?? 0
@@ -494,7 +495,7 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
     repoCoverage,
     repoDebt,
     sprintGoals,
-    greatStreak,
+    greatStreak: nextGreatStreak,
   }
 
   // スプリントレビューを解決した瞬間に、スプリントバックログ（別レイヤー）を精算する：
@@ -548,7 +549,7 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
     tokenSpent: tokenSpent || undefined,
     coverageDelta: covDelta || undefined,
     skillCoverageBonus: skillCov || undefined, // 会心実行が腕前としてコード品質に上乗せした分（表示用）
-    greatStreak: tier === 'great' ? greatStreak : undefined, // 会心の連鎖数（2以上で“波”演出。great時のみ）
+    greatStreak: tier === 'great' ? nextGreatStreak : undefined, // 会心の連鎖数（2以上で“波”演出。great時のみ）
     debtDelta: debtRaw || undefined,
     backlogReview,
     discoveredPbi, // ヒアリングで掘り当てた発見可PBI（あれば）。プロダクトバックログに新規追加された

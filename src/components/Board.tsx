@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { CEREMONY_LABELS, CEREMONY_SHORT, EVENTS, PRODUCT_GOAL, SPRINTS } from '../data/chapters/chapter-01'
 import { hearingThemeFor } from '../data/minigames'
 import { PRECEPTS } from '../data/precepts'
@@ -8,6 +8,7 @@ import { miniGameKindFor } from '../engine/game'
 import { customerValueBreakdown, isRouletteCeremony, repoStats } from '../engine/progression'
 import { isMuted, toggleMuted } from '../engine/sfx'
 import { readBool, writeBool } from '../lib/persist'
+import { seedFor } from '../lib/seed'
 import { useEngagement } from '../store/engagementStore'
 import type { Ceremony, Choice } from '../types'
 import { BacklogPanel } from './BacklogPanel'
@@ -25,13 +26,6 @@ import { RichText } from './RichText'
 import { Roulette } from './Roulette'
 import { SecondaryStats } from './SecondaryStats'
 import { Travel } from './Travel'
-
-/** イベントIDから決定的なシード（ミニゲームの内容選択用） */
-function seedFor(id: string): number {
-  let s = 0
-  for (let i = 0; i < id.length; i++) s = (s * 31 + id.charCodeAt(i)) >>> 0
-  return s
-}
 
 const PROLOGUE_SEEN_KEY = 'fde-agile-quest:prologue-seen'
 const prologueSeen = (): boolean => readBool(PROLOGUE_SEEN_KEY)
@@ -119,6 +113,16 @@ export function Board() {
   // 本音を見抜けた判断には「見抜きボーナス」として理解 +1（store 側で別枠加算・表示）
   const deductionBonus = deducedCorrect ? 1 : 0
 
+  // repoStats / customerValueBreakdown はメモ化して関係ない state 更新での再計算を避ける
+  const rs = useMemo(
+    () => repoStats({ resolvedIds, flags, aiTokens, repoCoverage, repoDebt, backlogDone }),
+    [resolvedIds, flags, aiTokens, repoCoverage, repoDebt, backlogDone]
+  )
+  const bd = useMemo(
+    () => customerValueBreakdown(meters, rs.coverage, rs.debtScore, rs.deliveredItems),
+    [meters, rs.coverage, rs.debtScore, rs.deliveredItems]
+  )
+
   // モーダル表示中は背後を支援技術ツリー/操作から外す（aria-modal 任せにしない）
   const modalOpen =
     (status === 'event' && !!currentEvent && !result) || !!result || bookOpen || prologueOpen || repoOpen || backlogOpen
@@ -180,32 +184,24 @@ export function Board() {
         </header>
 
         {/* HUD：北極星＝顧客価値（目標・大）→ 3メーター（手段・0ルール対象）→ 従ゲージは1行に圧縮 */}
-        {(() => {
-          const rs = repoStats({ resolvedIds, flags, aiTokens, repoCoverage, repoDebt, backlogDone })
-          const bd = customerValueBreakdown(meters, rs.coverage, rs.debtScore, rs.deliveredItems)
-          return (
-            <>
-              <CustomerValueBar value={bd.total} breakdown={bd} />
-              <MeterHUD meters={meters} />
-              <SecondaryStats
-                aiTokens={aiTokens}
-                coverage={rs.coverage}
-                debt={rs.debt}
-                onOpenDetail={() => setRepoOpen(true)}
-              />
-              {/* 会心の連鎖中（2以上）だけ“実装の波”を持続表示。続けて会心するほどコード品質ボーナスが増す。 */}
-              {greatStreak >= 2 && (
-                <p
-                  className="-mt-1 text-center text-xs font-semibold text-amber-300"
-                  role="status"
-                  aria-label={`会心の連鎖 ${greatStreak} 回。次の会心でコード品質ボーナスが増える`}
-                >
-                  会心 {greatStreak} 連鎖中 — 次も会心ならコード品質ボーナス増
-                </p>
-              )}
-            </>
-          )
-        })()}
+        <CustomerValueBar value={bd.total} breakdown={bd} />
+        <MeterHUD meters={meters} />
+        <SecondaryStats
+          aiTokens={aiTokens}
+          coverage={rs.coverage}
+          debt={rs.debt}
+          onOpenDetail={() => setRepoOpen(true)}
+        />
+        {/* 会心の連鎖中（2以上）だけ"実装の波"を持続表示。続けて会心するほどコード品質ボーナスが増す。 */}
+        {greatStreak >= 2 && (
+          <p
+            className="-mt-1 text-center text-xs font-semibold text-amber-300"
+            role="status"
+            aria-label={`会心の連鎖 ${greatStreak} 回。次の会心でコード品質ボーナスが増える`}
+          >
+            会心 {greatStreak} 連鎖中 — 次も会心ならコード品質ボーナス増
+          </p>
+        )}
         <p className="-mt-2 text-center text-xs leading-snug text-slate-400">
           どれか1つでも <span className="text-rose-400">0</span> になると案件は終了。削りすぎは命取り。
         </p>
@@ -446,13 +442,7 @@ export function Board() {
       {bookOpen && <PreceptBook seen={seenPrecepts} onClose={() => setBookOpen(false)} />}
 
       {/* コードリポジトリ状態パネル */}
-      {repoOpen && (
-        <RepoPanel
-          stats={repoStats({ resolvedIds, flags, aiTokens, repoCoverage, repoDebt, backlogDone })}
-          foundSeeds={foundSeeds}
-          onClose={() => setRepoOpen(false)}
-        />
-      )}
+      {repoOpen && <RepoPanel stats={rs} foundSeeds={foundSeeds} onClose={() => setRepoOpen(false)} />}
 
       {/* バックログ（プロダクト/スプリント）パネル */}
       {backlogOpen && <BacklogPanel onClose={() => setBacklogOpen(false)} />}
