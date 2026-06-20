@@ -20,4 +20,14 @@
 
 ## エントリ
 
-<!-- ここに指揮者が追記する。初期状態: 空。 -->
+<!-- ここに指揮者が追記する。 -->
+
+### 2026-06-20 / loop/ux-select-feedback-20260620（選択フィードバック: tick音+check-pop）
+
+- [open] (🟡) code-reviewer / minigame/*.tsx — `<span key={on?'on':'off'}>` のグリフ再マウントでアニメをリセットする手法は、SR（NVDA/VoiceOver）が button 内 DOM 変化をコンテンツ変更として通知する可能性。実機VoiceOver確認が必要。代替: `@starting-style`/`animation-play-state` で DOM 再マウントを避ける。（round1 / 静的判断の範囲、要実機）
+- [open] (🟡) ux-engineer / minigame/*.tsx — check-pop は ON 時のみ。OFF（チェック外し）時に視覚演出が無く色変化のみ。「外れた」手応えが1層弱い。OFF側に軽いフェード等を足す案（設計判断・必須でない）。（round1）
+- [open] (🟡) ux-engineer / MiniGameHearing.tsx — 上限2到達後の3つ目タップが完全無反応（音/視覚/aria 変化なし）で「バグかな」と誤認され得る。軽いシェイク＋"すでに2つ"の補足が親切だが、これは仕様・スコープ外。（round1）
+- [open] (🟡) ux-engineer / engine/sfx.ts — AudioContext suspended（mobile Safari 等）で初回 tick が無音になり得る。tick は毎クリック鳴るため気づかれやすい。ただし sfxDecide/sfxSpin と共通の既存課題で新規ではない。（round1）
+- [proposal] (提案) showrunner / data/seeds.ts:25 — `legacy-bridge` シードが懲罰分岐(`missedUpgrade`)でしか拾えず他5種と非対称。中立イベントへの新規バインド＝data層/物語の判断。次回の物語レーン候補（narrative-designer + fde/logistics 考証）。
+- [proposal] (提案) showrunner / components/Board.tsx:44 — localStorage boolean の try/catch 定型が4箇所重複。コード品質レーンの小リファクタ候補。
+- [open] (🟡) quality-gatekeeper / minigame/MiniGame{Hearing,Review}.tsx — 選択UI(`<button>`+チェックグリフ)が両ファイルで重複（cpdクローン、今回22→26行に微増）。既存クローンの延長で新規ではないが、`SelectableItem` 共通コンポーネント抽出のリファクタ候補。設計判断のため別イテレーション。
