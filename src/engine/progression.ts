@@ -105,8 +105,9 @@ export const REPO_COVERAGE_MAX = 100
 export const GREAT_SKILL_COVERAGE = 4
 
 /** 会心の連鎖（greatStreak）が会心コードボーナスに上乗せする1連鎖あたりの量(%)と、その上限。
- *  連鎖2回目から効き始め(streak-1)、上限で頭打ち。複利で青天井にせず“波に乗る手応え”だけ与える。 */
-export const STREAK_BONUS_PER = 1
+ *  連鎖2回目から効き始め(streak-1)、上限で頭打ち。複利で青天井にせず“波に乗る手応え”だけ与える。
+ *  PER はこのファイル内のみで使う（外部参照なし）ので非 export。CAP はテストが参照するので export。 */
+const STREAK_BONUS_PER = 1
 export const STREAK_BONUS_CAP = 4
 
 /** 会心連鎖を踏まえた、会心コードボーナスの基礎量(%)（ドラッグ適用前）。
