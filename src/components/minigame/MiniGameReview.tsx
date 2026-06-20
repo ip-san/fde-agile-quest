@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { type DiffLine, dealReview, type ReviewRound, scoreReview } from '../../data/minigames'
 import { sfxTick } from '../../engine/sfx'
 import type { ExecTier } from '../../types'
@@ -20,6 +20,15 @@ export function MiniGameReview({ seed, onResolve }: Props) {
   // 「直前の選択状態」を追跡して OFF になった項目だけ unpop を当てる
   const [unpopKey, setUnpopKey] = useState<Record<number, number>>({})
 
+  const revealed = tier !== null
+  const n = picked.length
+
+  // 答え合わせ表示に切り替わった際、「確定する」ボタンへフォーカスを移す
+  const confirmRef = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    if (revealed) confirmRef.current?.focus()
+  }, [revealed])
+
   const toggle = (i: number) => {
     // 上限なし：0件(LGTM)含む任意件数を選べる
     const has = picked.includes(i)
@@ -33,9 +42,6 @@ export function MiniGameReview({ seed, onResolve }: Props) {
     setPicked((p) => (has ? p.filter((x) => x !== i) : [...p, i]))
   }
   const submit = () => setTier(scoreReview(picked.map((i) => round.options[i])))
-
-  const revealed = tier !== null
-  const n = picked.length
 
   return (
     <div className="space-y-3">
@@ -115,6 +121,7 @@ export function MiniGameReview({ seed, onResolve }: Props) {
             <span className="font-semibold text-sky-300">気づき：</span> {round.takeaway}
           </p>
           <button
+            ref={confirmRef}
             type="button"
             onClick={() => onResolve(tier)}
             data-initial-focus

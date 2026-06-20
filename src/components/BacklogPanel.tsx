@@ -84,6 +84,7 @@ export function BacklogPanel({ onClose }: Props) {
         <div className="space-y-3 overflow-y-auto px-5 py-4">
           {isPlanning ? (
             <PlanningView
+              key={backlogOrder.filter((id) => !doneSet.has(id)).join(',')}
               sprintIndex={sprintIndex}
               backlogOrder={backlogOrder}
               sprintForecast={sprintForecast}
@@ -165,11 +166,6 @@ function PlanningView({
     draft: officialActive,
     verdict: null,
   })
-  const [prevOfficialActive, setPrevOfficialActive] = useState<string[]>(officialActive)
-  if (!sameOrder(prevOfficialActive, officialActive)) {
-    setPrevOfficialActive(officialActive)
-    setEditState({ draft: officialActive, verdict: null })
-  }
 
   const { draft, verdict } = editState
   const dirty = !sameOrder(draft, officialActive)

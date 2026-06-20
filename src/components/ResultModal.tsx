@@ -246,12 +246,15 @@ export function ResultModal({ result, meters, onContinue }: Props) {
   const kind = revealKindFor(result.effects, result.warn)
   const gotPrecept = result.newPreceptIds.length > 0
   const gotSeed = !!result.seedNew
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 結果（eventId/choiceId）が変わるたびに一度だけ鳴らす
+  // sfx 選択ロジックを effect 外で確定させ、union 型の値を deps に入れる。
+  // これにより effect 内の参照が常に最新値となり biome-ignore が不要になる。
+  const sfxKind: 'danger' | 'precept' | RevealKind =
+    dangerMeters.length > 0 ? 'danger' : gotPrecept || gotSeed ? 'precept' : kind
   useEffect(() => {
-    if (dangerMeters.length > 0) sfxDanger()
-    else if (gotPrecept || gotSeed) sfxPrecept()
-    else sfxReveal(kind)
-  }, [result.eventId, result.choiceId])
+    if (sfxKind === 'danger') sfxDanger()
+    else if (sfxKind === 'precept') sfxPrecept()
+    else sfxReveal(sfxKind)
+  }, [sfxKind])
   // 致命圏ならフラッシュも警告色（rose）で上書きする
   const flashColor = dangerMeters.length > 0 ? '#fb7185' : FLASH_COLOR[kind]
 

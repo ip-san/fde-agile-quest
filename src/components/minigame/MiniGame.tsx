@@ -16,18 +16,22 @@ interface Props {
   onSkip: () => void
 }
 
-const HEADING: Record<MiniGameKind, { tag: string; title: string }> = {
+const HEADING: Record<'dev' | 'review', { tag: string; title: string }> = {
   dev: { tag: '実行：開発', title: '手を動かす' },
-  // title は hearingTitleFor(theme) で必ず上書きされるため空文字（デフォルト値は使われない）
-  hearing: { tag: '実行：ヒアリング', title: '' },
   review: { tag: '実行：レビュー', title: 'AIの差分を点検する' },
+}
+
+function buildHeading(kind: MiniGameKind, theme?: HearingTheme): { tag: string; title: string } {
+  if (kind === 'hearing') {
+    return { tag: '実行：ヒアリング', title: hearingTitleFor(theme) }
+  }
+  return HEADING[kind]
 }
 
 /** 選択後に挟む「実行」ミニゲーム。出来が選択の主正メーターを倍率調整する。Esc/スキップで標準(good)。 */
 export function MiniGame({ kind, seed, theme, hearingOptions, onDone, onSkip }: Props) {
   const ref = useFocusTrap<HTMLDivElement>(onSkip)
-  // ヒアリングは相手・場面（テーマ）で見出しを出し分ける（“現場”固定を回避）。
-  const h = kind === 'hearing' ? { ...HEADING.hearing, title: hearingTitleFor(theme) } : HEADING[kind]
+  const h = buildHeading(kind, theme)
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:px-safe sm:pt-safe sm:pb-safe">
