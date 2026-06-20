@@ -199,7 +199,7 @@ function PlanningView({
       <section className="rounded-xl bg-slate-900/40 p-2">
         <h3 className="mb-1 px-1 text-xs font-bold text-slate-300">
           🗂 <RichText text="{{プロダクトバックログ}}" />
-          <span className="ml-1 font-normal text-slate-500">価値順・上位から選ぶ</span>
+          <span className="ml-1 font-normal text-slate-400">価値順・上位から選ぶ</span>
         </h3>
         <ul className="space-y-1.5">
           {rows.map((id) => {
