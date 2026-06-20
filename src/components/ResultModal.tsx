@@ -301,7 +301,11 @@ export function ResultModal({ result, meters, onContinue }: Props) {
           <div className="rounded-xl border border-slate-700 bg-slate-800/40 px-4 py-2.5">
             <p className="text-[11px] font-semibold text-slate-400">あなたの判断</p>
             <p className="text-sm font-medium text-slate-100">
-              {result.warn && <span className="mr-1">⚠</span>}
+              {result.warn && (
+                <span className="mr-1" aria-hidden="true">
+                  ⚠
+                </span>
+              )}
               <RichText text={result.choiceLabel} />
             </p>
           </div>

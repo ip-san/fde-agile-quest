@@ -177,7 +177,7 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
         <p className="mb-2.5 px-1 text-[11px] text-slate-400">
           本社{displayName('lumen')}のチームが、各自の観点（価値／プロセス／技術）で気づきを共有する。
           <span className="text-slate-300">今日どこへ向かうかを決めるのは、開発者であるあなた自身だ</span>
-          ——どれを採る？（動けるのは1箇所。選ばなかった方は見送りになる）
+          。どれを採る？（動けるのは1箇所。選ばなかった方は見送りになる）
         </p>
 
         {/* 役割タイル（それぞれ別の候補を主張） */}
@@ -189,13 +189,13 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
                 <div className="mb-1 flex items-center gap-1.5">
                   <span className={`text-sm font-bold ${tone.name}`}>{v.name}</span>
                   <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${tone.badge}`}>{v.label}</span>
-                  <span className="ml-auto text-[10px] text-slate-400">👀 {v.lens}</span>
+                  <span className="ml-auto text-[10px] text-slate-400">{v.lens}</span>
                 </div>
                 <p className="text-xs leading-relaxed text-slate-200">
                   <RichText text={v.line} />
                 </p>
                 <p className="mt-1 text-[10px] text-slate-400">
-                  {LOCATIONS[v.location].emoji} 推す行き先：{v.locationShort}
+                  <span aria-hidden="true">{LOCATIONS[v.location].emoji}</span> 推す行き先：{v.locationShort}
                 </p>
               </div>
             )
@@ -207,7 +207,7 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
               <span className="rounded bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-sky-300">
                 FDE（開発者）
               </span>
-              <span className="ml-auto text-[10px] text-slate-400">📍 {displayName('cargo')}（現地）</span>
+              <span className="ml-auto text-[10px] text-slate-400">{displayName('cargo')}（現地）</span>
             </div>
             <p className="text-xs leading-relaxed text-slate-400">（どれが今日の“本当の火種”か。1つに賭ける）</p>
           </div>
@@ -259,7 +259,7 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
             <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-b from-slate-950/10 to-slate-950/40" />
             {/* 図面の見出しと方位 */}
             <span className="absolute left-2 top-1.5 rounded bg-slate-950/60 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-slate-200 backdrop-blur-sm">
-              🏭 {displayName('cargo')}
+              {displayName('cargo')}
             </span>
             <span
               className="absolute right-2 top-1.5 flex flex-col items-center leading-none text-slate-200"
@@ -290,7 +290,7 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
           >
             <div className="mb-1.5 flex items-center justify-between px-0.5">
               <span className="text-[9px] font-semibold tracking-wide text-slate-500">
-                🏭 {displayName('cargo')}・見取り図
+                {displayName('cargo')}・見取り図
               </span>
               <span className="flex flex-col items-center leading-none text-slate-500" aria-hidden="true">
                 <span className="text-[8px] font-bold text-sky-400">N</span>
