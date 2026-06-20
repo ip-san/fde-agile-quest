@@ -78,6 +78,49 @@ body {
   animation: check-pop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
+/* チェックを外した瞬間の控えめな縮みフェード（OFFフィードバック）。
+ * check-pop より短く・小さく収縮し、初回ロードでは当てない（touched フラグで制御）。 */
+@keyframes check-unpop {
+  0% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.85);
+    opacity: 0.7;
+  }
+}
+.check-unpop {
+  display: inline-block;
+  animation: check-unpop 0.18s ease-out both;
+}
+
+/* 上限到達後に3つ目をタップしたときのシェイク演出。
+ * 横に数px 揺れて「これ以上は無理」を体感させる。 */
+@keyframes shake {
+  0% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-5px);
+  }
+  40% {
+    transform: translateX(5px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+.shake {
+  animation: shake 0.3s ease-in-out both;
+}
+
 /* モーション過敏設定では閃光・回転などの動きを無効化する（アクセシビリティ）。 */
 @media (prefers-reduced-motion: reduce) {
   .decisive-flash {
@@ -85,6 +128,12 @@ body {
     opacity: 0;
   }
   .check-pop {
+    animation: none;
+  }
+  .check-unpop {
+    animation: none;
+  }
+  .shake {
     animation: none;
   }
 }
