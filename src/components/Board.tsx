@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import { CEREMONY_LABELS, CEREMONY_SHORT, EVENTS, PRODUCT_GOAL, SPRINTS } from '../data/chapters/chapter-01'
 import { hearingThemeFor } from '../data/minigames'
 import { PRECEPTS } from '../data/precepts'
@@ -11,7 +11,10 @@ import { readBool, writeBool } from '../lib/persist'
 import { seedFor } from '../lib/seed'
 import { useEngagement } from '../store/engagementStore'
 import type { Ceremony, Choice } from '../types'
-import { BacklogPanel } from './BacklogPanel'
+
+// バックログ操作パネルは“開いた時だけ”要るモーダル＝コード分割で初期バンドルから外す（オンデマンド読込）。
+const BacklogPanel = lazy(() => import('./BacklogPanel').then((m) => ({ default: m.BacklogPanel })))
+
 import { CustomerValueBar } from './CustomerValueBar'
 import { DeductionModal } from './DeductionModal'
 import { EventLog } from './EventLog'
@@ -445,7 +448,11 @@ export function Board() {
       {repoOpen && <RepoPanel stats={rs} foundSeeds={foundSeeds} onClose={() => setRepoOpen(false)} />}
 
       {/* バックログ（プロダクト/スプリント）パネル */}
-      {backlogOpen && <BacklogPanel onClose={() => setBacklogOpen(false)} />}
+      {backlogOpen && (
+        <Suspense fallback={null}>
+          <BacklogPanel onClose={() => setBacklogOpen(false)} />
+        </Suspense>
+      )}
 
       {/* プロローグ（初回自動・以降は「あらすじ」から） */}
       {prologueOpen && <Prologue onClose={closePrologue} />}
