@@ -37,19 +37,18 @@ export function Prologue({ onClose }: Props) {
         className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-2xl"
       >
         <div className="space-y-4 px-6 py-6">
-          <div className="flex items-center justify-between gap-2">
+          <div className="sticky top-0 z-10 -mx-6 -mt-6 flex items-center justify-between gap-2 border-b border-[var(--border)] bg-[var(--card)]/95 px-6 py-3 backdrop-blur-sm">
             <p className="text-xs font-semibold tracking-wide text-amber-400">
               PROLOGUE ── 第1章「沈黙する基幹システム」
             </p>
-            {!onCast && (
-              <button
-                type="button"
-                onClick={onClose}
-                className="inline-flex min-h-[44px] shrink-0 items-center rounded-lg border border-[var(--border)] px-3 py-2 text-xs text-[var(--text-sub)] transition hover:bg-[var(--panel)]"
-              >
-                スキップ
-              </button>
-            )}
+            {/* 上部のショートカット。登場人物ページは一覧が長いので、下までスクロールせず開始できるよう常時表示する。 */}
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex min-h-[44px] shrink-0 items-center rounded-lg border border-[var(--border)] px-3 py-2 text-xs text-[var(--text-sub)] transition hover:bg-[var(--panel)]"
+            >
+              {onCast ? 'はじめる' : 'スキップ'}
+            </button>
           </div>
 
           {!onCast ? (
