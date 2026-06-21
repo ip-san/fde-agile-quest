@@ -53,6 +53,7 @@ export function BacklogPanel({ onClose }: Props) {
     velocity,
     aiTokens,
     lastCarryover,
+    sprintGoals,
     commitBacklogOrder,
     toggleForecast,
     startItem,
@@ -83,6 +84,9 @@ export function BacklogPanel({ onClose }: Props) {
             Sprint {SPRINTS[Math.min(sprintIndex, SPRINTS.length - 1)]?.n}
           </span>
         </header>
+
+        {/* スプリントゴール：計画・カンバンどちらでも forecast の判断軸として常時表示 */}
+        <SprintGoalBanner sprintIndex={sprintIndex} ceremony={ceremony} sprintGoals={sprintGoals} />
 
         <div className="space-y-3 overflow-y-auto px-5 py-4">
           {isPlanning ? (
@@ -126,6 +130,49 @@ export function BacklogPanel({ onClose }: Props) {
           </button>
         </footer>
       </div>
+    </div>
+  )
+}
+
+// ───────────────────────── スプリントゴール：計画/カンバン共通バナー ─────────────────────────
+
+/** Board.tsx HUD と同じ導出ロジックでスプリントゴールを表示する。
+ *  プレイヤーが forecast を組む際・カンバン操作中のどちらでも、ゴールが判断軸として常時見える。 */
+function SprintGoalBanner({
+  sprintIndex,
+  ceremony,
+  sprintGoals,
+}: {
+  sprintIndex: number
+  ceremony: string | undefined
+  sprintGoals: string[]
+}) {
+  const sprint = SPRINTS[Math.min(sprintIndex, SPRINTS.length - 1)]
+  if (!sprint) return null
+
+  const chosen = sprintGoals[sprintIndex]
+  const isPlanning = ceremony === 'planning'
+
+  return (
+    <div
+      role="note"
+      aria-label="このスプリントのゴール"
+      className="border-b border-sky-500/20 bg-sky-500/5 px-5 py-2.5"
+    >
+      <p className="text-[11px] leading-relaxed text-slate-400">
+        <RichText text="{{スプリントゴール}}" />
+        <span className="ml-1 text-slate-500">—</span>
+        <span className="ml-1">
+          {chosen ? (
+            <span className="font-semibold text-sky-300">{chosen}</span>
+          ) : isPlanning ? (
+            <span className="text-slate-500">プランニングで決める…</span>
+          ) : (
+            <span className="font-semibold text-sky-300">{sprint.goal}</span>
+          )}
+        </span>
+      </p>
+      {!isPlanning && <p className="mt-0.5 text-[10px] text-slate-500">予測はこれに資するか？</p>}
     </div>
   )
 }
@@ -575,7 +622,7 @@ function KanbanView({
                         }}
                         className="flex-1 rounded-lg bg-slate-700 px-2 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-slate-600 active:scale-95"
                       >
-                        浅い（速い/負債）
+                        <RichText text="浅い：DoDを妥協（速いが負債）" interactive={false} />
                       </button>
                       <button
                         type="button"
@@ -585,7 +632,7 @@ function KanbanView({
                         }}
                         className="flex-1 rounded-lg bg-emerald-600 px-2 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-emerald-500 active:scale-95"
                       >
-                        深い（テスト/品質）
+                        <RichText text="深い：{{完成の定義}}を満たす（テスト/品質）" interactive={false} />
                       </button>
                     </div>
                   ) : (
