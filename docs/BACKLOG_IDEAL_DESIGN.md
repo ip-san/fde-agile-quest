@@ -145,7 +145,7 @@
 | ④ レガシー関門 | `backlog.ts` の `isLegacyEmbedded`（太く残すPBI過半Ship＆非soloHero）／`types.ts` `EndingContext`／`game.ts` `evaluateEnding(endings, ctx)`／`chapter-01.ts` trueFde に `&& c.legacyEmbedded`／`progression.ts` `finalEndingFor(meters, flags, backlogDone)` | ✅ 完了・テスト済（Done数は不使用） |
 | ① 発見の信頼ゲート | `types.ts` `BacklogItem.requiresTrust?`／`progression.ts` で `base.meters.trust >= requiresTrust` を満たさないと revealPbi しない | ✅ engine完了（inert：requiresTrust を持つPBIは未設定＝narrative が付与） |
 | ③ DoD分離 | `types.ts` GameFlag `shippedUndone`／`backlog.ts` `reviewItem` の quick 完了で立てる／`threads.ts` に setVia `kanban` 追加で登録 | ✅ engine完了（payoff: 現状 score／event回は narrative 追加待ち） |
-| ② 並べ替え反応 | 既存の Sprint Goal 表示（SprintDef.goal/choice.sprintGoal）＋PO copy はゴール語で既に妥当。**非対称な遅延反応**はステークホルダー紐付け＋プランニング時シグナルの追加が必要（engine 小増築＋narrative） | ⏳ 未着手（設計のみ） |
+| ② 並べ替え反応 | `BacklogItem.stakeholder`（joushi/genba）＋ `resolveSprintBacklog` の非対称シグナル（forecast したゴール項目で一方Done・他方未達のとき後回し側フラグ `deprioritizedJoushi`/`deprioritizedGenba`）。S3 daily に反応イベント2本（情シス後回し=trust摩擦／現場後回し=insight機会損失）。単一正解化リークを story-review で是正 | ✅ 完了・テスト済（commit cd666e3） |
 
 **narrative 側の宿題（engine契約に結線するもの）**：
 - ① deep な discoverable PBI に `requiresTrust` を付与し、掘り損ね時の「後段強制イベント」を書く（missedHearing 等で配線）
