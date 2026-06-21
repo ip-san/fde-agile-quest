@@ -136,6 +136,8 @@ FDEの務めは現場を直すだけではない。**現場でしか掴めない
    選択が trust+1（進捗が見える）を持ち、正解はそれを**取り逃す**形（結果文に「（…の信頼+は取り逃す）」）。
 3. **warn 選択肢**は「即時の負効果」か「将来の手戻り(setsFlag)」のどちらかの**下振れ**を必ず持つ。
 4. **★0ルール**: どれか1ゲージが0で即バッドエンド（あるある失敗エピローグ）。
+5. **レトロのレバー（機構：Retro 昇格）**: レトロの選択は `retroLever` でプロセス改善を次sprint以降に永続させる。
+   `capacity`＝レビューの**量**（容量+1・ボトルネックを直接広げる／多く届けたい局面）、`wip`＝レビューの**質**（WIP上限-1で一つに集中→深レビューの coverage 増・リポジトリ健全度／質を上げたい局面）。**等価で別ベクトル＝状況依存**（単一正解化なし）。trust は動かさない（内部プロセス改善＝顧客摩擦でない）。
 
 ---
 
@@ -235,8 +237,10 @@ FDEの務めは現場を直すだけではない。**現場でしか掴めない
 [Sprint1] s1-daily-hideknowhow  「見て覚えるもん」と隠す入口（主軸の提示）
         ↓
 [Sprint2 レトロ] s2-retro  ★分岐点（毎回必ず選ぶ）
-   ├─ a トップダウンで乗り切る  → flag: topDown   （trust+1 経営の覚え/速い・culture-1, warn）
-   └─ b 信頼を築く・一緒に標準化 → flag: genbaTrust（insight+1, culture+1, 機会コストで trust+1 取り逃す）
+   ├─ a トップダウンで乗り切る          → flag: topDown   （trust+1 経営の覚え/速い・culture-1, warn）
+   ├─ b 信頼を築く＋レビューの「量」を厚く → flag: genbaTrust（insight+1, culture+1）＋ retroLever:'capacity'（次sprint レビュー容量+1）
+   └─ c 信頼を築く＋一つずつ深く仕上げる  → flag: genbaTrust（insight+1, culture+1）＋ retroLever:'wip'（WIP上限-1・focus 中は深レビューの coverage 増）
+        ↑ b/c はどちらも genbaTrust を立て主軸は同分岐。違いは「次に直すプロセス」＝量(capacity)か質(wip)か（機会コスト・状況依存で単一正解化なし）
         ↓
 [Sprint3 レビュー]  経路で別イベント
    ├─ topDown   → s3-review-topdown  隠れた例外が漏れ本番デモが崩れる大障害（取り繕う=悪化 / 頭を下げる=挽回の入口）
