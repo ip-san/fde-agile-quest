@@ -31,28 +31,36 @@ export function EventModal({ event, unexpected, aiTokens, revealHint, timed, onC
   // 時限選択（LIPS の「無回答＝沈黙も選択」の移植）。静観の選択肢があるイベントだけ作動し、
   // 時間切れ＝その静観を自動選択する。迷っている間に「動かない」を選んだことになる。
   // ※ warn 付き静観（罠）は自動選択対象にしない（迷って時間切れで最悪手を強制しない）。
-  // ※ Board が key={event.id} で再マウントするので、remaining/firedRef はイベント毎にリセットされる。
   const restraintChoice = event.choices.find((c) => c.restraint && !c.warn)
   // 解除＝WCAG 2.2.1（Timing Adjustable）。本人操作でこの判断の制限時間を止められる。
+  // [外部依存の明示] timerOff・remaining・firedRef は useState/useRef の初期値によってリセットされる。
+  // このリセットは Board.tsx が <EventModal key={currentEvent.id} /> と渡すことで
+  // イベント切り替え時に再マウントを保証している。Board 側の key 付与をやめると
+  // 前イベントの timerOff=true や firedRef=true が次イベントに持ち越されるため注意。
   const [timerOff, setTimerOff] = useState(false)
   const timerOn = !!timed && !!restraintChoice && !timerOff
   const [remaining, setRemaining] = useState(TIMED_SECONDS)
   const firedRef = useRef(false)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: イベントごとに一度だけ仕掛ける（key 再マウント前提。restraintChoice/onChoose は event から導出）
+  // ref で最新の restraintChoice/onChoose を追跡し、deps に含めなくても stale にならない
+  // （timerOn が変化した時点の最新値が ref に入っているため）
+  const restraintChoiceRef = useRef(restraintChoice)
+  restraintChoiceRef.current = restraintChoice
+  const onChooseRef = useRef(onChoose)
+  onChooseRef.current = onChoose
   useEffect(() => {
-    if (!timerOn || !restraintChoice) return
+    if (!timerOn || !restraintChoiceRef.current) return
     const tick = setInterval(() => setRemaining((r) => Math.max(0, r - 1)), 1000)
     const fire = setTimeout(() => {
-      if (firedRef.current) return
+      if (firedRef.current || !restraintChoiceRef.current) return
       firedRef.current = true
       sfxDecide()
-      onChoose(restraintChoice)
+      onChooseRef.current(restraintChoiceRef.current)
     }, TIMED_SECONDS * 1000)
     return () => {
       clearInterval(tick)
       clearTimeout(fire)
     }
-  }, [timerOn, event.id])
+  }, [timerOn])
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:px-safe sm:pt-safe sm:pb-safe">
@@ -100,7 +108,7 @@ export function EventModal({ event, unexpected, aiTokens, revealHint, timed, onC
         <div className="space-y-4 px-5 pt-4 pb-safe">
           {unexpected && (
             <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
-              ⚡ 想定外の展開——現場は狙い通りには動かない。
+              想定外の展開。現場は狙い通りには動かない。
             </p>
           )}
 
@@ -108,11 +116,9 @@ export function EventModal({ event, unexpected, aiTokens, revealHint, timed, onC
           {timerOn && (
             <div>
               <div className="mb-1 flex items-center justify-between gap-2 text-[11px] font-semibold text-amber-300">
-                <span>
-                  <span aria-hidden="true">⏱</span> 時限選択
-                </span>
+                <span>時限選択</span>
                 <span className="flex items-center gap-2">
-                  <span className="tabular-nums">残り {remaining}秒（時間切れ＝🕯 静観）</span>
+                  <span className="tabular-nums">残り {remaining}秒（時間切れ＝静観）</span>
                   {/* WCAG 2.2.1: 本人操作で制限時間を解除できる */}
                   <button
                     type="button"
@@ -150,7 +156,7 @@ export function EventModal({ event, unexpected, aiTokens, revealHint, timed, onC
           {/* 推理で見抜いた本音（核心が“開く”）。手探りで選ぶのと、本音を掴んで選ぶのとの差。 */}
           {revealHint && (
             <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
-              <span aria-hidden="true">🔍</span> 見抜いた本音：
+              見抜いた本音：
               <RichText text={revealHint} />
             </p>
           )}
@@ -192,7 +198,7 @@ export function EventModal({ event, unexpected, aiTokens, revealHint, timed, onC
                   {/* 「静観」スタンス＝今は動かない選択を識別表示（LIPSの「沈黙も選択」の移植）。 */}
                   {c.restraint && (
                     <span className="mb-1 inline-block rounded bg-slate-700/60 px-1.5 py-0.5 text-[10px] font-semibold text-slate-300">
-                      <span aria-hidden="true">🕯</span> 静観
+                      静観
                     </span>
                   )}
                   <span className="block text-sm font-medium text-slate-100">
@@ -208,7 +214,7 @@ export function EventModal({ event, unexpected, aiTokens, revealHint, timed, onC
                           locked ? 'bg-rose-500/15 text-rose-300' : 'bg-cyan-500/15 text-cyan-300'
                         }`}
                       >
-                        🔋 AI −{cost}
+                        AI −{cost}
                         {locked && '（残量不足）'}
                       </span>
                     </span>

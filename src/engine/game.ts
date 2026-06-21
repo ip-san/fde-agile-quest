@@ -74,9 +74,12 @@ export function amplifyEffects(
   return { effects: { ...e, [primary]: nv }, primary, delta: nv - v }
 }
 
-// 既定のミニゲーム種別（作る/直す=dev、人と現場=hearing）。event.minigame があれば優先
+// 既定のミニゲーム種別。event.minigame があれば優先。
+//  team   … チーム/ふりかえりは「議論＝問いを選ぶ」が自然 → hearing（team テーマ）
+//  trouble… 障害・コード起因の“直す”が大半 → dev（調査/対人の回は event.minigame で hearing/review に上書き）
+//  人と現場（genba/kokyaku/chance）… hearing
 const KIND_BY_SEGMENT: Record<Segment, MiniGameKind> = {
-  team: 'dev',
+  team: 'hearing',
   trouble: 'dev',
   genba: 'hearing',
   kokyaku: 'hearing',

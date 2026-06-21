@@ -22,7 +22,7 @@ export function PreceptBook({ seen, onClose }: Props) {
       >
         <header className="flex items-center justify-between gap-3 border-b border-slate-800 px-5 py-3">
           <h2 id="precept-book-title" className="text-base font-bold text-slate-100">
-            <span aria-hidden="true">📖</span> FDE心得手帳
+            FDE心得手帳
           </h2>
           <span className="text-sm font-bold tabular-nums text-sky-300">
             {got}

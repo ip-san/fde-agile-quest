@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { ACTION_LABELS, SEGMENT_COLORS, SEGMENT_LABELS } from '../data/chapters/chapter-01'
 import { sfxReveal } from '../engine/sfx'
 import { useFocusTrap } from '../hooks/useFocusTrap'
@@ -25,17 +25,6 @@ export function DeductionModal({ event, onResolve }: Props) {
   const [picked, setPicked] = useState<DeductionOption | null>(null)
   const ref = useFocusTrap<HTMLDivElement>()
   const correct = !!picked?.truth
-
-  // 推理が無いイベントに誤って表示された場合は素通り（防御的）。
-  useEffect(() => {
-    if (!d) onResolve(false)
-  }, [d, onResolve])
-
-  // 解答した瞬間に決定的瞬間の音（当たり＝突き上げる一撃／外し＝下降）。
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 解答（picked）が確定した一度だけ鳴らす
-  useEffect(() => {
-    if (picked) sfxReveal(correct ? 'impact' : 'bad')
-  }, [picked])
 
   if (!d) return null
 
@@ -66,9 +55,7 @@ export function DeductionModal({ event, onResolve }: Props) {
           >
             {SEGMENT_LABELS[event.segment]}
           </span>
-          <span className="rounded-full bg-amber-400/20 px-2.5 py-0.5 text-xs font-bold text-amber-200">
-            <span aria-hidden="true">🔍</span> 推理
-          </span>
+          <span className="rounded-full bg-amber-400/20 px-2.5 py-0.5 text-xs font-bold text-amber-200">推理</span>
           <h2 id={titleId} className="w-full text-base font-bold text-slate-100">
             {event.title}
           </h2>
@@ -92,7 +79,10 @@ export function DeductionModal({ event, onResolve }: Props) {
                 <button
                   key={o.id}
                   type="button"
-                  onClick={() => setPicked(o)}
+                  onClick={() => {
+                    setPicked(o)
+                    sfxReveal(o.truth ? 'impact' : 'bad')
+                  }}
                   className="group block w-full rounded-xl border border-slate-700 bg-slate-800/40 px-4 py-3 text-left transition hover:border-amber-400 hover:bg-slate-800"
                 >
                   <span className="block text-sm font-medium text-slate-100">
@@ -110,13 +100,7 @@ export function DeductionModal({ event, onResolve }: Props) {
                 }`}
               >
                 <p className={`text-sm font-bold ${correct ? 'text-amber-200' : 'text-rose-200'}`}>
-                  {correct ? (
-                    <>
-                      <span aria-hidden="true">🔍</span> 見抜いた！
-                    </>
-                  ) : (
-                    '— 読み違えた'
-                  )}
+                  {correct ? <>見抜いた！</> : '— 読み違えた'}
                 </p>
                 <p className="mt-1 text-sm text-slate-200">
                   {correct ? (

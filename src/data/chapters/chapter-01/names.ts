@@ -34,6 +34,7 @@ export type NameId =
   | 'yuki'
   | 'tabuchi'
   | 'hashimoto'
+  | 'yamada'
   | 'goda'
   | 'akagi'
   | 'moriya'
@@ -64,8 +65,8 @@ export const NAMES: Record<NameId, NameDef> = {
     kind: 'company',
     also: ['カルゴ'],
   },
-  parent: { canonical: 'ジェネリック電機', name: 'ジェネリック電機', kind: 'company' },
-  grandparent: { canonical: 'ジェネリックロジスティクス', name: 'ジェネリックロジスティクス', kind: 'company' },
+  parent: { canonical: 'ジェネリック電機', name: '東邦重電', kind: 'company' },
+  grandparent: { canonical: 'ジェネリックロジスティクス', name: '東邦ロジスティクス', kind: 'company' },
   product: { canonical: 'StockPilot', name: 'StockPilot', kind: 'company' },
   // ── 人物（hero=「あなた」は固有名を持たないので登録しない） ──
   kuon: { canonical: '久遠', name: '久遠', reading: 'くおん', kind: 'person' },
@@ -74,6 +75,7 @@ export const NAMES: Record<NameId, NameDef> = {
   yuki: { canonical: '結城', name: '結城', reading: 'ゆうき', kind: 'person' },
   tabuchi: { canonical: '田淵', name: '田淵', reading: 'たぶち', kind: 'person' },
   hashimoto: { canonical: '橋本', name: '橋本', reading: 'はしもと', kind: 'person' },
+  yamada: { canonical: '山田', name: '山田', reading: 'やまだ', kind: 'person' },
   goda: { canonical: '郷田', name: '郷田', reading: 'ごうだ', kind: 'person' },
   akagi: { canonical: '赤城', name: '赤城', reading: 'あかぎ', kind: 'person' },
   moriya: { canonical: '守屋', name: '守屋', reading: 'もりや', kind: 'person' },

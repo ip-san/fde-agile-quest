@@ -61,6 +61,10 @@ export type Segment = 'genba' | 'kokyaku' | 'team' | 'trouble' | 'chance'
 /** 選択後の「実行」ミニゲームの種類（開発＝タイミング型／ヒアリング＝選択型／レビュー＝AI差分の点検） */
 export type MiniGameKind = 'dev' | 'hearing' | 'review'
 
+/** ヒアリングの問いを「相手・場面」で変えるテーマ（現場/依頼主/機会/チーム）。
+ *  既定はイベントの segment から導出（hearingThemeFor）。問いプール・見出しは minigames.ts。 */
+export type HearingTheme = 'genba' | 'kokyaku' | 'chance' | 'team' | 'chousa' | 'inin'
+
 /** ミニゲームの出来。倍率＝選択の主正メーターを great:+1 / good:±0 / poor:-1 する */
 export type ExecTier = 'great' | 'good' | 'poor'
 
@@ -69,6 +73,13 @@ export type ReviewDepth = 'quick' | 'thorough'
 
 /** メーターへの効果（指定キーのみ加算） */
 export type Effects = Partial<Meters>
+
+/** ヒアリングの問いの選択肢。good:true＝核心に迫る良い問い／good:false＝場をズラす/誘導/決めつけ等の悪い問い。
+ *  単一の真実源をこの低層モジュールに置き、minigames.ts と各ミニゲームはここを import/re-export する。 */
+export interface HearingOption {
+  text: string
+  good: boolean
+}
 
 /** 1つの選択肢（トレードオフ。正解はない） */
 export interface Choice {
@@ -146,7 +157,10 @@ export interface GameEvent {
    *  指定するとこのイベントの場面に合った問い（良問2＋悪問3 が目安）が出る。
    *  未指定なら従来どおりテーマ別の汎用プール（dealHearing）にフォールバック。
    *  good:true＝核心に迫る良い問い／good:false＝場をズラす/誘導/決めつけ等の悪い問い。 */
-  hearingOptions?: { text: string; good: boolean }[]
+  hearingOptions?: HearingOption[]
+  /** ヒアリングの問いのテーマ（相手・場面）を明示する（任意）。未指定なら segment から既定（hearingThemeFor）。
+   *  主に trouble セグメントをヒアリングにする時に使う：調査=genba／対人=team を意図どおり出すため。 */
+  hearingTheme?: HearingTheme
   /** このイベントが起きる場所。未指定なら segment から既定（locations.ts の LOCATION_BY_SEGMENT） */
   location?: LocationId
   /** リモート朝会の役割別ヒント（任意）。未指定の役割は場所テンプレから自動生成。

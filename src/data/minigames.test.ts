@@ -4,7 +4,10 @@ import {
   dealHearing,
   dealReview,
   type HearingTheme,
+  hearingCtaFor,
+  hearingPromptFor,
   hearingThemeFor,
+  hearingTitleFor,
   REVIEW_REAL_COUNT,
   scoreHearing,
   scoreReview,
@@ -25,7 +28,7 @@ describe('dealHearing', () => {
     expect(same).toBe(false)
   })
   it('テーマ指定でも良2・悪3を保ち、テーマが違えば問いが変わる（ワンパターン回避）', () => {
-    const themes: HearingTheme[] = ['genba', 'kokyaku', 'chance']
+    const themes: HearingTheme[] = ['genba', 'kokyaku', 'chance', 'team', 'chousa', 'inin']
     for (const t of themes) {
       const r = dealHearing(7, t)
       expect(r.filter((o) => o.good)).toHaveLength(2)
@@ -40,11 +43,27 @@ describe('dealHearing', () => {
     )
     expect(new Set(sets).size).toBeGreaterThan(1)
   })
-  it('hearingThemeFor: hearing 系セグメントを themed に、その他は kokyaku に寄せる', () => {
+  it('hearingThemeFor: hearing 系セグメント(team含む)を themed に、その他は kokyaku に寄せる', () => {
     expect(hearingThemeFor('genba')).toBe('genba')
     expect(hearingThemeFor('kokyaku')).toBe('kokyaku')
     expect(hearingThemeFor('chance')).toBe('chance')
+    expect(hearingThemeFor('team')).toBe('team')
     expect(hearingThemeFor('trouble')).toBe('kokyaku')
+  })
+})
+
+describe('ヒアリングの見出し・設問リード・確定ラベル（相手/場面で出し分け）', () => {
+  const themes: HearingTheme[] = ['genba', 'kokyaku', 'chance', 'team', 'chousa', 'inin']
+  it('テーマごとに6種とも文言が異なる（“現場”固定の解消）', () => {
+    for (const fn of [hearingTitleFor, hearingPromptFor, hearingCtaFor]) {
+      const set = new Set(themes.map((t) => fn(t)))
+      expect(set.size).toBe(6)
+    }
+  })
+  it('未指定（theme=undefined）は現場主義の標準にフォールバック', () => {
+    expect(hearingTitleFor()).toBe(hearingTitleFor('genba'))
+    expect(hearingPromptFor()).toBe(hearingPromptFor('genba'))
+    expect(hearingCtaFor()).toBe(hearingCtaFor('genba'))
   })
 })
 

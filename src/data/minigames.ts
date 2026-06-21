@@ -1,4 +1,6 @@
-import type { ExecTier } from '../types'
+import type { ExecTier, HearingOption, HearingTheme } from '../types'
+
+export type { HearingOption, HearingTheme }
 
 // ───────────────────────────────────────────────────────────
 // 選択後ミニゲームの汎用コンテンツ（“実行スキル”の抽象。イベント個別には書かない）。
@@ -8,10 +10,10 @@ import type { ExecTier } from '../types'
 
 // ───────────────────────────────────────────────────────────
 // ヒアリングの問いは「相手・場面」で変える（ワンパターン回避）。テーマ別の良問/悪問＋汎用を
-// 混ぜて出す。テーマはイベントのセグメントから決まる（現場/顧客/機会）。
+// 混ぜて出す。テーマはイベントのセグメントから決まる（現場/顧客/機会/チーム）。
 // 良問＝観察・一次情報・現場主義／悪問＝誘導・クローズド・迎合・「答えは資料の中」前提。
+// （HearingTheme の定義は types.ts。circular import を避けつつ単一の真実源にする）
 // ───────────────────────────────────────────────────────────
-export type HearingTheme = 'genba' | 'kokyaku' | 'chance'
 
 const GENERAL_GOOD = [
   '実際にその作業、見せてもらえますか？',
@@ -50,6 +52,26 @@ const THEME_GOOD: Record<HearingTheme, string[]> = {
     'これを逃すと、何が起きますか？',
     '小さく試すなら、どこから始めますか？',
   ],
+  team: [
+    'さっきの「無理そう」、具体的にどこで詰まりそうですか？',
+    'この一週間で、いちばん時間を溶かした作業は？',
+    'いま止まっている仕事は、何待ちになっていますか？',
+    '誰か一人に負荷が寄っていませんか？',
+    'もう一度やり直せるなら、どこを変えますか？',
+    '言いそびれていること、ありませんか？',
+  ],
+  chousa: [
+    'それ、最後に“現物”で確かめられたのはいつですか？',
+    '同じことが、いつ・どこで・誰の時に起きていますか？',
+    '原票（契約書や請求書）まで、ひとつずつ照らせますか？',
+    '事実・推測・願望——どこまでが確かめられた話ですか？',
+  ],
+  inin: [
+    '間違えたとき、戻せる（ロールバック）経路は用意できていますか？',
+    '失敗したら、影響が及ぶ範囲はどこまでですか？',
+    'まず小さく任せて確かめるなら、どこからにしますか？',
+    '人が最後に確かめる関所は、どこに残しますか？',
+  ],
 }
 
 const THEME_BAD: Record<HearingTheme, string[]> = {
@@ -70,11 +92,22 @@ const THEME_BAD: Record<HearingTheme, string[]> = {
     '良さそうなので、すぐ本番でいいですよね？',
     '流行ってるし、入れとけば間違いないですよね？',
   ],
-}
-
-export interface HearingOption {
-  text: string
-  good: boolean
+  team: [
+    '要するに、気合いが足りないだけですよね？',
+    'まあ、いつも通りで問題ないですよね？',
+    '誰のせいで遅れたか、はっきりさせません？',
+    'もっと頑張れば終わる、ってことでいいですか？',
+  ],
+  chousa: [
+    '面倒なので、見なかったことにしておきましょうか？',
+    '数字が合っているなら、裏まで確かめなくていいですよね？',
+    '裏を取る前に、もう不正だと決めつけてしまいませんか？',
+  ],
+  inin: [
+    '速くて優秀なんだから、全部任せてしまっていいですよね？',
+    '失敗したら、その時に考えればよくないですか？',
+    'AIがやってくれるなら、もう人は見なくていいですよね？',
+  ],
 }
 
 /** 開発パズル：正しい順に組み直す“開発の手順”フロー（FDEらしい進め方の型）。 */
@@ -100,7 +133,7 @@ function rng(seed: number) {
     return s / 2 ** 32
   }
 }
-function shuffle<T>(arr: T[], seed: number): T[] {
+export function shuffle<T>(arr: T[], seed: number): T[] {
   const a = [...arr]
   const r = rng(seed)
   for (let i = a.length - 1; i > 0; i--) {
@@ -126,15 +159,79 @@ export function dealHearing(seed: number, theme?: HearingTheme): HearingOption[]
 }
 
 function allGood(): string[] {
-  return [...GENERAL_GOOD, ...THEME_GOOD.genba, ...THEME_GOOD.kokyaku, ...THEME_GOOD.chance]
+  return [
+    ...GENERAL_GOOD,
+    ...THEME_GOOD.genba,
+    ...THEME_GOOD.kokyaku,
+    ...THEME_GOOD.chance,
+    ...THEME_GOOD.team,
+    ...THEME_GOOD.chousa,
+    ...THEME_GOOD.inin,
+  ]
 }
 function allBad(): string[] {
-  return [...GENERAL_BAD, ...THEME_BAD.genba, ...THEME_BAD.kokyaku, ...THEME_BAD.chance]
+  return [
+    ...GENERAL_BAD,
+    ...THEME_BAD.genba,
+    ...THEME_BAD.kokyaku,
+    ...THEME_BAD.chance,
+    ...THEME_BAD.team,
+    ...THEME_BAD.chousa,
+    ...THEME_BAD.inin,
+  ]
 }
 
-/** イベントのセグメントからヒアリングのテーマを決める（hearing は genba/kokyaku/chance で発火） */
+/** イベントのセグメントからヒアリングのテーマを決める（hearing は genba/kokyaku/chance/team で発火）。
+ *  trouble をヒアリングにする場合は、調査=genba／対人=team を event.hearingTheme で明示する想定。 */
 export function hearingThemeFor(segment: string): HearingTheme {
-  return segment === 'genba' || segment === 'kokyaku' || segment === 'chance' ? segment : 'kokyaku'
+  return segment === 'genba' || segment === 'kokyaku' || segment === 'chance' || segment === 'team'
+    ? segment
+    : 'kokyaku'
+}
+
+// ヒアリングの見出しは相手・場面で変える（“現場”固定だと顧客/機会の場面と噛み合わないため）。
+const HEARING_TITLE: Record<HearingTheme, string> = {
+  genba: '現場の声を掘る',
+  kokyaku: '依頼主の期待を確かめる',
+  chance: '価値の在処を探る',
+  team: 'チームの本音を引き出す',
+  chousa: '事実の裏を取る',
+  inin: '任せる線を見極める',
+}
+
+/** ヒアリング・ミニゲームの見出し（テーマ＝相手・場面で出し分け。未指定は現場主義の標準） */
+export function hearingTitleFor(theme?: HearingTheme): string {
+  return theme ? HEARING_TITLE[theme] : HEARING_TITLE.genba
+}
+
+// 「誰に問いを投げるのか」もテーマで変える（“現場に”固定だと顧客/機会と噛み合わない）。
+const HEARING_PROMPT: Record<HearingTheme, string> = {
+  genba: '現場に、どの問いを投げる？',
+  kokyaku: '依頼主に、どの問いを投げる？',
+  chance: '機会の芽に、どの問いを当てる？',
+  team: 'チームに、どの問いを投げる？',
+  chousa: '事実の裏に、どの問いを当てる？',
+  inin: 'AIに任せる前に、どの問いを置く？',
+}
+
+/** ヒアリング・ミニゲームの設問リード文（相手・場面で出し分け。未指定は現場主義の標準） */
+export function hearingPromptFor(theme?: HearingTheme): string {
+  return theme ? HEARING_PROMPT[theme] : HEARING_PROMPT.genba
+}
+
+// 確定ボタンの動詞も場面に合わせる（“掘る”は現場寄り。顧客＝確かめる／機会＝見極める）。
+const HEARING_CTA: Record<HearingTheme, string> = {
+  genba: 'この2つで掘る',
+  kokyaku: 'この2つで確かめる',
+  chance: 'この2つで見極める',
+  team: 'この2つで掘り下げる',
+  chousa: 'この2つで裏を取る',
+  inin: 'この2つで線を引く',
+}
+
+/** ヒアリング確定ボタンのラベル（相手・場面で出し分け。未指定は現場主義の標準） */
+export function hearingCtaFor(theme?: HearingTheme): string {
+  return theme ? HEARING_CTA[theme] : HEARING_CTA.genba
 }
 
 /** ヒアリングの採点：選んだ2問のうち良問の数で great/good/poor。 */

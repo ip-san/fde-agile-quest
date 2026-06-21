@@ -9,3 +9,6 @@ coverage
 test-results
 playwright-report
 .playwright
+
+# Claude-in-Chrome 拡張バイナリのキャッシュ
+chrome/

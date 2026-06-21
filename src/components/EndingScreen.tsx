@@ -116,9 +116,7 @@ function ValueTrend({ baseline, history }: { baseline: number; history: number[]
   return (
     <div className="rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-3">
       <div className="mb-1.5 flex items-center justify-between">
-        <p className="text-xs font-semibold text-amber-200">
-          <span aria-hidden="true">📈</span> 顧客価値の歩み
-        </p>
+        <p className="text-xs font-semibold text-amber-200">顧客価値の歩み</p>
         <span
           className={`text-xs font-bold tabular-nums ${net > 0 ? 'text-emerald-300' : net < 0 ? 'text-rose-300' : 'text-slate-400'}`}
         >
@@ -171,10 +169,7 @@ export function EndingScreen({
         <p className={`text-xs font-semibold uppercase tracking-widest ${failed ? 'text-rose-400' : 'text-slate-400'}`}>
           {failed ? 'BAD END — 案件終了' : 'Ending'}
         </p>
-        <h1 className={`mt-2 text-3xl font-bold ${failed ? 'text-rose-300' : 'text-sky-300'}`}>
-          {failed ? '💀 ' : ''}
-          {ending.title}
-        </h1>
+        <h1 className={`mt-2 text-3xl font-bold ${failed ? 'text-rose-300' : 'text-sky-300'}`}>{ending.title}</h1>
       </div>
 
       {failed && <p className="text-center text-xs text-rose-300/80">ゲージが1つでも0になると、案件はここで終わる。</p>}
@@ -205,7 +200,7 @@ export function EndingScreen({
         <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${rank.cls}`}>
           <span className="text-3xl font-black tabular-nums">{rank.grade}</span>
           <div className="min-w-0">
-            <p className="text-sm font-bold">🎯 顧客価値ランク：{rank.label}</p>
+            <p className="text-sm font-bold">顧客価値ランク：{rank.label}</p>
             <p className="text-xs opacity-80">最終顧客価値 {customerValue} / 100</p>
           </div>
         </div>
@@ -215,9 +210,7 @@ export function EndingScreen({
         <MeterHUD meters={meters} />
         {/* 届けたインクリメント＝スプリントバックログを Done にした成果。0 は“使わなかった機会損失”として可視化 */}
         <div className="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-2.5 text-sm">
-          <span className="text-slate-300">
-            <span aria-hidden="true">📦</span> 届けたインクリメント
-          </span>
+          <span className="text-slate-300">届けたインクリメント</span>
           {deliveredItems > 0 ? (
             <span className="font-bold tabular-nums text-emerald-300">{deliveredItems} 件</span>
           ) : (

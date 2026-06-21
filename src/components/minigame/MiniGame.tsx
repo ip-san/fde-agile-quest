@@ -1,4 +1,4 @@
-import type { HearingTheme } from '../../data/minigames'
+import { type HearingOption, type HearingTheme, hearingTitleFor } from '../../data/minigames'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
 import type { ExecTier, MiniGameKind } from '../../types'
 import { MiniGameDev } from './MiniGameDev'
@@ -11,21 +11,27 @@ interface Props {
   /** ヒアリングの問いを相手・場面で変えるテーマ（hearing のみ使用） */
   theme?: HearingTheme
   /** イベント固有のヒアリング問い（hearing のみ使用。あればシャッフルして優先提示） */
-  hearingOptions?: { text: string; good: boolean }[]
+  hearingOptions?: HearingOption[]
   onDone: (tier: ExecTier) => void
   onSkip: () => void
 }
 
-const HEADING: Record<MiniGameKind, { tag: string; title: string }> = {
+const HEADING: Record<'dev' | 'review', { tag: string; title: string }> = {
   dev: { tag: '実行：開発', title: '手を動かす' },
-  hearing: { tag: '実行：ヒアリング', title: '現場の声を掘る' },
   review: { tag: '実行：レビュー', title: 'AIの差分を点検する' },
+}
+
+function buildHeading(kind: MiniGameKind, theme?: HearingTheme): { tag: string; title: string } {
+  if (kind === 'hearing') {
+    return { tag: '実行：ヒアリング', title: hearingTitleFor(theme) }
+  }
+  return HEADING[kind]
 }
 
 /** 選択後に挟む「実行」ミニゲーム。出来が選択の主正メーターを倍率調整する。Esc/スキップで標準(good)。 */
 export function MiniGame({ kind, seed, theme, hearingOptions, onDone, onSkip }: Props) {
   const ref = useFocusTrap<HTMLDivElement>(onSkip)
-  const h = HEADING[kind]
+  const h = buildHeading(kind, theme)
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:px-safe sm:pt-safe sm:pb-safe">

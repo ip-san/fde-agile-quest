@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { CEREMONY_LABELS, CEREMONY_SHORT, EVENTS, PRODUCT_GOAL, SPRINTS } from '../data/chapters/chapter-01'
 import { hearingThemeFor } from '../data/minigames'
 import { PRECEPTS } from '../data/precepts'
@@ -7,6 +7,8 @@ import { GEN_TOKEN_COST } from '../engine/backlog'
 import { miniGameKindFor } from '../engine/game'
 import { customerValueBreakdown, isRouletteCeremony, repoStats } from '../engine/progression'
 import { isMuted, toggleMuted } from '../engine/sfx'
+import { readBool, writeBool } from '../lib/persist'
+import { seedFor } from '../lib/seed'
 import { useEngagement } from '../store/engagementStore'
 import type { Ceremony, Choice } from '../types'
 import { BacklogPanel } from './BacklogPanel'
@@ -25,40 +27,13 @@ import { Roulette } from './Roulette'
 import { SecondaryStats } from './SecondaryStats'
 import { Travel } from './Travel'
 
-/** イベントIDから決定的なシード（ミニゲームの内容選択用） */
-function seedFor(id: string): number {
-  let s = 0
-  for (let i = 0; i < id.length; i++) s = (s * 31 + id.charCodeAt(i)) >>> 0
-  return s
-}
-
 const PROLOGUE_SEEN_KEY = 'fde-agile-quest:prologue-seen'
-function prologueSeen(): boolean {
-  try {
-    return !!localStorage.getItem(PROLOGUE_SEEN_KEY)
-  } catch {
-    return false
-  }
-}
+const prologueSeen = (): boolean => readBool(PROLOGUE_SEEN_KEY)
 
 // 時限選択（LIPS）の設定。既定OFF（学習を妨げないため opt-in）。localStorage 永続。
-// TODO(quality): localStorage boolean の try/catch 定型が muted(sfx.ts)/prologueSeen/timed と4箇所目。
-// localStorageBool(key)/setLocalStorageBool(key,on) のヘルパー（例 lib/persist.ts）に集約余地あり。
 const TIMED_CHOICE_KEY = 'fde-agile-quest:timed-choice'
-function timedChoicePref(): boolean {
-  try {
-    return localStorage.getItem(TIMED_CHOICE_KEY) === '1'
-  } catch {
-    return false
-  }
-}
-function setTimedChoicePref(on: boolean): void {
-  try {
-    localStorage.setItem(TIMED_CHOICE_KEY, on ? '1' : '0')
-  } catch {
-    /* noop */
-  }
-}
+const timedChoicePref = (): boolean => readBool(TIMED_CHOICE_KEY)
+const setTimedChoicePref = (on: boolean): void => writeBool(TIMED_CHOICE_KEY, on)
 
 export function Board() {
   const {
@@ -108,11 +83,7 @@ export function Board() {
   // 初回はプロローグを自動表示。以降は「あらすじ」から再生できる
   const [prologueOpen, setPrologueOpen] = useState(prologueSeen() === false)
   const closePrologue = () => {
-    try {
-      localStorage.setItem(PROLOGUE_SEEN_KEY, '1')
-    } catch {
-      /* noop */
-    }
+    writeBool(PROLOGUE_SEEN_KEY, true)
     setPrologueOpen(false)
   }
 
@@ -141,6 +112,16 @@ export function Board() {
   const revealHint = deducedCorrect ? currentEvent?.deduction?.reveal : undefined
   // 本音を見抜けた判断には「見抜きボーナス」として理解 +1（store 側で別枠加算・表示）
   const deductionBonus = deducedCorrect ? 1 : 0
+
+  // repoStats / customerValueBreakdown はメモ化して関係ない state 更新での再計算を避ける
+  const rs = useMemo(
+    () => repoStats({ resolvedIds, flags, aiTokens, repoCoverage, repoDebt, backlogDone }),
+    [resolvedIds, flags, aiTokens, repoCoverage, repoDebt, backlogDone]
+  )
+  const bd = useMemo(
+    () => customerValueBreakdown(meters, rs.coverage, rs.debtScore, rs.deliveredItems),
+    [meters, rs.coverage, rs.debtScore, rs.deliveredItems]
+  )
 
   // モーダル表示中は背後を支援技術ツリー/操作から外す（aria-modal 任せにしない）
   const modalOpen =
@@ -187,12 +168,12 @@ export function Board() {
           {/* プロダクトゴール＝章全体の到達点（PO所有・不変）。各スプリントゴールはこれに連なる。
               スプリントゴールの上に置いて「ゴールの階層（Product→Sprint）」を見せる。 */}
           <p className="mt-1 text-xs text-slate-400">
-            🧭 <RichText text="{{プロダクトゴール}}" />：<span className="text-violet-300">{PRODUCT_GOAL}</span>
+            <RichText text="{{プロダクトゴール}}" />：<span className="text-violet-300">{PRODUCT_GOAL}</span>
           </p>
           {/* スプリントゴールはプランニングの"成果"。プレイヤーがプランニングで選んだ狙いを表示する。
             未決定（プランニング中）は伏せ、選んだら現す（Scrum: ゴールはプランニングで決まる）。 */}
           <p className="mt-0.5 text-xs text-slate-400">
-            ↳ 🎯 スプリントゴール：
+            ↳ スプリントゴール：
             {(() => {
               const chosen = sprintGoals[sprintIndex]
               if (chosen) return <span className="text-sky-300">{chosen}</span>
@@ -203,35 +184,26 @@ export function Board() {
         </header>
 
         {/* HUD：北極星＝顧客価値（目標・大）→ 3メーター（手段・0ルール対象）→ 従ゲージは1行に圧縮 */}
-        {(() => {
-          const rs = repoStats({ resolvedIds, flags, aiTokens, repoCoverage, repoDebt, backlogDone })
-          const bd = customerValueBreakdown(meters, rs.coverage, rs.debtScore, rs.deliveredItems)
-          return (
-            <>
-              <CustomerValueBar value={bd.total} breakdown={bd} />
-              <MeterHUD meters={meters} />
-              <SecondaryStats
-                aiTokens={aiTokens}
-                coverage={rs.coverage}
-                debt={rs.debt}
-                onOpenDetail={() => setRepoOpen(true)}
-              />
-              {/* 会心の連鎖中（2以上）だけ“実装の波”を持続表示。続けて会心するほどコード品質ボーナスが増す。 */}
-              {greatStreak >= 2 && (
-                <p
-                  className="-mt-1 text-center text-xs font-semibold text-amber-300"
-                  role="status"
-                  aria-label={`会心の連鎖 ${greatStreak} 回。次の会心でコード品質ボーナスが増える`}
-                >
-                  🔥 会心 {greatStreak} 連鎖中 — 次も会心ならコード品質ボーナス増
-                </p>
-              )}
-            </>
-          )
-        })()}
+        <CustomerValueBar value={bd.total} breakdown={bd} />
+        <MeterHUD meters={meters} />
+        <SecondaryStats
+          aiTokens={aiTokens}
+          coverage={rs.coverage}
+          debt={rs.debt}
+          onOpenDetail={() => setRepoOpen(true)}
+        />
+        {/* 会心の連鎖中（2以上）だけ"実装の波"を持続表示。続けて会心するほどコード品質ボーナスが増す。 */}
+        {greatStreak >= 2 && (
+          <p
+            className="-mt-1 text-center text-xs font-semibold text-amber-300"
+            role="status"
+            aria-label={`会心の連鎖 ${greatStreak} 回。次の会心でコード品質ボーナスが増える`}
+          >
+            会心 {greatStreak} 連鎖中 — 次も会心ならコード品質ボーナス増
+          </p>
+        )}
         <p className="-mt-2 text-center text-xs leading-snug text-slate-400">
-          ⚠ 3つのゲージは、どれか1つでも <span className="text-rose-400">0</span> になると案件は終了。
-          差し引きプラスでも、削りすぎは命取り。
+          どれか1つでも <span className="text-rose-400">0</span> になると案件は終了。削りすぎは命取り。
         </p>
 
         {/* スプリント進捗ドット */}
@@ -305,9 +277,6 @@ export function Board() {
                   aria-label="開発未着手の注意"
                   className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-sm text-amber-300"
                 >
-                  <span aria-hidden="true" className="mt-0.5 shrink-0">
-                    🔧
-                  </span>
                   <span>今日はまだ開発に手をつけていない。回すと今日が終わる。</span>
                 </div>
               )}
@@ -331,7 +300,7 @@ export function Board() {
                   onClick={() => setBacklogOpen(true)}
                   className="rounded-lg border border-sky-500/40 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-200 transition hover:bg-sky-500/20 active:scale-95"
                 >
-                  📋 プロダクトバックログから予測を選ぶ
+                  プロダクトバックログから予測を選ぶ
                 </button>
               )}
               {/* デイリーでは、回す前にバックログ（着手・レビュー）を進められる。
@@ -347,7 +316,7 @@ export function Board() {
                       : 'rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-500/20 active:scale-95'
                   }
                 >
-                  📋 バックログを進める（着手 / レビュー）
+                  バックログを進める（着手 / レビュー）
                 </button>
               )}
             </>
@@ -360,9 +329,7 @@ export function Board() {
           if (open.length === 0) return null
           return (
             <section className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-3">
-              <h2 className="mb-1.5 px-1 text-xs font-semibold text-amber-300">
-                <span aria-hidden="true">🧵</span> 未回収の伏線（{open.length}）
-              </h2>
+              <h2 className="mb-1.5 px-1 text-xs font-semibold text-amber-300">未回収の伏線（{open.length}）</h2>
               <ul className="space-y-1 px-1">
                 {open.map((t) => (
                   <li key={t.flag} className="text-xs leading-snug text-slate-300">
@@ -394,9 +361,6 @@ export function Board() {
               onClick={() => setRepoOpen(true)}
               className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-cyan-200 transition hover:bg-slate-800 active:scale-95"
             >
-              <span className="text-base" aria-hidden="true">
-                🗂️
-              </span>
               リポジトリ
             </button>
             <button
@@ -404,9 +368,6 @@ export function Board() {
               onClick={() => setBacklogOpen(true)}
               className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-emerald-200 transition hover:bg-slate-800 active:scale-95"
             >
-              <span className="text-base" aria-hidden="true">
-                📋
-              </span>
               バックログ
             </button>
             <button
@@ -414,9 +375,6 @@ export function Board() {
               onClick={() => setBookOpen(true)}
               className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-sky-200 transition hover:bg-slate-800 active:scale-95"
             >
-              <span className="text-base" aria-hidden="true">
-                📖
-              </span>
               心得 {seenPrecepts.size}/{PRECEPTS.length}
             </button>
             <button
@@ -424,9 +382,6 @@ export function Board() {
               onClick={() => setPrologueOpen(true)}
               className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-slate-300 transition hover:bg-slate-800 active:scale-95"
             >
-              <span className="text-base" aria-hidden="true">
-                📜
-              </span>
               あらすじ
             </button>
             <button
@@ -467,7 +422,7 @@ export function Board() {
         <MiniGame
           kind={miniGameKindFor(currentEvent)}
           seed={seedFor(currentEvent.id)}
-          theme={hearingThemeFor(currentEvent.segment)}
+          theme={currentEvent.hearingTheme ?? hearingThemeFor(currentEvent.segment)}
           hearingOptions={currentEvent.hearingOptions}
           onDone={(tier) => {
             choose(pendingChoice, tier, deductionBonus)
@@ -487,13 +442,7 @@ export function Board() {
       {bookOpen && <PreceptBook seen={seenPrecepts} onClose={() => setBookOpen(false)} />}
 
       {/* コードリポジトリ状態パネル */}
-      {repoOpen && (
-        <RepoPanel
-          stats={repoStats({ resolvedIds, flags, aiTokens, repoCoverage, repoDebt, backlogDone })}
-          foundSeeds={foundSeeds}
-          onClose={() => setRepoOpen(false)}
-        />
-      )}
+      {repoOpen && <RepoPanel stats={rs} foundSeeds={foundSeeds} onClose={() => setRepoOpen(false)} />}
 
       {/* バックログ（プロダクト/スプリント）パネル */}
       {backlogOpen && <BacklogPanel onClose={() => setBacklogOpen(false)} />}

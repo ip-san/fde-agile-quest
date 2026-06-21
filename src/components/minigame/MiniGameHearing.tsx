@@ -1,5 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { dealHearing, type HearingOption, type HearingTheme, scoreHearing } from '../../data/minigames'
+import {
+  dealHearing,
+  type HearingOption,
+  type HearingTheme,
+  hearingCtaFor,
+  hearingPromptFor,
+  scoreHearing,
+  shuffle,
+} from '../../data/minigames'
 import { sfxTick } from '../../engine/sfx'
 import type { ExecTier } from '../../types'
 
@@ -7,7 +15,7 @@ interface Props {
   seed: number
   theme?: HearingTheme
   /** イベント固有の問い（指定時は良問2以上＋悪問1以上を満たす場合に優先使用） */
-  hearingOptions?: { text: string; good: boolean }[]
+  hearingOptions?: HearingOption[]
   onResolve: (tier: ExecTier) => void
 }
 
@@ -22,15 +30,8 @@ export function MiniGameHearing({ seed, theme, hearingOptions, onResolve }: Prop
       hearingOptions.filter((o) => o.good).length >= 2 &&
       hearingOptions.filter((o) => !o.good).length >= 1
     ) {
-      // シード付きFisher-Yates（minigames.tsのshuffleと同アルゴリズム・インライン化してimport増加を避ける）
-      const a = [...hearingOptions]
-      let s = seed >>> 0 || 1
-      for (let i = a.length - 1; i > 0; i--) {
-        s = (s * 1664525 + 1013904223) >>> 0
-        const j = s % (i + 1)
-        ;[a[i], a[j]] = [a[j], a[i]]
-      }
-      return a
+      // 共通の shuffle（minigames.ts）でシードを揃え、dealHearing と同一分布にする
+      return shuffle(hearingOptions, seed)
     }
     return dealHearing(seed, theme)
   })
@@ -79,7 +80,7 @@ export function MiniGameHearing({ seed, theme, hearingOptions, onResolve }: Prop
   return (
     <div className="space-y-3">
       <p className="text-sm text-slate-300">
-        現場に、どの問いを投げる？ <span className="text-slate-400">深掘りになる質問を2つ選ぶ</span>
+        {hearingPromptFor(theme)} <span className="text-slate-400">深掘りになる質問を2つ選ぶ</span>
       </p>
       <ul className="space-y-2">
         {options.map((o, i) => {
@@ -126,7 +127,7 @@ export function MiniGameHearing({ seed, theme, hearingOptions, onResolve }: Prop
         onClick={() => onResolve(scoreHearing(picked.map((i) => options[i])))}
         className={`min-h-[44px] w-full rounded-xl bg-sky-500 py-3 font-bold text-slate-950 transition hover:bg-sky-400 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-600 disabled:text-slate-400 ${limitHit ? 'shake' : ''}`}
       >
-        {ready ? 'この2つで掘る' : `あと ${2 - picked.length} つ選ぶ`}
+        {ready ? hearingCtaFor(theme) : `あと ${2 - picked.length} つ選ぶ`}
       </button>
     </div>
   )
