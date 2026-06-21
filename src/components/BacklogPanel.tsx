@@ -64,8 +64,10 @@ export function BacklogPanel({ onClose }: Props) {
     lastCarryover,
     sprintGoals,
     retroImprovements,
+    unrefinedPbis,
     commitBacklogOrder,
     toggleForecast,
+    refinePbi,
     startItem,
     reviewItem,
   } = useEngagement()
@@ -109,8 +111,10 @@ export function BacklogPanel({ onClose }: Props) {
               velocity={velocity}
               lastCarryover={lastCarryover}
               retroImprovements={retroImprovements}
+              unrefinedPbis={unrefinedPbis}
               commitBacklogOrder={commitBacklogOrder}
               toggleForecast={toggleForecast}
+              refinePbi={refinePbi}
             />
           ) : (
             <KanbanView
@@ -207,8 +211,10 @@ interface PlanningProps {
   velocity: number[]
   lastCarryover: string[]
   retroImprovements: string[]
+  unrefinedPbis: string[]
   commitBacklogOrder: (ids: string[]) => void
   toggleForecast: (id: string) => void
+  refinePbi: (id: string) => void
 }
 
 function PlanningView({
@@ -219,9 +225,12 @@ function PlanningView({
   velocity,
   lastCarryover,
   retroImprovements,
+  unrefinedPbis,
   commitBacklogOrder,
   toggleForecast,
+  refinePbi,
 }: PlanningProps) {
+  const unrefinedSet = useMemo(() => new Set(unrefinedPbis), [unrefinedPbis])
   // 予測の"目安"＝今スプリントで実際に終わらせられる量。律速は人のレビュー容量なので
   // それを基準にする（前回ベロシティではなく、真のボトルネックに合わせる）。レトロ改善(capacity)を反映。
   const capacity = reviewCapacityFor(retroImprovements)
@@ -334,6 +343,15 @@ function PlanningView({
                     <span className="rounded bg-slate-700 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-slate-300">
                       {item.estimate}pt
                     </span>
+                    {/* 機構：Refinement。発見直後の暫定見積り（Ready 化前）を明示 */}
+                    {unrefinedSet.has(id) && !isDone && (
+                      <span
+                        aria-label="暫定見積り（要リファインメント）"
+                        className="ml-1.5 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300"
+                      >
+                        暫定
+                      </span>
+                    )}
                     {/* 前回持ち越し・未done の項目にバッジ表示 */}
                     {carryoverSet.has(id) && !isDone && (
                       <span
@@ -349,22 +367,34 @@ function PlanningView({
                     </p>
                   </div>
 
-                  {!isDone && (
-                    <button
-                      type="button"
-                      aria-label={
-                        isForecast ? `${item.title} をスプリントから外す` : `${item.title} をスプリントへ入れる`
-                      }
-                      onClick={() => toggleForecast(id)}
-                      className={`shrink-0 self-center rounded-lg px-2.5 py-1.5 text-xs font-semibold transition active:scale-95 ${
-                        isForecast
-                          ? 'bg-sky-500 text-slate-950 hover:bg-sky-400'
-                          : 'bg-slate-700 text-slate-200 hover:bg-slate-600'
-                      }`}
-                    >
-                      {isForecast ? '✓ 入れた' : '＋ スプリントへ'}
-                    </button>
-                  )}
+                  {!isDone &&
+                    (unrefinedSet.has(id) ? (
+                      // 機構：Refinement。発見直後の暫定見積りは Ready 化するまで予測に積めない。
+                      <button
+                        type="button"
+                        aria-label={`${item.title} をリファインメントして Ready にする`}
+                        title="発見した項目は暫定見積り。リファインメントで見積りを確かめて Ready にすると予測に積める。"
+                        onClick={() => refinePbi(id)}
+                        className="shrink-0 self-center rounded-lg bg-amber-500/90 px-2.5 py-1.5 text-xs font-semibold text-slate-950 transition hover:bg-amber-400 active:scale-95"
+                      >
+                        🔍 <RichText text="{{リファインメント}}" interactive={false} />
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        aria-label={
+                          isForecast ? `${item.title} をスプリントから外す` : `${item.title} をスプリントへ入れる`
+                        }
+                        onClick={() => toggleForecast(id)}
+                        className={`shrink-0 self-center rounded-lg px-2.5 py-1.5 text-xs font-semibold transition active:scale-95 ${
+                          isForecast
+                            ? 'bg-sky-500 text-slate-950 hover:bg-sky-400'
+                            : 'bg-slate-700 text-slate-200 hover:bg-slate-600'
+                        }`}
+                      >
+                        {isForecast ? '✓ 入れた' : '＋ スプリントへ'}
+                      </button>
+                    ))}
                 </div>
               </li>
             )

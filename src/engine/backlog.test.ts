@@ -9,8 +9,10 @@ import {
   GEN_TOKEN_COST,
   isDiscoverablePbi,
   isKnownPbi,
+  isUnrefinedPbi,
   moveBacklogItem,
   REVIEW_CAPACITY,
+  refinePbi,
   reorderBacklog,
   resolveSprintBacklog,
   revealPbi,
@@ -341,6 +343,23 @@ describe('発見可PBI（ヒアリングで掘り当てる）', () => {
     expect(revealPbi(c, 'nope').revealed).toBeNull()
   })
 
+  it('機構：Refinement — 掘り当てた直後は未リファインメント（暫定）で予測に積めない／リファインメントで Ready 化', () => {
+    const revealed = revealPbi(core(), DISC).core
+    expect(isUnrefinedPbi(revealed, DISC)).toBe(true) // 発見直後は暫定
+    // 暫定のままでは予測に積めない（toggleForecast が no-op）
+    expect(toggleForecast(revealed, DISC).sprintForecast).not.toContain(DISC)
+    // プランニング中にリファインメントすると Ready 化し、予測に積めるようになる
+    const refined = refinePbi(revealed, DISC)
+    expect(isUnrefinedPbi(refined, DISC)).toBe(false)
+    expect(toggleForecast(refined, DISC).sprintForecast).toContain(DISC)
+  })
+  it('機構：Refinement — refinePbi はプランニング以外・未リファインメントでない id では no-op', () => {
+    const revealed = revealPbi(core(), DISC).core
+    const daily = { ...revealed, beatIndex: 1 } // daily
+    expect(refinePbi(daily, DISC)).toBe(daily) // プランニング外は no-op
+    expect(refinePbi(revealed, ID.floor)).toBe(revealed) // 未リファインメントでない id は no-op
+  })
+
   it('ヒアリング選択(discoversPbi)を good/great で解決すると掘り当ててバックログに加わる', () => {
     const ev: GameEvent = {
       id: 's1-hearing',
@@ -430,6 +449,7 @@ describe('永続化ラウンドトリップ / 旧セーブ復元', () => {
       backlogDone: [ID.veteran],
       shippedUndoneIds: [ID.veteran], // DoD未達Ship（backlogDone の部分集合）も往復で保たれる
       retroImprovements: ['capacity', 'wip'], // レトロ改善も往復で保たれる
+      unrefinedPbis: [ID.asis], // 未リファインメント（既知∧バックログ内∧未done）も往復で保たれる
       velocity: [5, 0],
     })
     const round = restoreCore(toPersisted(c))
@@ -438,6 +458,7 @@ describe('永続化ラウンドトリップ / 旧セーブ復元', () => {
     expect(round.backlogDone).toEqual([ID.veteran])
     expect(round.shippedUndoneIds).toEqual([ID.veteran])
     expect(round.retroImprovements).toEqual(['capacity', 'wip'])
+    expect(round.unrefinedPbis).toEqual([ID.asis])
     expect(round.velocity).toEqual([5, 0])
   })
 

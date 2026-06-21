@@ -102,7 +102,24 @@ export function isDiscoverablePbi(id: string): boolean {
 export function revealPbi(core: ProgressCore, id: string): { core: ProgressCore; revealed: BacklogItem | null } {
   const item = PBI_BY_ID.get(id)
   if (!item || core.backlogOrder.includes(id)) return { core, revealed: null }
-  return { core: { ...core, backlogOrder: [...core.backlogOrder, id] }, revealed: item }
+  // 掘り当てた直後は“暫定見積り（未リファインメント）”＝Ready でない。プランニングで refinePbi するまで予測に積めない。
+  return {
+    core: { ...core, backlogOrder: [...core.backlogOrder, id], unrefinedPbis: [...core.unrefinedPbis, id] },
+    revealed: item,
+  }
+}
+
+/** この PBI が“未リファインメント（暫定見積り）”か。発見直後で Ready 化前。 */
+export function isUnrefinedPbi(core: Pick<ProgressCore, 'unrefinedPbis'>, id: string): boolean {
+  return core.unrefinedPbis.includes(id)
+}
+
+/** 発見した PBI を“リファインメント”して Ready にする（プランニング中・未リファインメントのみ）。
+ *  ＝掘り当てた仕事は暫定のまま予測に積めず、見積りを確かめて Ready にして初めてフォーキャストできる。 */
+export function refinePbi(core: ProgressCore, pbiId: string): ProgressCore {
+  if (!isPlanningBeat(core)) return core
+  if (!core.unrefinedPbis.includes(pbiId)) return core
+  return { ...core, unrefinedPbis: core.unrefinedPbis.filter((id) => id !== pbiId) }
 }
 
 /** 現在ビートがプランニングか（予測の編集はプランニング中のみ許可する）。 */
@@ -120,6 +137,8 @@ export function toggleForecast(core: ProgressCore, pbiId: string): ProgressCore 
   if (!isPlanningBeat(core)) return core
   if (!PBI_BY_ID.has(pbiId)) return core
   if (core.backlogDone.includes(pbiId)) return core
+  // 未リファインメント（暫定見積り）は Ready 化するまで予測に積めない＝リファインメントを経て見積もる
+  if (core.unrefinedPbis.includes(pbiId)) return core
   const has = core.sprintForecast.includes(pbiId)
   const sprintForecast = has ? core.sprintForecast.filter((id) => id !== pbiId) : [...core.sprintForecast, pbiId]
   return { ...core, sprintForecast }

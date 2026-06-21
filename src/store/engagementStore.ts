@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { CEREMONY_ORDER, CHAPTER_TITLE, SPRINTS, STARTING_METERS } from '../data/chapters/chapter-01'
 import { PRECEPT_BY_ID } from '../data/precepts'
 import { SEED_BY_ID } from '../data/seeds'
-import { reorderBacklog, reviewItem, startItem, toggleForecast } from '../engine/backlog'
+import { refinePbi, reorderBacklog, reviewItem, startItem, toggleForecast } from '../engine/backlog'
 import { METER_MAX } from '../engine/game'
 import {
   arriveCore,
@@ -50,8 +50,10 @@ interface EngagementState extends ProgressCore {
   // ── バックログ操作 ──
   /** PO が承認した優先順位を確定する（並べ替えの所有は PO。プレイヤーは提案し、PO審査後にここで確定） */
   commitBacklogOrder: (ids: string[]) => void
-  /** PBI を今スプリントの予測に出し入れ（プランニング中・未done のみ有効） */
+  /** PBI を今スプリントの予測に出し入れ（プランニング中・未done・Ready のみ有効） */
   toggleForecast: (pbiId: string) => void
+  /** 発見した未リファインメントPBIを Ready 化する（プランニング中のみ。機構：Refinement） */
+  refinePbi: (pbiId: string) => void
   /** 着手：To Do→In Progress（AI生成・トークン消費・WIP上限） */
   startItem: (pbiId: string) => void
   /** レビュー：In Progress を進める（レビュー容量消費・深さ×ミニゲーム出来）。Done で完了 */
@@ -143,6 +145,7 @@ function coreOf(s: EngagementState): ProgressCore {
     reviewCapacity: s.reviewCapacity,
     lastCarryover: s.lastCarryover,
     retroImprovements: s.retroImprovements,
+    unrefinedPbis: s.unrefinedPbis,
   }
 }
 
@@ -227,6 +230,7 @@ export function isValidPersisted(x: unknown): x is Persisted {
     'shippedUndoneIds',
     'inProgress',
     'retroImprovements',
+    'unrefinedPbis',
   ] as const) {
     const v = o[k]
     if (v !== undefined && (!Array.isArray(v) || !v.every((id) => typeof id === 'string'))) return false
@@ -392,6 +396,12 @@ export const useEngagement = create<EngagementState>((set, get) => ({
 
   toggleForecast: (pbiId) => {
     const next = toggleForecast(coreOf(get()), pbiId)
+    set(next)
+    persistCore(next)
+  },
+
+  refinePbi: (pbiId) => {
+    const next = refinePbi(coreOf(get()), pbiId)
     set(next)
     persistCore(next)
   },

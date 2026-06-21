@@ -111,6 +111,9 @@ export interface ProgressCore {
   /** レトロで選んだプロセス改善の積み上げ（'capacity'/'wip'）。機構：Retro 昇格。
    *  次スプリント以降のレビュー容量(reviewCapacityFor)・WIP上限(wipLimitFor)に永続して効く。初期＝[]。 */
   retroImprovements: string[]
+  /** 発見したが未リファインメント（暫定見積り・Ready でない）の PBI id。機構：Refinement。
+   *  掘り当てた直後に入り、プランニングで refinePbi すると外れて予測に積めるようになる。初期＝[]。 */
+  unrefinedPbis: string[]
 }
 
 export const REPO_COVERAGE_MAX = 100
@@ -171,6 +174,8 @@ export interface Persisted {
   lastCarryover?: string[]
   /** レトロで選んだプロセス改善（旧セーブには無いので [] で補完） */
   retroImprovements?: string[]
+  /** 未リファインメントの発見PBI（旧セーブには無いので [] で補完） */
+  unrefinedPbis?: string[]
 }
 
 const METER_KEYS: MeterKey[] = ['trust', 'insight', 'culture']
@@ -221,6 +226,7 @@ export function freshCore(starting: Meters): ProgressCore {
     reviewCapacity: REVIEW_CAPACITY,
     lastCarryover: [],
     retroImprovements: [],
+    unrefinedPbis: [],
   }
 }
 
@@ -676,6 +682,7 @@ function restoreBacklog(
   | 'reviewCapacity'
   | 'lastCarryover'
   | 'retroImprovements'
+  | 'unrefinedPbis'
 > {
   // レトロ改善は既知レバー('capacity'/'wip')のみ復元（破損・旧スキーマは捨てる）。容量/WIP の上限導出に使う。
   const retroImprovements = (Array.isArray(p.retroImprovements) ? p.retroImprovements : []).filter(
@@ -687,10 +694,15 @@ function restoreBacklog(
   )
   const seen = new Set(savedOrder)
   const backlogOrder = [...savedOrder, ...seedOrder.filter((id) => !seen.has(id))]
+  const orderSet = new Set(backlogOrder)
   const done = new Set(
     (Array.isArray(p.backlogDone) ? p.backlogDone : []).filter(
       (id): id is string => typeof id === 'string' && isKnownPbi(id)
     )
+  )
+  // 未リファインメントは「既知∧バックログに現れている∧未done」のみ（破損・旧セーブで宙に浮いた id を捨てる）
+  const unrefinedPbis = (Array.isArray(p.unrefinedPbis) ? p.unrefinedPbis : []).filter(
+    (id): id is string => typeof id === 'string' && orderSet.has(id) && !done.has(id)
   )
   // DoD未達Ship は backlogDone の部分集合（既知∧Done済みのみ。破損・旧セーブでズレても安全側へ）
   const shippedUndoneIds = (Array.isArray(p.shippedUndoneIds) ? p.shippedUndoneIds : []).filter(
@@ -744,6 +756,7 @@ function restoreBacklog(
     reviewCapacity,
     lastCarryover,
     retroImprovements,
+    unrefinedPbis,
   }
 }
 
@@ -854,5 +867,6 @@ export function toPersisted(core: ProgressCore): Persisted {
     reviewCapacity: core.reviewCapacity,
     lastCarryover: core.lastCarryover,
     retroImprovements: core.retroImprovements,
+    unrefinedPbis: core.unrefinedPbis,
   }
 }
