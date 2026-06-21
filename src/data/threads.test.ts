@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { GameFlag } from '../types'
-import { EVENTS, SPRINTS } from './chapters/chapter-01'
+import { DISCOVERABLE_BACKLOG, EVENTS, PRODUCT_BACKLOG, SPRINTS } from './chapters/chapter-01'
 import { openThreads, THREADS } from './threads'
 
 // 伏線レジストリ（threads.ts）の宣言と、章データ（setsFlag/missedFlag/requiresFlag）の整合を検証する。
@@ -16,6 +16,11 @@ for (const e of EVENTS) {
   if (e.missedFlag) missedSet.add(e.missedFlag)
   if (e.requiresFlag) eventPayoff.add(e.requiresFlag)
   for (const c of e.choices) if (c.setsFlag) choiceSet.add(c.setsFlag)
+}
+// PBI の missedFlag（発見の信頼ゲート未達/poor で engine が立てる“掘り損ね”）も missed 経路として収集する。
+// ＝EVENTS だけ走査していると DISCOVERABLE_BACKLOG 由来の missedFlag を取りこぼし、宣言ドリフトを見逃すため。
+for (const p of [...PRODUCT_BACKLOG, ...DISCOVERABLE_BACKLOG]) {
+  if (p.missedFlag) missedSet.add(p.missedFlag)
 }
 
 describe('伏線レジストリ（threads）の整合性', () => {

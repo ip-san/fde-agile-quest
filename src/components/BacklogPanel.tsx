@@ -76,8 +76,9 @@ export function BacklogPanel({ onClose }: Props) {
   const isPlanning = ceremony === 'planning'
   const isWork = ceremony === 'daily'
 
-  const doneSet = new Set(backlogDone)
-  const inProgSet = new Set(inProgress)
+  const doneSet = useMemo(() => new Set(backlogDone), [backlogDone])
+  const inProgSet = useMemo(() => new Set(inProgress), [inProgress])
+  const undoneSet = useMemo(() => new Set(shippedUndoneIds), [shippedUndoneIds])
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 px-safe pt-safe pb-safe backdrop-blur-sm">
@@ -122,7 +123,7 @@ export function BacklogPanel({ onClose }: Props) {
               sprintForecast={sprintForecast}
               backlogOrder={backlogOrder}
               doneSet={doneSet}
-              undoneSet={new Set(shippedUndoneIds)}
+              undoneSet={undoneSet}
               inProgSet={inProgSet}
               inProgress={inProgress}
               reviewProgress={reviewProgress}
@@ -947,7 +948,7 @@ function StakeholderBalance({ forecastIds }: { forecastIds: string[] }) {
     <div
       role="note"
       aria-label={`ステークホルダー内訳 情シス${joushiPt}pt 現場${genbaPt}pt`}
-      className="mb-2 flex items-center gap-2 rounded-lg bg-slate-800/50 px-2.5 py-1.5"
+      className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg bg-slate-800/50 px-2.5 py-1.5"
     >
       <span className="text-[10px] text-slate-400">綱引き：</span>
       {joushiPt > 0 && (

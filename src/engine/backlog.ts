@@ -355,8 +355,11 @@ export function resolveSprintBacklog(core: ProgressCore): { core: ProgressCore; 
         const p = PBI_BY_ID.get(id)
         return p?.sprintHint === sprintNo && p.stakeholder === s
       })
-    const someDelivered = (ids: string[]) => ids.some((id) => doneThisSprint.includes(id))
-    const someUndelivered = (ids: string[]) => ids.some((id) => !doneSet.has(id))
+    // “今スプリントで終えたか”で揃える（delivered/undelivered とも doneThisSprint 基準・O(1)照合）。
+    //   undelivered を通算 doneSet で見ると、done済みが forecast に再混入した時に未達を取りこぼすため此処に統一。
+    const doneThisSprintSet = new Set(doneThisSprint)
+    const someDelivered = (ids: string[]) => ids.some((id) => doneThisSprintSet.has(id))
+    const someUndelivered = (ids: string[]) => ids.some((id) => !doneThisSprintSet.has(id))
     const genbaGoal = goalForecastOf('genba')
     const joushiGoal = goalForecastOf('joushi')
     const addFlag = (f: GameFlag) => {

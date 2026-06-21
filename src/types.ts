@@ -79,6 +79,9 @@ export type ExecTier = 'great' | 'good' | 'poor'
 /** スプリントバックログ項目のレビュー深さ。浅い＝速いが負債、深い＝テストで品質を積む */
 export type ReviewDepth = 'quick' | 'thorough'
 
+/** レトロで選べるプロセス改善レバー（機構：Retro 昇格）。capacity＝レビューの量／wip＝質。 */
+export type RetroLever = 'capacity' | 'wip'
+
 /** メーターへの効果（指定キーのみ加算） */
 export type Effects = Partial<Meters>
 
@@ -104,7 +107,7 @@ export interface Choice {
   /** レトロの選択肢のみ：選んだプロセス改善を次スプリント以降に効かせる（機構：Retro 昇格）。
    *  'capacity'＝レビュー容量+1（制約理論：ボトルネックを広げる）／'wip'＝WIP上限−1（フロー改善）。
    *  1レトロ1つ＝他は見送り（機会コスト）。retroImprovements に積まれ canStart/精算リセットに反映。 */
-  retroLever?: 'capacity' | 'wip'
+  retroLever?: RetroLever
   /** 危険な選択（UIで警告表示） */
   warn?: boolean
   /** 「静観」スタンス＝今は動かない／観察する／即答しない選択（サクラ大戦LIPSの「沈黙も選択」の移植）。

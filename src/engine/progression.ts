@@ -26,6 +26,7 @@ import type {
   MeterKey,
   Meters,
   ResultView,
+  RetroLever,
   Segment,
   Status,
 } from '../types'
@@ -110,7 +111,7 @@ export interface ProgressCore {
   lastCarryover: string[]
   /** レトロで選んだプロセス改善の積み上げ（'capacity'/'wip'）。機構：Retro 昇格。
    *  次スプリント以降のレビュー容量(reviewCapacityFor)・WIP上限(wipLimitFor)に永続して効く。初期＝[]。 */
-  retroImprovements: string[]
+  retroImprovements: RetroLever[]
   /** 発見したが未リファインメント（暫定見積り・Ready でない）の PBI id。機構：Refinement。
    *  掘り当てた直後に入り、プランニングで refinePbi すると外れて予測に積めるようになる。初期＝[]。 */
   unrefinedPbis: string[]
@@ -502,8 +503,12 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
     sprintGoals = [...core.sprintGoals]
     sprintGoals[core.sprintIndex] = choice.sprintGoal
   }
-  // レトロでプロセス改善を“選ぶ”: choice.retroLever があれば積む（次スプリント以降の容量/WIP に効く）
-  const retroImprovements = choice.retroLever ? [...core.retroImprovements, choice.retroLever] : core.retroImprovements
+  // レトロでプロセス改善を“選ぶ”: レトロのイベントで choice.retroLever があれば積む（次スプリント以降の容量/WIP に効く）。
+  // ＝機構の不変条件（積めるのはレトロのみ）を data 規律でなく engine 側で担保する。
+  const retroImprovements =
+    choice.retroLever && event.ceremony === 'retro'
+      ? [...core.retroImprovements, choice.retroLever]
+      : core.retroImprovements
   const resolvedIds = new Set(core.resolvedIds).add(event.id)
   const log: LogEntry[] = [
     ...core.log,
@@ -626,11 +631,13 @@ export function restoreCore(p: Persisted): ProgressCore {
   const resolvedIds = new Set<string>(p.resolvedIds)
   const zeroed = zeroedMeter(p.meters)
   const campaignDone = p.sprintIndex >= SPRINTS.length
+  // バックログ状態は一度だけ正規化し、エンディング判定にも“正規化後”の backlogDone を渡す（生 p.backlogDone を使わない）。
+  const restoredBacklog = restoreBacklog(p)
   // 0ルール失敗 > 完走（フィナーレ含む）> 進行中
   const fin = zeroed
     ? { ending: FAILURE_EPILOGUES[zeroed], finalePending: false }
     : campaignDone
-      ? finalEndingFor(p.meters, flags, p.backlogDone)
+      ? finalEndingFor(p.meters, flags, restoredBacklog.backlogDone)
       : { ending: null, finalePending: false }
   const isEnded = zeroed !== undefined || campaignDone
   return {
@@ -657,7 +664,7 @@ export function restoreCore(p: Persisted): ProgressCore {
     greatStreak: Number.isFinite(p.greatStreak) ? Math.max(0, Math.floor(p.greatStreak as number)) : 0,
     // index=sprintIndex を保つため filter で詰めず、各枠を文字列か空文字に正規化（空＝未決定）
     sprintGoals: Array.isArray(p.sprintGoals) ? p.sprintGoals.map((g) => (typeof g === 'string' ? g : '')) : [],
-    ...restoreBacklog(p),
+    ...restoredBacklog,
   }
 }
 
@@ -686,7 +693,7 @@ function restoreBacklog(
 > {
   // レトロ改善は既知レバー('capacity'/'wip')のみ復元（破損・旧スキーマは捨てる）。容量/WIP の上限導出に使う。
   const retroImprovements = (Array.isArray(p.retroImprovements) ? p.retroImprovements : []).filter(
-    (x): x is string => x === 'capacity' || x === 'wip'
+    (x): x is RetroLever => x === 'capacity' || x === 'wip'
   )
   const seedOrder = PRODUCT_BACKLOG.map((q) => q.id)
   const savedOrder = (Array.isArray(p.backlogOrder) ? p.backlogOrder : []).filter(

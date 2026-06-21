@@ -91,10 +91,11 @@ export const THREADS: Record<GameFlag, Thread> = {
     teaser: '後回しにした基盤が、静かに軋んでいる。',
   },
   missedNightShift: {
-    // ①の信頼ゲート見逃しの“顕在化”。深い本音(pbi-disc-night-shift, requiresTrust=6)を掘り損ねる
-    // 浅い対応（s1-daily-warehouse の仕様書通り/観察どまり）で setsFlag。ゲート未達の沈黙は engine が
-    // フラグを自動では立てないため、深い関係を築けなかった選択側に紐付けて顕在化の入口にする。
-    setVia: ['choice'],
+    // ①の信頼ゲート見逃しの“顕在化”。2経路で立つ：
+    //  - choice: 浅い対応（s1-daily-warehouse の仕様書通り/観察どまり）の setsFlag
+    //  - missed: 深い聞き取りを選んでも信頼ゲート未達/poor で掘り損ねた時、PBI(pbi-disc-night-shift)の
+    //    missedFlag を engine が立てる（＝“掘り損ね”＝見送りの一種）。
+    setVia: ['choice', 'missed'],
     payoffVia: ['event'],
     note: '夜勤帯の本音を掘り損ねる（浅い聞き取り）→S3で引き継ぎ漏れ起因の誤出荷トラブルが強制発火',
     teaser: '夜勤帯まで、聞けていない声が残っている。',
