@@ -9,16 +9,20 @@ import {
   GEN_TOKEN_COST,
   isDiscoverablePbi,
   isKnownPbi,
+  isUnrefinedPbi,
   moveBacklogItem,
   REVIEW_CAPACITY,
+  refinePbi,
   reorderBacklog,
   resolveSprintBacklog,
   revealPbi,
   reviewBacklogProposal,
+  reviewCapacityFor,
   reviewItem,
   startItem,
   toggleForecast,
   WIP_LIMIT,
+  wipLimitFor,
 } from './backlog'
 import { chooseCore, freshCore, type ProgressCore, restoreCore, toPersisted } from './progression'
 
@@ -170,6 +174,21 @@ describe('reviewItem（レビュー＝In Progress→Done）', () => {
     expect(reviewItem(c, ID.floor, 'thorough', 'good')).toBe(c)
     expect(canReview(c, ID.floor)).toBe(false)
   })
+  it('機構③: 浅い(quick)レビューで Done させると shippedUndone（DoD妥協Ship）フラグが立つ', () => {
+    // est3 の floor を残り 0.5 まで詰めた状態から quick good(+1) で Done させる
+    const c = workCore({ inProgress: [ID.floor], reviewProgress: { [ID.floor]: 2.5 }, reviewCapacity: 6 })
+    const n = reviewItem(c, ID.floor, 'quick', 'good')
+    expect(n.backlogDone).toContain(ID.floor) // Done 済み
+    expect(n.flags.has('shippedUndone')).toBe(true) // DoD を妥協して Ship＝負債の取り立てフラグ
+    expect(n.shippedUndoneIds).toContain(ID.floor) // どの項目を妥協 Ship したか id でも記録（UI出し分け用）
+  })
+  it('機構③: 深い(thorough)レビューで Done させても shippedUndone は立たない（DoD 達成）', () => {
+    const c = workCore({ inProgress: [ID.floor], reviewProgress: { [ID.floor]: 2.5 }, reviewCapacity: 6 })
+    const n = reviewItem(c, ID.floor, 'thorough', 'good') // +2 → Done、深いので DoD 達成
+    expect(n.backlogDone).toContain(ID.floor)
+    expect(n.flags.has('shippedUndone')).toBe(false)
+    expect(n.shippedUndoneIds).not.toContain(ID.floor) // 深いレビューは DoD未達Ship に記録しない
+  })
 })
 
 describe('resolveSprintBacklog（カンバン精算）', () => {
@@ -234,6 +253,76 @@ describe('resolveSprintBacklog（カンバン精算）', () => {
   })
 })
 
+describe('機構②: ステークホルダー間の非対称トレードオフ（resolveSprintBacklog のフラグ）', () => {
+  // S2(sprintIndex=1) のゴール: genba=picking-screen/feedback-loop, joushi=misship-mvp/stock-reconcile
+  const S2 = 1
+  const GENBA = 'pbi-picking-screen'
+  const JOUSHI = 'pbi-misship-mvp'
+
+  it('現場のゴールを届け、情シスのゴールを未達 → deprioritizedJoushi（結城を後回し）', () => {
+    const c = core({ sprintIndex: S2, sprintForecast: [GENBA, JOUSHI], backlogDone: [GENBA] })
+    const { core: next } = resolveSprintBacklog(c)
+    expect(next.flags.has('deprioritizedJoushi')).toBe(true)
+    expect(next.flags.has('deprioritizedGenba')).toBe(false)
+  })
+  it('情シスのゴールを届け、現場のゴールを未達 → deprioritizedGenba（田淵を後回し）', () => {
+    const c = core({ sprintIndex: S2, sprintForecast: [GENBA, JOUSHI], backlogDone: [JOUSHI] })
+    const { core: next } = resolveSprintBacklog(c)
+    expect(next.flags.has('deprioritizedGenba')).toBe(true)
+    expect(next.flags.has('deprioritizedJoushi')).toBe(false)
+  })
+  it('両方届けた／両方未達では、どちらの非対称フラグも立たない（明確なトレードオフのみ）', () => {
+    const both = core({ sprintIndex: S2, sprintForecast: [GENBA, JOUSHI], backlogDone: [GENBA, JOUSHI] })
+    const n1 = resolveSprintBacklog(both).core
+    expect(n1.flags.has('deprioritizedJoushi')).toBe(false)
+    expect(n1.flags.has('deprioritizedGenba')).toBe(false)
+    // 両方未達（着手中で engaged だが Done 無し）＝容量不足。後回しの“選択”ではないので発火しない
+    const neither = core({ sprintIndex: S2, sprintForecast: [GENBA, JOUSHI], inProgress: [GENBA], backlogDone: [] })
+    const n2 = resolveSprintBacklog(neither).core
+    expect(n2.flags.has('deprioritizedJoushi')).toBe(false)
+    expect(n2.flags.has('deprioritizedGenba')).toBe(false)
+  })
+})
+
+describe('機構：Retro 昇格（レトロ改善が次スプリントに効く）', () => {
+  it('reviewCapacityFor: capacity 投資1つにつきレビュー容量 +1', () => {
+    expect(reviewCapacityFor([])).toBe(REVIEW_CAPACITY)
+    expect(reviewCapacityFor(['capacity'])).toBe(REVIEW_CAPACITY + 1)
+    expect(reviewCapacityFor(['capacity', 'capacity'])).toBe(REVIEW_CAPACITY + 2)
+    expect(reviewCapacityFor(['wip'])).toBe(REVIEW_CAPACITY) // wip は容量に効かない
+  })
+  it('wipLimitFor: wip 改善1つにつき仕掛り上限 −1（下限1）', () => {
+    expect(wipLimitFor([])).toBe(WIP_LIMIT)
+    expect(wipLimitFor(['wip'])).toBe(WIP_LIMIT - 1)
+    expect(wipLimitFor(['wip', 'wip'])).toBe(1) // 下限1（0未満にしない）
+    expect(wipLimitFor(['capacity'])).toBe(WIP_LIMIT) // capacity は WIP に効かない
+  })
+  it('精算リセットはレトロ改善(capacity)を反映した容量まで戻す', () => {
+    const c = core({ retroImprovements: ['capacity'], reviewCapacity: 0 })
+    const { core: next } = resolveSprintBacklog(c)
+    expect(next.reviewCapacity).toBe(REVIEW_CAPACITY + 1)
+  })
+  it('wip 改善(focus)中は深いレビューが積む coverage が増える＝量(capacity)に対する質(wip)の固有メリット', () => {
+    const baseCore = { inProgress: [ID.floor], reviewProgress: { [ID.floor]: 0 }, reviewCapacity: 6, repoCoverage: 0 }
+    const plain = reviewItem(workCore({ ...baseCore }), ID.floor, 'thorough', 'good')
+    const focused = reviewItem(workCore({ ...baseCore, retroImprovements: ['wip'] }), ID.floor, 'thorough', 'good')
+    expect(focused.repoCoverage).toBeGreaterThan(plain.repoCoverage) // focus で質が上がる
+  })
+  it('canStart: wip 改善で仕掛り上限が下がり、上限に達したら着手不可', () => {
+    // wip 改善1つ＝WIP上限1。すでに1件着手中なら2件目は着手できない
+    const c = workCore({
+      retroImprovements: ['wip'],
+      sprintForecast: [ID.floor, ID.veteran],
+      inProgress: [ID.veteran],
+      aiTokens: 999,
+    })
+    expect(canStart(c, ID.floor)).toBe(false)
+    // 改善なし（WIP=2）なら同条件で2件目を着手できる
+    const c2 = { ...c, retroImprovements: [] }
+    expect(canStart(c2, ID.floor)).toBe(true)
+  })
+})
+
 describe('発見可PBI（ヒアリングで掘り当てる）', () => {
   it('発見可PBIは既知だが初期のプロダクトバックログ（backlogOrder）には現れない', () => {
     expect(isKnownPbi(DISC)).toBe(true)
@@ -252,6 +341,23 @@ describe('発見可PBI（ヒアリングで掘り当てる）', () => {
     expect(revealPbi(r1.core, DISC).core.backlogOrder.filter((id) => id === DISC)).toHaveLength(1)
     // 未知 id は no-op
     expect(revealPbi(c, 'nope').revealed).toBeNull()
+  })
+
+  it('機構：Refinement — 掘り当てた直後は未リファインメント（暫定）で予測に積めない／リファインメントで Ready 化', () => {
+    const revealed = revealPbi(core(), DISC).core
+    expect(isUnrefinedPbi(revealed, DISC)).toBe(true) // 発見直後は暫定
+    // 暫定のままでは予測に積めない（toggleForecast が no-op）
+    expect(toggleForecast(revealed, DISC).sprintForecast).not.toContain(DISC)
+    // プランニング中にリファインメントすると Ready 化し、予測に積めるようになる
+    const refined = refinePbi(revealed, DISC)
+    expect(isUnrefinedPbi(refined, DISC)).toBe(false)
+    expect(toggleForecast(refined, DISC).sprintForecast).toContain(DISC)
+  })
+  it('機構：Refinement — refinePbi はプランニング以外・未リファインメントでない id では no-op', () => {
+    const revealed = revealPbi(core(), DISC).core
+    const daily = { ...revealed, beatIndex: 1 } // daily
+    expect(refinePbi(daily, DISC)).toBe(daily) // プランニング外は no-op
+    expect(refinePbi(revealed, ID.floor)).toBe(revealed) // 未リファインメントでない id は no-op
   })
 
   it('ヒアリング選択(discoversPbi)を good/great で解決すると掘り当ててバックログに加わる', () => {
@@ -341,12 +447,18 @@ describe('永続化ラウンドトリップ / 旧セーブ復元', () => {
       backlogOrder: [ID.asis, ID.floor, ID.veteran],
       sprintForecast: [ID.floor],
       backlogDone: [ID.veteran],
+      shippedUndoneIds: [ID.veteran], // DoD未達Ship（backlogDone の部分集合）も往復で保たれる
+      retroImprovements: ['capacity', 'wip'], // レトロ改善も往復で保たれる
+      unrefinedPbis: [ID.asis], // 未リファインメント（既知∧バックログ内∧未done）も往復で保たれる
       velocity: [5, 0],
     })
     const round = restoreCore(toPersisted(c))
     expect(round.backlogOrder.slice(0, 3)).toEqual([ID.asis, ID.floor, ID.veteran])
     expect(round.sprintForecast).toEqual([ID.floor])
     expect(round.backlogDone).toEqual([ID.veteran])
+    expect(round.shippedUndoneIds).toEqual([ID.veteran])
+    expect(round.retroImprovements).toEqual(['capacity', 'wip'])
+    expect(round.unrefinedPbis).toEqual([ID.asis])
     expect(round.velocity).toEqual([5, 0])
   })
 

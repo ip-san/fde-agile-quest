@@ -5,7 +5,7 @@
 // 現在ビートの判定は SPRINTS を chapter-01 から直接読む。
 // ───────────────────────────────────────────────────────────
 import { DISCOVERABLE_BACKLOG, PRODUCT_BACKLOG, SPRINTS } from '../data/chapters/chapter-01'
-import type { BacklogItem, BacklogReview, ExecTier, ReviewDepth } from '../types'
+import type { BacklogItem, BacklogReview, ExecTier, GameFlag, ReviewDepth } from '../types'
 import { coverageDrag } from './game'
 import type { ProgressCore } from './progression'
 
@@ -13,10 +13,22 @@ import type { ProgressCore } from './progression'
 const PBI_BY_ID = new Map<string, BacklogItem>([...PRODUCT_BACKLOG, ...DISCOVERABLE_BACKLOG].map((p) => [p.id, p]))
 
 // ── カンバン／レビューのバランス定数（暫定・調整可）──
-/** 同時着手の上限（In Progress 列の WIP 制限。仕掛りを学ぶ） */
+/** 同時着手の上限（In Progress 列の WIP 制限。仕掛りを学ぶ）。レトロ改善で下げられる（下限1）。 */
 export const WIP_LIMIT = 2
-/** 1スプリントの人間レビュー容量（毎スプリントこの値にリセット＝ボトルネック資源） */
+/** 1スプリントの人間レビュー容量（毎スプリントこの値にリセット＝ボトルネック資源）。レトロ改善で増やせる。 */
 export const REVIEW_CAPACITY = 6
+
+// ── レトロ改善（機構：Retro 昇格）──
+// レトロでプレイヤーが選んだプロセス改善を retroImprovements に積む（'capacity'/'wip'）。
+// 1レトロ1つ＝他は見送り（機会コスト）。次スプリント以降のパラメータに永続して効く。
+/** レトロ改善を反映したレビュー容量（制約理論：ボトルネックを広げる投資。'capacity' 1つにつき +1）。 */
+export function reviewCapacityFor(retroImprovements: readonly string[]): number {
+  return REVIEW_CAPACITY + retroImprovements.filter((x) => x === 'capacity').length
+}
+/** レトロ改善を反映した WIP 上限（フロー改善：仕掛りを絞る。'wip' 1つにつき −1、下限1）。 */
+export function wipLimitFor(retroImprovements: readonly string[]): number {
+  return Math.max(1, WIP_LIMIT - retroImprovements.filter((x) => x === 'wip').length)
+}
 /** 着手1回（AIにドラフト生成させる）の生成トークンコスト（安い） */
 export const GEN_TOKEN_COST = 80
 /** レビュー深さごとの容量コスト */
@@ -28,6 +40,9 @@ const TIER_MULT: Record<'great' | 'good' | 'poor', number> = { great: 1.5, good:
 /** 深いレビューで積むテストカバレッジ(%)／浅いレビューで増える技術的負債 */
 const COVERAGE_PER_THOROUGH = 4
 const DEBT_PER_QUICK = 1
+/** フロー改善（レトロで WIP を下げた＝focus）中、深いレビューが追加で積む coverage(%)。
+ *  ＝wip レバーの固有メリット（レビューの“質”）。capacity レバー（レビューの“量”）と等価で別ベクトル。 */
+const FOCUS_COVERAGE_BONUS = 2
 const REPO_COVERAGE_CAP = 100
 
 /** 現在ビートが“作業中（デイリー）”か。着手/レビューはこの間だけ可能。 */
@@ -43,6 +58,32 @@ export function backlogItem(id: string): BacklogItem | undefined {
 /** PBI の見積りポイント（未知 id は 0）。 */
 export function estimateOf(id: string): number {
   return PBI_BY_ID.get(id)?.estimate ?? 0
+}
+
+// ── レガシー（「太く残す」）＝去り際にシステムが自分なしで回る状態を残せたか ──
+/** 「太く残す」PBI 群＝仕組みを人から人へ渡し、運用として根付かせる項目。
+ *  ここを Ship したかが、エンディングの“去り際の実体”を決める（出力カウントではなく成果の質で読む）。
+ *  UI でこれらを「太く残す（結末に効く）」として強調表示するため公開する。 */
+export const LEGACY_PBI_IDS = ['pbi-handoff-doc', 'pbi-onboarding', 'pbi-monitoring'] as const
+
+/** この PBI が「太く残す」レガシー項目か（UI 強調用）。 */
+export function isLegacyPbi(id: string): boolean {
+  return (LEGACY_PBI_IDS as readonly string[]).includes(id)
+}
+/** レガシー成立に必要な Ship 数（3項目中）。レビュー容量律速を踏まえ「過半＝2」を閾に置く（調整可）。 */
+const LEGACY_SHIP_THRESHOLD = 2
+
+/** 「太く残す」PBI のうち Ship（DoD達成）した数。 */
+function legacyShippedCount(backlogDone: readonly string[]): number {
+  const done = new Set(backlogDone)
+  return LEGACY_PBI_IDS.filter((id) => done.has(id)).length
+}
+
+/** レガシーが“定着”したか。
+ *  ＝太く残すPBIを過半 Ship し、かつ属人化させなかった（soloHero でない＝自分が窓口を抱えていない）。
+ *  Ship しただけ（手順書を書いただけ）では定着とみなさない＝「Ship≠定着」を機構に落とす。 */
+export function isLegacyEmbedded(backlogDone: readonly string[], flags: ReadonlySet<GameFlag>): boolean {
+  return legacyShippedCount(backlogDone) >= LEGACY_SHIP_THRESHOLD && !flags.has('soloHero')
 }
 
 /** PBI として既知の id か。 */
@@ -61,7 +102,24 @@ export function isDiscoverablePbi(id: string): boolean {
 export function revealPbi(core: ProgressCore, id: string): { core: ProgressCore; revealed: BacklogItem | null } {
   const item = PBI_BY_ID.get(id)
   if (!item || core.backlogOrder.includes(id)) return { core, revealed: null }
-  return { core: { ...core, backlogOrder: [...core.backlogOrder, id] }, revealed: item }
+  // 掘り当てた直後は“暫定見積り（未リファインメント）”＝Ready でない。プランニングで refinePbi するまで予測に積めない。
+  return {
+    core: { ...core, backlogOrder: [...core.backlogOrder, id], unrefinedPbis: [...core.unrefinedPbis, id] },
+    revealed: item,
+  }
+}
+
+/** この PBI が“未リファインメント（暫定見積り）”か。発見直後で Ready 化前。 */
+export function isUnrefinedPbi(core: Pick<ProgressCore, 'unrefinedPbis'>, id: string): boolean {
+  return core.unrefinedPbis.includes(id)
+}
+
+/** 発見した PBI を“リファインメント”して Ready にする（プランニング中・未リファインメントのみ）。
+ *  ＝掘り当てた仕事は暫定のまま予測に積めず、見積りを確かめて Ready にして初めてフォーキャストできる。 */
+export function refinePbi(core: ProgressCore, pbiId: string): ProgressCore {
+  if (!isPlanningBeat(core)) return core
+  if (!core.unrefinedPbis.includes(pbiId)) return core
+  return { ...core, unrefinedPbis: core.unrefinedPbis.filter((id) => id !== pbiId) }
 }
 
 /** 現在ビートがプランニングか（予測の編集はプランニング中のみ許可する）。 */
@@ -79,6 +137,8 @@ export function toggleForecast(core: ProgressCore, pbiId: string): ProgressCore 
   if (!isPlanningBeat(core)) return core
   if (!PBI_BY_ID.has(pbiId)) return core
   if (core.backlogDone.includes(pbiId)) return core
+  // 未リファインメント（暫定見積り）は Ready 化するまで予測に積めない＝リファインメントを経て見積もる
+  if (core.unrefinedPbis.includes(pbiId)) return core
   const has = core.sprintForecast.includes(pbiId)
   const sprintForecast = has ? core.sprintForecast.filter((id) => id !== pbiId) : [...core.sprintForecast, pbiId]
   return { ...core, sprintForecast }
@@ -157,7 +217,10 @@ export function moveBacklogItem(core: ProgressCore, id: string, dir: -1 | 1): Pr
 
 /** 着手できるか（To Do→In Progress）。作業中ビート・予測内・未done・未着手・WIP余裕・生成トークンあり。 */
 export function canStart(
-  core: Pick<ProgressCore, 'sprintIndex' | 'beatIndex' | 'sprintForecast' | 'backlogDone' | 'inProgress' | 'aiTokens'>,
+  core: Pick<
+    ProgressCore,
+    'sprintIndex' | 'beatIndex' | 'sprintForecast' | 'backlogDone' | 'inProgress' | 'aiTokens' | 'retroImprovements'
+  >,
   pbiId: string
 ): boolean {
   return (
@@ -166,7 +229,7 @@ export function canStart(
     core.sprintForecast.includes(pbiId) &&
     !core.backlogDone.includes(pbiId) &&
     !core.inProgress.includes(pbiId) &&
-    core.inProgress.length < WIP_LIMIT &&
+    core.inProgress.length < wipLimitFor(core.retroImprovements) &&
     core.aiTokens >= GEN_TOKEN_COST
   )
 }
@@ -199,23 +262,47 @@ export function reviewItem(core: ProgressCore, pbiId: string, depth: ReviewDepth
   const gain = REVIEW_GAIN[depth] * TIER_MULT[tier] * drag
   const prog = (core.reviewProgress[pbiId] ?? 0) + gain
 
-  // リポジトリ品質：深いレビュー＝テストで coverage を積む（負債ドラッグ込み）／浅い＝負債が増える
+  // リポジトリ品質：深いレビュー＝テストで coverage を積む（負債ドラッグ込み）／浅い＝負債が増える。
+  // ★フロー改善（レトロで WIP を下げた＝focus）中は「一つに集中して仕上げる」ので深いレビューの質が上がる
+  //   ＝coverage を多く積む（FOCUS_COVERAGE_BONUS）。これが capacity 投資（=レビュー回数の量）に対する
+  //   wip 投資（=レビューの質）の固有メリット＝両レバーを等価で別ベクトルにし、単一正解化を避ける。
+  const focused = wipLimitFor(core.retroImprovements) < WIP_LIMIT
   let repoCoverage = core.repoCoverage
   let repoDebt = core.repoDebt
-  if (depth === 'thorough')
-    repoCoverage = Math.min(REPO_COVERAGE_CAP, repoCoverage + Math.round(COVERAGE_PER_THOROUGH * drag))
-  else repoDebt = repoDebt + DEBT_PER_QUICK
+  if (depth === 'thorough') {
+    const perThorough = COVERAGE_PER_THOROUGH + (focused ? FOCUS_COVERAGE_BONUS : 0)
+    repoCoverage = Math.min(REPO_COVERAGE_CAP, repoCoverage + Math.round(perThorough * drag))
+  } else repoDebt = repoDebt + DEBT_PER_QUICK
 
   const reviewProgress: Record<string, number> = { ...core.reviewProgress, [pbiId]: prog }
   let inProgress = core.inProgress
   let backlogDone = core.backlogDone
+  let shippedUndoneIds = core.shippedUndoneIds
+  let flags = core.flags
   if (prog >= estimateOf(pbiId)) {
     // DoD 達成＝Done。In Progress から外し、通算 Done（インクリメント）へ
     delete reviewProgress[pbiId]
     inProgress = core.inProgress.filter((x) => x !== pbiId)
     backlogDone = [...core.backlogDone, pbiId]
+    // ★完了させたレビューが浅い(quick)＝DoD を妥協して Ship した（undone work）。
+    //   物語へ「負債の取り立て」を呼ぶ橋として shippedUndone を立て（後段の demofail/debt 回）、
+    //   どの項目を妥協 Ship したかを id でも記録（Done カードの「✓ DoD / ⚠ 浅い」出し分け用）。
+    if (depth === 'quick') {
+      if (!flags.has('shippedUndone')) flags = new Set(flags).add('shippedUndone')
+      shippedUndoneIds = [...core.shippedUndoneIds, pbiId]
+    }
   }
-  return { ...core, reviewCapacity, reviewProgress, inProgress, backlogDone, repoCoverage, repoDebt }
+  return {
+    ...core,
+    flags,
+    reviewCapacity,
+    reviewProgress,
+    inProgress,
+    backlogDone,
+    shippedUndoneIds,
+    repoCoverage,
+    repoDebt,
+  }
 }
 
 /** スプリント末（レビュー）の精算。スプリント中に Done した分を確定し、未Done（To Do+In Progress）を
@@ -251,15 +338,50 @@ export function resolveSprintBacklog(core: ProgressCore): { core: ProgressCore; 
     velocity: velocityPts,
     cultureDelta: appliedCultureDelta,
   }
+
+  // 機構②: ステークホルダー間の“非対称トレードオフ”を記録する。今スプリントのゴール直結項目
+  // (sprintHint===sprintNo) をステークホルダー別に見て、「一方のゴールを届けた“のに”他方を未達にした」
+  // ときだけ、後回しにされた側の反応フラグを立てる（後段で遅れて響く）。
+  // ＝容量不足で両方未達／両方達成では発火しない＝明確に「どちらを選んだか」のときのみ。単一正解化を避ける
+  //   機会コスト型：現場優先→情シスが不安(trust摩擦)／情シス優先→現場が後回し(insight機会損失)。
+  const sprintNo = SPRINTS[core.sprintIndex]?.n
+  let flags = core.flags
+  if (sprintNo !== undefined) {
+    // 判定は“今スプリントに予測（forecast）したゴール項目”に限る＝プレイヤーが実際に抱えた約束の範囲。
+    //   これにより「容量の都合で最初から積まなかった項目」では発火せず、「両方積んだのに片方だけ終えた＝
+    //   どちらを finish するか選んだ」明確なトレードオフのときだけ後回し側のフラグが立つ（過剰発火を防ぐ）。
+    const goalForecastOf = (s: 'joushi' | 'genba') =>
+      core.sprintForecast.filter((id) => {
+        const p = PBI_BY_ID.get(id)
+        return p?.sprintHint === sprintNo && p.stakeholder === s
+      })
+    // “今スプリントで終えたか”で揃える（delivered/undelivered とも doneThisSprint 基準・O(1)照合）。
+    //   undelivered を通算 doneSet で見ると、done済みが forecast に再混入した時に未達を取りこぼすため此処に統一。
+    const doneThisSprintSet = new Set(doneThisSprint)
+    const someDelivered = (ids: string[]) => ids.some((id) => doneThisSprintSet.has(id))
+    const someUndelivered = (ids: string[]) => ids.some((id) => !doneThisSprintSet.has(id))
+    const genbaGoal = goalForecastOf('genba')
+    const joushiGoal = goalForecastOf('joushi')
+    const addFlag = (f: GameFlag) => {
+      if (!flags.has(f)) flags = new Set(flags).add(f)
+    }
+    // 現場のゴールを届け、情シスのゴールを未達 → 情シス(結城)を後回しにした
+    if (someDelivered(genbaGoal) && someUndelivered(joushiGoal)) addFlag('deprioritizedJoushi')
+    // 情シスのゴールを届け、現場のゴールを未達 → 現場(田淵)を後回しにした
+    if (someDelivered(joushiGoal) && someUndelivered(genbaGoal)) addFlag('deprioritizedGenba')
+  }
+
   // 精算後は次スプリントへ：予測/In Progress/進捗をクリア、レビュー容量を満タンに戻す
   const next: ProgressCore = {
     ...core,
     meters,
+    flags,
     velocity,
     sprintForecast: [],
     inProgress: [],
     reviewProgress: {},
-    reviewCapacity: REVIEW_CAPACITY,
+    // レビュー容量は満タンにリセット＝レトロ改善（capacity 投資）を反映した上限まで戻す
+    reviewCapacity: reviewCapacityFor(core.retroImprovements),
     // 次プランニングで「↪前回持ち越し」を示すため、終わらせきれなかった分を記録（done なら []）
     lastCarryover: carryIds,
   }

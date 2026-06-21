@@ -9,7 +9,7 @@ import {
 } from '../data/chapters/chapter-01'
 import { GLOSSARY } from '../data/glossary'
 import { EVENT_PRECEPTS, PRECEPTS } from '../data/precepts'
-import type { Ceremony, Choice, GameEvent, GameFlag, MeterKey, Meters } from '../types'
+import type { Ceremony, Choice, EndingContext, GameEvent, GameFlag, MeterKey, Meters } from '../types'
 import {
   amplifyEffects,
   applyEffects,
@@ -24,6 +24,12 @@ import {
 import { AI_TOKENS_MAX } from './progression'
 
 const meters = (p: Partial<Meters> = {}): Meters => ({ trust: 5, insight: 2, culture: 2, ...p })
+/** エンディング判定の文脈。既定はレガシー定着済み（=trueFde の AND 関門を通す）。
+ *  メーターだけのケースは legacyEmbedded を既定 true にして従来挙動を保つ。 */
+const endCtx = (p: Partial<Meters> = {}, legacyEmbedded = true): EndingContext => ({
+  meters: meters(p),
+  legacyEmbedded,
+})
 
 describe('clampMeters', () => {
   it('各メーターを 0..10 に丸める', () => {
@@ -181,45 +187,48 @@ describe('drawEvent', () => {
 
 describe('evaluateEnding', () => {
   it('全メーター高なら 真のFDE', () => {
-    expect(evaluateEnding(ENDINGS, meters({ trust: 8, insight: 7, culture: 7 })).id).toBe('trueFde')
+    expect(evaluateEnding(ENDINGS, endCtx({ trust: 8, insight: 7, culture: 7 })).id).toBe('trueFde')
   })
   it('insight 低は 言われた通り作る人', () => {
-    expect(evaluateEnding(ENDINGS, meters({ insight: 3 })).id).toBe('orderTaker')
+    expect(evaluateEnding(ENDINGS, endCtx({ insight: 3 })).id).toBe('orderTaker')
   })
   it('trust 低は 現場に嫌われた', () => {
-    expect(evaluateEnding(ENDINGS, meters({ trust: 1, insight: 8 })).id).toBe('disliked')
+    expect(evaluateEnding(ENDINGS, endCtx({ trust: 1, insight: 8 })).id).toBe('disliked')
   })
   it('文化が低くて信頼ありは ヒーロー止まり', () => {
-    expect(evaluateEnding(ENDINGS, meters({ trust: 6, insight: 7, culture: 2 })).id).toBe('hero')
+    expect(evaluateEnding(ENDINGS, endCtx({ trust: 6, insight: 7, culture: 2 })).id).toBe('hero')
   })
   it('どれにも該当しなければ 及第点', () => {
-    expect(evaluateEnding(ENDINGS, meters({ trust: 6, insight: 5, culture: 5 })).id).toBe('decent')
+    expect(evaluateEnding(ENDINGS, endCtx({ trust: 6, insight: 5, culture: 5 })).id).toBe('decent')
   })
 
   // しきい値の「ちょうど境界」を踏み、>= を > 等にずらす off-by-one を検出できるようにする
   describe('エンディング閾値の境界値', () => {
     it('trueFde はちょうど 7/6/6 で成立する', () => {
-      expect(evaluateEnding(ENDINGS, meters({ trust: 7, insight: 6, culture: 6 })).id).toBe('trueFde')
+      expect(evaluateEnding(ENDINGS, endCtx({ trust: 7, insight: 6, culture: 6 })).id).toBe('trueFde')
+    })
+    it('メーターが満点でも、レガシー未定着なら trueFde にならず及第点（機構④の AND 関門）', () => {
+      expect(evaluateEnding(ENDINGS, endCtx({ trust: 8, insight: 7, culture: 7 }, false)).id).toBe('decent')
     })
     it('trueFde は各次元を1下回ると成立しない（→及第点）', () => {
-      expect(evaluateEnding(ENDINGS, meters({ trust: 6, insight: 6, culture: 6 })).id).toBe('decent')
-      expect(evaluateEnding(ENDINGS, meters({ trust: 7, insight: 5, culture: 6 })).id).toBe('decent')
-      expect(evaluateEnding(ENDINGS, meters({ trust: 7, insight: 6, culture: 5 })).id).toBe('decent')
+      expect(evaluateEnding(ENDINGS, endCtx({ trust: 6, insight: 6, culture: 6 })).id).toBe('decent')
+      expect(evaluateEnding(ENDINGS, endCtx({ trust: 7, insight: 5, culture: 6 })).id).toBe('decent')
+      expect(evaluateEnding(ENDINGS, endCtx({ trust: 7, insight: 6, culture: 5 })).id).toBe('decent')
     })
     it('disliked はちょうど trust=2 で成立する', () => {
-      expect(evaluateEnding(ENDINGS, meters({ trust: 2, insight: 8 })).id).toBe('disliked')
+      expect(evaluateEnding(ENDINGS, endCtx({ trust: 2, insight: 8 })).id).toBe('disliked')
     })
     it('orderTaker はちょうど insight=3 で成立し、insight=4 では成立しない', () => {
-      expect(evaluateEnding(ENDINGS, meters({ trust: 6, insight: 3, culture: 5 })).id).toBe('orderTaker')
-      expect(evaluateEnding(ENDINGS, meters({ trust: 6, insight: 4, culture: 5 })).id).toBe('decent')
+      expect(evaluateEnding(ENDINGS, endCtx({ trust: 6, insight: 3, culture: 5 })).id).toBe('orderTaker')
+      expect(evaluateEnding(ENDINGS, endCtx({ trust: 6, insight: 4, culture: 5 })).id).toBe('decent')
     })
     it('hero はちょうど trust=4・culture=2 で成立し、trust=3 では成立しない', () => {
-      expect(evaluateEnding(ENDINGS, meters({ trust: 4, insight: 7, culture: 2 })).id).toBe('hero')
-      expect(evaluateEnding(ENDINGS, meters({ trust: 3, insight: 7, culture: 2 })).id).toBe('decent')
+      expect(evaluateEnding(ENDINGS, endCtx({ trust: 4, insight: 7, culture: 2 })).id).toBe('hero')
+      expect(evaluateEnding(ENDINGS, endCtx({ trust: 3, insight: 7, culture: 2 })).id).toBe('decent')
     })
     it('disliked と orderTaker が同時成立なら、配列順で先の disliked を優先する', () => {
       // trust<=2 かつ insight<=3 の複合失敗。順序不変条件（disliked が先）を固定する
-      expect(evaluateEnding(ENDINGS, meters({ trust: 1, insight: 1 })).id).toBe('disliked')
+      expect(evaluateEnding(ENDINGS, endCtx({ trust: 1, insight: 1 })).id).toBe('disliked')
     })
   })
 })

@@ -26,10 +26,20 @@ import type {
   MeterKey,
   Meters,
   ResultView,
+  RetroLever,
   Segment,
   Status,
 } from '../types'
-import { isKnownPbi, REVIEW_CAPACITY, resolveSprintBacklog, revealPbi, WIP_LIMIT } from './backlog'
+import {
+  backlogItem,
+  isKnownPbi,
+  isLegacyEmbedded,
+  REVIEW_CAPACITY,
+  resolveSprintBacklog,
+  revealPbi,
+  reviewCapacityFor,
+  wipLimitFor,
+} from './backlog'
 import {
   amplifyEffects,
   availableEvents,
@@ -77,6 +87,9 @@ export interface ProgressCore {
   sprintForecast: string[]
   /** DoD 達成済み PBI id（キャンペーン通算） */
   backlogDone: string[]
+  /** うち「DoD を妥協して（浅い quick レビューで）Ship した」PBI id（DoD未達Ship）。
+   *  backlogDone の部分集合。Done カードで「✓ DoD」か「⚠ 浅いレビュー（DoD未達）」を出し分けるのに使う。 */
+  shippedUndoneIds: string[]
   /** スプリントごとの完了ポイント（ベロシティ。index=sprintIndex）。推移表示に使う */
   velocity: number[]
   /** スプリント末（レビュー精算後）に記録した顧客価値（北極星。index=sprintIndex）。
@@ -96,6 +109,12 @@ export interface ProgressCore {
   /** 直前スプリントのレビューで終わらせきれず持ち越した PBI id 群（次プランニングで「↪前回持ち越し」表示に使う）。
    *  レビュー精算で carryIds を書き、次レビューで上書きされる。初期＝[]。 */
   lastCarryover: string[]
+  /** レトロで選んだプロセス改善の積み上げ（'capacity'/'wip'）。機構：Retro 昇格。
+   *  次スプリント以降のレビュー容量(reviewCapacityFor)・WIP上限(wipLimitFor)に永続して効く。初期＝[]。 */
+  retroImprovements: RetroLever[]
+  /** 発見したが未リファインメント（暫定見積り・Ready でない）の PBI id。機構：Refinement。
+   *  掘り当てた直後に入り、プランニングで refinePbi すると外れて予測に積めるようになる。初期＝[]。 */
+  unrefinedPbis: string[]
 }
 
 export const REPO_COVERAGE_MAX = 100
@@ -141,6 +160,7 @@ export interface Persisted {
   backlogOrder?: string[]
   sprintForecast?: string[]
   backlogDone?: string[]
+  shippedUndoneIds?: string[]
   velocity?: number[]
   /** スプリント末に記録した顧客価値（旧セーブには無いので [] で補完） */
   valueHistory?: number[]
@@ -153,6 +173,10 @@ export interface Persisted {
   reviewCapacity?: number
   /** 直前スプリントの持ち越し（旧セーブには無いので [] で補完） */
   lastCarryover?: string[]
+  /** レトロで選んだプロセス改善（旧セーブには無いので [] で補完） */
+  retroImprovements?: string[]
+  /** 未リファインメントの発見PBI（旧セーブには無いので [] で補完） */
+  unrefinedPbis?: string[]
 }
 
 const METER_KEYS: MeterKey[] = ['trust', 'insight', 'culture']
@@ -192,6 +216,7 @@ export function freshCore(starting: Meters): ProgressCore {
     backlogOrder: PRODUCT_BACKLOG.map((p) => p.id),
     sprintForecast: [],
     backlogDone: [],
+    shippedUndoneIds: [],
     velocity: [],
     valueHistory: [],
     // 開始時の顧客価値（カバレッジ0・負債0・未デリバリ）。第1スプリントの伸びをここから測る。
@@ -201,6 +226,8 @@ export function freshCore(starting: Meters): ProgressCore {
     reviewProgress: {},
     reviewCapacity: REVIEW_CAPACITY,
     lastCarryover: [],
+    retroImprovements: [],
+    unrefinedPbis: [],
   }
 }
 
@@ -255,7 +282,8 @@ export function repoStats(
  *  ■ exposed/complicit/coopted の分岐は将来章のためのドーマント（第1章では立たない）。 */
 export function finalEndingFor(
   meters: Meters,
-  flags: Set<GameFlag>
+  flags: Set<GameFlag>,
+  backlogDone: readonly string[] = []
 ): { ending: Epilogue | null; finalePending: boolean } {
   // ── 将来章用のドーマント分岐（第1章ではこれらのフラグは立たない）──
   // 暴くを選んだ場合、動かぬ証拠(fraudCase)を固めていれば告発が通り、無ければ握り潰される
@@ -266,7 +294,9 @@ export function finalEndingFor(
   if (flags.has('complicit')) return { ending: FINALE_EPILOGUES.complicit, finalePending: false }
   if (flags.has('coopted')) return { ending: FINALE_EPILOGUES.coopted, finalePending: false }
   // 第1章: 手がかり/証拠の有無に関わらず、決着させず通常EDで締める（伏線は次章へ）
-  return { ending: evaluateEnding(ENDINGS, meters), finalePending: false }
+  // ★3メーター＋レガシー（去り際の実体）を合流させて評価＝バックログ層が結末に効く。
+  const legacyEmbedded = isLegacyEmbedded(backlogDone, flags)
+  return { ending: evaluateEnding(ENDINGS, { meters, legacyEmbedded }), finalePending: false }
 }
 
 /** ビートを1つ進め、スプリント／キャンペーンの終端を判定する */
@@ -292,7 +322,7 @@ export function advanceCore(core: ProgressCore, result: ResultView | null = null
   }
 
   if (sprintIndex >= SPRINTS.length) {
-    const fin = finalEndingFor(core.meters, core.flags)
+    const fin = finalEndingFor(core.meters, core.flags, core.backlogDone)
     return { ...base, status: 'ended', ending: fin.ending, finalePending: fin.finalePending }
   }
   return { ...base, status: 'playing', ending: null, finalePending: false }
@@ -473,6 +503,12 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
     sprintGoals = [...core.sprintGoals]
     sprintGoals[core.sprintIndex] = choice.sprintGoal
   }
+  // レトロでプロセス改善を“選ぶ”: レトロのイベントで choice.retroLever があれば積む（次スプリント以降の容量/WIP に効く）。
+  // ＝機構の不変条件（積めるのはレトロのみ）を data 規律でなく engine 側で担保する。
+  const retroImprovements =
+    choice.retroLever && event.ceremony === 'retro'
+      ? [...core.retroImprovements, choice.retroLever]
+      : core.retroImprovements
   const resolvedIds = new Set(core.resolvedIds).add(event.id)
   const log: LogEntry[] = [
     ...core.log,
@@ -495,6 +531,7 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
     repoCoverage,
     repoDebt,
     sprintGoals,
+    retroImprovements,
     greatStreak: nextGreatStreak,
   }
 
@@ -521,12 +558,21 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
 
   // 発見：ヒアリングで現場の声を良く掘り当てた選択は、伏せられた発見可PBIをプロダクトバックログに加える。
   // 出来が poor（聞けていない）だと掘り当てられない＝丁寧に聞くほど発見がある。
+  // さらに“信頼ゲート”：深い本音(requiresTrust)は現場の信頼を貯めて初めて出る（一発で真実は湧かない）。
+  // ★掘り損ね（poor／信頼ゲート未達）は“沈黙”で終わらせない：そのPBIの missedFlag を立て、
+  //   後段で強制イベントとして高コストに顕在化させる（＝深く聞こうとして空振った選択も機会コストを払う）。
   let discoveredPbi: { id: string; title: string } | undefined
-  if (choice.discoversPbi && tier !== 'poor') {
-    const rev = revealPbi(base, choice.discoversPbi)
-    if (rev.revealed) {
-      base = rev.core
-      discoveredPbi = { id: rev.revealed.id, title: rev.revealed.title }
+  if (choice.discoversPbi) {
+    const item = backlogItem(choice.discoversPbi)
+    const reachable = tier !== 'poor' && base.meters.trust >= (item?.requiresTrust ?? 0)
+    if (reachable) {
+      const rev = revealPbi(base, choice.discoversPbi)
+      if (rev.revealed) {
+        base = rev.core
+        discoveredPbi = { id: rev.revealed.id, title: rev.revealed.title }
+      }
+    } else if (item?.missedFlag && !base.flags.has(item.missedFlag)) {
+      base = { ...base, flags: new Set(base.flags).add(item.missedFlag) }
     }
   }
 
@@ -585,11 +631,13 @@ export function restoreCore(p: Persisted): ProgressCore {
   const resolvedIds = new Set<string>(p.resolvedIds)
   const zeroed = zeroedMeter(p.meters)
   const campaignDone = p.sprintIndex >= SPRINTS.length
+  // バックログ状態は一度だけ正規化し、エンディング判定にも“正規化後”の backlogDone を渡す（生 p.backlogDone を使わない）。
+  const restoredBacklog = restoreBacklog(p)
   // 0ルール失敗 > 完走（フィナーレ含む）> 進行中
   const fin = zeroed
     ? { ending: FAILURE_EPILOGUES[zeroed], finalePending: false }
     : campaignDone
-      ? finalEndingFor(p.meters, flags)
+      ? finalEndingFor(p.meters, flags, restoredBacklog.backlogDone)
       : { ending: null, finalePending: false }
   const isEnded = zeroed !== undefined || campaignDone
   return {
@@ -616,7 +664,7 @@ export function restoreCore(p: Persisted): ProgressCore {
     greatStreak: Number.isFinite(p.greatStreak) ? Math.max(0, Math.floor(p.greatStreak as number)) : 0,
     // index=sprintIndex を保つため filter で詰めず、各枠を文字列か空文字に正規化（空＝未決定）
     sprintGoals: Array.isArray(p.sprintGoals) ? p.sprintGoals.map((g) => (typeof g === 'string' ? g : '')) : [],
-    ...restoreBacklog(p),
+    ...restoredBacklog,
   }
 }
 
@@ -632,6 +680,7 @@ function restoreBacklog(
   | 'backlogOrder'
   | 'sprintForecast'
   | 'backlogDone'
+  | 'shippedUndoneIds'
   | 'velocity'
   | 'valueHistory'
   | 'valueBaseline'
@@ -639,17 +688,32 @@ function restoreBacklog(
   | 'reviewProgress'
   | 'reviewCapacity'
   | 'lastCarryover'
+  | 'retroImprovements'
+  | 'unrefinedPbis'
 > {
+  // レトロ改善は既知レバー('capacity'/'wip')のみ復元（破損・旧スキーマは捨てる）。容量/WIP の上限導出に使う。
+  const retroImprovements = (Array.isArray(p.retroImprovements) ? p.retroImprovements : []).filter(
+    (x): x is RetroLever => x === 'capacity' || x === 'wip'
+  )
   const seedOrder = PRODUCT_BACKLOG.map((q) => q.id)
   const savedOrder = (Array.isArray(p.backlogOrder) ? p.backlogOrder : []).filter(
     (id): id is string => typeof id === 'string' && isKnownPbi(id)
   )
   const seen = new Set(savedOrder)
   const backlogOrder = [...savedOrder, ...seedOrder.filter((id) => !seen.has(id))]
+  const orderSet = new Set(backlogOrder)
   const done = new Set(
     (Array.isArray(p.backlogDone) ? p.backlogDone : []).filter(
       (id): id is string => typeof id === 'string' && isKnownPbi(id)
     )
+  )
+  // 未リファインメントは「既知∧バックログに現れている∧未done」のみ（破損・旧セーブで宙に浮いた id を捨てる）
+  const unrefinedPbis = (Array.isArray(p.unrefinedPbis) ? p.unrefinedPbis : []).filter(
+    (id): id is string => typeof id === 'string' && orderSet.has(id) && !done.has(id)
+  )
+  // DoD未達Ship は backlogDone の部分集合（既知∧Done済みのみ。破損・旧セーブでズレても安全側へ）
+  const shippedUndoneIds = (Array.isArray(p.shippedUndoneIds) ? p.shippedUndoneIds : []).filter(
+    (id): id is string => typeof id === 'string' && done.has(id)
   )
   const sprintForecast = (Array.isArray(p.sprintForecast) ? p.sprintForecast : []).filter(
     (id): id is string => typeof id === 'string' && isKnownPbi(id) && !done.has(id)
@@ -670,17 +734,18 @@ function restoreBacklog(
   const forecastSet = new Set(sprintForecast)
   const inProgress = (Array.isArray(p.inProgress) ? p.inProgress : [])
     .filter((id): id is string => typeof id === 'string' && isKnownPbi(id) && forecastSet.has(id) && !done.has(id))
-    .slice(0, WIP_LIMIT)
+    .slice(0, wipLimitFor(retroImprovements))
   const rawProg = p.reviewProgress && typeof p.reviewProgress === 'object' ? p.reviewProgress : {}
   const reviewProgress: Record<string, number> = {}
   for (const id of inProgress) {
     const v = (rawProg as Record<string, unknown>)[id]
     reviewProgress[id] = typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : 0
   }
+  const capCap = reviewCapacityFor(retroImprovements)
   const reviewCapacity =
     typeof p.reviewCapacity === 'number' && Number.isFinite(p.reviewCapacity)
-      ? Math.max(0, Math.min(REVIEW_CAPACITY, p.reviewCapacity))
-      : REVIEW_CAPACITY
+      ? Math.max(0, Math.min(capCap, p.reviewCapacity))
+      : capCap
   // 持ち越しは既知 PBI のみ（表示用ヒント。done でも保持＝「前回終わらせた」とは別概念なので絞らない）
   const lastCarryover = (Array.isArray(p.lastCarryover) ? p.lastCarryover : []).filter(
     (id): id is string => typeof id === 'string' && isKnownPbi(id)
@@ -689,6 +754,7 @@ function restoreBacklog(
     backlogOrder,
     sprintForecast,
     backlogDone: [...done],
+    shippedUndoneIds,
     velocity,
     valueHistory,
     valueBaseline,
@@ -696,6 +762,8 @@ function restoreBacklog(
     reviewProgress,
     reviewCapacity,
     lastCarryover,
+    retroImprovements,
+    unrefinedPbis,
   }
 }
 
@@ -796,6 +864,7 @@ export function toPersisted(core: ProgressCore): Persisted {
     backlogOrder: core.backlogOrder,
     sprintForecast: core.sprintForecast,
     backlogDone: core.backlogDone,
+    shippedUndoneIds: core.shippedUndoneIds,
     velocity: core.velocity,
     valueHistory: core.valueHistory,
     valueBaseline: core.valueBaseline,
@@ -804,5 +873,7 @@ export function toPersisted(core: ProgressCore): Persisted {
     reviewProgress: core.reviewProgress,
     reviewCapacity: core.reviewCapacity,
     lastCarryover: core.lastCarryover,
+    retroImprovements: core.retroImprovements,
+    unrefinedPbis: core.unrefinedPbis,
   }
 }

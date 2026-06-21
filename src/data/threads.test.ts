@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { GameFlag } from '../types'
-import { EVENTS, SPRINTS } from './chapters/chapter-01'
+import { DISCOVERABLE_BACKLOG, EVENTS, PRODUCT_BACKLOG, SPRINTS } from './chapters/chapter-01'
 import { openThreads, THREADS } from './threads'
 
 // 伏線レジストリ（threads.ts）の宣言と、章データ（setsFlag/missedFlag/requiresFlag）の整合を検証する。
@@ -16,6 +16,11 @@ for (const e of EVENTS) {
   if (e.missedFlag) missedSet.add(e.missedFlag)
   if (e.requiresFlag) eventPayoff.add(e.requiresFlag)
   for (const c of e.choices) if (c.setsFlag) choiceSet.add(c.setsFlag)
+}
+// PBI の missedFlag（発見の信頼ゲート未達/poor で engine が立てる“掘り損ね”）も missed 経路として収集する。
+// ＝EVENTS だけ走査していると DISCOVERABLE_BACKLOG 由来の missedFlag を取りこぼし、宣言ドリフトを見逃すため。
+for (const p of [...PRODUCT_BACKLOG, ...DISCOVERABLE_BACKLOG]) {
+  if (p.missedFlag) missedSet.add(p.missedFlag)
 }
 
 describe('伏線レジストリ（threads）の整合性', () => {
@@ -44,8 +49,15 @@ describe('伏線レジストリ（threads）の整合性', () => {
     expect(drift, `event payoff 宣言とデータの不一致: ${drift.join(', ')}`).toEqual([])
   })
 
-  it('イベントで回収する伏線は、それを立てる手段（choice/missed）がデータに必ず存在する（宙づり防止）', () => {
-    const orphan = flags.filter((f) => THREADS[f].payoffVia.includes('event') && !choiceSet.has(f) && !missedSet.has(f))
+  // finale/kanban は resolveFinale／カンバンの reviewItem で立つ“データ外の経路”（threads.ts 参照）。
+  // event データに setsFlag/missedFlag として現れないため、これらを仕掛けに持つ伏線は宙づり判定から除く。
+  const hasDataExternalSetter = (f: GameFlag) => THREADS[f].setVia.some((v) => v === 'finale' || v === 'kanban')
+
+  it('イベントで回収する伏線は、それを立てる手段（choice/missed/データ外経路）が必ず存在する（宙づり防止）', () => {
+    const orphan = flags.filter(
+      (f) =>
+        THREADS[f].payoffVia.includes('event') && !choiceSet.has(f) && !missedSet.has(f) && !hasDataExternalSetter(f)
+    )
     expect(orphan, `回収イベントはあるが立てる手段が無い: ${orphan.join(', ')}`).toEqual([])
   })
 
@@ -68,6 +80,8 @@ describe('伏線レジストリ（threads）の整合性', () => {
     const unreachable: string[] = []
     for (const f of flags) {
       if (!THREADS[f].payoffVia.includes('event')) continue
+      // データ外経路（finale/kanban）で立つ伏線は beat 枠を持たない＝この beat順検査の対象外（宙づり防止は上の it で担保）。
+      if (hasDataExternalSetter(f)) continue
       const setters = EVENTS.filter((e) => e.missedFlag === f || e.choices.some((c) => c.setsFlag === f))
       const payoffs = EVENTS.filter((e) => e.requiresFlag === f)
       if (payoffs.length === 0) continue

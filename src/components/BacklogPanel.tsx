@@ -7,10 +7,14 @@ import {
   forecastPoints,
   GEN_TOKEN_COST,
   isDiscoverablePbi,
+  isLegacyPbi,
+  LEGACY_PBI_IDS,
   type ProposalVerdict,
   REVIEW_CAPACITY,
   reviewBacklogProposal,
+  reviewCapacityFor,
   WIP_LIMIT,
+  wipLimitFor,
 } from '../engine/backlog'
 import type { ProgressCore } from '../engine/progression'
 import { useFocusTrap } from '../hooks/useFocusTrap'
@@ -23,7 +27,14 @@ import { RichText } from './RichText'
 /** canStart/canReview に渡す最小コア（カンバンのゲート判定に必要な欄だけ） */
 type KanbanCore = Pick<
   ProgressCore,
-  'sprintIndex' | 'beatIndex' | 'sprintForecast' | 'backlogDone' | 'inProgress' | 'reviewCapacity' | 'aiTokens'
+  | 'sprintIndex'
+  | 'beatIndex'
+  | 'sprintForecast'
+  | 'backlogDone'
+  | 'inProgress'
+  | 'reviewCapacity'
+  | 'aiTokens'
+  | 'retroImprovements'
 >
 
 interface Props {
@@ -44,14 +55,19 @@ export function BacklogPanel({ onClose }: Props) {
     backlogOrder,
     sprintForecast,
     backlogDone,
+    shippedUndoneIds,
     inProgress,
     reviewProgress,
     reviewCapacity,
     velocity,
     aiTokens,
     lastCarryover,
+    sprintGoals,
+    retroImprovements,
+    unrefinedPbis,
     commitBacklogOrder,
     toggleForecast,
+    refinePbi,
     startItem,
     reviewItem,
   } = useEngagement()
@@ -60,8 +76,9 @@ export function BacklogPanel({ onClose }: Props) {
   const isPlanning = ceremony === 'planning'
   const isWork = ceremony === 'daily'
 
-  const doneSet = new Set(backlogDone)
-  const inProgSet = new Set(inProgress)
+  const doneSet = useMemo(() => new Set(backlogDone), [backlogDone])
+  const inProgSet = useMemo(() => new Set(inProgress), [inProgress])
+  const undoneSet = useMemo(() => new Set(shippedUndoneIds), [shippedUndoneIds])
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 px-safe pt-safe pb-safe backdrop-blur-sm">
@@ -81,6 +98,9 @@ export function BacklogPanel({ onClose }: Props) {
           </span>
         </header>
 
+        {/* スプリントゴール：計画・カンバンどちらでも forecast の判断軸として常時表示 */}
+        <SprintGoalBanner sprintIndex={sprintIndex} ceremony={ceremony} sprintGoals={sprintGoals} />
+
         <div className="space-y-3 overflow-y-auto px-5 py-4">
           {isPlanning ? (
             <PlanningView
@@ -91,8 +111,11 @@ export function BacklogPanel({ onClose }: Props) {
               backlogDone={backlogDone}
               velocity={velocity}
               lastCarryover={lastCarryover}
+              retroImprovements={retroImprovements}
+              unrefinedPbis={unrefinedPbis}
               commitBacklogOrder={commitBacklogOrder}
               toggleForecast={toggleForecast}
+              refinePbi={refinePbi}
             />
           ) : (
             <KanbanView
@@ -100,6 +123,7 @@ export function BacklogPanel({ onClose }: Props) {
               sprintForecast={sprintForecast}
               backlogOrder={backlogOrder}
               doneSet={doneSet}
+              undoneSet={undoneSet}
               inProgSet={inProgSet}
               inProgress={inProgress}
               reviewProgress={reviewProgress}
@@ -107,7 +131,16 @@ export function BacklogPanel({ onClose }: Props) {
               aiTokens={aiTokens}
               startItem={startItem}
               reviewItem={reviewItem}
-              core={{ sprintIndex, beatIndex, sprintForecast, backlogDone, inProgress, reviewCapacity, aiTokens }}
+              core={{
+                sprintIndex,
+                beatIndex,
+                sprintForecast,
+                backlogDone,
+                inProgress,
+                reviewCapacity,
+                aiTokens,
+                retroImprovements,
+              }}
             />
           )}
         </div>
@@ -126,6 +159,49 @@ export function BacklogPanel({ onClose }: Props) {
   )
 }
 
+// ───────────────────────── スプリントゴール：計画/カンバン共通バナー ─────────────────────────
+
+/** Board.tsx HUD と同じ導出ロジックでスプリントゴールを表示する。
+ *  プレイヤーが forecast を組む際・カンバン操作中のどちらでも、ゴールが判断軸として常時見える。 */
+function SprintGoalBanner({
+  sprintIndex,
+  ceremony,
+  sprintGoals,
+}: {
+  sprintIndex: number
+  ceremony: string | undefined
+  sprintGoals: string[]
+}) {
+  const sprint = SPRINTS[Math.min(sprintIndex, SPRINTS.length - 1)]
+  if (!sprint) return null
+
+  const chosen = sprintGoals[sprintIndex]
+  const isPlanning = ceremony === 'planning'
+
+  return (
+    <div
+      role="note"
+      aria-label="このスプリントのゴール"
+      className="border-b border-sky-500/20 bg-sky-500/5 px-5 py-2.5"
+    >
+      <p className="text-[11px] leading-relaxed text-slate-400">
+        <RichText text="{{スプリントゴール}}" />
+        <span className="ml-1 text-slate-500">—</span>
+        <span className="ml-1">
+          {chosen ? (
+            <span className="font-semibold text-sky-300">{chosen}</span>
+          ) : isPlanning ? (
+            <span className="text-slate-500">プランニングで決める…</span>
+          ) : (
+            <span className="font-semibold text-sky-300">{sprint.goal}</span>
+          )}
+        </span>
+      </p>
+      {!isPlanning && <p className="mt-0.5 text-[10px] text-slate-500">予測はこれに資するか？</p>}
+    </div>
+  )
+}
+
 // ───────────────────────── プランニング：PBL 並べ替え提案＋フォーキャスト ─────────────────────────
 
 interface PlanningProps {
@@ -135,8 +211,11 @@ interface PlanningProps {
   backlogDone: string[]
   velocity: number[]
   lastCarryover: string[]
+  retroImprovements: string[]
+  unrefinedPbis: string[]
   commitBacklogOrder: (ids: string[]) => void
   toggleForecast: (id: string) => void
+  refinePbi: (id: string) => void
 }
 
 function PlanningView({
@@ -146,12 +225,16 @@ function PlanningView({
   backlogDone,
   velocity,
   lastCarryover,
+  retroImprovements,
+  unrefinedPbis,
   commitBacklogOrder,
   toggleForecast,
+  refinePbi,
 }: PlanningProps) {
-  // 予測の”目安”＝今スプリントで実際に終わらせられる量。律速は人のレビュー容量なので
-  // それを基準にする（前回ベロシティではなく、真のボトルネックに合わせる）。
-  const capacity = REVIEW_CAPACITY
+  const unrefinedSet = useMemo(() => new Set(unrefinedPbis), [unrefinedPbis])
+  // 予測の"目安"＝今スプリントで実際に終わらせられる量。律速は人のレビュー容量なので
+  // それを基準にする（前回ベロシティではなく、真のボトルネックに合わせる）。レトロ改善(capacity)を反映。
+  const capacity = reviewCapacityFor(retroImprovements)
   // 前回スプリントから持ち越された PBI のうち、まだ未 done のもの
   const carryoverSet = useMemo(() => new Set(lastCarryover), [lastCarryover])
   const fpts = forecastPoints({ sprintForecast })
@@ -193,7 +276,7 @@ function PlanningView({
   return (
     <>
       <p className="text-xs leading-relaxed text-slate-400">
-        <RichText text="{{プロダクトバックログ}}（やりたいこと全部・価値順）から、上位を選んで「＋ スプリントへ」で今スプリントの{{スプリントバックログ}}に入れる＝{{フォーキャスト}}（予測）。並び（優先順位）の最終責任はPOにあるので、並べ替えは“提案”する。" />
+        <RichText text="{{プロダクトバックログ}}（やりたいこと全部・価値順）から、上位を選んで「＋ スプリントへ」で今スプリントの{{スプリントバックログ}}に入れる＝{{フォーキャスト}}（予測）。並び（優先順位）の最終責任はPOにあるので、並べ替えは「提案」する。" />
       </p>
 
       {/* 🗂 元：プロダクトバックログ（選ぶ側） */}
@@ -261,6 +344,15 @@ function PlanningView({
                     <span className="rounded bg-slate-700 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-slate-300">
                       {item.estimate}pt
                     </span>
+                    {/* 機構：Refinement。発見直後の暫定見積り（Ready 化前）を明示 */}
+                    {unrefinedSet.has(id) && !isDone && (
+                      <span
+                        aria-label="暫定見積り（要リファインメント）"
+                        className="ml-1.5 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300"
+                      >
+                        暫定
+                      </span>
+                    )}
                     {/* 前回持ち越し・未done の項目にバッジ表示 */}
                     {carryoverSet.has(id) && !isDone && (
                       <span
@@ -270,27 +362,40 @@ function PlanningView({
                         ↪ 前回持ち越し
                       </span>
                     )}
+                    <PbiBadges id={id} stakeholder={item.stakeholder} />
                     <p className={`mt-1 text-sm ${isDone ? 'text-slate-400 line-through' : 'text-slate-100'}`}>
                       <RichText text={item.title} />
                     </p>
                   </div>
 
-                  {!isDone && (
-                    <button
-                      type="button"
-                      aria-label={
-                        isForecast ? `${item.title} をスプリントから外す` : `${item.title} をスプリントへ入れる`
-                      }
-                      onClick={() => toggleForecast(id)}
-                      className={`shrink-0 self-center rounded-lg px-2.5 py-1.5 text-xs font-semibold transition active:scale-95 ${
-                        isForecast
-                          ? 'bg-sky-500 text-slate-950 hover:bg-sky-400'
-                          : 'bg-slate-700 text-slate-200 hover:bg-slate-600'
-                      }`}
-                    >
-                      {isForecast ? '✓ 入れた' : '＋ スプリントへ'}
-                    </button>
-                  )}
+                  {!isDone &&
+                    (unrefinedSet.has(id) ? (
+                      // 機構：Refinement。発見直後の暫定見積りは Ready 化するまで予測に積めない。
+                      <button
+                        type="button"
+                        aria-label={`${item.title} をリファインメントして Ready にする`}
+                        title="発見した項目は暫定見積り。リファインメントで見積りを確かめて Ready にすると予測に積める。"
+                        onClick={() => refinePbi(id)}
+                        className="shrink-0 self-center rounded-lg bg-amber-500/90 px-2.5 py-1.5 text-xs font-semibold text-slate-950 transition hover:bg-amber-400 active:scale-95"
+                      >
+                        🔍 <RichText text="{{リファインメント}}" interactive={false} />
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        aria-label={
+                          isForecast ? `${item.title} をスプリントから外す` : `${item.title} をスプリントへ入れる`
+                        }
+                        onClick={() => toggleForecast(id)}
+                        className={`shrink-0 self-center rounded-lg px-2.5 py-1.5 text-xs font-semibold transition active:scale-95 ${
+                          isForecast
+                            ? 'bg-sky-500 text-slate-950 hover:bg-sky-400'
+                            : 'bg-slate-700 text-slate-200 hover:bg-slate-600'
+                        }`}
+                      >
+                        {isForecast ? '✓ 入れた' : '＋ スプリントへ'}
+                      </button>
+                    ))}
                 </div>
               </li>
             )
@@ -375,6 +480,9 @@ function PlanningView({
           {<RichText text="{{キャリーオーバー}}" />}。
         </p>
 
+        {/* ② ステークホルダー内訳（情シス/現場の綱引き） */}
+        <StakeholderBalance forecastIds={selected} />
+
         {selected.length === 0 ? (
           <p className="rounded-lg bg-slate-900/40 px-3 py-3 text-center text-xs text-slate-400">
             まだ何も入れていません。上のリストから「＋ スプリントへ」で選びます。
@@ -392,6 +500,7 @@ function PlanningView({
                   <span className="rounded bg-slate-700 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-slate-300">
                     {item.estimate}pt
                   </span>
+                  <PbiBadges id={id} stakeholder={item.stakeholder} />
                   <span className="min-w-0 flex-1 truncate text-sm text-slate-100">
                     <RichText text={item.title} interactive={false} />
                   </span>
@@ -410,6 +519,9 @@ function PlanningView({
         )}
       </section>
 
+      {/* ④ 太く残す PBI のサマリ */}
+      <LegacySummary backlogDone={backlogDone} />
+
       <VelocityChart velocity={velocity} />
     </>
   )
@@ -423,6 +535,8 @@ interface KanbanProps {
   /** 見えているプロダクトバックログ全体（read-only 参照用） */
   backlogOrder: string[]
   doneSet: Set<string>
+  /** うち「DoD を妥協して（浅い quick レビューで）Ship した」PBI id。Done バッジの出し分けに使う。 */
+  undoneSet: Set<string>
   inProgSet: Set<string>
   inProgress: string[]
   reviewProgress: Record<string, number>
@@ -438,6 +552,7 @@ function KanbanView({
   sprintForecast,
   backlogOrder,
   doneSet,
+  undoneSet,
   inProgSet,
   inProgress,
   reviewProgress,
@@ -453,6 +568,9 @@ function KanbanView({
 
   const todo = sprintForecast.filter((id) => !doneSet.has(id) && !inProgSet.has(id))
   const done = sprintForecast.filter((id) => doneSet.has(id))
+  // レトロ改善（機構：Retro 昇格）を反映した上限。capacity 投資で容量↑／wip 改善で仕掛り上限↓。
+  const maxReview = reviewCapacityFor(core.retroImprovements)
+  const wipMax = wipLimitFor(core.retroImprovements)
 
   if (sprintForecast.length === 0) {
     return (
@@ -475,13 +593,14 @@ function KanbanView({
           <div className="flex items-center justify-between text-xs">
             <span className="text-slate-300">レビュー容量</span>
             <span className="tabular-nums text-slate-300">
-              {reviewCapacity} / {REVIEW_CAPACITY}
+              {reviewCapacity} / {maxReview}
+              {maxReview > REVIEW_CAPACITY && <span className="ml-1 text-emerald-400">🔧</span>}
             </span>
           </div>
           <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-700">
             <div
               className="h-full rounded-full bg-emerald-400"
-              style={{ width: `${(Math.max(0, reviewCapacity) / REVIEW_CAPACITY) * 100}%` }}
+              style={{ width: `${(Math.max(0, reviewCapacity) / maxReview) * 100}%` }}
             />
           </div>
         </div>
@@ -490,7 +609,8 @@ function KanbanView({
             <RichText text="{{仕掛り}}" />
           </div>
           <div className="tabular-nums text-sm text-slate-200">
-            {inProgress.length}/{WIP_LIMIT}
+            {inProgress.length}/{wipMax}
+            {wipMax < WIP_LIMIT && <span className="ml-1 text-emerald-400">🔧</span>}
           </div>
         </div>
       </div>
@@ -508,7 +628,12 @@ function KanbanView({
           if (!item) return null
           const startable = canStart(core, id)
           return (
-            <Card key={id} title={item.title} estimate={item.estimate}>
+            <Card
+              key={id}
+              title={item.title}
+              estimate={item.estimate}
+              badges={<PbiBadges id={id} stakeholder={item.stakeholder} />}
+            >
               <button
                 type="button"
                 onClick={() => startItem(id)}
@@ -536,6 +661,7 @@ function KanbanView({
               key={id}
               title={item.title}
               estimate={item.estimate}
+              badges={<PbiBadges id={id} stakeholder={item.stakeholder} />}
               below={
                 <div className="mt-2 flex flex-col gap-1.5">
                   <div className="h-1.5 overflow-hidden rounded-full bg-slate-700">
@@ -554,7 +680,7 @@ function KanbanView({
                         }}
                         className="flex-1 rounded-lg bg-slate-700 px-2 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-slate-600 active:scale-95"
                       >
-                        浅い（速い/負債）
+                        <RichText text="浅い：DoDを妥協（速いが負債）" interactive={false} />
                       </button>
                       <button
                         type="button"
@@ -564,7 +690,7 @@ function KanbanView({
                         }}
                         className="flex-1 rounded-lg bg-emerald-600 px-2 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-emerald-500 active:scale-95"
                       >
-                        深い（テスト/品質）
+                        <RichText text="深い：{{完成の定義}}を満たす（テスト/品質）" interactive={false} />
                       </button>
                     </div>
                   ) : (
@@ -592,10 +718,25 @@ function KanbanView({
           const item = backlogItem(id)
           if (!item) return null
           return (
-            <Card key={id} title={item.title} estimate={item.estimate} dimmed>
-              <span className="shrink-0 self-center rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">
-                ✓ DoD
-              </span>
+            <Card
+              key={id}
+              title={item.title}
+              estimate={item.estimate}
+              dimmed
+              badges={<PbiBadges id={id} stakeholder={item.stakeholder} />}
+            >
+              {undoneSet.has(id) ? (
+                <span
+                  title="浅いレビューで通した＝完成の定義(DoD)を妥協した Ship。後で負債の取り立てが来る。"
+                  className="shrink-0 self-center rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-300"
+                >
+                  ⚠ 浅い
+                </span>
+              ) : (
+                <span className="shrink-0 self-center rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">
+                  ✓ DoD
+                </span>
+              )}
             </Card>
           )
         })}
@@ -665,14 +806,19 @@ function ProductBacklogReadOnly({ backlogOrder, doneSet }: { backlogOrder: strin
                 <span className="shrink-0 rounded bg-slate-700 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-slate-300">
                   {item.estimate}pt
                 </span>
-                <span className={`min-w-0 flex-1 text-sm ${done ? 'text-slate-400 line-through' : 'text-slate-100'}`}>
-                  <RichText text={item.title} />
-                </span>
-                {disc && !done && (
-                  <span className="shrink-0 rounded bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-rose-300">
-                    現場で発見
+                <div className="min-w-0 flex-1">
+                  <span className={`text-sm ${done ? 'text-slate-400 line-through' : 'text-slate-100'}`}>
+                    <RichText text={item.title} />
                   </span>
-                )}
+                  <div className="mt-0.5 flex flex-wrap gap-1">
+                    <PbiBadges id={id} stakeholder={item.stakeholder} />
+                    {disc && !done && (
+                      <span className="rounded bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-rose-300">
+                        現場で発見
+                      </span>
+                    )}
+                  </div>
+                </div>
               </li>
             )
           })}
@@ -710,14 +856,17 @@ function Card({
   dimmed,
   children,
   below,
+  badges,
 }: {
   title: string
   estimate: number
   dimmed?: boolean
   /** タイトル行の右に置く小さな操作（着手ボタン・DoD バッジ等）。幅を奪うと崩れるので軽量な要素のみ。 */
   children?: React.ReactNode
-  /** タイトル行の“下”に全幅で敷くブロック（進捗バー＋レビュー操作など）。 */
+  /** タイトル行の"下"に全幅で敷くブロック（進捗バー＋レビュー操作など）。 */
   below?: React.ReactNode
+  /** pt バッジの右に並ぶ小バッジ（ステークホルダー・レガシー等）。 */
+  badges?: React.ReactNode
 }) {
   return (
     <div className={`rounded-lg border border-slate-700 bg-slate-800/40 px-3 py-2 ${dimmed ? 'opacity-70' : ''}`}>
@@ -726,6 +875,7 @@ function Card({
           <span className="rounded bg-slate-700 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-slate-300">
             {estimate}pt
           </span>
+          {badges}
           <p className={`mt-1 text-sm ${dimmed ? 'text-slate-400 line-through' : 'text-slate-100'}`}>
             <RichText text={title} />
           </p>
@@ -739,6 +889,138 @@ function Card({
 
 function Empty() {
   return <p className="px-1 py-1 text-xs text-slate-400">— なし —</p>
+}
+
+// ───────────────────────── PBI 共通バッジ群（ステークホルダー＋レガシー） ─────────────────────────
+
+/** PBI 1件分のステークホルダー・レガシーバッジをまとめたヘルパー。
+ *  Card/li 各所で同じフラグメントを繰り返さないための集約コンポーネント。 */
+function PbiBadges({ id, stakeholder }: { id: string; stakeholder?: 'joushi' | 'genba' }) {
+  return (
+    <>
+      <StakeholderBadge stakeholder={stakeholder} />
+      <LegacyBadge id={id} />
+    </>
+  )
+}
+
+// ───────────────────────── ② ステークホルダーバッジ ─────────────────────────
+
+/** PBI を"推す"ステークホルダーの識別バッジ。
+ *  joushi＝情シス(結城)：紫系。genba＝現場(田淵)：空色系。未設定は何も出さない。 */
+function StakeholderBadge({ stakeholder }: { stakeholder?: 'joushi' | 'genba' }) {
+  if (!stakeholder) return null
+  if (stakeholder === 'joushi') {
+    return (
+      <span
+        aria-label="情シス（結城）推奨"
+        title="情シス（結城）が重視する項目。進捗を見せたい発注側の関心。"
+        className="ml-1 rounded bg-violet-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-violet-300"
+      >
+        情シス
+      </span>
+    )
+  }
+  return (
+    <span
+      aria-label="現場（田淵）推奨"
+      title="現場（田淵）が重視する項目。使える物が欲しい現場側の関心。"
+      className="ml-1 rounded bg-sky-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-sky-300"
+    >
+      現場
+    </span>
+  )
+}
+
+/** スプリントバックログ内の情シス/現場ポイント内訳。
+ *  選んだ予測が「どちらに偏っているか」を軽量表示する（綱引きのトレードオフ可視化）。 */
+function StakeholderBalance({ forecastIds }: { forecastIds: string[] }) {
+  let joushiPt = 0
+  let genbaPt = 0
+  for (const id of forecastIds) {
+    const item = backlogItem(id)
+    if (!item) continue
+    if (item.stakeholder === 'joushi') joushiPt += item.estimate
+    else if (item.stakeholder === 'genba') genbaPt += item.estimate
+  }
+  if (joushiPt === 0 && genbaPt === 0) return null
+  return (
+    <div
+      role="note"
+      aria-label={`ステークホルダー内訳 情シス${joushiPt}pt 現場${genbaPt}pt`}
+      className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg bg-slate-800/50 px-2.5 py-1.5"
+    >
+      <span className="text-[10px] text-slate-400">綱引き：</span>
+      {joushiPt > 0 && (
+        <span className="flex items-center gap-1 text-[10px] font-semibold text-violet-300">
+          <span className="rounded bg-violet-500/20 px-1 py-0.5">情シス</span>
+          {joushiPt}pt
+        </span>
+      )}
+      {joushiPt > 0 && genbaPt > 0 && <span className="text-[10px] text-slate-500">vs</span>}
+      {genbaPt > 0 && (
+        <span className="flex items-center gap-1 text-[10px] font-semibold text-sky-300">
+          <span className="rounded bg-sky-500/20 px-1 py-0.5">現場</span>
+          {genbaPt}pt
+        </span>
+      )}
+    </div>
+  )
+}
+
+// ───────────────────────── ④ 太く残す（レガシー）バッジ ─────────────────────────
+
+/** 「太く残す」PBI の識別バッジ。エンディングに影響する旨を短く伝える。 */
+function LegacyBadge({ id }: { id: string }) {
+  if (!isLegacyPbi(id)) return null
+  return (
+    <span
+      aria-label="太く残す：Shipすると結末に効く"
+      title="この項目をShipして定着させると、エンディング（真のFDE到達）に影響します。"
+      className="ml-1 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300"
+    >
+      🌱 太く残す
+    </span>
+  )
+}
+
+/** 「太く残す」PBI のサマリ（計画画面に表示）。何件 Ship できたかを一覧する。 */
+function LegacySummary({ backlogDone }: { backlogDone: readonly string[] }) {
+  const doneSet = new Set(backlogDone)
+  const shippedCount = LEGACY_PBI_IDS.filter((id) => doneSet.has(id)).length
+  const total = LEGACY_PBI_IDS.length
+  return (
+    <div
+      role="note"
+      aria-label={`太く残す ${shippedCount}/${total} Ship`}
+      className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3 py-2"
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-bold text-emerald-300">🌱 太く残す PBI</span>
+        <span className="tabular-nums text-xs text-emerald-200">
+          {shippedCount} / {total} Ship
+        </span>
+      </div>
+      <p className="mt-0.5 text-[10px] leading-relaxed text-slate-400">
+        文化を人に渡す3項目。Ship＆定着でエンディングが変わります。
+      </p>
+      <ul className="mt-1.5 space-y-0.5">
+        {LEGACY_PBI_IDS.map((id) => {
+          const item = backlogItem(id)
+          const shipped = doneSet.has(id)
+          return (
+            <li
+              key={id}
+              className={`flex items-center gap-1.5 text-[10px] ${shipped ? 'text-emerald-300' : 'text-slate-400'}`}
+            >
+              <span aria-hidden="true">{shipped ? '✓' : '○'}</span>
+              <span className={shipped ? '' : ''}>{item?.title ?? id}</span>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
 }
 
 function VelocityChart({ velocity }: { velocity: number[] }) {

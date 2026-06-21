@@ -205,7 +205,7 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
             <div className="mb-1 flex items-center gap-1.5">
               <span className="text-sm font-bold text-sky-200">あなた</span>
               <span className="rounded bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-sky-300">
-                FDE（開発者）
+                開発者（FDE）
               </span>
               <span className="ml-auto text-[10px] text-slate-400">{displayName('cargo')}（現地）</span>
             </div>

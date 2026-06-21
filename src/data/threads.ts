@@ -16,7 +16,9 @@ import type { GameFlag } from '../types'
 //   finale … 不正暴露アークのフィナーレ選択（resolveFinale）で立つ
 // ───────────────────────────────────────────────────────────
 
-type ThreadSetVia = 'choice' | 'missed' | 'finale'
+// choice/missed はイベントデータ（setsFlag/missedFlag）と threads.test で突き合わせる。
+// finale/kanban はデータ外の経路（resolveFinale／カンバンの reviewItem）で立つため、データ突合の対象外。
+type ThreadSetVia = 'choice' | 'missed' | 'finale' | 'kanban'
 type ThreadPayoffVia = 'event' | 'ending' | 'score'
 
 interface Thread {
@@ -88,6 +90,16 @@ export const THREADS: Record<GameFlag, Thread> = {
     note: '基盤更新を見送る→後で詰まるイベント',
     teaser: '後回しにした基盤が、静かに軋んでいる。',
   },
+  missedNightShift: {
+    // ①の信頼ゲート見逃しの“顕在化”。2経路で立つ：
+    //  - choice: 浅い対応（s1-daily-warehouse の仕様書通り/観察どまり）の setsFlag
+    //  - missed: 深い聞き取りを選んでも信頼ゲート未達/poor で掘り損ねた時、PBI(pbi-disc-night-shift)の
+    //    missedFlag を engine が立てる（＝“掘り損ね”＝見送りの一種）。
+    setVia: ['choice', 'missed'],
+    payoffVia: ['event'],
+    note: '夜勤帯の本音を掘り損ねる（浅い聞き取り）→S3で引き継ぎ漏れ起因の誤出荷トラブルが強制発火',
+    teaser: '夜勤帯まで、聞けていない声が残っている。',
+  },
   showcasePressure: {
     setVia: ['choice'],
     payoffVia: ['event'],
@@ -111,6 +123,30 @@ export const THREADS: Record<GameFlag, Thread> = {
     payoffVia: ['event'],
     note: '移譲せず窓口を抱える→属人化ボトルネックのイベント',
     teaser: '自分が抱え込んだ役割が、いつか詰まる。',
+  },
+  shippedUndone: {
+    // カンバンの reviewItem（quick 完了）で立つ＝データ外の経路なので 'kanban'。
+    // 負債スコアで回収（quick レビューが debt を積む）＋ s2-daily-undone-debt の event 回で“取り立て”を物語化。
+    setVia: ['kanban'],
+    payoffVia: ['score', 'event'],
+    note: '浅いレビューのまま DoD を妥協して Ship（reviewItem quick 完了で立つ）→負債スコア＋ s2-daily-undone-debt（DoD を一つ飛ばして Done にした判断の取り立てが現場で表に出る）で回収',
+    teaser: 'DoD を妥協して通したものが、取り立てを待っている。',
+  },
+  deprioritizedJoushi: {
+    // 機構②: スプリント精算(resolveSprintBacklog)で立つ＝データ外経路なので 'kanban'。
+    // s3-daily-joushi-deprioritized（発注者＝結城の不安・面子＝trust摩擦）で回収。
+    setVia: ['kanban'],
+    payoffVia: ['event', 'score'],
+    note: '現場のゴールを届け情シス(結城)のゴールを後回し→ s3-daily-joushi-deprioritized で発注者の不安・面子として回収（trust摩擦・非対称に重い）',
+    teaser: '進捗を見せたい相手を、後回しにしたかもしれない。',
+  },
+  deprioritizedGenba: {
+    // 機構②: スプリント精算で立つ＝データ外経路 'kanban'。
+    // s3-daily-genba-deprioritized（現場＝田淵の後回し＝insight機会損失/手戻り）で回収。
+    setVia: ['kanban'],
+    payoffVia: ['event', 'score'],
+    note: '情シスのゴールを届け現場(田淵)のゴールを後回し→ s3-daily-genba-deprioritized で現場の手戻り・機会損失として回収（insight・機会損失アークの時間差）',
+    teaser: '使える物を待つ現場を、後回しにしたかもしれない。',
   },
 }
 

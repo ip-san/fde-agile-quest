@@ -33,6 +33,14 @@ export type GameFlag =
   // 機会損失アーク: 朝会で“競合する優先”の1つを選ぶと、見送った重要事が後で響く
   | 'missedHearing' // 現場の聞き取りを見送った＝理解不足の手戻り
   | 'missedUpgrade' // 基盤の更新/対応を見送った＝後で詰まる
+  | 'missedNightShift' // 夜勤帯の“深い本音”を掘り当てられなかった（信頼ゲート未達／浅い聞き取り）＝後で誤出荷として顕在化
+  // カンバン→物語の橋: 浅い(quick)レビューのまま DoD を妥協して Ship した＝undone work。
+  // 後段で demofail/debt のトラブル回として“負債の取り立て”を呼ぶ（narrative 側で requiresFlag 配線）。
+  | 'shippedUndone'
+  // 機構②: スプリント精算で“どちらのステークホルダーを優先したか”の非対称トレードオフを記録。
+  // 一方のゴール項目を届けて他方を未達にした＝後段で後回しにされた側が遅れて反応する（機会コスト型）。
+  | 'deprioritizedJoushi' // 情シス(結城)のゴール項目を後回し＝発注者の不安・面子（trust摩擦）として後で響く
+  | 'deprioritizedGenba' // 現場(田淵)のゴール項目を後回し＝理解不足・手戻り（insight機会損失）として後で響く
   // 買収の皮肉アーク: 親会社(ジェネリック電機)の“フィジカルAI実証ショーケース”圧力が立つ。
   // 夢（実証）と現実（アナログ現場）の落差を巡る連鎖（視察→報告）の起点フラグ
   | 'showcasePressure'
@@ -71,6 +79,9 @@ export type ExecTier = 'great' | 'good' | 'poor'
 /** スプリントバックログ項目のレビュー深さ。浅い＝速いが負債、深い＝テストで品質を積む */
 export type ReviewDepth = 'quick' | 'thorough'
 
+/** レトロで選べるプロセス改善レバー（機構：Retro 昇格）。capacity＝レビューの量／wip＝質。 */
+export type RetroLever = 'capacity' | 'wip'
+
 /** メーターへの効果（指定キーのみ加算） */
 export type Effects = Partial<Meters>
 
@@ -93,6 +104,10 @@ export interface Choice {
   setsFlag?: GameFlag
   /** プランニングの選択肢のみ：この狙いを選ぶと、その周回のスプリントゴール表示になる */
   sprintGoal?: string
+  /** レトロの選択肢のみ：選んだプロセス改善を次スプリント以降に効かせる（機構：Retro 昇格）。
+   *  'capacity'＝レビュー容量+1（制約理論：ボトルネックを広げる）／'wip'＝WIP上限−1（フロー改善）。
+   *  1レトロ1つ＝他は見送り（機会コスト）。retroImprovements に積まれ canStart/精算リセットに反映。 */
+  retroLever?: RetroLever
   /** 危険な選択（UIで警告表示） */
   warn?: boolean
   /** 「静観」スタンス＝今は動かない／観察する／即答しない選択（サクラ大戦LIPSの「沈黙も選択」の移植）。
@@ -203,6 +218,18 @@ export interface BacklogItem {
   /** 初期は伏せられた“発見可”PBI。プロダクトバックログには最初は出ず、ヒアリングで掘り当てると現れる
    *  （DISCOVERABLE_BACKLOG に置く。通常の PRODUCT_BACKLOG とは別管理）。 */
   discoverable?: boolean
+  /** 発見可PBIの“信頼ゲート”（任意）。この信頼(trust)に達していないと、良いヒアリングでも掘り当てられない。
+   *  ＝深い本音は現場の信頼を貯めて初めて出る（一発で真実が湧く美化を避ける）。未指定＝ゲート無し。
+   *  掘り損ねた重要PBIは、後段で強制イベントとして高コストに顕在化させる（narrative 側で配線）。 */
+  requiresTrust?: number
+  /** 掘り損ね（poor／信頼ゲート未達でこのPBIを発見できなかった）時に立てる機会損失フラグ（任意）。
+   *  ＝深く聞こうとして空振った選択も“沈黙”させず、後段の強制イベントで機会コストを顕在化させる。
+   *  未指定＝掘り損ねても何も立たない（重要でないPBI）。 */
+  missedFlag?: GameFlag
+  /** このPBIを“推す”ステークホルダー（任意）。機構②：スプリント精算で「どちらを優先したか」の
+   *  非対称トレードオフを判定するのに使う。情シス(発注者・結城)＝進捗を見せたい側／現場(田淵)＝使える物が欲しい側。
+   *  未指定＝どちらの綱引きにも属さない（文化・基盤などの中立項目）。 */
+  stakeholder?: 'joushi' | 'genba'
 }
 
 /** スプリント末（レビュー）のバックログ精算結果。done は二値（DoD未達は部分点なし）。 */
@@ -236,10 +263,21 @@ export interface Epilogue {
   reflection: string
 }
 
-/** 通常エンディング定義（メーターの組み合わせで判定） */
+/** エンディング判定の文脈。3メーター（道中の関係性）に加え、
+ *  「去り際に残した仕組みの実体」＝レガシーが定着したか（太く残せたか）を持つ。
+ *  ＝判断（ルーレット層）と実装（バックログ層）の両方が結末に合流する単一の入力。 */
+export interface EndingContext {
+  meters: Meters
+  /** 「太く残す」PBI（手順書/オンボーディング/監視）を過半 Ship し、かつ属人化させなかった
+   *  （soloHero でない）＝仕組みが自分なしで回る状態を残せたか。最上位エンディングの AND 関門。
+   *  ★Ship 数（出力）ではなく「どの成果を・定着まで残したか」で読む（velocity 至上主義を避ける）。 */
+  legacyEmbedded: boolean
+}
+
+/** 通常エンディング定義（メーター＋レガシーの組み合わせで判定） */
 export interface Ending extends Epilogue {
   /** この順に条件評価し、最初にマッチしたものを採用 */
-  match: (m: Meters) => boolean
+  match: (ctx: EndingContext) => boolean
 }
 
 /** イベントログの1エントリ */
