@@ -136,7 +136,7 @@ describe('縦糸の入口（pinned）の整合性', () => {
     // pinned は原則「無条件に出る入口」。ただし requiresFlag 付きでも、そのフラグを全選択で立てる
     // 無条件 pinned（保証役）が同一以前のスプリントにあれば、フラグは必ず立つので入口として成立する。
     // 例: 現状の pinned はいずれも無条件（requiresFlag 無し）。s1-daily-showcase-order と
-    //     s2-physical-ai-showcase（S1 へ前倒したお披露目）は全選択で showcasePressure を立てる
+    //     s1-physical-ai-showcase（S1 へ前倒したお披露目）は全選択で showcasePressure を立てる
     //     “保証役”を兼ね、S2 視察・S3 報告（showcasePressure ゲート）への縦糸を確実に繋ぐ。
     const guarantees = (flag: string) =>
       pinned.some((g) => !g.requiresFlag && g.choices.length > 0 && g.choices.every((c) => c.setsFlag === flag))

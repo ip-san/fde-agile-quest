@@ -919,7 +919,7 @@ describe('dismissResultCore', () => {
 describe('spinCore — 縦糸の入口(pinned)の強制提示', () => {
   // S1/S2 beats: [planning, daily×5, review, retro] → デイリーは beatIndex 1..5。
   // pinned（S1）: s1-daily-hideknowhow（主軸の入口）＋ s1-daily-showcase-order（ショーケース弧の入口）
-  //   ＋ s2-physical-ai-showcase（フィジカルAIお披露目。序盤で必ず見せるため S1 へ前倒し。id は資産安定のため据置）。
+  //   ＋ s1-physical-ai-showcase（フィジカルAIお披露目。序盤で必ず見せるため S1 へ前倒し）。
   // pinned（S2）: s2-daily-ghost-stock（不正暴露の入口）のみ。
   // 未遭遇の pinned が「残りデイリー数」以上に溜まったら、末尾のデイリーから1つずつ必ず提示する。
   const at = (sprintIndex: number, beatIndex: number, over: Partial<ProgressCore> = {}): ProgressCore => ({
@@ -950,7 +950,7 @@ describe('spinCore — 縦糸の入口(pinned)の強制提示', () => {
       'kokyaku',
       0
     )
-    expect(day5.dailyCandidates).toEqual(['s2-physical-ai-showcase'])
+    expect(day5.dailyCandidates).toEqual(['s1-physical-ai-showcase'])
   })
 
   it('S2: ghost-stock は最終デイリーで必ず通る（S2 唯一の pinned）', () => {

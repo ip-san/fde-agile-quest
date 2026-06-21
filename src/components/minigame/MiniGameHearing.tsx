@@ -10,6 +10,7 @@ import {
 } from '../../data/minigames'
 import { sfxTick } from '../../engine/sfx'
 import type { ExecTier } from '../../types'
+import { RichText } from '../RichText'
 
 interface Props {
   seed: number
@@ -109,7 +110,8 @@ export function MiniGameHearing({ seed, theme, hearingOptions, onResolve }: Prop
                 <span key={glyphKey} className={`mr-1.5 text-base ${glyphClass}`} aria-hidden="true">
                   {on ? '☑' : '☐'}
                 </span>
-                {o.text}
+                {/* {{用語}} を含むので RichText で展開（ボタン内なので interactive=false で入れ子ボタンを避ける） */}
+                <RichText text={o.text} interactive={false} />
               </button>
             </li>
           )
