@@ -9,9 +9,9 @@ interface Props {
 }
 
 const DEBT_LABEL = { low: '低', mid: '中', high: '高' } as const
-const DEBT_TONE = { low: 'text-slate-300', mid: 'text-amber-300', high: 'text-rose-300' } as const
+const DEBT_TONE = { low: 'text-[var(--text-body)]', mid: 'text-amber-300', high: 'text-rose-300' } as const
 
-/** “手段”ゲージのうち、0ルール対象でない従ゲージ（AIトークン／コード／負債）を1行に圧縮表示。
+/** "手段"ゲージのうち、0ルール対象でない従ゲージ（AIトークン／コード／負債）を1行に圧縮表示。
  *  常時フル展開はやめ、タップで詳細パネルへ（HUDの過密を解消・北極星と3メーターを主役に）。 */
 export function SecondaryStats({ aiTokens, coverage, debt, onOpenDetail }: Props) {
   const tokenRatio = aiTokens / AI_TOKENS_MAX
@@ -21,24 +21,24 @@ export function SecondaryStats({ aiTokens, coverage, debt, onOpenDetail }: Props
       type="button"
       onClick={onOpenDetail}
       aria-label="リポジトリの詳細（AIトークン・カバレッジ・技術的負債）を開く"
-      className="flex min-h-[40px] w-full items-center gap-1 rounded-lg bg-slate-800/40 px-3 py-1.5 text-xs transition hover:bg-slate-800/70"
+      className="flex min-h-[40px] w-full items-center gap-1 rounded-lg bg-[var(--panel)]/40 px-3 py-1.5 text-xs transition hover:bg-[var(--panel)]/70"
     >
-      <span className={`flex items-center gap-1 tabular-nums ${tokenTone}`}>AI {aiTokens}</span>
-      <span className="text-slate-600" aria-hidden="true">
+      <span className={`flex items-center gap-1 tabular-nums ${tokenTone}`}>AIトークン {aiTokens}</span>
+      <span className="text-[var(--border-strong)]" aria-hidden="true">
         ·
       </span>
-      <span className="flex items-center gap-1 tabular-nums text-slate-300">
-        Coverage {coverage}
-        <span className="text-slate-400">/{REPO_COVERAGE_MAX}</span>
+      <span className="flex items-center gap-1 tabular-nums text-[var(--text-body)]">
+        カバレッジ {coverage}
+        <span className="text-[var(--text-sub)]">/{REPO_COVERAGE_MAX}</span>
       </span>
-      <span className="text-slate-600" aria-hidden="true">
+      <span className="text-[var(--border-strong)]" aria-hidden="true">
         ·
       </span>
       <span className={`flex items-center gap-1 ${DEBT_TONE[debt]}`}>
         <span aria-hidden="true">▲</span>
         負債{DEBT_LABEL[debt]}
       </span>
-      <span className="ml-auto text-slate-400">詳細 ›</span>
+      <span className="ml-auto text-[var(--text-sub)]">詳細 ›</span>
     </button>
   )
 }

@@ -16,20 +16,20 @@ interface Props {
   valueBaseline: number
   /** スプリント末ごとに記録した顧客価値（index=sprintIndex。成長曲線に使う） */
   valueHistory: number[]
-  /** 第1章で掴んだ不正の“伏線”の深さ（次章への引き）。none=気づかず / clue=違和感 / case=輪郭 */
+  /** 第1章で掴んだ不正の"伏線"の深さ（次章への引き）。none=気づかず / clue=違和感 / case=輪郭 */
   fraudHint?: 'none' | 'clue' | 'case'
   log: LogEntry[]
   onReset: () => void
 }
 
-/** 第1章で掴んだ不正の伏線に応じた“次章への引き”。告発の決着は次章へ繰り延べる。 */
+/** 第1章で掴んだ不正の伏線に応じた"次章への引き"。告発の決着は次章へ繰り延べる。 */
 const FRAUD_TEASER: Record<'clue' | 'case', string> = {
   clue: '——本物の仕事を進めるほどに、グループの数字の裏に、説明のつかない違和感が一つ、残った。それが何なのか、今はまだ分からない。だが、見なかったことには、できない。',
   case: '——あなたは見てしまった。同じ機材が書類の上だけを巡る、架空の循環取引の輪郭を。一介のFDEが今この場で動かせる話ではない。だがその記録は、静かに胸に刻まれた。いつか、決着をつける日のために。',
 }
 
 /** 「決断の一歩手前」（不正を掴んだ周回のみ）。告発の決着は次章へ繰り延べる（§6.5）ので、
- *  ここでは“決着”ではなく主人公の「姿勢」を一つ選ばせ、繰り延べを“自分で選んだ焦らし”に変える。
+ *  ここでは"決着"ではなく主人公の「姿勢」を一つ選ばせ、繰り延べを"自分で選んだ焦らし"に変える。
  *  フレーバー（結びの一文を彩る）に留め、メーターや永続フラグには影響しない。 */
 const FRAUD_STANCE: Record<
   'clue' | 'case',
@@ -83,14 +83,23 @@ function FraudStanceBeat({ hint }: { hint: 'clue' | 'case' }) {
   )
 }
 
-/** 顧客価値（北極星）の最終ランク。案件の“スコア”として結果に意味を与える。 */
+/** 顧客価値（北極星）の最終ランク。案件の"スコア"として結果に意味を与える。 */
 function valueRank(v: number): { grade: string; label: string; cls: string } {
   if (v >= 90)
-    return { grade: 'S', label: '圧倒的な価値を届けた', cls: 'text-amber-300 border-amber-400/50 bg-amber-400/10' }
+    return {
+      grade: 'S',
+      label: '圧倒的な価値を届けた',
+      cls: 'text-amber-300 border-amber-400/50 bg-[var(--accent)]/10',
+    }
   if (v >= 75)
     return { grade: 'A', label: '確かな価値を届けた', cls: 'text-emerald-300 border-emerald-400/40 bg-emerald-400/10' }
   if (v >= 60) return { grade: 'B', label: '価値は届いた', cls: 'text-sky-300 border-sky-400/40 bg-sky-400/10' }
-  if (v >= 40) return { grade: 'C', label: '価値は道半ば', cls: 'text-slate-300 border-slate-500/40 bg-slate-500/10' }
+  if (v >= 40)
+    return {
+      grade: 'C',
+      label: '価値は道半ば',
+      cls: 'text-[var(--text-body)] border-[var(--border-strong)]/40 bg-[var(--border-strong)]/10',
+    }
   return { grade: 'D', label: '価値を残せなかった', cls: 'text-rose-300 border-rose-400/40 bg-rose-400/10' }
 }
 
@@ -114,11 +123,11 @@ function ValueTrend({ baseline, history }: { baseline: number; history: number[]
   const net = points[n - 1].v - points[0].v
 
   return (
-    <div className="rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-3">
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--card)]/60 px-4 py-3">
       <div className="mb-1.5 flex items-center justify-between">
         <p className="text-xs font-semibold text-amber-200">顧客価値の歩み</p>
         <span
-          className={`text-xs font-bold tabular-nums ${net > 0 ? 'text-emerald-300' : net < 0 ? 'text-rose-300' : 'text-slate-400'}`}
+          className={`text-xs font-bold tabular-nums ${net > 0 ? 'text-emerald-300' : net < 0 ? 'text-rose-300' : 'text-[var(--text-sub)]'}`}
         >
           通算 {net > 0 ? `▲ +${net}` : net < 0 ? `▼ ${net}` : '±0'}
         </span>
@@ -130,16 +139,24 @@ function ValueTrend({ baseline, history }: { baseline: number; history: number[]
         role="img"
         aria-label={`顧客価値の推移：${points.map((p) => `${p.label} ${p.v}`).join('、')}`}
       >
-        <path d={line} fill="none" stroke="#fbbf24" strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
+        <path
+          d={line}
+          fill="none"
+          stroke="currentColor"
+          className="text-[var(--accent)]"
+          strokeWidth={1.5}
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
         {points.map((p, i) => (
-          <circle key={p.label} cx={x(i)} cy={y(p.v)} r={1.6} fill="#fbbf24" />
+          <circle key={p.label} cx={x(i)} cy={y(p.v)} r={1.6} fill="currentColor" className="text-[var(--accent)]" />
         ))}
       </svg>
-      <div className="mt-0.5 flex justify-between text-[10px] tabular-nums text-slate-400">
+      <div className="mt-0.5 flex justify-between text-[10px] tabular-nums text-[var(--text-sub)]">
         {points.map((p) => (
           <span key={p.label}>
             {p.label}
-            <span className="ml-0.5 text-slate-300">{p.v}</span>
+            <span className="ml-0.5 text-[var(--text-body)]">{p.v}</span>
           </span>
         ))}
       </div>
@@ -166,36 +183,40 @@ export function EndingScreen({
   return (
     <div className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center gap-6 px-safe py-10">
       <div className="text-center">
-        <p className={`text-xs font-semibold uppercase tracking-widest ${failed ? 'text-rose-400' : 'text-slate-400'}`}>
+        <p
+          className={`text-xs font-semibold uppercase tracking-widest ${failed ? 'text-rose-400' : 'text-[var(--text-sub)]'}`}
+        >
           {failed ? 'BAD END — 案件終了' : 'Ending'}
         </p>
-        <h1 className={`mt-2 text-3xl font-bold ${failed ? 'text-rose-300' : 'text-sky-300'}`}>{ending.title}</h1>
+        <h1 className={`mt-2 text-3xl font-bold ${failed ? 'text-rose-300' : 'text-amber-300'}`}>{ending.title}</h1>
       </div>
 
       {failed && <p className="text-center text-xs text-rose-300/80">ゲージが1つでも0になると、案件はここで終わる。</p>}
 
       <p
         className={`rounded-2xl border p-5 text-sm leading-relaxed ${
-          failed ? 'border-rose-500/40 bg-rose-950/30 text-rose-100' : 'border-slate-700 bg-slate-900/60 text-slate-200'
+          failed
+            ? 'border-rose-500/40 bg-rose-950/30 text-rose-100'
+            : 'border-[var(--border)] bg-[var(--card)]/60 text-[var(--text-body)]'
         }`}
       >
         {ending.reflection}
       </p>
 
-      {/* 不正の伏線を掴んだ周回だけ出す“次章への引き”（告発の決着は第1章ではつけない） */}
+      {/* 不正の伏線を掴んだ周回だけ出す"次章への引き"（告発の決着は第1章ではつけない） */}
       {teaser && !failed && (
         <div className="rounded-2xl border border-amber-600/40 bg-amber-950/20 p-5">
           <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-widest text-amber-400/80">
             To be continued — 次章へ
           </p>
           <p className="text-sm leading-relaxed text-amber-100/90">{teaser}</p>
-          {/* 決着はつけず（§6.5）、主人公の“姿勢”だけを選ばせて繰り延べを焦らしに変える */}
+          {/* 決着はつけず（§6.5）、主人公の"姿勢"だけを選ばせて繰り延べを焦らしに変える */}
           <FraudStanceBeat hint={fraudHint as 'clue' | 'case'} />
         </div>
       )}
 
       <div className="space-y-2">
-        <p className="mb-2 text-xs font-semibold text-slate-400">最終評価</p>
+        <p className="mb-2 text-xs font-semibold text-[var(--text-sub)]">最終評価</p>
         {/* 顧客価値ランク＝この案件で届けた価値の総合スコア（北極星の結実） */}
         <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${rank.cls}`}>
           <span className="text-3xl font-black tabular-nums">{rank.grade}</span>
@@ -208,18 +229,18 @@ export function EndingScreen({
         {/* 開始 → 各スプリント末の顧客価値の歩み（成長曲線）。案件の総括として右肩上がりを見せる。 */}
         <ValueTrend baseline={valueBaseline} history={valueHistory} />
         <MeterHUD meters={meters} />
-        {/* 届けたインクリメント＝スプリントバックログを Done にした成果。0 は“使わなかった機会損失”として可視化 */}
-        <div className="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-2.5 text-sm">
-          <span className="text-slate-300">届けたインクリメント</span>
+        {/* 届けたインクリメント＝スプリントバックログを Done にした成果。0 は"使わなかった機会損失"として可視化 */}
+        <div className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--card)]/60 px-4 py-2.5 text-sm">
+          <span className="text-[var(--text-body)]">届けたインクリメント</span>
           {deliveredItems > 0 ? (
             <span className="font-bold tabular-nums text-emerald-300">{deliveredItems} 件</span>
           ) : (
-            <span className="text-xs text-slate-400">0 件 — バックログを Done にできなかった</span>
+            <span className="text-xs text-[var(--text-sub)]">0 件 — バックログを Done にできなかった</span>
           )}
         </div>
       </div>
 
-      <p className="text-center text-xs text-slate-400">
+      <p className="text-center text-xs text-[var(--text-sub)]">
         この案件であなたは {log.length} の判断を下した。
         <br />
         別の判断は、別の結末へ続く。
@@ -228,8 +249,8 @@ export function EndingScreen({
       <button
         type="button"
         onClick={onReset}
-        className={`mx-auto rounded-xl px-8 py-3 font-bold text-slate-950 transition active:scale-95 ${
-          failed ? 'bg-rose-400 hover:bg-rose-300' : 'bg-sky-500 hover:bg-sky-400'
+        className={`mx-auto rounded-xl px-8 py-3 font-bold text-[var(--bg)] transition active:scale-95 ${
+          failed ? 'bg-rose-400 hover:bg-rose-300' : 'bg-[var(--accent)] hover:bg-[var(--accent-hover)]'
         }`}
       >
         もう一度、別の判断で挑む

@@ -132,16 +132,68 @@ export function forecastPoints(core: Pick<ProgressCore, 'sprintForecast'>): numb
   return core.sprintForecast.reduce((s, id) => s + estimateOf(id), 0)
 }
 
-/** PBI をスプリント予測に出し入れ（プランニング中・未done のみ）。容量超過はブロックしない＝過剰予測は可能。 */
+/** その PBI を“今、新たに予測へ選べる”か（上位優先＝飛ばし入れ禁止の核）。
+ *  Ready（未リファインメントでない）・未done・未予測で、かつ backlogOrder 上で自分より上位の
+ *  「Ready かつ未done」項目がすべて予測済み（または done）であること。＝PO 順の上位から詰める。
+ *  下位を先に入れたいなら、並べ替えを PO に提案して優先順位を上げる（自由な飛ばし入れはできない）。
+ *  ＝「価値の高い順に届ける」を選択の段階で体現する（顧客価値ゲームの土台）。 */
+export function canAddToForecast(
+  core: Pick<ProgressCore, 'sprintForecast' | 'backlogDone' | 'unrefinedPbis' | 'backlogOrder'>,
+  pbiId: string
+): boolean {
+  if (!PBI_BY_ID.has(pbiId)) return false
+  if (core.backlogDone.includes(pbiId)) return false
+  if (core.unrefinedPbis.includes(pbiId)) return false
+  if (core.sprintForecast.includes(pbiId)) return false
+  const forecast = new Set(core.sprintForecast)
+  const done = new Set(core.backlogDone)
+  const unrefined = new Set(core.unrefinedPbis)
+  // 自分より上位（backlogOrder で前）に、未選択の「Ready かつ未done」項目が一つでもあれば飛ばし入れ＝不可。
+  for (const other of core.backlogOrder) {
+    if (other === pbiId) return true
+    const readyActive = PBI_BY_ID.has(other) && !done.has(other) && !unrefined.has(other)
+    if (readyActive && !forecast.has(other)) return false
+  }
+  return true // id が backlogOrder に無い等は素直に許可（通常は到達しない）
+}
+
+/** PBI をスプリント予測に出し入れ（プランニング中・未done のみ）。容量超過はブロックしない＝過剰予測は可能。
+ *  - 入れる：上位優先の“次の1件”だけ（飛ばし入れ禁止＝canAddToForecast）。下位は PO に並べ替え提案を通す。
+ *  - 外す：その1件だけ外す（下位は巻き込まない）。上位優先は“入れる”側だけで担保するので、
+ *    途中を外して“穴”ができたら、その穴を埋めるまで下位を新規追加できない（自然に再び上から詰める）。 */
 export function toggleForecast(core: ProgressCore, pbiId: string): ProgressCore {
   if (!isPlanningBeat(core)) return core
   if (!PBI_BY_ID.has(pbiId)) return core
   if (core.backlogDone.includes(pbiId)) return core
-  // 未リファインメント（暫定見積り）は Ready 化するまで予測に積めない＝リファインメントを経て見積もる
-  if (core.unrefinedPbis.includes(pbiId)) return core
-  const has = core.sprintForecast.includes(pbiId)
-  const sprintForecast = has ? core.sprintForecast.filter((id) => id !== pbiId) : [...core.sprintForecast, pbiId]
-  return { ...core, sprintForecast }
+  if (core.sprintForecast.includes(pbiId)) {
+    // 外す：その1件だけ。プレイヤーが積んだ他の予測を巻き添えにしない（理不尽な作業やり直しを避ける）。
+    return { ...core, sprintForecast: core.sprintForecast.filter((id) => id !== pbiId) }
+  }
+  // 入れる：上位優先の“次の1件”のみ
+  if (!canAddToForecast(core, pbiId)) return core
+  return { ...core, sprintForecast: [...core.sprintForecast, pbiId] }
+}
+
+/** スプリント途中で、その PBI を追加で引き込めるか（スコープ再交渉の可否）。
+ *  作業中ビートで、かつ上位優先の“次の1件”（canAddToForecast）であること。途中追加も飛ばし入れはしない。 */
+export function canPullIntoSprint(
+  core: Pick<
+    ProgressCore,
+    'sprintIndex' | 'beatIndex' | 'sprintForecast' | 'backlogDone' | 'unrefinedPbis' | 'backlogOrder'
+  >,
+  pbiId: string
+): boolean {
+  return isWorkBeat(core) && canAddToForecast(core, pbiId)
+}
+
+/** スプリント途中での“追加引き込み”（スコープ再交渉）。
+ *  スプリントバックログは「スプリント期間中、学びに応じて更新され続ける」(Scrum Guide 2020)。
+ *  予測より早く終わって容量に余裕が出たときなどに、Ready な PBI をプロダクトバックログから今スプリントへ引き込む。
+ *  ＝PO と再交渉し、スプリントゴールを危うくしない範囲で。末尾に足すだけ（着手済みを壊さない・削除はしない）。
+ *  プランニング中の出し入れは toggleForecast が担うので、ここは作業中（デイリー）の“追加のみ”に限定する。 */
+export function pullIntoSprint(core: ProgressCore, pbiId: string): ProgressCore {
+  if (!canPullIntoSprint(core, pbiId)) return core
+  return { ...core, sprintForecast: [...core.sprintForecast, pbiId] }
 }
 
 /** プロダクトバックログの並べ替え（正規化）。指定に漏れた既知 id は元順で末尾に補完し、
@@ -157,20 +209,24 @@ export function reorderBacklog(core: ProgressCore, ids: string[]): ProgressCore 
 export interface ProposalVerdict {
   /** PO が確定した公式の優先順位（これを backlogOrder に確定する） */
   order: string[]
-  /** 提案がそのまま通ったか（既にゴール優先を満たしていた） */
+  /** 提案がそのまま通ったか（説得成功 or 既にゴール優先） */
   accepted: boolean
+  /** 説得に失敗し、PO が現状順を維持した（提案を却下した） */
+  rejected: boolean
   /** PO が「今スプリントのゴールに直結する」として上に戻した項目の id（補正の説明用） */
   floated: string[]
 }
 
-/** プレイヤーの並べ替え“提案”を PO がレビューする（純粋）。
- *  優先順位の所有は PO にある＝原則「今スプリントのゴールに直結する未完了項目（sprintHint＝今sprint）を最優先」。
- *  それ以外の相対順は提案を尊重する。完了済みは末尾へ寄せる。
- *  - 既にゴール優先なら accepted=true（提案を全面採用）
- *  - ゴール項目が非ゴール項目より下に埋もれていたら、その項目を上に戻し floated に記録（部分採用） */
+/** プレイヤーの並べ替え“提案”を PO がレビューする（純粋）。優先順位の所有は PO にある。
+ *  説得ミニゲームの出来 tier で採否が変わる＝「優先順位を動かすには PO を価値で説得する」を機構化:
+ *  - great（説得成功）: 提案どおり全面採用（ゴール補正もしない）。accepted。
+ *  - good（標準）: 提案を尊重しつつ、今スプリントのゴール直結項目(sprintHint=今sprint)を上に補正（floated）。
+ *  - poor（説得失敗）: PO は現状の公式順を維持＝却下（rejected）。優先順位は動かない。
+ *  完了済みは末尾へ寄せる。漏れた既知 id は現行順で末尾補完。 */
 export function reviewBacklogProposal(
   core: Pick<ProgressCore, 'sprintIndex' | 'backlogDone' | 'backlogOrder'>,
-  proposedIds: string[]
+  proposedIds: string[],
+  tier: ExecTier = 'good'
 ): ProposalVerdict {
   // 提案を既知 id に正規化し、漏れた既知 id は現行順で末尾補完
   const known = proposedIds.filter((id) => PBI_BY_ID.has(id))
@@ -183,6 +239,19 @@ export function reviewBacklogProposal(
 
   const active = full.filter((id) => !done.has(id))
   const doneItems = full.filter((id) => done.has(id))
+
+  // poor（説得失敗）＝PO は現状の公式順を維持して却下。優先順位は動かさない。
+  if (tier === 'poor') {
+    const current = core.backlogOrder.filter((id) => PBI_BY_ID.has(id))
+    return { order: current, accepted: false, rejected: true, floated: [] }
+  }
+
+  // great（説得成功）＝提案どおり全面採用（ゴール補正もしない）。
+  if (tier === 'great') {
+    return { order: [...active, ...doneItems], accepted: true, rejected: false, floated: [] }
+  }
+
+  // good（標準）＝提案を尊重しつつ、ゴール直結を上に補正する。
   const goal = active.filter(isGoal)
   const others = active.filter((id) => !isGoal(id))
   const correctedActive = [...goal, ...others]
@@ -201,7 +270,7 @@ export function reviewBacklogProposal(
     }
   }
 
-  return { order: [...correctedActive, ...doneItems], accepted, floated }
+  return { order: [...correctedActive, ...doneItems], accepted, rejected: false, floated }
 }
 
 /** 1項目を上(-1)/下(+1)へ動かす（UIの並べ替えボタン用）。端なら no-op。 */

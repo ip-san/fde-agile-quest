@@ -79,8 +79,8 @@ export function MiniGameHearing({ seed, theme, hearingOptions, onResolve }: Prop
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-slate-300">
-        {hearingPromptFor(theme)} <span className="text-slate-400">深掘りになる質問を2つ選ぶ</span>
+      <p className="text-sm text-[var(--text-body)]">
+        {hearingPromptFor(theme)} <span className="text-[var(--text-sub)]">深掘りになる質問を2つ選ぶ</span>
       </p>
       <ul className="space-y-2">
         {options.map((o, i) => {
@@ -89,10 +89,10 @@ export function MiniGameHearing({ seed, theme, hearingOptions, onResolve }: Prop
           // unpop は「触れたことがある AND 現在OFF」の場合だけ当てる。キーで再マウントを制御。
           const glyphKey = on ? `on-${i}` : wasTouched ? `off-${i}-${unpopKey[i] ?? 0}` : `init-${i}`
           const glyphClass = on
-            ? 'check-pop text-sky-300'
+            ? 'check-pop text-[var(--link)]'
             : wasTouched
-              ? 'check-unpop text-slate-400'
-              : 'text-slate-400'
+              ? 'check-unpop text-[var(--text-sub)]'
+              : 'text-[var(--text-sub)]'
           return (
             <li key={o.text}>
               <button
@@ -102,8 +102,8 @@ export function MiniGameHearing({ seed, theme, hearingOptions, onResolve }: Prop
                 data-initial-focus={i === 0 ? true : undefined}
                 className={`block w-full rounded-xl border px-4 py-3 text-left text-sm transition active:scale-[0.98] ${
                   on
-                    ? 'border-sky-400 bg-sky-500/20 text-slate-100 ring-1 ring-sky-400/60'
-                    : 'border-slate-700 bg-slate-800/40 text-slate-200 hover:border-sky-500/50 hover:bg-slate-800'
+                    ? 'border-[var(--link)] bg-[var(--accent)]/20 text-[var(--text)] ring-1 ring-[var(--link)]/60'
+                    : 'border-[var(--border)] bg-[var(--panel)]/40 text-[var(--text-body)] hover:border-amber-500/50 hover:bg-[var(--panel)]'
                 }`}
               >
                 <span key={glyphKey} className={`mr-1.5 text-base ${glyphClass}`} aria-hidden="true">
@@ -125,7 +125,7 @@ export function MiniGameHearing({ seed, theme, hearingOptions, onResolve }: Prop
         type="button"
         disabled={!ready}
         onClick={() => onResolve(scoreHearing(picked.map((i) => options[i])))}
-        className={`min-h-[44px] w-full rounded-xl bg-sky-500 py-3 font-bold text-slate-950 transition hover:bg-sky-400 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-600 disabled:text-slate-400 ${limitHit ? 'shake' : ''}`}
+        className={`min-h-[44px] w-full rounded-xl bg-[var(--accent)] py-3 font-bold text-[var(--bg)] transition hover:bg-[var(--accent-hover)] active:scale-95 disabled:cursor-not-allowed disabled:bg-[var(--border-strong)] disabled:text-[var(--text-disabled)] ${limitHit ? 'shake' : ''}`}
       >
         {ready ? hearingCtaFor(theme) : `あと ${2 - picked.length} つ選ぶ`}
       </button>

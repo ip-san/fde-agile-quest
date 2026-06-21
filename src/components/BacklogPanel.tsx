@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { SPRINTS } from '../data/chapters/chapter-01'
 import {
   backlogItem,
+  canAddToForecast,
   canReview,
   canStart,
   forecastPoints,
@@ -67,6 +68,7 @@ export function BacklogPanel({ onClose }: Props) {
     unrefinedPbis,
     commitBacklogOrder,
     toggleForecast,
+    pullIntoSprint,
     refinePbi,
     startItem,
     reviewItem,
@@ -87,7 +89,10 @@ export function BacklogPanel({ onClose }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="backlog-panel-title"
-        className="flex max-h-[90vh] w-full max-w-md flex-col rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl"
+        className={`flex max-h-[90vh] w-full flex-col rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl ${
+          // カンバン（スプリント中）は広い画面で横長ボードにするため幅を広げる。プランニングは従来の縦長(md)。
+          isPlanning ? 'max-w-md' : 'max-w-md lg:max-w-5xl'
+        }`}
       >
         <header className="flex items-center justify-between gap-3 border-b border-slate-800 px-5 py-3">
           <h2 id="backlog-panel-title" className="text-base font-bold text-slate-100">
@@ -104,7 +109,6 @@ export function BacklogPanel({ onClose }: Props) {
         <div className="space-y-3 overflow-y-auto px-5 py-4">
           {isPlanning ? (
             <PlanningView
-              key={backlogOrder.filter((id) => !doneSet.has(id)).join(',')}
               sprintIndex={sprintIndex}
               backlogOrder={backlogOrder}
               sprintForecast={sprintForecast}
@@ -129,8 +133,11 @@ export function BacklogPanel({ onClose }: Props) {
               reviewProgress={reviewProgress}
               reviewCapacity={reviewCapacity}
               aiTokens={aiTokens}
+              unrefinedPbis={unrefinedPbis}
+              retroImprovements={retroImprovements}
               startItem={startItem}
               reviewItem={reviewItem}
+              pullIntoSprint={pullIntoSprint}
               core={{
                 sprintIndex,
                 beatIndex,
@@ -252,6 +259,14 @@ function PlanningView({
 
   const { draft, verdict } = editState
   const dirty = !sameOrder(draft, officialActive)
+  // 上位優先（飛ばし入れ禁止）では“次に入れられる1件”だけが addable。毎行 canAddToForecast を呼ぶと O(n²) なので、
+  // PO 確定順(backlogOrder)上で最初に入れられる id を一度だけ求めて使い回す（その1件＝addable、他は不可）。
+  const nextAddableId = useMemo(() => {
+    const coreForSelect = { sprintForecast, backlogDone, unrefinedPbis, backlogOrder }
+    return backlogOrder.find((id) => canAddToForecast(coreForSelect, id)) ?? null
+  }, [sprintForecast, backlogDone, unrefinedPbis, backlogOrder])
+  // PO 説得ミニゲームの表示フラグ。
+  const [proposing, setProposing] = useState(false)
   const move = (id: string, dir: -1 | 1) => {
     setEditState((cur) => {
       const arr = [...cur.draft]
@@ -262,10 +277,14 @@ function PlanningView({
       return { draft: arr, verdict: null }
     })
   }
-  const submitProposal = () => {
-    const v = reviewBacklogProposal({ sprintIndex, backlogDone, backlogOrder }, [...draft, ...doneList])
+  // 「PO に提案」＝説得ミニゲームへ。優先順位は PO の所有なので、価値の論拠で説得して初めて動く。
+  const submitProposal = () => setProposing(true)
+  const resolveProposal = (tier: ExecTier) => {
+    const v = reviewBacklogProposal({ sprintIndex, backlogDone, backlogOrder }, [...draft, ...doneList], tier)
     commitBacklogOrder(v.order)
-    setEditState((cur) => ({ ...cur, verdict: v }))
+    // PO が確定した順を draft に同期（採用/補正/却下のいずれでも“今の公式順”を映す）。verdict は残して結果を見せる。
+    setEditState({ draft: v.order.filter((id) => !doneSet.has(id)), verdict: v })
+    setProposing(false)
   }
 
   const rows = [...draft, ...doneList]
@@ -276,8 +295,28 @@ function PlanningView({
   return (
     <>
       <p className="text-xs leading-relaxed text-slate-400">
-        <RichText text="{{プロダクトバックログ}}（やりたいこと全部・価値順）から、上位を選んで「＋ スプリントへ」で今スプリントの{{スプリントバックログ}}に入れる＝{{フォーキャスト}}（予測）。並び（優先順位）の最終責任はPOにあるので、並べ替えは「提案」する。" />
+        <RichText text="{{プロダクトバックログ}}（価値順）の上位から「＋ スプリントへ」で今スプリントの{{スプリントバックログ}}に入れる＝{{フォーキャスト}}（予測）。下位を上げたいときは、並びをPOに提案（説得）。" />
       </p>
+
+      {/* 入れた予測の即時フィードバック：長いリストを下までスクロールしなくても件数/容量が常に見える。 */}
+      <div
+        className={`flex items-center justify-between rounded-lg border px-3 py-1.5 text-xs ${
+          selected.length === 0
+            ? 'border-amber-500/30 bg-amber-500/5 text-amber-300'
+            : over
+              ? 'border-amber-500/40 bg-amber-500/10 text-amber-200'
+              : 'border-sky-500/30 bg-sky-500/10 text-sky-200'
+        }`}
+      >
+        <span className="font-semibold">
+          {selected.length === 0
+            ? 'スプリントバックログは空（1件以上で開始）'
+            : `スプリントバックログ：${selected.length}件`}
+        </span>
+        <span className="tabular-nums">
+          {fpts} / {capacity} pt
+        </span>
+      </div>
 
       {/* 🗂 元：プロダクトバックログ（選ぶ側） */}
       <section className="rounded-xl bg-slate-900/40 p-2">
@@ -303,6 +342,8 @@ function PlanningView({
             const isDone = doneSet.has(id)
             const isForecast = forecastSet.has(id)
             const draftPos = draft.indexOf(id)
+            // 上位優先：この項目が“次に入れられる1件”か（飛ばし入れ禁止）。
+            const addable = id === nextAddableId
             return (
               <li
                 key={id}
@@ -387,13 +428,21 @@ function PlanningView({
                           isForecast ? `${item.title} をスプリントから外す` : `${item.title} をスプリントへ入れる`
                         }
                         onClick={() => toggleForecast(id)}
+                        disabled={!isForecast && !addable}
+                        title={
+                          !isForecast && !addable
+                            ? '上位の項目を先に入れます（価値の高い順）。下位を上げたいなら、下で並べ替えをPOに提案。'
+                            : undefined
+                        }
                         className={`shrink-0 self-center rounded-lg px-2.5 py-1.5 text-xs font-semibold transition active:scale-95 ${
                           isForecast
                             ? 'bg-sky-500 text-slate-950 hover:bg-sky-400'
-                            : 'bg-slate-700 text-slate-200 hover:bg-slate-600'
+                            : addable
+                              ? 'bg-slate-700 text-slate-200 hover:bg-slate-600'
+                              : 'cursor-not-allowed bg-slate-800 text-slate-500'
                         }`}
                       >
-                        {isForecast ? '✓ 入れた' : '＋ スプリントへ'}
+                        {isForecast ? '✓ 入れた' : addable ? '＋ スプリントへ' : '上位が先'}
                       </button>
                     ))}
                 </div>
@@ -407,14 +456,18 @@ function PlanningView({
             <p
               role="status"
               aria-live="polite"
-              className={`text-xs leading-relaxed ${verdict.accepted ? 'text-emerald-300' : 'text-amber-300'}`}
+              className={`text-xs leading-relaxed ${
+                verdict.rejected ? 'text-rose-300' : verdict.accepted ? 'text-emerald-300' : 'text-amber-300'
+              }`}
             >
               <span className="font-semibold">プロダクトオーナー：</span>
-              {verdict.accepted ? (
-                'いい並びだ。今のゴールに効く順になっている。これで行こう。'
+              {verdict.rejected ? (
+                '今の優先順位には根拠がある。価値で説得しきれていない——並べ替えは見送りだ。現状の順で行こう。'
+              ) : verdict.accepted ? (
+                'いい並びだ。価値の順に届く。これで行こう。'
               ) : (
                 <>
-                  提案はほぼ採る。ただし
+                  筋は通っている。ただし
                   {verdict.floated.map((fid) => `「${backlogItem(fid)?.title ?? fid}」`).join('')}
                   は今スプリントのゴールに直結する。優先順位の最終責任は私にある——上に戻した。
                 </>
@@ -424,6 +477,12 @@ function PlanningView({
           {!dirty && !verdict && (
             <p id="propose-hint" className="text-xs text-slate-500">
               ▲▼で並び替えると提案できます
+            </p>
+          )}
+          {dirty && (
+            <p className="text-xs leading-relaxed text-amber-300/90">
+              並べ替えは“提案”の下書き中。「＋
+              スプリントへ」はPOが確定した順から選べます——先にこの並びをPOに提案して通すと、その順で選べるようになります。
             </p>
           )}
           <div className="flex gap-2">
@@ -463,14 +522,14 @@ function PlanningView({
             <RichText text="{{スプリントバックログ}}" />
             <span className="ml-1 font-normal text-sky-400/70">今スプリントに入れた予測</span>
           </h3>
-          <span className={`text-xs font-bold tabular-nums ${over ? 'text-rose-300' : 'text-sky-200'}`}>
+          <span className={`text-xs font-bold tabular-nums ${over ? 'text-amber-300' : 'text-sky-200'}`}>
             {fpts} / {capacity} pt
           </span>
         </div>
 
         <div className="h-2 overflow-hidden rounded-full bg-slate-700">
           <div
-            className={`h-full rounded-full transition-all ${over ? 'bg-rose-500' : 'bg-sky-400'}`}
+            className={`h-full rounded-full transition-all ${over ? 'bg-amber-500' : 'bg-sky-400'}`}
             style={{ width: `${Math.min(100, capacity ? (fpts / capacity) * 100 : 0)}%` }}
           />
         </div>
@@ -523,6 +582,17 @@ function PlanningView({
       <LegacySummary backlogDone={backlogDone} />
 
       <VelocityChart velocity={velocity} />
+
+      {/* PO 説得ミニゲーム（並べ替え提案時）。価値の論拠を2つ選んで PO を動かす。スキップ＝標準(good)。 */}
+      {proposing && (
+        <MiniGame
+          kind="persuade"
+          // 提案の中身でシードを変える＝説得の論拠カードの並びが毎回固定にならない（位置の暗記化を防ぐ）。
+          seed={seedFor(`po-proposal-${sprintIndex}-${draft.join(',')}`)}
+          onDone={resolveProposal}
+          onSkip={() => resolveProposal('good')}
+        />
+      )}
     </>
   )
 }
@@ -542,8 +612,13 @@ interface KanbanProps {
   reviewProgress: Record<string, number>
   reviewCapacity: number
   aiTokens: number
+  /** 未リファインメント（暫定見積り）の PBI id。途中引き込みは Ready のみ対象にするため除外に使う。 */
+  unrefinedPbis: string[]
+  retroImprovements: string[]
   startItem: (id: string) => void
   reviewItem: (id: string, depth: ReviewDepth, tier: ExecTier) => void
+  /** スプリント途中で Ready な PBI を予測に引き込む（スコープ再交渉） */
+  pullIntoSprint: (id: string) => void
   core: KanbanCore
 }
 
@@ -558,8 +633,11 @@ function KanbanView({
   reviewProgress,
   reviewCapacity,
   aiTokens,
+  unrefinedPbis,
+  retroImprovements,
   startItem,
   reviewItem,
+  pullIntoSprint,
   core,
 }: KanbanProps) {
   // レビューの2段：深さ選択 → ミニゲーム → 確定
@@ -571,6 +649,17 @@ function KanbanView({
   // レトロ改善（機構：Retro 昇格）を反映した上限。capacity 投資で容量↑／wip 改善で仕掛り上限↓。
   const maxReview = reviewCapacityFor(core.retroImprovements)
   const wipMax = wipLimitFor(core.retroImprovements)
+
+  // 容量の目安＝人のレビュー容量。予測がこれを超えると、終わらない分は持ち越しになる（補助実践の目安・ガイドの規定ではない）。
+  const capacity = reviewCapacityFor(retroImprovements)
+  const fpts = forecastPoints({ sprintForecast })
+  const over = fpts > capacity
+  // 途中で引き込める候補も“上位優先”に揃える＝canAddToForecast（上位を全部入れてからでないと下位は引けない）。
+  // プランニングの選択と同じ規律にすることで、途中追加でも飛ばし入れを許さない（engine 側のガードと UI を一致させる）。
+  const pullable = useMemo(() => {
+    const coreForPull = { sprintForecast, backlogDone: core.backlogDone, unrefinedPbis, backlogOrder }
+    return backlogOrder.filter((id) => canAddToForecast(coreForPull, id))
+  }, [backlogOrder, sprintForecast, core.backlogDone, unrefinedPbis])
 
   if (sprintForecast.length === 0) {
     return (
@@ -586,6 +675,41 @@ function KanbanView({
       <p className="text-xs leading-relaxed text-slate-400">
         <RichText text="開発そのものは AI が担う（着手＝生成）。価値は人の{{レビュー}}にある。In Progress は WIP=2 で詰まり、{{制約理論}}どおりレビューがボトルネックになる。" />
       </p>
+
+      {/* 予測量 vs 容量（オーバーフォーキャストの可視化）。超過分は終わらず持ち越しになる。 */}
+      <section
+        className={`rounded-xl border p-3 ${over ? 'border-amber-500/40 bg-amber-500/5' : 'border-sky-500/30 bg-sky-500/5'}`}
+      >
+        <div className="mb-1.5 flex items-center justify-between">
+          <h3 className="px-0.5 text-xs font-bold text-sky-300">
+            <RichText text="{{スプリントバックログ}}" />
+            <span className="ml-1 font-normal text-sky-400/70">予測量</span>
+          </h3>
+          <span className={`text-xs font-bold tabular-nums ${over ? 'text-amber-300' : 'text-sky-200'}`}>
+            {fpts} / {capacity} pt
+          </span>
+        </div>
+        <div className="h-2 overflow-hidden rounded-full bg-slate-700">
+          <div
+            className={`h-full rounded-full transition-all ${over ? 'bg-amber-500' : 'bg-sky-400'}`}
+            style={{ width: `${Math.min(100, capacity ? (fpts / capacity) * 100 : 0)}%` }}
+          />
+        </div>
+        {over ? (
+          <p role="note" className="mt-1.5 text-[11px] leading-relaxed text-amber-300">
+            容量（人の{<RichText text="{{レビュー}}" />}・{capacity}pt）を超えて積んでいます。これは“悪手”ではなく
+            <span className="font-semibold">賭け</span>
+            ——多く積んでゴールに挑むのも一手。ただし終わらなかった分はスプリント末に
+            {<RichText text="{{キャリーオーバー}}" />}（次へ持ち越し）。commitment
+            はスプリントゴールであって全部終える約束ではない。
+          </p>
+        ) : (
+          <p className="mt-1.5 text-[11px] leading-relaxed text-slate-400">
+            容量の目安＝人の{<RichText text="{{レビュー}}" />}（{capacity}
+            pt/スプリント）。余裕があれば下で追加を引き込めます。
+          </p>
+        )}
+      </section>
 
       {/* レビュー容量＋WIP メーター */}
       <div className="flex gap-2">
@@ -621,127 +745,178 @@ function KanbanView({
         </p>
       )}
 
-      {/* To Do */}
-      <Column title="To Do" tone="text-slate-300" count={todo.length}>
-        {todo.map((id) => {
-          const item = backlogItem(id)
-          if (!item) return null
-          const startable = canStart(core, id)
-          return (
-            <Card
-              key={id}
-              title={item.title}
-              estimate={item.estimate}
-              badges={<PbiBadges id={id} stakeholder={item.stakeholder} />}
-            >
-              <button
-                type="button"
-                onClick={() => startItem(id)}
-                disabled={!startable}
-                title={!startable && aiTokens < GEN_TOKEN_COST ? 'AIトークンが足りません' : undefined}
-                className="shrink-0 self-center rounded-lg bg-sky-600 px-2.5 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-sky-500 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
+      {/* カンバン3列：広い画面(lg〜)では横並びにして“ボード感”を出す。狭い画面は縦積み。
+          列は上端揃え(items-start)で、各列が中身の高さに収まる（空列が無駄に伸びない）。 */}
+      <div className="grid gap-3 lg:grid-cols-3 lg:items-start">
+        {/* To Do */}
+        <Column title="To Do" tone="text-slate-300" count={todo.length}>
+          {todo.map((id) => {
+            const item = backlogItem(id)
+            if (!item) return null
+            const startable = canStart(core, id)
+            return (
+              <Card
+                key={id}
+                title={item.title}
+                estimate={item.estimate}
+                badges={<PbiBadges id={id} stakeholder={item.stakeholder} />}
               >
-                着手（AI生成）
-              </button>
-            </Card>
-          )
-        })}
-        {todo.length === 0 && <Empty />}
-      </Column>
-
-      {/* In Progress */}
-      <Column title="In Progress（着手中）" tone="text-amber-200" count={inProgress.length}>
-        {inProgress.map((id) => {
-          const item = backlogItem(id)
-          if (!item) return null
-          const prog = Math.min(item.estimate, reviewProgress[id] ?? 0)
-          const reviewable = canReview(core, id)
-          return (
-            <Card
-              key={id}
-              title={item.title}
-              estimate={item.estimate}
-              badges={<PbiBadges id={id} stakeholder={item.stakeholder} />}
-              below={
-                <div className="mt-2 flex flex-col gap-1.5">
-                  <div className="h-1.5 overflow-hidden rounded-full bg-slate-700">
-                    <div
-                      className="h-full rounded-full bg-amber-400"
-                      style={{ width: `${item.estimate ? (prog / item.estimate) * 100 : 0}%` }}
-                    />
-                  </div>
-                  {depthFor === id ? (
-                    <div className="flex gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPending({ id, depth: 'quick' })
-                          setDepthFor(null)
-                        }}
-                        className="flex-1 rounded-lg bg-slate-700 px-2 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-slate-600 active:scale-95"
-                      >
-                        <RichText text="浅い：DoDを妥協（速いが負債）" interactive={false} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPending({ id, depth: 'thorough' })
-                          setDepthFor(null)
-                        }}
-                        className="flex-1 rounded-lg bg-emerald-600 px-2 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-emerald-500 active:scale-95"
-                      >
-                        <RichText text="深い：{{完成の定義}}を満たす（テスト/品質）" interactive={false} />
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setDepthFor(id)}
-                      disabled={!reviewable}
-                      title={!reviewable && reviewCapacity <= 0 ? 'レビュー容量切れ（次スプリントで回復）' : undefined}
-                      className="self-start rounded-lg bg-emerald-700 px-2.5 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-emerald-600 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
-                    >
-                      レビューする
-                    </button>
-                  )}
-                </div>
-              }
-            />
-          )
-        })}
-        {inProgress.length === 0 && <Empty />}
-      </Column>
-
-      {/* Done */}
-      <Column title="Done（完了）" tone="text-emerald-300" count={done.length}>
-        {done.map((id) => {
-          const item = backlogItem(id)
-          if (!item) return null
-          return (
-            <Card
-              key={id}
-              title={item.title}
-              estimate={item.estimate}
-              dimmed
-              badges={<PbiBadges id={id} stakeholder={item.stakeholder} />}
-            >
-              {undoneSet.has(id) ? (
-                <span
-                  title="浅いレビューで通した＝完成の定義(DoD)を妥協した Ship。後で負債の取り立てが来る。"
-                  className="shrink-0 self-center rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-300"
+                <button
+                  type="button"
+                  onClick={() => startItem(id)}
+                  disabled={!startable}
+                  title={!startable && aiTokens < GEN_TOKEN_COST ? 'AIトークンが足りません' : undefined}
+                  className="shrink-0 self-center rounded-lg bg-sky-600 px-2.5 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-sky-500 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
                 >
-                  ⚠ 浅い
-                </span>
-              ) : (
-                <span className="shrink-0 self-center rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">
-                  ✓ DoD
-                </span>
-              )}
-            </Card>
-          )
-        })}
-        {done.length === 0 && <Empty />}
-      </Column>
+                  着手（AI生成）
+                </button>
+              </Card>
+            )
+          })}
+          {todo.length === 0 && <Empty />}
+        </Column>
+
+        {/* In Progress */}
+        <Column title="In Progress（着手中）" tone="text-amber-200" count={inProgress.length}>
+          {inProgress.map((id) => {
+            const item = backlogItem(id)
+            if (!item) return null
+            const prog = Math.min(item.estimate, reviewProgress[id] ?? 0)
+            const reviewable = canReview(core, id)
+            return (
+              <Card
+                key={id}
+                title={item.title}
+                estimate={item.estimate}
+                badges={<PbiBadges id={id} stakeholder={item.stakeholder} />}
+                below={
+                  <div className="mt-2 flex flex-col gap-1.5">
+                    <div className="h-1.5 overflow-hidden rounded-full bg-slate-700">
+                      <div
+                        className="h-full rounded-full bg-amber-400"
+                        style={{ width: `${item.estimate ? (prog / item.estimate) * 100 : 0}%` }}
+                      />
+                    </div>
+                    {depthFor === id ? (
+                      <div className="flex gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPending({ id, depth: 'quick' })
+                            setDepthFor(null)
+                          }}
+                          className="flex-1 rounded-lg bg-slate-700 px-2 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-slate-600 active:scale-95"
+                        >
+                          <RichText text="浅い：DoDを妥協（速いが負債）" interactive={false} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPending({ id, depth: 'thorough' })
+                            setDepthFor(null)
+                          }}
+                          className="flex-1 rounded-lg bg-emerald-600 px-2 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-emerald-500 active:scale-95"
+                        >
+                          <RichText text="深い：{{完成の定義}}を満たす（テスト/品質）" interactive={false} />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setDepthFor(id)}
+                        disabled={!reviewable}
+                        title={
+                          !reviewable && reviewCapacity <= 0 ? 'レビュー容量切れ（次スプリントで回復）' : undefined
+                        }
+                        className="self-start rounded-lg bg-emerald-700 px-2.5 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-emerald-600 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
+                      >
+                        レビューする
+                      </button>
+                    )}
+                  </div>
+                }
+              />
+            )
+          })}
+          {inProgress.length === 0 && <Empty />}
+        </Column>
+
+        {/* Done */}
+        <Column title="Done（完了）" tone="text-emerald-300" count={done.length}>
+          {done.map((id) => {
+            const item = backlogItem(id)
+            if (!item) return null
+            return (
+              <Card
+                key={id}
+                title={item.title}
+                estimate={item.estimate}
+                dimmed
+                badges={<PbiBadges id={id} stakeholder={item.stakeholder} />}
+              >
+                {undoneSet.has(id) ? (
+                  <span
+                    title="浅いレビューで通した＝完成の定義(DoD)を妥協した Ship。後で負債の取り立てが来る。"
+                    className="shrink-0 self-center rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-300"
+                  >
+                    ⚠ 浅い
+                  </span>
+                ) : (
+                  <span className="shrink-0 self-center rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">
+                    ✓ DoD
+                  </span>
+                )}
+              </Card>
+            )
+          })}
+          {done.length === 0 && <Empty />}
+        </Column>
+      </div>
+
+      {/* スプリント途中の追加引き込み（スコープ再交渉）。早く終わって容量に余裕が出たら Ready 項目を足せる。 */}
+      {isWork && pullable.length > 0 && (
+        <section className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3">
+          <h3 className="mb-1 px-0.5 text-xs font-bold text-emerald-300">
+            スプリントに追加（
+            <RichText text="{{スコープ再交渉}}" interactive={false} />）
+          </h3>
+          <p className="mb-2 text-[11px] leading-relaxed text-slate-400">
+            予測より早く片づき、容量に余裕が出たら Ready な項目を追加で引き込めます。
+            <RichText text="{{スプリントバックログ}}" />
+            は学びに応じてスプリント中も更新され続ける——ただし PO と再交渉し、
+            <RichText text="{{スプリントゴール}}" />
+            を危うくしない範囲で。
+          </p>
+          <ul className="space-y-1.5">
+            {pullable.map((id) => {
+              const item = backlogItem(id)
+              if (!item) return null
+              return (
+                <li
+                  key={id}
+                  className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/40 px-2.5 py-1.5"
+                >
+                  <span className="rounded bg-slate-700 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-slate-300">
+                    {item.estimate}pt
+                  </span>
+                  <PbiBadges id={id} stakeholder={item.stakeholder} />
+                  <span className="min-w-0 flex-1 truncate text-sm text-slate-100">
+                    <RichText text={item.title} interactive={false} />
+                  </span>
+                  <button
+                    type="button"
+                    aria-label={`${item.title} をスプリントに引き込む`}
+                    onClick={() => pullIntoSprint(id)}
+                    className="shrink-0 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-emerald-500 active:scale-95"
+                  >
+                    ＋ 引き込む
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </section>
+      )}
 
       {/* プロダクトバックログ全体の参照（read-only）。スプリント中でも全体像を把握できる。 */}
       <ProductBacklogReadOnly backlogOrder={backlogOrder} doneSet={doneSet} />
@@ -1014,7 +1189,7 @@ function LegacySummary({ backlogDone }: { backlogDone: readonly string[] }) {
               className={`flex items-center gap-1.5 text-[10px] ${shipped ? 'text-emerald-300' : 'text-slate-400'}`}
             >
               <span aria-hidden="true">{shipped ? '✓' : '○'}</span>
-              <span className={shipped ? '' : ''}>{item?.title ?? id}</span>
+              <span>{item ? <RichText text={item.title} interactive={false} /> : id}</span>
             </li>
           )
         })}

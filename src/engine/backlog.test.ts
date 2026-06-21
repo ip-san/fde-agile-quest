@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { PRODUCT_BACKLOG, STARTING_METERS } from '../data/chapters/chapter-01'
 import type { Choice, GameEvent } from '../types'
 import {
+  canAddToForecast,
+  canPullIntoSprint,
   canReview,
   canStart,
   estimateOf,
@@ -11,6 +13,7 @@ import {
   isKnownPbi,
   isUnrefinedPbi,
   moveBacklogItem,
+  pullIntoSprint,
   REVIEW_CAPACITY,
   refinePbi,
   reorderBacklog,
@@ -66,6 +69,71 @@ describe('forecastPoints', () => {
   })
 })
 
+describe('上位優先の予測選択（飛ばし入れ禁止／canAddToForecast）', () => {
+  // freshCore の backlogOrder 先頭2件（PO 順の上位2つ）を使う
+  const top0 = freshCore(STARTING_METERS).backlogOrder[0]
+  const top1 = freshCore(STARTING_METERS).backlogOrder[1]
+
+  it('先頭（最上位）は入れられる／その下位は上位未選択だと入れられない', () => {
+    expect(canAddToForecast(core(), top0)).toBe(true)
+    expect(canAddToForecast(core(), top1)).toBe(false) // top0 未選択のうちは飛ばし入れ不可
+  })
+  it('上位を入れると、その次が入れられるようになる（上から順に詰める）', () => {
+    const c1 = toggleForecast(core(), top0)
+    expect(c1.sprintForecast).toEqual([top0])
+    expect(canAddToForecast(c1, top1)).toBe(true)
+    const c2 = toggleForecast(c1, top1)
+    expect(c2.sprintForecast).toEqual([top0, top1])
+  })
+  it('飛ばし入れ（下位を直接）は toggleForecast でも no-op', () => {
+    expect(toggleForecast(core(), top1).sprintForecast).toEqual([])
+  })
+  it('外すのはその1件だけ（下位は巻き込まない）。上位優先は“入れる”側で担保する', () => {
+    const c = core({ sprintForecast: [top0, top1] })
+    // 上位(top0)を外しても下位(top1)は残る＝巻き添えにしない
+    expect(toggleForecast(c, top0).sprintForecast).toEqual([top1])
+    // 末尾(top1)だけ外せば top0 は残る
+    expect(toggleForecast(c, top1).sprintForecast).toEqual([top0])
+  })
+  it('途中を外して“穴”ができると、その穴を埋めるまで下位は新規追加できない（上から詰め直し）', () => {
+    const top2 = freshCore(STARTING_METERS).backlogOrder[2]
+    // top0,top1 を入れた後 top0 を外す＝[top1]（top0 が穴）
+    const holed = core({ sprintForecast: [top1] })
+    expect(canAddToForecast(holed, top2)).toBe(false) // 上位の穴(top0)が埋まるまで下位不可
+    expect(canAddToForecast(holed, top0)).toBe(true) // 穴(top0)は埋められる
+  })
+})
+
+describe('pullIntoSprint（スプリント途中の追加引き込み・スコープ再交渉）', () => {
+  // 作業中ビート（daily）で、既に予測に1件ある状態から追加する
+  const workCore = (over: Partial<ProgressCore> = {}): ProgressCore =>
+    core({ beatIndex: 1, sprintForecast: [ID.floor], ...over })
+
+  it('作業中ビートでは Ready な未予測項目を末尾に引き込める', () => {
+    const next = pullIntoSprint(workCore(), ID.veteran)
+    expect(next.sprintForecast).toEqual([ID.floor, ID.veteran])
+  })
+  it('プランニング中（beat0）は no-op（出し入れは toggleForecast が担う）', () => {
+    const c = core({ sprintForecast: [ID.floor] }) // beat0 = planning
+    expect(pullIntoSprint(c, ID.veteran)).toBe(c)
+  })
+  it('既に予測済み／完了済み／未知 id は引き込めない', () => {
+    const c = workCore()
+    expect(pullIntoSprint(c, ID.floor)).toBe(c) // 既に予測済み → 同一参照で no-op
+    expect(pullIntoSprint(workCore({ backlogDone: [ID.veteran] }), ID.veteran).sprintForecast).toEqual([ID.floor])
+    expect(pullIntoSprint(workCore(), 'nope').sprintForecast).toEqual([ID.floor])
+  })
+  it('未リファインメント（暫定見積り）は Ready になるまで引き込めない', () => {
+    const c = workCore({ unrefinedPbis: [ID.veteran] })
+    expect(pullIntoSprint(c, ID.veteran).sprintForecast).toEqual([ID.floor])
+    expect(canPullIntoSprint(c, ID.veteran)).toBe(false)
+  })
+  it('canPullIntoSprint は作業中・Ready・未予測・未done のときだけ true', () => {
+    expect(canPullIntoSprint(workCore(), ID.veteran)).toBe(true)
+    expect(canPullIntoSprint(core({ sprintForecast: [ID.floor] }), ID.veteran)).toBe(false) // planning
+  })
+})
+
 describe('reorderBacklog / moveBacklogItem', () => {
   it('指定順に並べ替え、漏れた既知 id は末尾に補完、未知 id は捨てる', () => {
     const c = core()
@@ -111,6 +179,29 @@ describe('reviewBacklogProposal（PO が並べ替え提案を審査）', () => {
     const v = reviewBacklogProposal({ ...base, backlogDone: [ID.floor] }, [ID.veteran, ID.asis])
     expect(v.order[v.order.length - 1]).toBe(ID.floor) // done は末尾
     expect(v.order).toContain(MVP) // 提案漏れの既知 id も残る
+  })
+
+  it('説得 great＝提案どおり全面採用（ゴール補正もしない）', () => {
+    // good なら floated されるはずの「非ゴール先頭」提案も、great では提案順のまま通る
+    const v = reviewBacklogProposal(base, [MVP, ID.floor, ID.veteran, ID.asis], 'great')
+    expect(v.accepted).toBe(true)
+    expect(v.rejected).toBe(false)
+    expect(v.floated).toEqual([])
+    expect(v.order).toEqual([MVP, ID.floor, ID.veteran, ID.asis])
+  })
+
+  it('説得 poor＝却下。PO は現状の公式順を維持して優先順位は動かない', () => {
+    const v = reviewBacklogProposal(base, [MVP, ID.floor, ID.veteran, ID.asis], 'poor')
+    expect(v.rejected).toBe(true)
+    expect(v.accepted).toBe(false)
+    expect(v.order).toEqual(base.backlogOrder) // 現状順のまま
+  })
+
+  it('説得 good（既定）＝従来どおりゴール直結を上に補正する', () => {
+    const v = reviewBacklogProposal(base, [MVP, ID.floor, ID.veteran, ID.asis], 'good')
+    expect(v.rejected).toBe(false)
+    expect(v.floated).toEqual([ID.floor, ID.veteran, ID.asis])
+    expect(v.order).toEqual([ID.floor, ID.veteran, ID.asis, MVP])
   })
 })
 
@@ -348,10 +439,13 @@ describe('発見可PBI（ヒアリングで掘り当てる）', () => {
     expect(isUnrefinedPbi(revealed, DISC)).toBe(true) // 発見直後は暫定
     // 暫定のままでは予測に積めない（toggleForecast が no-op）
     expect(toggleForecast(revealed, DISC).sprintForecast).not.toContain(DISC)
-    // プランニング中にリファインメントすると Ready 化し、予測に積めるようになる
+    // プランニング中にリファインメントすると Ready 化する
     const refined = refinePbi(revealed, DISC)
     expect(isUnrefinedPbi(refined, DISC)).toBe(false)
-    expect(toggleForecast(refined, DISC).sprintForecast).toContain(DISC)
+    // DISC は末尾＝上位優先で「上位を全部入れてから」でないと積めない。上位を予測済みにすると積める。
+    const higher = refined.backlogOrder.filter((id) => id !== DISC)
+    const ready = { ...refined, sprintForecast: higher }
+    expect(toggleForecast(ready, DISC).sprintForecast).toContain(DISC)
   })
   it('機構：Refinement — refinePbi はプランニング以外・未リファインメントでない id では no-op', () => {
     const revealed = revealPbi(core(), DISC).core

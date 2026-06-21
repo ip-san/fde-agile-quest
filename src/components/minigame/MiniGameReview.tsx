@@ -9,7 +9,7 @@ interface Props {
 }
 
 /** レビュー・ミニゲーム：AI が書いた差分を点検し、人が拾うべき指摘を選ぶ（AI時代の人間レビュー）。
- *  選択 → 答え合わせ（拾えた/見逃し/空振り＋気づき）→ 確定、の2段。LGTM（0件）も“出せる”。 */
+ *  選択 → 答え合わせ（拾えた/見逃し/空振り＋気づき）→ 確定、の2段。LGTM（0件）も"出せる"。 */
 export function MiniGameReview({ seed, onResolve }: Props) {
   const [round] = useState<ReviewRound>(() => dealReview(seed))
   const [picked, setPicked] = useState<number[]>([])
@@ -45,22 +45,22 @@ export function MiniGameReview({ seed, onResolve }: Props) {
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-slate-300">
+      <p className="text-sm text-[var(--text-body)]">
         AIが書いた差分を点検する。{' '}
-        <span className="text-slate-400">人が拾うべき指摘を選ぶ（複数可・無ければLGTM）</span>
+        <span className="text-[var(--text-sub)]">人が拾うべき指摘を選ぶ（複数可・無ければLGTM）</span>
       </p>
 
       {/* AI に頼んだこと */}
-      <div className="rounded-lg border border-slate-700 bg-slate-800/40 px-3 py-2 text-xs">
-        <span className="font-semibold text-slate-400">頼んだこと：</span>
-        <span className="text-slate-200">{round.task}</span>
+      <div className="rounded-lg border border-[var(--border)] bg-[var(--panel)]/40 px-3 py-2 text-xs">
+        <span className="font-semibold text-[var(--text-sub)]">頼んだこと：</span>
+        <span className="text-[var(--text-body)]">{round.task}</span>
       </div>
 
       {/* AI が書いた差分 */}
       <DiffView diff={round.diff} />
 
-      {/* AI の自己申告（過信を誘うメモ） */}
-      <p className="rounded-lg bg-slate-800/40 px-3 py-1.5 text-xs text-slate-400">
+      {/* AI の自己申告（過信を誘うメモ）— text-sky-400 は意味色（AIを示す色）として保持 */}
+      <p className="rounded-lg bg-[var(--panel)]/40 px-3 py-1.5 text-xs text-[var(--text-sub)]">
         <span className="font-semibold text-sky-400">🤖 AI：</span> {round.aiNote}
       </p>
 
@@ -72,11 +72,11 @@ export function MiniGameReview({ seed, onResolve }: Props) {
             const mark = o.issue ? (on ? '✓ 的確' : '! 見逃し') : on ? '✗ 空振り' : '— 不要'
             const cellStyle = o.issue
               ? on
-                ? 'border-emerald-400/60 bg-emerald-500/10 text-slate-100'
-                : 'border-amber-400/60 bg-amber-500/10 text-slate-100'
+                ? 'border-emerald-400/60 bg-emerald-500/10 text-[var(--text)]'
+                : 'border-amber-400/60 bg-amber-500/10 text-[var(--text)]'
               : on
-                ? 'border-rose-400/50 bg-rose-500/10 text-slate-300'
-                : 'border-slate-800 bg-slate-800/20 text-slate-500'
+                ? 'border-rose-400/50 bg-rose-500/10 text-[var(--text-body)]'
+                : 'border-[var(--panel)] bg-[var(--panel)]/20 text-[var(--text-disabled)]'
             return (
               <li key={o.text} className={`rounded-xl border px-4 py-2.5 text-sm ${cellStyle}`}>
                 <span className="mr-2 text-[11px] font-bold">{mark}</span>
@@ -88,10 +88,10 @@ export function MiniGameReview({ seed, onResolve }: Props) {
           // unpop は「触れたことがある AND 現在OFF」の場合だけ当てる。キーで再マウントを制御。
           const glyphKey = on ? `on-${i}` : wasTouched ? `off-${i}-${unpopKey[i] ?? 0}` : `init-${i}`
           const glyphClass = on
-            ? 'check-pop text-sky-300'
+            ? 'check-pop text-[var(--link)]'
             : wasTouched
-              ? 'check-unpop text-slate-400'
-              : 'text-slate-400'
+              ? 'check-unpop text-[var(--text-sub)]'
+              : 'text-[var(--text-sub)]'
           return (
             <li key={o.text}>
               <button
@@ -101,8 +101,8 @@ export function MiniGameReview({ seed, onResolve }: Props) {
                 data-initial-focus={i === 0 ? true : undefined}
                 className={`block w-full rounded-xl border px-4 py-3 text-left text-sm transition active:scale-[0.98] ${
                   on
-                    ? 'border-sky-400 bg-sky-500/20 text-slate-100 ring-1 ring-sky-400/60'
-                    : 'border-slate-700 bg-slate-800/40 text-slate-200 hover:border-sky-500/50 hover:bg-slate-800'
+                    ? 'border-[var(--link)] bg-[var(--accent)]/20 text-[var(--text)] ring-1 ring-[var(--link)]/60'
+                    : 'border-[var(--border)] bg-[var(--panel)]/40 text-[var(--text-body)] hover:border-amber-500/50 hover:bg-[var(--panel)]'
                 }`}
               >
                 <span key={glyphKey} className={`mr-1.5 text-base ${glyphClass}`} aria-hidden="true">
@@ -117,15 +117,16 @@ export function MiniGameReview({ seed, onResolve }: Props) {
 
       {revealed ? (
         <>
-          <p className="rounded-lg border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-xs leading-relaxed text-slate-200">
-            <span className="font-semibold text-sky-300">気づき：</span> {round.takeaway}
+          {/* 気づきは学習ポイント（意味色なし・情報色）なので amber-500/sky はそのまま amber に統一 */}
+          <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs leading-relaxed text-[var(--text-body)]">
+            <span className="font-semibold text-amber-300">気づき：</span> {round.takeaway}
           </p>
           <button
             ref={confirmRef}
             type="button"
             onClick={() => onResolve(tier)}
             data-initial-focus
-            className="min-h-[44px] w-full rounded-xl bg-sky-500 py-3 font-bold text-slate-950 transition hover:bg-sky-400 active:scale-95"
+            className="min-h-[44px] w-full rounded-xl bg-[var(--accent)] py-3 font-bold text-[var(--bg)] transition hover:bg-[var(--accent-hover)] active:scale-95"
           >
             確定する
           </button>
@@ -134,7 +135,7 @@ export function MiniGameReview({ seed, onResolve }: Props) {
         <button
           type="button"
           onClick={submit}
-          className="min-h-[44px] w-full rounded-xl bg-sky-500 py-3 font-bold text-slate-950 transition hover:bg-sky-400 active:scale-95"
+          className="min-h-[44px] w-full rounded-xl bg-[var(--accent)] py-3 font-bold text-[var(--bg)] transition hover:bg-[var(--accent-hover)] active:scale-95"
         >
           {n === 0 ? '問題なし（LGTM）として出す' : `${n}件 指摘してレビューを出す`}
         </button>
@@ -146,7 +147,7 @@ export function MiniGameReview({ seed, onResolve }: Props) {
 /** AI が書いた差分の表示（add=緑/del=赤取り消し/ctx=灰）。等幅で読みやすく。 */
 function DiffView({ diff }: { diff: DiffLine[] }) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-700 bg-slate-950/60 p-2.5 font-mono text-[11px] leading-relaxed">
+    <div className="overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--bg-deep)]/60 p-2.5 font-mono text-[11px] leading-relaxed">
       {diff.map((l, i) => {
         const sign = l.tag === 'add' ? '+' : l.tag === 'del' ? '-' : ' '
         const tone =
@@ -154,7 +155,7 @@ function DiffView({ diff }: { diff: DiffLine[] }) {
             ? 'text-emerald-300'
             : l.tag === 'del'
               ? 'text-rose-300 line-through decoration-rose-400/40'
-              : 'text-slate-500'
+              : 'text-[var(--border-strong)]'
         return (
           <div key={`${i}-${l.text}`} className={`whitespace-pre ${tone}`}>
             <span className="mr-2 select-none opacity-70" aria-hidden="true">

@@ -1156,13 +1156,16 @@ export const SPRINT1_EVENTS: GameEvent[] = [
 
   // ── 買収の皮肉アーク（親会社ジェネリック電機の登場・起点）──
   // 「フィジカルAI実証の場」として買われたのに現場はアナログ、という落差。
-  // どちらを選んでも showcasePressure が立ち、視察(s2)→報告(s3)の連鎖が確実に続く。
+  // どちらを選んでも showcasePressure が立ち、視察(s2)→お披露目(s2)→報告(s3)の連鎖が確実に続く。
+  // 縦糸の入口：pinned で必ず通す。ここを見逃すと showcasePressure が立たず、フィジカルAIの
+  // お披露目(s2-physical-ai-showcase)以降のショーケース弧がまるごと始まらない（後の話が読めなくなる）。
   {
     id: 's1-daily-showcase-order',
     sprint: 1,
     ceremony: 'daily',
     segment: 'kokyaku',
     location: 'client',
+    pinned: true,
     hints: {
       po: 'グループから視察の話が来てる。会議室で結城さんと方針を握ってきて。',
       sm: '上の期待と現場の実力に開きがある。会議室で擦り合わせを。',

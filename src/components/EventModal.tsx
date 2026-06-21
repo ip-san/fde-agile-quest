@@ -15,7 +15,7 @@ interface Props {
   unexpected: boolean
   /** 生成AIの残りトークン。tokenCost を超える選択は「残量不足」で選べない＝AIショートカット封印 */
   aiTokens: number
-  /** 推理で本音を見抜けた時の開示ヒント（核心が“開く”）。外した／推理なしなら undefined */
+  /** 推理で本音を見抜けた時の開示ヒント（核心が"開く"）。外した／推理なしなら undefined */
   revealHint?: string
   /** 時限選択を有効にするか（設定でON。静観の選択肢があるイベントだけカウントダウンする）。 */
   timed?: boolean
@@ -72,23 +72,23 @@ export function EventModal({ event, unexpected, aiTokens, revealHint, timed, onC
         // ルーレットの結果通知は背景の aria-live にあり aria-modal 下で取りこぼれ得るため
         aria-labelledby={`${segId} ${titleId}`}
         // スマホ＝下から立ち上がるボトムシート（親指の届く下部に内容を寄せる）／デスクトップ＝中央ダイアログ
-        className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-slate-700 bg-slate-900 shadow-2xl sm:max-h-[90vh] sm:rounded-2xl"
+        className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-[var(--border)] bg-[var(--card)] shadow-2xl sm:max-h-[90vh] sm:rounded-2xl"
       >
         <header
           className="flex flex-wrap items-center gap-2 rounded-t-2xl px-5 py-3"
           style={{ backgroundColor: `${SEGMENT_COLORS[event.segment]}22` }}
         >
-          <span className="rounded-full bg-slate-950/60 px-2.5 py-0.5 text-xs font-bold text-slate-200">
+          <span className="rounded-full bg-[var(--bg-deep)]/60 px-2.5 py-0.5 text-xs font-bold text-[var(--text-body)]">
             {ACTION_LABELS[event.ceremony]}
           </span>
           <span
             id={segId}
-            className="rounded-full px-2.5 py-0.5 text-xs font-bold text-slate-950"
+            className="rounded-full px-2.5 py-0.5 text-xs font-bold text-[var(--bg)]"
             style={{ backgroundColor: SEGMENT_COLORS[event.segment] }}
           >
             {SEGMENT_LABELS[event.segment]}
           </span>
-          <h2 id={titleId} className="w-full text-base font-bold text-slate-100">
+          <h2 id={titleId} className="w-full text-base font-bold text-[var(--text)]">
             {event.title}
           </h2>
         </header>
@@ -123,14 +123,14 @@ export function EventModal({ event, unexpected, aiTokens, revealHint, timed, onC
                   <button
                     type="button"
                     onClick={() => setTimerOff(true)}
-                    className="rounded border border-amber-400/40 px-1.5 py-0.5 text-[10px] text-amber-200 transition hover:bg-amber-400/10"
+                    className="rounded border border-amber-400/40 px-1.5 py-0.5 text-[10px] text-amber-200 transition hover:bg-[var(--accent)]/10"
                   >
                     解除
                   </button>
                 </span>
               </div>
               <div
-                className="h-1 overflow-hidden rounded-full bg-slate-700"
+                className="h-1 overflow-hidden rounded-full bg-[var(--border)]"
                 role="progressbar"
                 aria-label="判断の残り時間"
                 aria-valuenow={remaining}
@@ -138,7 +138,7 @@ export function EventModal({ event, unexpected, aiTokens, revealHint, timed, onC
                 aria-valuemax={TIMED_SECONDS}
               >
                 <div
-                  className="h-full rounded-full bg-amber-400 transition-[width] duration-1000 ease-linear motion-reduce:transition-none"
+                  className="h-full rounded-full bg-[var(--accent)] transition-[width] duration-1000 ease-linear motion-reduce:transition-none"
                   style={{ width: `${(remaining / TIMED_SECONDS) * 100}%` }}
                 />
               </div>
@@ -149,11 +149,11 @@ export function EventModal({ event, unexpected, aiTokens, revealHint, timed, onC
             </div>
           )}
 
-          <p className="text-sm leading-relaxed text-slate-200">
+          <p className="text-sm leading-relaxed text-[var(--text-body)]">
             <RichText text={event.narrative} />
           </p>
 
-          {/* 推理で見抜いた本音（核心が“開く”）。手探りで選ぶのと、本音を掴んで選ぶのとの差。 */}
+          {/* 推理で見抜いた本音（核心が"開く"）。手探りで選ぶのと、本音を掴んで選ぶのとの差。 */}
           {revealHint && (
             <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
               見抜いた本音：
@@ -162,10 +162,10 @@ export function EventModal({ event, unexpected, aiTokens, revealHint, timed, onC
           )}
 
           <div className="space-y-2">
-            {/* 注記は選択肢の“上”に置き、選択肢を親指の届く最下段に配置（HIG: 主操作を下部に） */}
+            {/* 注記は選択肢の"上"に置き、選択肢を親指の届く最下段に配置（HIG: 主操作を下部に） */}
             <div className="flex flex-wrap items-baseline justify-between gap-x-2">
-              <p className="text-xs font-semibold text-slate-400">あなたの判断は？</p>
-              <p className="text-xs text-slate-400">※ 正解はない。結果は決めてから分かる</p>
+              <p className="text-xs font-semibold text-[var(--text-sub)]">あなたの判断は？</p>
+              <p className="text-xs text-[var(--text-sub)]">※ 正解はない。結果は決めてから分かる</p>
             </div>
             {event.choices.map((c) => {
               const cost = c.tokenCost ?? 0
@@ -178,7 +178,7 @@ export function EventModal({ event, unexpected, aiTokens, revealHint, timed, onC
                   onClick={() => {
                     // タイマーの自動発火と手動クリックの二重 onChoose を防ぐ（同tick競合ガード）。
                     firedRef.current = true
-                    // 判断を確定した瞬間の“決め”の合図（＝突きつける手応え）。
+                    // 判断を確定した瞬間の"決め"の合図（＝突きつける手応え）。
                     // この後ミニゲーム→結果開示へ。決定的瞬間の音は ResultModal が鳴らす。
                     sfxDecide()
                     onChoose(c)
@@ -191,22 +191,22 @@ export function EventModal({ event, unexpected, aiTokens, revealHint, timed, onC
                   }
                   className={`group block w-full rounded-xl border px-4 py-3 text-left transition ${
                     locked
-                      ? 'cursor-not-allowed border-slate-800 bg-slate-900/40 opacity-50'
-                      : 'border-slate-700 bg-slate-800/40 hover:border-sky-400 hover:bg-slate-800'
+                      ? 'cursor-not-allowed border-[var(--border)] bg-[var(--card)]/40 opacity-50'
+                      : 'border-[var(--border)] bg-[var(--panel)]/40 hover:border-[var(--link)] hover:bg-[var(--panel)]'
                   }`}
                 >
                   {/* 「静観」スタンス＝今は動かない選択を識別表示（LIPSの「沈黙も選択」の移植）。 */}
                   {c.restraint && (
-                    <span className="mb-1 inline-block rounded bg-slate-700/60 px-1.5 py-0.5 text-[10px] font-semibold text-slate-300">
+                    <span className="mb-1 inline-block rounded bg-[var(--border)]/60 px-1.5 py-0.5 text-[10px] font-semibold text-[var(--text-body)]">
                       静観
                     </span>
                   )}
-                  <span className="block text-sm font-medium text-slate-100">
+                  <span className="block text-sm font-medium text-[var(--text)]">
                     {/* メーター増減と⚠は選択前は伏せ、結果画面で初めて見せる（判断＝賭けにする）。
                         選択肢ラベルは外側が button なので、用語チップ(button)を入れ子にしない */}
                     <RichText text={c.label} interactive={false} />
                   </span>
-                  {/* AIトークンの“価格”だけは残す（残量不足の封印を成立させる資源コスト） */}
+                  {/* AIトークンの"価格"だけは残す（残量不足の封印を成立させる資源コスト） */}
                   {cost > 0 && (
                     <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
                       <span

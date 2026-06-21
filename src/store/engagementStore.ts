@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { CEREMONY_ORDER, CHAPTER_TITLE, SPRINTS, STARTING_METERS } from '../data/chapters/chapter-01'
 import { PRECEPT_BY_ID } from '../data/precepts'
 import { SEED_BY_ID } from '../data/seeds'
-import { refinePbi, reorderBacklog, reviewItem, startItem, toggleForecast } from '../engine/backlog'
+import { pullIntoSprint, refinePbi, reorderBacklog, reviewItem, startItem, toggleForecast } from '../engine/backlog'
 import { METER_MAX } from '../engine/game'
 import {
   arriveCore,
@@ -52,6 +52,8 @@ interface EngagementState extends ProgressCore {
   commitBacklogOrder: (ids: string[]) => void
   /** PBI を今スプリントの予測に出し入れ（プランニング中・未done・Ready のみ有効） */
   toggleForecast: (pbiId: string) => void
+  /** スプリント途中で追加の PBI を予測に引き込む（スコープ再交渉・作業中ビートのみ・追加のみ） */
+  pullIntoSprint: (pbiId: string) => void
   /** 発見した未リファインメントPBIを Ready 化する（プランニング中のみ。機構：Refinement） */
   refinePbi: (pbiId: string) => void
   /** 着手：To Do→In Progress（AI生成・トークン消費・WIP上限） */
@@ -396,6 +398,12 @@ export const useEngagement = create<EngagementState>((set, get) => ({
 
   toggleForecast: (pbiId) => {
     const next = toggleForecast(coreOf(get()), pbiId)
+    set(next)
+    persistCore(next)
+  },
+
+  pullIntoSprint: (pbiId) => {
+    const next = pullIntoSprint(coreOf(get()), pbiId)
     set(next)
     persistCore(next)
   },

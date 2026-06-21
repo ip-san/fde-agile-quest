@@ -8,14 +8,14 @@ interface Props {
   breakdown?: ValueBreakdown
 }
 
-/** 積み上げに使う“正の寄与”キー（penalty/total は積み上げない）。SEGMENTS をこれに縛り、
+/** 積み上げに使う"正の寄与"キー（penalty/total は積み上げない）。SEGMENTS をこれに縛り、
  *  penalty を誤って積み上げる／ breakdown[key] が number 以外に解決される事故を型で防ぐ。 */
 type ValueSegKey = Exclude<keyof ValueBreakdown, 'penalty' | 'total'>
 
-/** 顧客価値を構成する各レイヤーの“見せ方”定義。色＝出どころ（どの働きが積んだか）。
+/** 顧客価値を構成する各レイヤーの"見せ方"定義。色＝出どころ（どの働きが積んだか）。
  *  means＝ルーレットの判断（イベント層）／delivery・coverage＝バックログの実装（カンバン層）。 */
 const SEGMENTS: { key: ValueSegKey; color: string; dot: string; label: string }[] = [
-  { key: 'means', color: 'bg-amber-400', dot: 'bg-amber-400', label: '判断' },
+  { key: 'means', color: 'bg-[var(--accent)]', dot: 'bg-[var(--accent)]', label: '判断' },
   { key: 'delivery', color: 'bg-emerald-400', dot: 'bg-emerald-400', label: 'デリバリ' },
   { key: 'coverage', color: 'bg-cyan-400', dot: 'bg-cyan-400', label: 'コード' },
 ]
@@ -39,12 +39,12 @@ export function CustomerValueBar({ value, breakdown }: Props) {
   const ratio = Math.max(0, Math.min(100, value)) / 100
   const tone =
     value >= 70
-      ? { bar: 'from-amber-300 to-amber-500', text: 'text-amber-200', ring: 'ring-amber-500/40' }
+      ? { bar: 'from-amber-300 to-amber-500', text: 'text-amber-200', ring: 'ring-[var(--accent)]/40' }
       : value >= 40
-        ? { bar: 'from-amber-400 to-yellow-600', text: 'text-amber-200', ring: 'ring-amber-500/40' }
-        : { bar: 'from-slate-400 to-slate-600', text: 'text-slate-300', ring: 'ring-slate-600/40' }
+        ? { bar: 'from-amber-400 to-yellow-600', text: 'text-amber-200', ring: 'ring-[var(--accent)]/40' }
+        : { bar: 'from-stone-400 to-stone-600', text: 'text-[var(--text-sub)]', ring: 'ring-[var(--border-strong)]/40' }
   return (
-    <div className={`rounded-xl border border-amber-500/30 bg-slate-900/40 px-4 py-3 ring-1 ${tone.ring}`}>
+    <div className={`rounded-xl border border-amber-500/30 bg-[var(--card)]/40 px-4 py-3 ring-1 ${tone.ring}`}>
       <div className="mb-1.5 flex items-center justify-between">
         <span className="flex items-center gap-1.5 text-sm font-bold text-amber-100">
           顧客価値
@@ -71,7 +71,7 @@ export function CustomerValueBar({ value, breakdown }: Props) {
         <StackedBar value={value} breakdown={breakdown} />
       ) : (
         <div
-          className="h-3 overflow-hidden rounded-full bg-slate-800"
+          className="h-3 overflow-hidden rounded-full bg-[var(--panel)]"
           role="progressbar"
           aria-label="顧客価値"
           aria-valuenow={value}
@@ -86,12 +86,12 @@ export function CustomerValueBar({ value, breakdown }: Props) {
       )}
 
       {breakdown ? (
-        <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-slate-300">
+        <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-[var(--text-sub)]">
           {SEGMENTS.map((s) => (
             <span key={s.key} className="flex items-center gap-1">
               <span aria-hidden="true" className={`inline-block h-2 w-2 rounded ${s.dot}`} />
               {s.label}
-              <span className="tabular-nums text-slate-400">{Math.round(breakdown[s.key])}</span>
+              <span className="tabular-nums text-[var(--text-sub)]">{Math.round(breakdown[s.key])}</span>
             </span>
           ))}
           {breakdown.penalty > 0 && (
@@ -103,7 +103,7 @@ export function CustomerValueBar({ value, breakdown }: Props) {
         </div>
       ) : null}
 
-      <p className="mt-1.5 text-xs leading-snug text-amber-200/70">
+      <p className="mt-1.5 text-xs leading-snug text-amber-200">
         {breakdown ? (
           <>判断と実装、両方の成果がここに集まる。</>
         ) : (
@@ -114,7 +114,7 @@ export function CustomerValueBar({ value, breakdown }: Props) {
   )
 }
 
-/** 内訳を積み上げで描く北極星バー。各セグメント幅＝そのレイヤーの“gross寄与”を total に按分（合計=total）。
+/** 内訳を積み上げで描く北極星バー。各セグメント幅＝そのレイヤーの"gross寄与"を total に按分（合計=total）。
  *  ＝判断（amber）・デリバリ（emerald）・コード（cyan）が一本に積み上がり、負債はそれを縮める。 */
 function StackedBar({ value, breakdown }: { value: number; breakdown: ValueBreakdown }) {
   const gross = breakdown.means + breakdown.delivery + breakdown.coverage
@@ -126,7 +126,7 @@ function StackedBar({ value, breakdown }: { value: number; breakdown: ValueBreak
   )}・コード${Math.round(breakdown.coverage)}・負債−${Math.round(breakdown.penalty)}）`
   return (
     <div
-      className="flex h-3 overflow-hidden rounded-full bg-slate-800"
+      className="flex h-3 overflow-hidden rounded-full bg-[var(--panel)]"
       role="progressbar"
       aria-label={label}
       aria-valuenow={value}

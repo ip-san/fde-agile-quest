@@ -7,7 +7,7 @@ interface Props {
   onResolve: (tier: ExecTier) => void
 }
 
-/** 開発パズル：シャッフルされた“開発の手順”を、正しい順に組み直す（並べ替え）。 */
+/** 開発パズル：シャッフルされた"開発の手順"を、正しい順に組み直す（並べ替え）。 */
 export function MiniGameDevPuzzle({ seed, onResolve }: Props) {
   const [flow] = useState<DevFlow>(() => dealDevFlow(seed))
   const [answer, setAnswer] = useState<string[]>([]) // 置いた順
@@ -19,8 +19,8 @@ export function MiniGameDevPuzzle({ seed, onResolve }: Props) {
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-slate-300">
-        開発の手順を組み直す。 <span className="text-slate-400">正しい順にタップで並べる</span>
+      <p className="text-sm text-[var(--text-body)]">
+        開発の手順を組み直す。 <span className="text-[var(--text-sub)]">正しい順にタップで並べる</span>
       </p>
 
       {/* 並べたスロット（タップで戻す） */}
@@ -29,20 +29,20 @@ export function MiniGameDevPuzzle({ seed, onResolve }: Props) {
           const s = answer[i]
           return (
             <li key={`slot-${i}`} className="flex items-center gap-2">
-              <span className="w-5 shrink-0 text-right text-xs tabular-nums text-slate-400">{i + 1}.</span>
+              <span className="w-5 shrink-0 text-right text-xs tabular-nums text-[var(--text-sub)]">{i + 1}.</span>
               {s ? (
                 <button
                   type="button"
                   onClick={() => remove(s)}
-                  className="min-h-[44px] flex-1 rounded-lg border border-sky-400/60 bg-sky-500/15 px-3 py-2.5 text-left text-sm text-slate-100 transition hover:bg-sky-500/25"
+                  className="min-h-[44px] flex-1 rounded-lg border border-[var(--link)]/60 bg-[var(--accent)]/15 px-3 py-2.5 text-left text-sm text-[var(--text)] transition hover:bg-[var(--accent)]/25"
                 >
                   {s}
-                  <span className="ml-1 text-[10px] text-slate-400" aria-hidden="true">
+                  <span className="ml-1 text-[10px] text-[var(--text-sub)]" aria-hidden="true">
                     （戻す）
                   </span>
                 </button>
               ) : (
-                <span className="flex-1 rounded-lg border border-dashed border-slate-700 px-3 py-2 text-sm text-slate-400">
+                <span className="flex-1 rounded-lg border border-dashed border-[var(--border)] px-3 py-2 text-sm text-[var(--text-sub)]">
                   ——
                 </span>
               )}
@@ -53,14 +53,14 @@ export function MiniGameDevPuzzle({ seed, onResolve }: Props) {
 
       {/* 未配置のタイル */}
       {remaining.length > 0 && (
-        <div className="flex flex-wrap gap-2.5 border-t border-slate-800 pt-3">
+        <div className="flex flex-wrap gap-2.5 border-t border-[var(--panel)] pt-3">
           {remaining.map((s, i) => (
             <button
               key={s}
               type="button"
               onClick={() => place(s)}
               data-initial-focus={i === 0 ? true : undefined}
-              className="min-h-[44px] rounded-lg border border-slate-700 bg-slate-800/40 px-3.5 py-2.5 text-sm text-slate-200 transition hover:border-sky-500/50 hover:bg-slate-800"
+              className="min-h-[44px] rounded-lg border border-[var(--border)] bg-[var(--panel)]/40 px-3.5 py-2.5 text-sm text-[var(--text-body)] transition hover:border-amber-500/50 hover:bg-[var(--panel)]"
             >
               {s}
             </button>
@@ -73,7 +73,7 @@ export function MiniGameDevPuzzle({ seed, onResolve }: Props) {
         disabled={!full}
         onClick={() => onResolve(scoreSequence(answer, flow.correct))}
         data-initial-focus={full ? true : undefined}
-        className="min-h-[44px] w-full rounded-xl bg-sky-500 py-3 font-bold text-slate-950 transition hover:bg-sky-400 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-600 disabled:text-slate-400"
+        className="min-h-[44px] w-full rounded-xl bg-[var(--accent)] py-3 font-bold text-[var(--bg)] transition hover:bg-[var(--accent-hover)] active:scale-95 disabled:cursor-not-allowed disabled:bg-[var(--border-strong)] disabled:text-[var(--text-disabled)]"
       >
         {full ? 'この手順で組み上げる' : `あと ${flow.steps.length - answer.length} つ`}
       </button>
