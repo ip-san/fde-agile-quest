@@ -277,10 +277,41 @@ export function resolveSprintBacklog(core: ProgressCore): { core: ProgressCore; 
     velocity: velocityPts,
     cultureDelta: appliedCultureDelta,
   }
+
+  // 機構②: ステークホルダー間の“非対称トレードオフ”を記録する。今スプリントのゴール直結項目
+  // (sprintHint===sprintNo) をステークホルダー別に見て、「一方のゴールを届けた“のに”他方を未達にした」
+  // ときだけ、後回しにされた側の反応フラグを立てる（後段で遅れて響く）。
+  // ＝容量不足で両方未達／両方達成では発火しない＝明確に「どちらを選んだか」のときのみ。単一正解化を避ける
+  //   機会コスト型：現場優先→情シスが不安(trust摩擦)／情シス優先→現場が後回し(insight機会損失)。
+  const sprintNo = SPRINTS[core.sprintIndex]?.n
+  let flags = core.flags
+  if (sprintNo !== undefined) {
+    // 判定は“今スプリントに予測（forecast）したゴール項目”に限る＝プレイヤーが実際に抱えた約束の範囲。
+    //   これにより「容量の都合で最初から積まなかった項目」では発火せず、「両方積んだのに片方だけ終えた＝
+    //   どちらを finish するか選んだ」明確なトレードオフのときだけ後回し側のフラグが立つ（過剰発火を防ぐ）。
+    const goalForecastOf = (s: 'joushi' | 'genba') =>
+      core.sprintForecast.filter((id) => {
+        const p = PBI_BY_ID.get(id)
+        return p?.sprintHint === sprintNo && p.stakeholder === s
+      })
+    const someDelivered = (ids: string[]) => ids.some((id) => doneThisSprint.includes(id))
+    const someUndelivered = (ids: string[]) => ids.some((id) => !doneSet.has(id))
+    const genbaGoal = goalForecastOf('genba')
+    const joushiGoal = goalForecastOf('joushi')
+    const addFlag = (f: GameFlag) => {
+      if (!flags.has(f)) flags = new Set(flags).add(f)
+    }
+    // 現場のゴールを届け、情シスのゴールを未達 → 情シス(結城)を後回しにした
+    if (someDelivered(genbaGoal) && someUndelivered(joushiGoal)) addFlag('deprioritizedJoushi')
+    // 情シスのゴールを届け、現場のゴールを未達 → 現場(田淵)を後回しにした
+    if (someDelivered(joushiGoal) && someUndelivered(genbaGoal)) addFlag('deprioritizedGenba')
+  }
+
   // 精算後は次スプリントへ：予測/In Progress/進捗をクリア、レビュー容量を満タンに戻す
   const next: ProgressCore = {
     ...core,
     meters,
+    flags,
     velocity,
     sprintForecast: [],
     inProgress: [],

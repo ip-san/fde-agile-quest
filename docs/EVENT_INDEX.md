@@ -1,7 +1,7 @@
 # 全イベント索引（自動生成）
 
 > `node scripts/gen-event-index.mjs` で再生成。**手で編集しない**（筋書きの調整は docs/STORY.md）。
-> 物語の矛盾チェック用スナップショット。総イベント数: **130**。
+> 物語の矛盾チェック用スナップショット。総イベント数: **132**。
 > 記法: ⚠=warn / →flag=この選択でフラグが立つ / [要flag]=このフラグがある時だけ出現。
 
 
@@ -533,6 +533,14 @@
 - **夜勤明けの、誤出荷** `s3-daily-night-shift-miss`（トラブル _[要 missedNightShift]_） 心得:6,67
     - ⚠ 夜勤の不注意として詫び状を出し、その場を収める `{ trust: 1, insight: -1, culture: -1 }`
     - 今からでも夜勤帯に張り付き、口頭の申し送りを仕組みで塞ぐ `{ insight: 2, trust: -1 }`
+
+- **見せる数字が、まだ無い** `s3-daily-joushi-deprioritized`（顧客 _[要 deprioritizedJoushi]_） 心得:79,81
+    - ⚠ 現場の改善が先だと押し通し、数字の話はもう一スプリント待ってもらう `{ insight: 1, trust: -2 }`
+    - 現場の成果を“結城が経営に見せられる一枚”に翻訳し、今スプリントで数字を届ける `{ insight: 1, culture: 1, trust: 1 }`
+
+- **後回しにされた、使い勝手** `s3-daily-genba-deprioritized`（現場 _[要 deprioritizedGenba]_） 心得:1,67
+    - ⚠ 数字は届いている。現場の細かい使い勝手は次章の課題として先送りする `{ trust: 1, insight: -1, culture: -1 }`
+    - 今からでも倉庫に立ち、後回しにした使い勝手を一つ拾って直す `{ insight: 2, trust: -1 }`
 
 ### レビュー
 

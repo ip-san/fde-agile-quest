@@ -131,6 +131,22 @@ export const THREADS: Record<GameFlag, Thread> = {
     note: '浅いレビューのまま DoD を妥協して Ship（reviewItem quick 完了で立つ）→負債スコア＋ s2-daily-undone-debt（DoD を一つ飛ばして Done にした判断の取り立てが現場で表に出る）で回収',
     teaser: 'DoD を妥協して通したものが、取り立てを待っている。',
   },
+  deprioritizedJoushi: {
+    // 機構②: スプリント精算(resolveSprintBacklog)で立つ＝データ外経路なので 'kanban'。
+    // s3-daily-joushi-deprioritized（発注者＝結城の不安・面子＝trust摩擦）で回収。
+    setVia: ['kanban'],
+    payoffVia: ['event', 'score'],
+    note: '現場のゴールを届け情シス(結城)のゴールを後回し→ s3-daily-joushi-deprioritized で発注者の不安・面子として回収（trust摩擦・非対称に重い）',
+    teaser: '進捗を見せたい相手を、後回しにしたかもしれない。',
+  },
+  deprioritizedGenba: {
+    // 機構②: スプリント精算で立つ＝データ外経路 'kanban'。
+    // s3-daily-genba-deprioritized（現場＝田淵の後回し＝insight機会損失/手戻り）で回収。
+    setVia: ['kanban'],
+    payoffVia: ['event', 'score'],
+    note: '情シスのゴールを届け現場(田淵)のゴールを後回し→ s3-daily-genba-deprioritized で現場の手戻り・機会損失として回収（insight・機会損失アークの時間差）',
+    teaser: '使える物を待つ現場を、後回しにしたかもしれない。',
+  },
 }
 
 /** いま盤面で追う「未回収の伏線」＝フラグが立っていて、まだ回収イベントが解決していないもの。

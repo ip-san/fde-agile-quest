@@ -247,6 +247,37 @@ describe('resolveSprintBacklog（カンバン精算）', () => {
   })
 })
 
+describe('機構②: ステークホルダー間の非対称トレードオフ（resolveSprintBacklog のフラグ）', () => {
+  // S2(sprintIndex=1) のゴール: genba=picking-screen/feedback-loop, joushi=misship-mvp/stock-reconcile
+  const S2 = 1
+  const GENBA = 'pbi-picking-screen'
+  const JOUSHI = 'pbi-misship-mvp'
+
+  it('現場のゴールを届け、情シスのゴールを未達 → deprioritizedJoushi（結城を後回し）', () => {
+    const c = core({ sprintIndex: S2, sprintForecast: [GENBA, JOUSHI], backlogDone: [GENBA] })
+    const { core: next } = resolveSprintBacklog(c)
+    expect(next.flags.has('deprioritizedJoushi')).toBe(true)
+    expect(next.flags.has('deprioritizedGenba')).toBe(false)
+  })
+  it('情シスのゴールを届け、現場のゴールを未達 → deprioritizedGenba（田淵を後回し）', () => {
+    const c = core({ sprintIndex: S2, sprintForecast: [GENBA, JOUSHI], backlogDone: [JOUSHI] })
+    const { core: next } = resolveSprintBacklog(c)
+    expect(next.flags.has('deprioritizedGenba')).toBe(true)
+    expect(next.flags.has('deprioritizedJoushi')).toBe(false)
+  })
+  it('両方届けた／両方未達では、どちらの非対称フラグも立たない（明確なトレードオフのみ）', () => {
+    const both = core({ sprintIndex: S2, sprintForecast: [GENBA, JOUSHI], backlogDone: [GENBA, JOUSHI] })
+    const n1 = resolveSprintBacklog(both).core
+    expect(n1.flags.has('deprioritizedJoushi')).toBe(false)
+    expect(n1.flags.has('deprioritizedGenba')).toBe(false)
+    // 両方未達（着手中で engaged だが Done 無し）＝容量不足。後回しの“選択”ではないので発火しない
+    const neither = core({ sprintIndex: S2, sprintForecast: [GENBA, JOUSHI], inProgress: [GENBA], backlogDone: [] })
+    const n2 = resolveSprintBacklog(neither).core
+    expect(n2.flags.has('deprioritizedJoushi')).toBe(false)
+    expect(n2.flags.has('deprioritizedGenba')).toBe(false)
+  })
+})
+
 describe('発見可PBI（ヒアリングで掘り当てる）', () => {
   it('発見可PBIは既知だが初期のプロダクトバックログ（backlogOrder）には現れない', () => {
     expect(isKnownPbi(DISC)).toBe(true)

@@ -164,6 +164,8 @@ const VALID_FLAGS = {
   groundedGoal: true,
   soloHero: true,
   shippedUndone: true,
+  deprioritizedJoushi: true,
+  deprioritizedGenba: true,
 } satisfies Record<GameFlag, true>
 const FLAG_SET = new Set<string>(Object.keys(VALID_FLAGS))
 
