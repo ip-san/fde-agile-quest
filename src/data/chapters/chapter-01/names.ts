@@ -60,8 +60,8 @@ export const NAMES: Record<NameId, NameDef> = {
   lumen: { canonical: 'ルミクラウド', name: 'ルミクラウド', kind: 'company' },
   cargo: {
     canonical: 'カルゴ物流',
-    name: 'カルゴ物流',
-    reading: 'カルゴぶつりゅう',
+    name: '翠流物流',
+    reading: 'すいりゅうぶつりゅう',
     kind: 'company',
     also: ['カルゴ'],
   },
