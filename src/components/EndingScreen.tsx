@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { displayName } from '../data/chapters/chapter-01/names'
 import type { ValueBreakdown } from '../engine/progression'
 import type { Epilogue, LogEntry, Meters } from '../types'
 import { CustomerValueBar } from './CustomerValueBar'
@@ -203,15 +204,30 @@ export function EndingScreen({
         {ending.reflection}
       </p>
 
-      {/* 不正の伏線を掴んだ周回だけ出す"次章への引き"（告発の決着は第1章ではつけない） */}
-      {teaser && !failed && (
+      {/* "次章への引き"（クリア時のみ）。告発の決着は第1章ではつけない（§6.5）。
+          全員向け＝ショーケース弧の伏線（フィジカルAI実証が“ルミクラウドのおかげで順調”と上方向に
+          報告され＝主人公の本物の仕事が見栄えの数字に転用される皮肉。産学官/補助金の決着には絡めず、
+          機械が回り続ける匂わせだけ残して第二章へ繋ぐ）。不正を掴んだ周回はさらに違和感の引きを重ねる。 */}
+      {!failed && (
         <div className="rounded-2xl border border-amber-600/40 bg-amber-950/20 p-5">
           <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-widest text-amber-400/80">
             To be continued — 次章へ
           </p>
-          <p className="text-sm leading-relaxed text-amber-100/90">{teaser}</p>
-          {/* 決着はつけず（§6.5）、主人公の"姿勢"だけを選ばせて繰り延べを焦らしに変える */}
-          <FraudStanceBeat hint={fraudHint as 'clue' | 'case'} />
+          <p className="text-sm leading-relaxed text-amber-100/90">
+            ——後日、グループの定例報告。{displayName('grandparent')}は、さらに上の{displayName('parent')}
+            へ、こう上げたという。「フィジカルAI実証、順調に進んでおります。現場のIT化が効きました——
+            {displayName('lumen')}のおかげで」。あなたが現場で積み上げた本物の一歩は、いつのまにか
+            “実証は進んでいる”という見栄えの数字に書き換えられていた。倍力装置の華々しいお披露目は、
+            まだ終わっていない。次の舞台は、その奥にある。
+          </p>
+          {/* 不正の伏線を掴んだ周回だけ、個人の“違和感”の引きを重ねる。決着はつけず（§6.5）、
+              主人公の"姿勢"だけを選ばせて繰り延べを焦らしに変える。 */}
+          {teaser && (
+            <div className="mt-3 border-t border-amber-600/20 pt-3">
+              <p className="text-sm leading-relaxed text-amber-100/90">{teaser}</p>
+              <FraudStanceBeat hint={fraudHint as 'clue' | 'case'} />
+            </div>
+          )}
         </div>
       )}
 
