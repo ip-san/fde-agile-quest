@@ -12,7 +12,9 @@ import {
   type ProposalVerdict,
   REVIEW_CAPACITY,
   reviewBacklogProposal,
+  reviewCapacityFor,
   WIP_LIMIT,
+  wipLimitFor,
 } from '../engine/backlog'
 import type { ProgressCore } from '../engine/progression'
 import { useFocusTrap } from '../hooks/useFocusTrap'
@@ -25,7 +27,14 @@ import { RichText } from './RichText'
 /** canStart/canReview に渡す最小コア（カンバンのゲート判定に必要な欄だけ） */
 type KanbanCore = Pick<
   ProgressCore,
-  'sprintIndex' | 'beatIndex' | 'sprintForecast' | 'backlogDone' | 'inProgress' | 'reviewCapacity' | 'aiTokens'
+  | 'sprintIndex'
+  | 'beatIndex'
+  | 'sprintForecast'
+  | 'backlogDone'
+  | 'inProgress'
+  | 'reviewCapacity'
+  | 'aiTokens'
+  | 'retroImprovements'
 >
 
 interface Props {
@@ -54,6 +63,7 @@ export function BacklogPanel({ onClose }: Props) {
     aiTokens,
     lastCarryover,
     sprintGoals,
+    retroImprovements,
     commitBacklogOrder,
     toggleForecast,
     startItem,
@@ -98,6 +108,7 @@ export function BacklogPanel({ onClose }: Props) {
               backlogDone={backlogDone}
               velocity={velocity}
               lastCarryover={lastCarryover}
+              retroImprovements={retroImprovements}
               commitBacklogOrder={commitBacklogOrder}
               toggleForecast={toggleForecast}
             />
@@ -115,7 +126,16 @@ export function BacklogPanel({ onClose }: Props) {
               aiTokens={aiTokens}
               startItem={startItem}
               reviewItem={reviewItem}
-              core={{ sprintIndex, beatIndex, sprintForecast, backlogDone, inProgress, reviewCapacity, aiTokens }}
+              core={{
+                sprintIndex,
+                beatIndex,
+                sprintForecast,
+                backlogDone,
+                inProgress,
+                reviewCapacity,
+                aiTokens,
+                retroImprovements,
+              }}
             />
           )}
         </div>
@@ -186,6 +206,7 @@ interface PlanningProps {
   backlogDone: string[]
   velocity: number[]
   lastCarryover: string[]
+  retroImprovements: string[]
   commitBacklogOrder: (ids: string[]) => void
   toggleForecast: (id: string) => void
 }
@@ -197,12 +218,13 @@ function PlanningView({
   backlogDone,
   velocity,
   lastCarryover,
+  retroImprovements,
   commitBacklogOrder,
   toggleForecast,
 }: PlanningProps) {
   // 予測の"目安"＝今スプリントで実際に終わらせられる量。律速は人のレビュー容量なので
-  // それを基準にする（前回ベロシティではなく、真のボトルネックに合わせる）。
-  const capacity = REVIEW_CAPACITY
+  // それを基準にする（前回ベロシティではなく、真のボトルネックに合わせる）。レトロ改善(capacity)を反映。
+  const capacity = reviewCapacityFor(retroImprovements)
   // 前回スプリントから持ち越された PBI のうち、まだ未 done のもの
   const carryoverSet = useMemo(() => new Set(lastCarryover), [lastCarryover])
   const fpts = forecastPoints({ sprintForecast })
@@ -515,6 +537,9 @@ function KanbanView({
 
   const todo = sprintForecast.filter((id) => !doneSet.has(id) && !inProgSet.has(id))
   const done = sprintForecast.filter((id) => doneSet.has(id))
+  // レトロ改善（機構：Retro 昇格）を反映した上限。capacity 投資で容量↑／wip 改善で仕掛り上限↓。
+  const maxReview = reviewCapacityFor(core.retroImprovements)
+  const wipMax = wipLimitFor(core.retroImprovements)
 
   if (sprintForecast.length === 0) {
     return (
@@ -537,13 +562,14 @@ function KanbanView({
           <div className="flex items-center justify-between text-xs">
             <span className="text-slate-300">レビュー容量</span>
             <span className="tabular-nums text-slate-300">
-              {reviewCapacity} / {REVIEW_CAPACITY}
+              {reviewCapacity} / {maxReview}
+              {maxReview > REVIEW_CAPACITY && <span className="ml-1 text-emerald-400">🔧</span>}
             </span>
           </div>
           <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-700">
             <div
               className="h-full rounded-full bg-emerald-400"
-              style={{ width: `${(Math.max(0, reviewCapacity) / REVIEW_CAPACITY) * 100}%` }}
+              style={{ width: `${(Math.max(0, reviewCapacity) / maxReview) * 100}%` }}
             />
           </div>
         </div>
@@ -552,7 +578,8 @@ function KanbanView({
             <RichText text="{{仕掛り}}" />
           </div>
           <div className="tabular-nums text-sm text-slate-200">
-            {inProgress.length}/{WIP_LIMIT}
+            {inProgress.length}/{wipMax}
+            {wipMax < WIP_LIMIT && <span className="ml-1 text-emerald-400">🔧</span>}
           </div>
         </div>
       </div>

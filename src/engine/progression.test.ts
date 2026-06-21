@@ -777,6 +777,19 @@ describe('機構①: 発見の信頼ゲート＋掘り損ねの顕在化（disco
   })
 })
 
+describe('機構：Retro 昇格（choice.retroLever でプロセス改善を積む）', () => {
+  it('レトロの選択で retroLever があれば retroImprovements に積まれる', () => {
+    const core = eventCore({ currentEvent: synthEvent({ ceremony: 'retro' }) })
+    const next = chooseCore(core, choice({}, { retroLever: 'capacity' }))
+    expect(next.retroImprovements).toEqual(['capacity'])
+  })
+  it('retroLever 無しの選択では retroImprovements は変わらない', () => {
+    const core = eventCore({ currentEvent: synthEvent({ ceremony: 'retro' }), retroImprovements: ['wip'] })
+    const next = chooseCore(core, choice({ insight: 1 }))
+    expect(next.retroImprovements).toEqual(['wip'])
+  })
+})
+
 describe('restoreCore — 永続データからの復元', () => {
   const base: Persisted = {
     meters: m(),

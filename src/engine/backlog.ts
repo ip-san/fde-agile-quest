@@ -13,10 +13,22 @@ import type { ProgressCore } from './progression'
 const PBI_BY_ID = new Map<string, BacklogItem>([...PRODUCT_BACKLOG, ...DISCOVERABLE_BACKLOG].map((p) => [p.id, p]))
 
 // ── カンバン／レビューのバランス定数（暫定・調整可）──
-/** 同時着手の上限（In Progress 列の WIP 制限。仕掛りを学ぶ） */
+/** 同時着手の上限（In Progress 列の WIP 制限。仕掛りを学ぶ）。レトロ改善で下げられる（下限1）。 */
 export const WIP_LIMIT = 2
-/** 1スプリントの人間レビュー容量（毎スプリントこの値にリセット＝ボトルネック資源） */
+/** 1スプリントの人間レビュー容量（毎スプリントこの値にリセット＝ボトルネック資源）。レトロ改善で増やせる。 */
 export const REVIEW_CAPACITY = 6
+
+// ── レトロ改善（機構：Retro 昇格）──
+// レトロでプレイヤーが選んだプロセス改善を retroImprovements に積む（'capacity'/'wip'）。
+// 1レトロ1つ＝他は見送り（機会コスト）。次スプリント以降のパラメータに永続して効く。
+/** レトロ改善を反映したレビュー容量（制約理論：ボトルネックを広げる投資。'capacity' 1つにつき +1）。 */
+export function reviewCapacityFor(retroImprovements: readonly string[]): number {
+  return REVIEW_CAPACITY + retroImprovements.filter((x) => x === 'capacity').length
+}
+/** レトロ改善を反映した WIP 上限（フロー改善：仕掛りを絞る。'wip' 1つにつき −1、下限1）。 */
+export function wipLimitFor(retroImprovements: readonly string[]): number {
+  return Math.max(1, WIP_LIMIT - retroImprovements.filter((x) => x === 'wip').length)
+}
 /** 着手1回（AIにドラフト生成させる）の生成トークンコスト（安い） */
 export const GEN_TOKEN_COST = 80
 /** レビュー深さごとの容量コスト */
@@ -183,7 +195,10 @@ export function moveBacklogItem(core: ProgressCore, id: string, dir: -1 | 1): Pr
 
 /** 着手できるか（To Do→In Progress）。作業中ビート・予測内・未done・未着手・WIP余裕・生成トークンあり。 */
 export function canStart(
-  core: Pick<ProgressCore, 'sprintIndex' | 'beatIndex' | 'sprintForecast' | 'backlogDone' | 'inProgress' | 'aiTokens'>,
+  core: Pick<
+    ProgressCore,
+    'sprintIndex' | 'beatIndex' | 'sprintForecast' | 'backlogDone' | 'inProgress' | 'aiTokens' | 'retroImprovements'
+  >,
   pbiId: string
 ): boolean {
   return (
@@ -192,7 +207,7 @@ export function canStart(
     core.sprintForecast.includes(pbiId) &&
     !core.backlogDone.includes(pbiId) &&
     !core.inProgress.includes(pbiId) &&
-    core.inProgress.length < WIP_LIMIT &&
+    core.inProgress.length < wipLimitFor(core.retroImprovements) &&
     core.aiTokens >= GEN_TOKEN_COST
   )
 }
@@ -335,7 +350,8 @@ export function resolveSprintBacklog(core: ProgressCore): { core: ProgressCore; 
     sprintForecast: [],
     inProgress: [],
     reviewProgress: {},
-    reviewCapacity: REVIEW_CAPACITY,
+    // レビュー容量は満タンにリセット＝レトロ改善（capacity 投資）を反映した上限まで戻す
+    reviewCapacity: reviewCapacityFor(core.retroImprovements),
     // 次プランニングで「↪前回持ち越し」を示すため、終わらせきれなかった分を記録（done なら []）
     lastCarryover: carryIds,
   }

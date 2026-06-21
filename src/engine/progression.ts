@@ -36,7 +36,8 @@ import {
   REVIEW_CAPACITY,
   resolveSprintBacklog,
   revealPbi,
-  WIP_LIMIT,
+  reviewCapacityFor,
+  wipLimitFor,
 } from './backlog'
 import {
   amplifyEffects,
@@ -107,6 +108,9 @@ export interface ProgressCore {
   /** 直前スプリントのレビューで終わらせきれず持ち越した PBI id 群（次プランニングで「↪前回持ち越し」表示に使う）。
    *  レビュー精算で carryIds を書き、次レビューで上書きされる。初期＝[]。 */
   lastCarryover: string[]
+  /** レトロで選んだプロセス改善の積み上げ（'capacity'/'wip'）。機構：Retro 昇格。
+   *  次スプリント以降のレビュー容量(reviewCapacityFor)・WIP上限(wipLimitFor)に永続して効く。初期＝[]。 */
+  retroImprovements: string[]
 }
 
 export const REPO_COVERAGE_MAX = 100
@@ -165,6 +169,8 @@ export interface Persisted {
   reviewCapacity?: number
   /** 直前スプリントの持ち越し（旧セーブには無いので [] で補完） */
   lastCarryover?: string[]
+  /** レトロで選んだプロセス改善（旧セーブには無いので [] で補完） */
+  retroImprovements?: string[]
 }
 
 const METER_KEYS: MeterKey[] = ['trust', 'insight', 'culture']
@@ -214,6 +220,7 @@ export function freshCore(starting: Meters): ProgressCore {
     reviewProgress: {},
     reviewCapacity: REVIEW_CAPACITY,
     lastCarryover: [],
+    retroImprovements: [],
   }
 }
 
@@ -489,6 +496,8 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
     sprintGoals = [...core.sprintGoals]
     sprintGoals[core.sprintIndex] = choice.sprintGoal
   }
+  // レトロでプロセス改善を“選ぶ”: choice.retroLever があれば積む（次スプリント以降の容量/WIP に効く）
+  const retroImprovements = choice.retroLever ? [...core.retroImprovements, choice.retroLever] : core.retroImprovements
   const resolvedIds = new Set(core.resolvedIds).add(event.id)
   const log: LogEntry[] = [
     ...core.log,
@@ -511,6 +520,7 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
     repoCoverage,
     repoDebt,
     sprintGoals,
+    retroImprovements,
     greatStreak: nextGreatStreak,
   }
 
@@ -665,7 +675,12 @@ function restoreBacklog(
   | 'reviewProgress'
   | 'reviewCapacity'
   | 'lastCarryover'
+  | 'retroImprovements'
 > {
+  // レトロ改善は既知レバー('capacity'/'wip')のみ復元（破損・旧スキーマは捨てる）。容量/WIP の上限導出に使う。
+  const retroImprovements = (Array.isArray(p.retroImprovements) ? p.retroImprovements : []).filter(
+    (x): x is string => x === 'capacity' || x === 'wip'
+  )
   const seedOrder = PRODUCT_BACKLOG.map((q) => q.id)
   const savedOrder = (Array.isArray(p.backlogOrder) ? p.backlogOrder : []).filter(
     (id): id is string => typeof id === 'string' && isKnownPbi(id)
@@ -700,17 +715,18 @@ function restoreBacklog(
   const forecastSet = new Set(sprintForecast)
   const inProgress = (Array.isArray(p.inProgress) ? p.inProgress : [])
     .filter((id): id is string => typeof id === 'string' && isKnownPbi(id) && forecastSet.has(id) && !done.has(id))
-    .slice(0, WIP_LIMIT)
+    .slice(0, wipLimitFor(retroImprovements))
   const rawProg = p.reviewProgress && typeof p.reviewProgress === 'object' ? p.reviewProgress : {}
   const reviewProgress: Record<string, number> = {}
   for (const id of inProgress) {
     const v = (rawProg as Record<string, unknown>)[id]
     reviewProgress[id] = typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : 0
   }
+  const capCap = reviewCapacityFor(retroImprovements)
   const reviewCapacity =
     typeof p.reviewCapacity === 'number' && Number.isFinite(p.reviewCapacity)
-      ? Math.max(0, Math.min(REVIEW_CAPACITY, p.reviewCapacity))
-      : REVIEW_CAPACITY
+      ? Math.max(0, Math.min(capCap, p.reviewCapacity))
+      : capCap
   // 持ち越しは既知 PBI のみ（表示用ヒント。done でも保持＝「前回終わらせた」とは別概念なので絞らない）
   const lastCarryover = (Array.isArray(p.lastCarryover) ? p.lastCarryover : []).filter(
     (id): id is string => typeof id === 'string' && isKnownPbi(id)
@@ -727,6 +743,7 @@ function restoreBacklog(
     reviewProgress,
     reviewCapacity,
     lastCarryover,
+    retroImprovements,
   }
 }
 
@@ -836,5 +853,6 @@ export function toPersisted(core: ProgressCore): Persisted {
     reviewProgress: core.reviewProgress,
     reviewCapacity: core.reviewCapacity,
     lastCarryover: core.lastCarryover,
+    retroImprovements: core.retroImprovements,
   }
 }

@@ -101,6 +101,10 @@ export interface Choice {
   setsFlag?: GameFlag
   /** プランニングの選択肢のみ：この狙いを選ぶと、その周回のスプリントゴール表示になる */
   sprintGoal?: string
+  /** レトロの選択肢のみ：選んだプロセス改善を次スプリント以降に効かせる（機構：Retro 昇格）。
+   *  'capacity'＝レビュー容量+1（制約理論：ボトルネックを広げる）／'wip'＝WIP上限−1（フロー改善）。
+   *  1レトロ1つ＝他は見送り（機会コスト）。retroImprovements に積まれ canStart/精算リセットに反映。 */
+  retroLever?: 'capacity' | 'wip'
   /** 危険な選択（UIで警告表示） */
   warn?: boolean
   /** 「静観」スタンス＝今は動かない／観察する／即答しない選択（サクラ大戦LIPSの「沈黙も選択」の移植）。
