@@ -186,18 +186,18 @@ function SprintGoalBanner({
     >
       <p className="text-[11px] leading-relaxed text-slate-400">
         <RichText text="{{スプリントゴール}}" />
-        <span className="ml-1 text-slate-500">—</span>
+        <span className="ml-1 text-slate-400">—</span>
         <span className="ml-1">
           {chosen ? (
             <span className="font-semibold text-sky-300">{chosen}</span>
           ) : isPlanning ? (
-            <span className="text-slate-500">プランニングで決める…</span>
+            <span className="text-slate-400">プランニングで決める…</span>
           ) : (
             <span className="font-semibold text-sky-300">{sprint.goal}</span>
           )}
         </span>
       </p>
-      {!isPlanning && <p className="mt-0.5 text-[10px] text-slate-500">予測はこれに資するか？</p>}
+      {!isPlanning && <p className="mt-0.5 text-[10px] text-slate-400">予測はこれに資するか？</p>}
     </div>
   )
 }
@@ -957,7 +957,7 @@ function StakeholderBalance({ forecastIds }: { forecastIds: string[] }) {
           {joushiPt}pt
         </span>
       )}
-      {joushiPt > 0 && genbaPt > 0 && <span className="text-[10px] text-slate-500">vs</span>}
+      {joushiPt > 0 && genbaPt > 0 && <span className="text-[10px] text-slate-400">vs</span>}
       {genbaPt > 0 && (
         <span className="flex items-center gap-1 text-[10px] font-semibold text-sky-300">
           <span className="rounded bg-sky-500/20 px-1 py-0.5">現場</span>
