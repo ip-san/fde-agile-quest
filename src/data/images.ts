@@ -44,6 +44,7 @@ export const AVAILABLE_IMAGES = new Set<string>([
   's3-daily-showcase-report', // 役員会議室・地味な成果を発表するFDE・失望した役員たち（期待vs現実の落差）
   's3-daily-handoff-trust', // 倉庫事務室・ベテランが「抜けたら元に戻るんじゃ」と前傾みで問いかける
   's2-daily-promise-gap', // タスク消化するFDE・ガラス越しに手書き作業が続く倉庫（ゴールの空回り）
+  's2-daily-grounded-core', // 田淵さんが手書きメモから顔を上げ心を開く瞬間（正しい問い→要件に届く・promise-gapの対）
   's1-daily-standup-zombie', // 全員が紙を読む形骸化したデイリー・触られないカンバン（zombie standup）
   's1-daily-cando', // 腕組みの係長・反論しかける若手・代案を書く3人目（無理筋要求と「できません」の分岐）
   's2-daily-pair', // ベロシティ折れ線を指す係長・うつむくチーム（ノルマ化の圧力）
