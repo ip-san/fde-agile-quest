@@ -85,6 +85,8 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     sprint: 2,
     ceremony: 'daily',
     segment: 'trouble',
+    // 「どう作って出すか」の実装判断＝開発ミニゲーム（手順並べ替え）が芯。現場への問い(hearing)は馴染まないため意図的に dev。
+    minigame: 'dev',
     title: '締切と技術的負債',
     narrative: '締切まで、あと二日。きれいに作る時間はない。{{技術的負債}}を承知で速く出すか、間に合わせを諦めるか。',
     choices: [
@@ -945,6 +947,8 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     sprint: 2,
     ceremony: 'daily',
     segment: 'trouble',
+    // 落ちた機能を「どう直すか」の不具合対応＝開発ミニゲーム（再現→原因→修正→再発防止）が芯。意図的に dev。
+    minigame: 'dev',
     title: 'レビュー前夜、機能が落ちた',
     narrative:
       '{{スプリントレビュー}}の前日、見せる予定だった機能が落ちた。郷田専務も来る。隠して別の見栄えで乗り切るか。',
