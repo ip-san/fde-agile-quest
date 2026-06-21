@@ -7,6 +7,8 @@ import {
   forecastPoints,
   GEN_TOKEN_COST,
   isDiscoverablePbi,
+  isLegacyPbi,
+  LEGACY_PBI_IDS,
   type ProposalVerdict,
   REVIEW_CAPACITY,
   reviewBacklogProposal,
@@ -149,7 +151,7 @@ function PlanningView({
   commitBacklogOrder,
   toggleForecast,
 }: PlanningProps) {
-  // 予測の”目安”＝今スプリントで実際に終わらせられる量。律速は人のレビュー容量なので
+  // 予測の"目安"＝今スプリントで実際に終わらせられる量。律速は人のレビュー容量なので
   // それを基準にする（前回ベロシティではなく、真のボトルネックに合わせる）。
   const capacity = REVIEW_CAPACITY
   // 前回スプリントから持ち越された PBI のうち、まだ未 done のもの
@@ -193,7 +195,7 @@ function PlanningView({
   return (
     <>
       <p className="text-xs leading-relaxed text-slate-400">
-        <RichText text="{{プロダクトバックログ}}（やりたいこと全部・価値順）から、上位を選んで「＋ スプリントへ」で今スプリントの{{スプリントバックログ}}に入れる＝{{フォーキャスト}}（予測）。並び（優先順位）の最終責任はPOにあるので、並べ替えは“提案”する。" />
+        <RichText text="{{プロダクトバックログ}}（やりたいこと全部・価値順）から、上位を選んで「＋ スプリントへ」で今スプリントの{{スプリントバックログ}}に入れる＝{{フォーキャスト}}（予測）。並び（優先順位）の最終責任はPOにあるので、並べ替えは「提案」する。" />
       </p>
 
       {/* 🗂 元：プロダクトバックログ（選ぶ側） */}
@@ -270,6 +272,7 @@ function PlanningView({
                         ↪ 前回持ち越し
                       </span>
                     )}
+                    <PbiBadges id={id} stakeholder={item.stakeholder} />
                     <p className={`mt-1 text-sm ${isDone ? 'text-slate-400 line-through' : 'text-slate-100'}`}>
                       <RichText text={item.title} />
                     </p>
@@ -375,6 +378,9 @@ function PlanningView({
           {<RichText text="{{キャリーオーバー}}" />}。
         </p>
 
+        {/* ② ステークホルダー内訳（情シス/現場の綱引き） */}
+        <StakeholderBalance forecastIds={selected} />
+
         {selected.length === 0 ? (
           <p className="rounded-lg bg-slate-900/40 px-3 py-3 text-center text-xs text-slate-400">
             まだ何も入れていません。上のリストから「＋ スプリントへ」で選びます。
@@ -392,6 +398,7 @@ function PlanningView({
                   <span className="rounded bg-slate-700 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-slate-300">
                     {item.estimate}pt
                   </span>
+                  <PbiBadges id={id} stakeholder={item.stakeholder} />
                   <span className="min-w-0 flex-1 truncate text-sm text-slate-100">
                     <RichText text={item.title} interactive={false} />
                   </span>
@@ -409,6 +416,9 @@ function PlanningView({
           </ul>
         )}
       </section>
+
+      {/* ④ 太く残す PBI のサマリ */}
+      <LegacySummary backlogDone={backlogDone} />
 
       <VelocityChart velocity={velocity} />
     </>
@@ -508,7 +518,12 @@ function KanbanView({
           if (!item) return null
           const startable = canStart(core, id)
           return (
-            <Card key={id} title={item.title} estimate={item.estimate}>
+            <Card
+              key={id}
+              title={item.title}
+              estimate={item.estimate}
+              badges={<PbiBadges id={id} stakeholder={item.stakeholder} />}
+            >
               <button
                 type="button"
                 onClick={() => startItem(id)}
@@ -536,6 +551,7 @@ function KanbanView({
               key={id}
               title={item.title}
               estimate={item.estimate}
+              badges={<PbiBadges id={id} stakeholder={item.stakeholder} />}
               below={
                 <div className="mt-2 flex flex-col gap-1.5">
                   <div className="h-1.5 overflow-hidden rounded-full bg-slate-700">
@@ -592,7 +608,13 @@ function KanbanView({
           const item = backlogItem(id)
           if (!item) return null
           return (
-            <Card key={id} title={item.title} estimate={item.estimate} dimmed>
+            <Card
+              key={id}
+              title={item.title}
+              estimate={item.estimate}
+              dimmed
+              badges={<PbiBadges id={id} stakeholder={item.stakeholder} />}
+            >
               <span className="shrink-0 self-center rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">
                 ✓ DoD
               </span>
@@ -665,14 +687,19 @@ function ProductBacklogReadOnly({ backlogOrder, doneSet }: { backlogOrder: strin
                 <span className="shrink-0 rounded bg-slate-700 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-slate-300">
                   {item.estimate}pt
                 </span>
-                <span className={`min-w-0 flex-1 text-sm ${done ? 'text-slate-400 line-through' : 'text-slate-100'}`}>
-                  <RichText text={item.title} />
-                </span>
-                {disc && !done && (
-                  <span className="shrink-0 rounded bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-rose-300">
-                    現場で発見
+                <div className="min-w-0 flex-1">
+                  <span className={`text-sm ${done ? 'text-slate-400 line-through' : 'text-slate-100'}`}>
+                    <RichText text={item.title} />
                   </span>
-                )}
+                  <div className="mt-0.5 flex flex-wrap gap-1">
+                    <PbiBadges id={id} stakeholder={item.stakeholder} />
+                    {disc && !done && (
+                      <span className="rounded bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-rose-300">
+                        現場で発見
+                      </span>
+                    )}
+                  </div>
+                </div>
               </li>
             )
           })}
@@ -710,14 +737,17 @@ function Card({
   dimmed,
   children,
   below,
+  badges,
 }: {
   title: string
   estimate: number
   dimmed?: boolean
   /** タイトル行の右に置く小さな操作（着手ボタン・DoD バッジ等）。幅を奪うと崩れるので軽量な要素のみ。 */
   children?: React.ReactNode
-  /** タイトル行の“下”に全幅で敷くブロック（進捗バー＋レビュー操作など）。 */
+  /** タイトル行の"下"に全幅で敷くブロック（進捗バー＋レビュー操作など）。 */
   below?: React.ReactNode
+  /** pt バッジの右に並ぶ小バッジ（ステークホルダー・レガシー等）。 */
+  badges?: React.ReactNode
 }) {
   return (
     <div className={`rounded-lg border border-slate-700 bg-slate-800/40 px-3 py-2 ${dimmed ? 'opacity-70' : ''}`}>
@@ -726,6 +756,7 @@ function Card({
           <span className="rounded bg-slate-700 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-slate-300">
             {estimate}pt
           </span>
+          {badges}
           <p className={`mt-1 text-sm ${dimmed ? 'text-slate-400 line-through' : 'text-slate-100'}`}>
             <RichText text={title} />
           </p>
@@ -739,6 +770,138 @@ function Card({
 
 function Empty() {
   return <p className="px-1 py-1 text-xs text-slate-400">— なし —</p>
+}
+
+// ───────────────────────── PBI 共通バッジ群（ステークホルダー＋レガシー） ─────────────────────────
+
+/** PBI 1件分のステークホルダー・レガシーバッジをまとめたヘルパー。
+ *  Card/li 各所で同じフラグメントを繰り返さないための集約コンポーネント。 */
+function PbiBadges({ id, stakeholder }: { id: string; stakeholder?: 'joushi' | 'genba' }) {
+  return (
+    <>
+      <StakeholderBadge stakeholder={stakeholder} />
+      <LegacyBadge id={id} />
+    </>
+  )
+}
+
+// ───────────────────────── ② ステークホルダーバッジ ─────────────────────────
+
+/** PBI を"推す"ステークホルダーの識別バッジ。
+ *  joushi＝情シス(結城)：紫系。genba＝現場(田淵)：空色系。未設定は何も出さない。 */
+function StakeholderBadge({ stakeholder }: { stakeholder?: 'joushi' | 'genba' }) {
+  if (!stakeholder) return null
+  if (stakeholder === 'joushi') {
+    return (
+      <span
+        aria-label="情シス（結城）推奨"
+        title="情シス（結城）が重視する項目。進捗を見せたい発注側の関心。"
+        className="ml-1 rounded bg-violet-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-violet-300"
+      >
+        情シス
+      </span>
+    )
+  }
+  return (
+    <span
+      aria-label="現場（田淵）推奨"
+      title="現場（田淵）が重視する項目。使える物が欲しい現場側の関心。"
+      className="ml-1 rounded bg-sky-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-sky-300"
+    >
+      現場
+    </span>
+  )
+}
+
+/** スプリントバックログ内の情シス/現場ポイント内訳。
+ *  選んだ予測が「どちらに偏っているか」を軽量表示する（綱引きのトレードオフ可視化）。 */
+function StakeholderBalance({ forecastIds }: { forecastIds: string[] }) {
+  let joushiPt = 0
+  let genbaPt = 0
+  for (const id of forecastIds) {
+    const item = backlogItem(id)
+    if (!item) continue
+    if (item.stakeholder === 'joushi') joushiPt += item.estimate
+    else if (item.stakeholder === 'genba') genbaPt += item.estimate
+  }
+  if (joushiPt === 0 && genbaPt === 0) return null
+  return (
+    <div
+      role="note"
+      aria-label={`ステークホルダー内訳 情シス${joushiPt}pt 現場${genbaPt}pt`}
+      className="mb-2 flex items-center gap-2 rounded-lg bg-slate-800/50 px-2.5 py-1.5"
+    >
+      <span className="text-[10px] text-slate-400">綱引き：</span>
+      {joushiPt > 0 && (
+        <span className="flex items-center gap-1 text-[10px] font-semibold text-violet-300">
+          <span className="rounded bg-violet-500/20 px-1 py-0.5">情シス</span>
+          {joushiPt}pt
+        </span>
+      )}
+      {joushiPt > 0 && genbaPt > 0 && <span className="text-[10px] text-slate-500">vs</span>}
+      {genbaPt > 0 && (
+        <span className="flex items-center gap-1 text-[10px] font-semibold text-sky-300">
+          <span className="rounded bg-sky-500/20 px-1 py-0.5">現場</span>
+          {genbaPt}pt
+        </span>
+      )}
+    </div>
+  )
+}
+
+// ───────────────────────── ④ 太く残す（レガシー）バッジ ─────────────────────────
+
+/** 「太く残す」PBI の識別バッジ。エンディングに影響する旨を短く伝える。 */
+function LegacyBadge({ id }: { id: string }) {
+  if (!isLegacyPbi(id)) return null
+  return (
+    <span
+      aria-label="太く残す：Shipすると結末に効く"
+      title="この項目をShipして定着させると、エンディング（真のFDE到達）に影響します。"
+      className="ml-1 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300"
+    >
+      🌱 太く残す
+    </span>
+  )
+}
+
+/** 「太く残す」PBI のサマリ（計画画面に表示）。何件 Ship できたかを一覧する。 */
+function LegacySummary({ backlogDone }: { backlogDone: readonly string[] }) {
+  const doneSet = new Set(backlogDone)
+  const shippedCount = LEGACY_PBI_IDS.filter((id) => doneSet.has(id)).length
+  const total = LEGACY_PBI_IDS.length
+  return (
+    <div
+      role="note"
+      aria-label={`太く残す ${shippedCount}/${total} Ship`}
+      className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3 py-2"
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-bold text-emerald-300">🌱 太く残す PBI</span>
+        <span className="tabular-nums text-xs text-emerald-200">
+          {shippedCount} / {total} Ship
+        </span>
+      </div>
+      <p className="mt-0.5 text-[10px] leading-relaxed text-slate-400">
+        文化を人に渡す3項目。Ship＆定着でエンディングが変わります。
+      </p>
+      <ul className="mt-1.5 space-y-0.5">
+        {LEGACY_PBI_IDS.map((id) => {
+          const item = backlogItem(id)
+          const shipped = doneSet.has(id)
+          return (
+            <li
+              key={id}
+              className={`flex items-center gap-1.5 text-[10px] ${shipped ? 'text-emerald-300' : 'text-slate-400'}`}
+            >
+              <span aria-hidden="true">{shipped ? '✓' : '○'}</span>
+              <span className={shipped ? '' : ''}>{item?.title ?? id}</span>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
 }
 
 function VelocityChart({ velocity }: { velocity: number[] }) {

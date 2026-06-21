@@ -47,8 +47,14 @@ export function estimateOf(id: string): number {
 
 // ── レガシー（「太く残す」）＝去り際にシステムが自分なしで回る状態を残せたか ──
 /** 「太く残す」PBI 群＝仕組みを人から人へ渡し、運用として根付かせる項目。
- *  ここを Ship したかが、エンディングの“去り際の実体”を決める（出力カウントではなく成果の質で読む）。 */
-const LEGACY_PBI_IDS = ['pbi-handoff-doc', 'pbi-onboarding', 'pbi-monitoring'] as const
+ *  ここを Ship したかが、エンディングの“去り際の実体”を決める（出力カウントではなく成果の質で読む）。
+ *  UI でこれらを「太く残す（結末に効く）」として強調表示するため公開する。 */
+export const LEGACY_PBI_IDS = ['pbi-handoff-doc', 'pbi-onboarding', 'pbi-monitoring'] as const
+
+/** この PBI が「太く残す」レガシー項目か（UI 強調用）。 */
+export function isLegacyPbi(id: string): boolean {
+  return (LEGACY_PBI_IDS as readonly string[]).includes(id)
+}
 /** レガシー成立に必要な Ship 数（3項目中）。レビュー容量律速を踏まえ「過半＝2」を閾に置く（調整可）。 */
 const LEGACY_SHIP_THRESHOLD = 2
 
