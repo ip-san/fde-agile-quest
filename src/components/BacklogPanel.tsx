@@ -46,6 +46,7 @@ export function BacklogPanel({ onClose }: Props) {
     backlogOrder,
     sprintForecast,
     backlogDone,
+    shippedUndoneIds,
     inProgress,
     reviewProgress,
     reviewCapacity,
@@ -102,6 +103,7 @@ export function BacklogPanel({ onClose }: Props) {
               sprintForecast={sprintForecast}
               backlogOrder={backlogOrder}
               doneSet={doneSet}
+              undoneSet={new Set(shippedUndoneIds)}
               inProgSet={inProgSet}
               inProgress={inProgress}
               reviewProgress={reviewProgress}
@@ -433,6 +435,8 @@ interface KanbanProps {
   /** 見えているプロダクトバックログ全体（read-only 参照用） */
   backlogOrder: string[]
   doneSet: Set<string>
+  /** うち「DoD を妥協して（浅い quick レビューで）Ship した」PBI id。Done バッジの出し分けに使う。 */
+  undoneSet: Set<string>
   inProgSet: Set<string>
   inProgress: string[]
   reviewProgress: Record<string, number>
@@ -448,6 +452,7 @@ function KanbanView({
   sprintForecast,
   backlogOrder,
   doneSet,
+  undoneSet,
   inProgSet,
   inProgress,
   reviewProgress,
@@ -615,9 +620,18 @@ function KanbanView({
               dimmed
               badges={<PbiBadges id={id} stakeholder={item.stakeholder} />}
             >
-              <span className="shrink-0 self-center rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">
-                ✓ DoD
-              </span>
+              {undoneSet.has(id) ? (
+                <span
+                  title="浅いレビューで通した＝完成の定義(DoD)を妥協した Ship。後で負債の取り立てが来る。"
+                  className="shrink-0 self-center rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-300"
+                >
+                  ⚠ 浅い
+                </span>
+              ) : (
+                <span className="shrink-0 self-center rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">
+                  ✓ DoD
+                </span>
+              )}
             </Card>
           )
         })}

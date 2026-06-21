@@ -85,6 +85,9 @@ export interface ProgressCore {
   sprintForecast: string[]
   /** DoD 達成済み PBI id（キャンペーン通算） */
   backlogDone: string[]
+  /** うち「DoD を妥協して（浅い quick レビューで）Ship した」PBI id（DoD未達Ship）。
+   *  backlogDone の部分集合。Done カードで「✓ DoD」か「⚠ 浅いレビュー（DoD未達）」を出し分けるのに使う。 */
+  shippedUndoneIds: string[]
   /** スプリントごとの完了ポイント（ベロシティ。index=sprintIndex）。推移表示に使う */
   velocity: number[]
   /** スプリント末（レビュー精算後）に記録した顧客価値（北極星。index=sprintIndex）。
@@ -149,6 +152,7 @@ export interface Persisted {
   backlogOrder?: string[]
   sprintForecast?: string[]
   backlogDone?: string[]
+  shippedUndoneIds?: string[]
   velocity?: number[]
   /** スプリント末に記録した顧客価値（旧セーブには無いので [] で補完） */
   valueHistory?: number[]
@@ -200,6 +204,7 @@ export function freshCore(starting: Meters): ProgressCore {
     backlogOrder: PRODUCT_BACKLOG.map((p) => p.id),
     sprintForecast: [],
     backlogDone: [],
+    shippedUndoneIds: [],
     velocity: [],
     valueHistory: [],
     // 開始時の顧客価値（カバレッジ0・負債0・未デリバリ）。第1スプリントの伸びをここから測る。
@@ -652,6 +657,7 @@ function restoreBacklog(
   | 'backlogOrder'
   | 'sprintForecast'
   | 'backlogDone'
+  | 'shippedUndoneIds'
   | 'velocity'
   | 'valueHistory'
   | 'valueBaseline'
@@ -670,6 +676,10 @@ function restoreBacklog(
     (Array.isArray(p.backlogDone) ? p.backlogDone : []).filter(
       (id): id is string => typeof id === 'string' && isKnownPbi(id)
     )
+  )
+  // DoD未達Ship は backlogDone の部分集合（既知∧Done済みのみ。破損・旧セーブでズレても安全側へ）
+  const shippedUndoneIds = (Array.isArray(p.shippedUndoneIds) ? p.shippedUndoneIds : []).filter(
+    (id): id is string => typeof id === 'string' && done.has(id)
   )
   const sprintForecast = (Array.isArray(p.sprintForecast) ? p.sprintForecast : []).filter(
     (id): id is string => typeof id === 'string' && isKnownPbi(id) && !done.has(id)
@@ -709,6 +719,7 @@ function restoreBacklog(
     backlogOrder,
     sprintForecast,
     backlogDone: [...done],
+    shippedUndoneIds,
     velocity,
     valueHistory,
     valueBaseline,
@@ -816,6 +827,7 @@ export function toPersisted(core: ProgressCore): Persisted {
     backlogOrder: core.backlogOrder,
     sprintForecast: core.sprintForecast,
     backlogDone: core.backlogDone,
+    shippedUndoneIds: core.shippedUndoneIds,
     velocity: core.velocity,
     valueHistory: core.valueHistory,
     valueBaseline: core.valueBaseline,

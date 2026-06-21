@@ -133,6 +133,7 @@ function coreOf(s: EngagementState): ProgressCore {
     backlogOrder: s.backlogOrder,
     sprintForecast: s.sprintForecast,
     backlogDone: s.backlogDone,
+    shippedUndoneIds: s.shippedUndoneIds,
     velocity: s.velocity,
     valueHistory: s.valueHistory,
     valueBaseline: s.valueBaseline,
@@ -218,7 +219,7 @@ export function isValidPersisted(x: unknown): x is Persisted {
   }
   // バックログ状態も任意（旧セーブは欠落 → restore で補完・正規化）。寛容に検証し、
   // 型が明確に壊れている時だけ弾く（未知 id・index ズレ等は restoreBacklog が吸収する）。
-  for (const k of ['backlogOrder', 'sprintForecast', 'backlogDone', 'inProgress'] as const) {
+  for (const k of ['backlogOrder', 'sprintForecast', 'backlogDone', 'shippedUndoneIds', 'inProgress'] as const) {
     const v = o[k]
     if (v !== undefined && (!Array.isArray(v) || !v.every((id) => typeof id === 'string'))) return false
   }

@@ -176,12 +176,14 @@ describe('reviewItem（レビュー＝In Progress→Done）', () => {
     const n = reviewItem(c, ID.floor, 'quick', 'good')
     expect(n.backlogDone).toContain(ID.floor) // Done 済み
     expect(n.flags.has('shippedUndone')).toBe(true) // DoD を妥協して Ship＝負債の取り立てフラグ
+    expect(n.shippedUndoneIds).toContain(ID.floor) // どの項目を妥協 Ship したか id でも記録（UI出し分け用）
   })
   it('機構③: 深い(thorough)レビューで Done させても shippedUndone は立たない（DoD 達成）', () => {
     const c = workCore({ inProgress: [ID.floor], reviewProgress: { [ID.floor]: 2.5 }, reviewCapacity: 6 })
     const n = reviewItem(c, ID.floor, 'thorough', 'good') // +2 → Done、深いので DoD 達成
     expect(n.backlogDone).toContain(ID.floor)
     expect(n.flags.has('shippedUndone')).toBe(false)
+    expect(n.shippedUndoneIds).not.toContain(ID.floor) // 深いレビューは DoD未達Ship に記録しない
   })
 })
 
@@ -385,12 +387,14 @@ describe('永続化ラウンドトリップ / 旧セーブ復元', () => {
       backlogOrder: [ID.asis, ID.floor, ID.veteran],
       sprintForecast: [ID.floor],
       backlogDone: [ID.veteran],
+      shippedUndoneIds: [ID.veteran], // DoD未達Ship（backlogDone の部分集合）も往復で保たれる
       velocity: [5, 0],
     })
     const round = restoreCore(toPersisted(c))
     expect(round.backlogOrder.slice(0, 3)).toEqual([ID.asis, ID.floor, ID.veteran])
     expect(round.sprintForecast).toEqual([ID.floor])
     expect(round.backlogDone).toEqual([ID.veteran])
+    expect(round.shippedUndoneIds).toEqual([ID.veteran])
     expect(round.velocity).toEqual([5, 0])
   })
 

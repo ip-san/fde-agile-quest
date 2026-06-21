@@ -235,6 +235,7 @@ export function reviewItem(core: ProgressCore, pbiId: string, depth: ReviewDepth
   const reviewProgress: Record<string, number> = { ...core.reviewProgress, [pbiId]: prog }
   let inProgress = core.inProgress
   let backlogDone = core.backlogDone
+  let shippedUndoneIds = core.shippedUndoneIds
   let flags = core.flags
   if (prog >= estimateOf(pbiId)) {
     // DoD 達成＝Done。In Progress から外し、通算 Done（インクリメント）へ
@@ -242,12 +243,24 @@ export function reviewItem(core: ProgressCore, pbiId: string, depth: ReviewDepth
     inProgress = core.inProgress.filter((x) => x !== pbiId)
     backlogDone = [...core.backlogDone, pbiId]
     // ★完了させたレビューが浅い(quick)＝DoD を妥協して Ship した（undone work）。
-    //   物語へ「負債の取り立て」を呼ぶ橋として shippedUndone を立てる（後段の demofail/debt 回）。
-    if (depth === 'quick' && !flags.has('shippedUndone')) {
-      flags = new Set(flags).add('shippedUndone')
+    //   物語へ「負債の取り立て」を呼ぶ橋として shippedUndone を立て（後段の demofail/debt 回）、
+    //   どの項目を妥協 Ship したかを id でも記録（Done カードの「✓ DoD / ⚠ 浅い」出し分け用）。
+    if (depth === 'quick') {
+      if (!flags.has('shippedUndone')) flags = new Set(flags).add('shippedUndone')
+      shippedUndoneIds = [...core.shippedUndoneIds, pbiId]
     }
   }
-  return { ...core, flags, reviewCapacity, reviewProgress, inProgress, backlogDone, repoCoverage, repoDebt }
+  return {
+    ...core,
+    flags,
+    reviewCapacity,
+    reviewProgress,
+    inProgress,
+    backlogDone,
+    shippedUndoneIds,
+    repoCoverage,
+    repoDebt,
+  }
 }
 
 /** スプリント末（レビュー）の精算。スプリント中に Done した分を確定し、未Done（To Do+In Progress）を
