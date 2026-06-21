@@ -283,6 +283,10 @@ export const EVENT_PRECEPTS: Record<string, number[]> = {
   's3-daily-soumu-paper': [73, 74],
   's3-daily-faction': [84, 30],
   's3-daily-circular': [73, 89],
+  // ① 信頼ゲート見逃しの回収：夜勤帯の本音を掘り損ねた誤出荷。沈黙は未発見の要件／浅い学びの手戻り。
+  's3-daily-night-shift-miss': [6, 67],
+  // ③ DoD妥協Shipの取り立て：速さは礼儀・品質は責任（DoDを飛ばした人の判断が主軸）／雑でも出して計画的に返す。
+  's2-daily-undone-debt': [97, 13],
 }
 
 export function preceptsForEvent(eventId: string): number[] {

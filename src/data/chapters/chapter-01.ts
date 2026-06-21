@@ -127,28 +127,30 @@ export const ENDINGS: Ending[] = [
     title: '現場に嫌われたFDE',
     reflection:
       '正しさを急ぎ、信頼を後回しにした。境界線の上に立つには、まず人の隣に立つこと。技術より先に、信頼が土台になる。',
-    match: (m) => m.trust <= 2,
+    match: (c) => c.meters.trust <= 2,
   },
   {
     id: 'orderTaker',
     title: '言われた通り作る人',
     reflection:
       '現場の沈黙を聞かず、要望をそのまま実装した。「答えは資料の外にある」。FDEは御用聞きではなく、真の課題の発見者だ。',
-    match: (m) => m.insight <= 3,
+    match: (c) => c.meters.insight <= 3,
   },
   {
     id: 'hero',
     title: 'ヒーロー止まり',
     reflection:
       '成果は出した。だが自分が抜けたら止まる仕組みを残した。FDEの仕事は組織を賢くすることまで。文化が残って初めて「太く残した」と言える。',
-    match: (m) => m.culture <= 2 && m.trust >= 4,
+    match: (c) => c.meters.culture <= 2 && c.meters.trust >= 4,
   },
   {
     id: 'trueFde',
     title: '真のFDE',
     reflection:
       '現場に入り、正しいKPIを立て、小さく出して大きく学び、文化を残した。沈黙していたシステムが、現場の言葉で動き始めた。小さく作り、大きく学び、太く残す——体現できた。',
-    match: (m) => m.trust >= 7 && m.insight >= 6 && m.culture >= 6,
+    // 3メーター（道中の関係性）に加え、レガシー＝去り際に仕組みを“定着まで残せたか”を AND 関門にする。
+    // ★高メーターでも「太く残す」PBI を Ship＆定着できていなければ真のFDEには届かない（→及第点）。
+    match: (c) => c.meters.trust >= 7 && c.meters.insight >= 6 && c.meters.culture >= 6 && c.legacyEmbedded,
   },
   {
     id: 'decent',

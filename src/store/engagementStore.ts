@@ -158,10 +158,12 @@ const VALID_FLAGS = {
   coopted: true,
   missedHearing: true,
   missedUpgrade: true,
+  missedNightShift: true,
   showcasePressure: true,
   chasedPromise: true,
   groundedGoal: true,
   soloHero: true,
+  shippedUndone: true,
 } satisfies Record<GameFlag, true>
 const FLAG_SET = new Set<string>(Object.keys(VALID_FLAGS))
 
@@ -359,7 +361,7 @@ export const useEngagement = create<EngagementState>((set, get) => ({
   resolveFinale: (flag) => {
     const core = coreOf(get())
     const flags = new Set(core.flags).add(flag)
-    const fin = finalEndingFor(core.meters, flags)
+    const fin = finalEndingFor(core.meters, flags, core.backlogDone)
     const next: ProgressCore = {
       ...core,
       flags,

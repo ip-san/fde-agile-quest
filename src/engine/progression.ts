@@ -29,7 +29,15 @@ import type {
   Segment,
   Status,
 } from '../types'
-import { isKnownPbi, REVIEW_CAPACITY, resolveSprintBacklog, revealPbi, WIP_LIMIT } from './backlog'
+import {
+  backlogItem,
+  isKnownPbi,
+  isLegacyEmbedded,
+  REVIEW_CAPACITY,
+  resolveSprintBacklog,
+  revealPbi,
+  WIP_LIMIT,
+} from './backlog'
 import {
   amplifyEffects,
   availableEvents,
@@ -255,7 +263,8 @@ export function repoStats(
  *  ■ exposed/complicit/coopted の分岐は将来章のためのドーマント（第1章では立たない）。 */
 export function finalEndingFor(
   meters: Meters,
-  flags: Set<GameFlag>
+  flags: Set<GameFlag>,
+  backlogDone: readonly string[] = []
 ): { ending: Epilogue | null; finalePending: boolean } {
   // ── 将来章用のドーマント分岐（第1章ではこれらのフラグは立たない）──
   // 暴くを選んだ場合、動かぬ証拠(fraudCase)を固めていれば告発が通り、無ければ握り潰される
@@ -266,7 +275,9 @@ export function finalEndingFor(
   if (flags.has('complicit')) return { ending: FINALE_EPILOGUES.complicit, finalePending: false }
   if (flags.has('coopted')) return { ending: FINALE_EPILOGUES.coopted, finalePending: false }
   // 第1章: 手がかり/証拠の有無に関わらず、決着させず通常EDで締める（伏線は次章へ）
-  return { ending: evaluateEnding(ENDINGS, meters), finalePending: false }
+  // ★3メーター＋レガシー（去り際の実体）を合流させて評価＝バックログ層が結末に効く。
+  const legacyEmbedded = isLegacyEmbedded(backlogDone, flags)
+  return { ending: evaluateEnding(ENDINGS, { meters, legacyEmbedded }), finalePending: false }
 }
 
 /** ビートを1つ進め、スプリント／キャンペーンの終端を判定する */
@@ -292,7 +303,7 @@ export function advanceCore(core: ProgressCore, result: ResultView | null = null
   }
 
   if (sprintIndex >= SPRINTS.length) {
-    const fin = finalEndingFor(core.meters, core.flags)
+    const fin = finalEndingFor(core.meters, core.flags, core.backlogDone)
     return { ...base, status: 'ended', ending: fin.ending, finalePending: fin.finalePending }
   }
   return { ...base, status: 'playing', ending: null, finalePending: false }
@@ -521,12 +532,21 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
 
   // 発見：ヒアリングで現場の声を良く掘り当てた選択は、伏せられた発見可PBIをプロダクトバックログに加える。
   // 出来が poor（聞けていない）だと掘り当てられない＝丁寧に聞くほど発見がある。
+  // さらに“信頼ゲート”：深い本音(requiresTrust)は現場の信頼を貯めて初めて出る（一発で真実は湧かない）。
+  // ★掘り損ね（poor／信頼ゲート未達）は“沈黙”で終わらせない：そのPBIの missedFlag を立て、
+  //   後段で強制イベントとして高コストに顕在化させる（＝深く聞こうとして空振った選択も機会コストを払う）。
   let discoveredPbi: { id: string; title: string } | undefined
-  if (choice.discoversPbi && tier !== 'poor') {
-    const rev = revealPbi(base, choice.discoversPbi)
-    if (rev.revealed) {
-      base = rev.core
-      discoveredPbi = { id: rev.revealed.id, title: rev.revealed.title }
+  if (choice.discoversPbi) {
+    const item = backlogItem(choice.discoversPbi)
+    const reachable = tier !== 'poor' && base.meters.trust >= (item?.requiresTrust ?? 0)
+    if (reachable) {
+      const rev = revealPbi(base, choice.discoversPbi)
+      if (rev.revealed) {
+        base = rev.core
+        discoveredPbi = { id: rev.revealed.id, title: rev.revealed.title }
+      }
+    } else if (item?.missedFlag && !base.flags.has(item.missedFlag)) {
+      base = { ...base, flags: new Set(base.flags).add(item.missedFlag) }
     }
   }
 
@@ -589,7 +609,7 @@ export function restoreCore(p: Persisted): ProgressCore {
   const fin = zeroed
     ? { ending: FAILURE_EPILOGUES[zeroed], finalePending: false }
     : campaignDone
-      ? finalEndingFor(p.meters, flags)
+      ? finalEndingFor(p.meters, flags, p.backlogDone)
       : { ending: null, finalePending: false }
   const isEnded = zeroed !== undefined || campaignDone
   return {

@@ -5,7 +5,7 @@
 // 現在ビートの判定は SPRINTS を chapter-01 から直接読む。
 // ───────────────────────────────────────────────────────────
 import { DISCOVERABLE_BACKLOG, PRODUCT_BACKLOG, SPRINTS } from '../data/chapters/chapter-01'
-import type { BacklogItem, BacklogReview, ExecTier, ReviewDepth } from '../types'
+import type { BacklogItem, BacklogReview, ExecTier, GameFlag, ReviewDepth } from '../types'
 import { coverageDrag } from './game'
 import type { ProgressCore } from './progression'
 
@@ -43,6 +43,26 @@ export function backlogItem(id: string): BacklogItem | undefined {
 /** PBI の見積りポイント（未知 id は 0）。 */
 export function estimateOf(id: string): number {
   return PBI_BY_ID.get(id)?.estimate ?? 0
+}
+
+// ── レガシー（「太く残す」）＝去り際にシステムが自分なしで回る状態を残せたか ──
+/** 「太く残す」PBI 群＝仕組みを人から人へ渡し、運用として根付かせる項目。
+ *  ここを Ship したかが、エンディングの“去り際の実体”を決める（出力カウントではなく成果の質で読む）。 */
+const LEGACY_PBI_IDS = ['pbi-handoff-doc', 'pbi-onboarding', 'pbi-monitoring'] as const
+/** レガシー成立に必要な Ship 数（3項目中）。レビュー容量律速を踏まえ「過半＝2」を閾に置く（調整可）。 */
+const LEGACY_SHIP_THRESHOLD = 2
+
+/** 「太く残す」PBI のうち Ship（DoD達成）した数。 */
+function legacyShippedCount(backlogDone: readonly string[]): number {
+  const done = new Set(backlogDone)
+  return LEGACY_PBI_IDS.filter((id) => done.has(id)).length
+}
+
+/** レガシーが“定着”したか。
+ *  ＝太く残すPBIを過半 Ship し、かつ属人化させなかった（soloHero でない＝自分が窓口を抱えていない）。
+ *  Ship しただけ（手順書を書いただけ）では定着とみなさない＝「Ship≠定着」を機構に落とす。 */
+export function isLegacyEmbedded(backlogDone: readonly string[], flags: ReadonlySet<GameFlag>): boolean {
+  return legacyShippedCount(backlogDone) >= LEGACY_SHIP_THRESHOLD && !flags.has('soloHero')
 }
 
 /** PBI として既知の id か。 */
@@ -209,13 +229,19 @@ export function reviewItem(core: ProgressCore, pbiId: string, depth: ReviewDepth
   const reviewProgress: Record<string, number> = { ...core.reviewProgress, [pbiId]: prog }
   let inProgress = core.inProgress
   let backlogDone = core.backlogDone
+  let flags = core.flags
   if (prog >= estimateOf(pbiId)) {
     // DoD 達成＝Done。In Progress から外し、通算 Done（インクリメント）へ
     delete reviewProgress[pbiId]
     inProgress = core.inProgress.filter((x) => x !== pbiId)
     backlogDone = [...core.backlogDone, pbiId]
+    // ★完了させたレビューが浅い(quick)＝DoD を妥協して Ship した（undone work）。
+    //   物語へ「負債の取り立て」を呼ぶ橋として shippedUndone を立てる（後段の demofail/debt 回）。
+    if (depth === 'quick' && !flags.has('shippedUndone')) {
+      flags = new Set(flags).add('shippedUndone')
+    }
   }
-  return { ...core, reviewCapacity, reviewProgress, inProgress, backlogDone, repoCoverage, repoDebt }
+  return { ...core, flags, reviewCapacity, reviewProgress, inProgress, backlogDone, repoCoverage, repoDebt }
 }
 
 /** スプリント末（レビュー）の精算。スプリント中に Done した分を確定し、未Done（To Do+In Progress）を

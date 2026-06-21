@@ -170,6 +170,19 @@ describe('reviewItem（レビュー＝In Progress→Done）', () => {
     expect(reviewItem(c, ID.floor, 'thorough', 'good')).toBe(c)
     expect(canReview(c, ID.floor)).toBe(false)
   })
+  it('機構③: 浅い(quick)レビューで Done させると shippedUndone（DoD妥協Ship）フラグが立つ', () => {
+    // est3 の floor を残り 0.5 まで詰めた状態から quick good(+1) で Done させる
+    const c = workCore({ inProgress: [ID.floor], reviewProgress: { [ID.floor]: 2.5 }, reviewCapacity: 6 })
+    const n = reviewItem(c, ID.floor, 'quick', 'good')
+    expect(n.backlogDone).toContain(ID.floor) // Done 済み
+    expect(n.flags.has('shippedUndone')).toBe(true) // DoD を妥協して Ship＝負債の取り立てフラグ
+  })
+  it('機構③: 深い(thorough)レビューで Done させても shippedUndone は立たない（DoD 達成）', () => {
+    const c = workCore({ inProgress: [ID.floor], reviewProgress: { [ID.floor]: 2.5 }, reviewCapacity: 6 })
+    const n = reviewItem(c, ID.floor, 'thorough', 'good') // +2 → Done、深いので DoD 達成
+    expect(n.backlogDone).toContain(ID.floor)
+    expect(n.flags.has('shippedUndone')).toBe(false)
+  })
 })
 
 describe('resolveSprintBacklog（カンバン精算）', () => {

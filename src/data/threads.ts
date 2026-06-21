@@ -16,7 +16,9 @@ import type { GameFlag } from '../types'
 //   finale … 不正暴露アークのフィナーレ選択（resolveFinale）で立つ
 // ───────────────────────────────────────────────────────────
 
-type ThreadSetVia = 'choice' | 'missed' | 'finale'
+// choice/missed はイベントデータ（setsFlag/missedFlag）と threads.test で突き合わせる。
+// finale/kanban はデータ外の経路（resolveFinale／カンバンの reviewItem）で立つため、データ突合の対象外。
+type ThreadSetVia = 'choice' | 'missed' | 'finale' | 'kanban'
 type ThreadPayoffVia = 'event' | 'ending' | 'score'
 
 interface Thread {
@@ -88,6 +90,15 @@ export const THREADS: Record<GameFlag, Thread> = {
     note: '基盤更新を見送る→後で詰まるイベント',
     teaser: '後回しにした基盤が、静かに軋んでいる。',
   },
+  missedNightShift: {
+    // ①の信頼ゲート見逃しの“顕在化”。深い本音(pbi-disc-night-shift, requiresTrust=6)を掘り損ねる
+    // 浅い対応（s1-daily-warehouse の仕様書通り/観察どまり）で setsFlag。ゲート未達の沈黙は engine が
+    // フラグを自動では立てないため、深い関係を築けなかった選択側に紐付けて顕在化の入口にする。
+    setVia: ['choice'],
+    payoffVia: ['event'],
+    note: '夜勤帯の本音を掘り損ねる（浅い聞き取り）→S3で引き継ぎ漏れ起因の誤出荷トラブルが強制発火',
+    teaser: '夜勤帯まで、聞けていない声が残っている。',
+  },
   showcasePressure: {
     setVia: ['choice'],
     payoffVia: ['event'],
@@ -111,6 +122,14 @@ export const THREADS: Record<GameFlag, Thread> = {
     payoffVia: ['event'],
     note: '移譲せず窓口を抱える→属人化ボトルネックのイベント',
     teaser: '自分が抱え込んだ役割が、いつか詰まる。',
+  },
+  shippedUndone: {
+    // カンバンの reviewItem（quick 完了）で立つ＝データ外の経路なので 'kanban'。
+    // 負債スコアで回収（quick レビューが debt を積む）＋ s2-daily-undone-debt の event 回で“取り立て”を物語化。
+    setVia: ['kanban'],
+    payoffVia: ['score', 'event'],
+    note: '浅いレビューのまま DoD を妥協して Ship（reviewItem quick 完了で立つ）→負債スコア＋ s2-daily-undone-debt（DoD を一つ飛ばして Done にした判断の取り立てが現場で表に出る）で回収',
+    teaser: 'DoD を妥協して通したものが、取り立てを待っている。',
   },
 }
 

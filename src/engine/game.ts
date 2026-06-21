@@ -3,6 +3,7 @@ import type {
   Choice,
   Effects,
   Ending,
+  EndingContext,
   ExecTier,
   GameEvent,
   GameFlag,
@@ -139,7 +140,8 @@ export function drawEvent(
   return { event: available[idx], unexpected: true }
 }
 
-/** エンディングを評価（配列順に最初にマッチしたもの） */
-export function evaluateEnding(endings: Ending[], meters: Meters): Ending {
-  return endings.find((e) => e.match(meters)) ?? endings[endings.length - 1]
+/** エンディングを評価（配列順に最初にマッチしたもの）。
+ *  ctx は3メーター＋レガシー（去り際に残した仕組みの実体）。 */
+export function evaluateEnding(endings: Ending[], ctx: EndingContext): Ending {
+  return endings.find((e) => e.match(ctx)) ?? endings[endings.length - 1]
 }

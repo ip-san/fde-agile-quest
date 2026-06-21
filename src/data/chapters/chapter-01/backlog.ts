@@ -112,6 +112,12 @@ export const DISCOVERABLE_BACKLOG: BacklogItem[] = [
     estimate: 3,
     sprintHint: 2,
     discoverable: true,
+    // “深い本音”の信頼ゲート（①）。STARTING trust=5 では届かず、1段(=6)貯めて初めて夜勤帯の本音が出る。
+    // ＝一発で真実は湧かない。掘り損ねた周回は S3 の誤出荷トラブル（s3-daily-night-shift-miss）で高コストに顕在化。
+    requiresTrust: 6,
+    // 掘り損ね（poor／ゲート未達で深く聞こうとして空振った場合も含む）は沈黙させず、この機会損失フラグを立てる。
+    // ＝浅い選択(s1-daily-warehouse a/b)の setsFlag と同じ flag に集約し、深い空振りも S3 で回収される。
+    missedFlag: 'missedNightShift',
   },
   {
     id: 'pbi-disc-return-flow',
