@@ -134,6 +134,11 @@
     - ⚠ とりあえず“AIらしい”画面を急ごしらえして、体裁だけ整える `{ trust: 1, insight: -1 }` →showcasePressure
     - 「実証の前に、まず基本のIT化と自動化が要る」と現実を正直に上げる `{ insight: 1, culture: 1 }` →showcasePressure
 
+- **試作ロボットのお披露目** `s2-physical-ai-showcase`（チャンス） 心得:1,19
+    - ⚠ 親会社が本気で張る技術だ。「これ、早くうちにも」とタイミングを逃さず上に同調する `{ trust: 1, insight: -1 }` →showcasePressure
+    - ロボットが動く前提（誤りのないデータ・整った棚と動線）に気づき、「まず土台のIT化が先だ」と構造から受け止める `{ insight: 1 }` →showcasePressure
+    - 田淵さんの隣に立ち、ベテランの目に映るデモ機を聞いてみる `{ culture: 1 }` →showcasePressure
+
 ### レビュー
 
 - **スプリントレビュー：まだ“機能”はない** `s1-review`（顧客） 心得:56,89
@@ -334,11 +339,6 @@
 - **視察当日：夢とフォークリフト** `s2-daily-showcase-visit`（現場 _[要 showcasePressure]_） 心得:62,64
     - ⚠ ベテランの手書き運用を物陰に隠し、用意したデモ画面だけ見せて取り繕う `{ trust: 1, culture: -1 }`
     - アナログの現実と、地に足のついた小さな改善を、田淵さんと一緒に正直に見せる `{ insight: 1, culture: 1 }`
-
-- **試作ロボットのお披露目** `s2-physical-ai-showcase`（チャンス _[要 showcasePressure]_） 心得:1,19
-    - ⚠ 親会社が本気で張る技術だ。「これ、早くうちにも」とタイミングを逃さず上に同調する `{ trust: 1, insight: -1 }`
-    - ロボットが動く前提（誤りのないデータ・整った棚と動線）に気づき、「まず土台のIT化が先だ」と構造から受け止める `{ insight: 1 }`
-    - 田淵さんの隣に立ち、ベテランの目に映るデモ機を聞いてみる `{ culture: 1 }`
 
 - **約束を追ったゴールの空回り** `s2-daily-promise-gap`（顧客 _[要 chasedPromise]_） 心得:1,10
     - ⚠ ここまで来たら引けない。予測機能をさらに作り込んで押し通す `{ trust: 1, insight: -1 }`
