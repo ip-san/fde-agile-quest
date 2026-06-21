@@ -68,10 +68,11 @@ export const NAMES: Record<NameId, NameDef> = {
     kind: 'company',
     also: ['カルゴ'],
   },
-  // 企業階層: 東邦重電(総本山・総合電機) > 東邦ロジスティクス(中間持株・物流) > 翠流物流(舞台)。
+  // 企業階層: ジェネリック電機(総本山・総合電機) > ジェネリックロジスティクス(中間持株・物流) > 翠流物流(舞台)。
   // キーは翠流物流から見た関係: parentCo=直接の親(ロジ) / groupHq=グループ総本山(電機)。報告は下→上(ロジ→電機)。
-  parentCo: { canonical: 'ジェネリックロジスティクス', name: '東邦ロジスティクス', kind: 'company' },
-  groupHq: { canonical: 'ジェネリック電機', name: '東邦重電', kind: 'company' },
+  // 現状は恒等(canonical===name)＝表示はそのまま「ジェネリック…」。リネームしたいときは name だけ変える。
+  parentCo: { canonical: 'ジェネリックロジスティクス', name: 'ジェネリックロジスティクス', kind: 'company' },
+  groupHq: { canonical: 'ジェネリック電機', name: 'ジェネリック電機', kind: 'company' },
   product: { canonical: 'StockPilot', name: 'StockPilot', kind: 'company' },
   // ── 第二章への伏線の固有名詞。現状は恒等(canonical===name)＝表示は不変だが、ここに登録して
   //    “データ層は localizeDeep で一発リネーム可能”に統一する（孤立した生文字列を残さない）。
