@@ -55,7 +55,7 @@ describe('standupFor（朝会＝競合する主張）', () => {
     const cs: GameEvent[] = [
       synth({ id: 'a', segment: 'kokyaku', location: 'client' }),
       synth({ id: 'b', segment: 'trouble', location: 'serverroom' }),
-      synth({ id: 'c', segment: 'team', location: 'repo' }),
+      synth({ id: 'c', segment: 'team', location: 'devroom' }),
     ]
     const voices = standupFor(cs)
     expect(voices).toHaveLength(3)

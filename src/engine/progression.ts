@@ -252,11 +252,9 @@ export function repoStats(
   let mergedPrs = 0
   for (const ev of EVENTS) {
     if (!core.resolvedIds.has(ev.id)) continue
-    // 技術イベント＝team/trouble、または repo/devroom ロケーション（ただし“チャンス”は開発PRに数えない）
+    // 技術イベント＝team/trouble、または devroom ロケーション（ただし“チャンス”は開発PRに数えない）
     const tech =
-      ev.segment === 'team' ||
-      ev.segment === 'trouble' ||
-      ((ev.location === 'repo' || ev.location === 'devroom') && ev.segment !== 'chance')
+      ev.segment === 'team' || ev.segment === 'trouble' || (ev.location === 'devroom' && ev.segment !== 'chance')
     if (tech) mergedPrs++
   }
   // 負債は「累積した雑さ(repoDebt)」＋「過信/誤KPIのフラグ」を合算して質的レベルへ

@@ -51,10 +51,11 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
 
   // マップは“地理”として読ませる。ゾーンは2つ：
   //  ・物理の建物（見取り図に描く部屋）＝歩いて回る
-  //  ・画面の中（デジタル）＝コードリポジトリと、リモートの開発室。物理の部屋とは別物。
-  // リポジトリは“社内の一室”ではなくコードの中なので、見取り図には入れない（存在の混同を防ぐ）。
-  const floorRooms = LOCATION_ORDER.filter((id) => !LOCATIONS[id].remote && id !== 'repo')
-  const digitalLocations = LOCATION_ORDER.filter((id) => id === 'repo' || LOCATIONS[id].remote)
+  //  ・画面の中（デジタル）＝リモートの開発室。物理の部屋とは別物。
+  // リポジトリ自体は“行き先”にしない（状態確認は下部メニューのパネルに集約）。
+  // コードに触れる作業は「開発室に繋いでリポジトリを開く」として devroom 経由で扱う。
+  const floorRooms = LOCATION_ORDER.filter((id) => !LOCATIONS[id].remote)
+  const digitalLocations = LOCATION_ORDER.filter((id) => LOCATIONS[id].remote)
 
   // 選択中の拠点（タップ→下に詳細→「向かう」で確定）。初期値は今日の論点があればそこ。
   const [selectedId, setSelectedId] = useState<LocationId>(
@@ -328,7 +329,14 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
               <span>画面の中（コード／リモート・歩いては行けない）</span>
               <span className="h-px flex-1 border-t border-dashed border-emerald-700/50" />
             </div>
-            <div className="mt-1.5 grid grid-cols-2 gap-1.5">{digitalLocations.map((id) => renderRoom(id, false))}</div>
+            {/* デジタル拠点は中央寄せ（開発室1つでも中央に置く。複数になれば横並びで均等に） */}
+            <div className="mt-1.5 flex flex-wrap justify-center gap-1.5">
+              {digitalLocations.map((id) => (
+                <div key={id} className="w-[calc(50%-0.375rem/2)]">
+                  {renderRoom(id, false)}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

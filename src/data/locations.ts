@@ -67,13 +67,6 @@ export const LOCATIONS: Record<LocationId, LocationDef> = localizeDeep({
     emoji: '🧮',
     desc: '仕訳・決算・連結の数字を締める部署。グループの粉飾が通り、そして暴かれうる“数字の現場”。',
   },
-  repo: {
-    id: 'repo',
-    label: 'コードリポジトリ',
-    short: 'リポジトリ',
-    emoji: '🗂️',
-    desc: 'コードとPR・テスト・CIが集まる場所。ここで作り、直し、生成AIと技術的負債に向き合う。',
-  },
   devroom: {
     id: 'devroom',
     label: 'ルミクラウド 開発室',
@@ -99,17 +92,10 @@ export function locationOf(event: GameEvent): LocationId {
   return event.location ?? LOCATION_BY_SEGMENT[event.segment]
 }
 
-/** マップ表示順（現地→リモート） */
-export const LOCATION_ORDER: LocationId[] = [
-  'warehouse',
-  'serverroom',
-  'client',
-  'soumu',
-  'jinji',
-  'keiri',
-  'repo',
-  'devroom',
-]
+/** マップ表示順（現地→リモート）。
+ *  リポジトリ(repo)は“行き先”には含めない——状態確認は下部メニューの専用パネルに集約し、
+ *  コードに触れる作業は「開発室(devroom)に繋いでリポジトリを開く」として devroom 経由で行う。 */
+export const LOCATION_ORDER: LocationId[] = ['warehouse', 'serverroom', 'client', 'soumu', 'jinji', 'keiri', 'devroom']
 
 // ───────────────────────────────────────────────────────────
 // リモート朝会の役割（ルミクラウドのチーム）。役割ごとに「観点（レンズ）」が違う。
@@ -165,7 +151,6 @@ export const QUIET_BY_LOCATION: Record<LocationId, string> = {
   soumu: '総務部は今日は穏やかだ。書類のやり取りが淡々と進むだけで、今日はここに用は無さそうだ。',
   jinji: '人事部は今日は静かだ。面談予定の貼り紙があるだけで、今日はここに用は無さそうだ。',
   keiri: '経理部は今日は静かだ。電卓とキーボードの音が続くだけで、今日はここに用は無さそうだ。',
-  repo: 'リポジトリは今日は静かだ。CIのグリーンが並ぶだけで、今日はここで手を入れることは無さそうだ。',
   devroom: '開発室にリモートで繋いだが、みな別の作業中。今日はここで動くことは無さそうだ。',
 }
 
@@ -307,7 +292,7 @@ function advocacyLine(role: DailyRole, event: GameEvent, locShort: string, seed:
   if (isSensitiveEvent(event)) return pick(SENSITIVE_LINES[role])
   if (role === 'dev') {
     const loc = locationOf(event)
-    return pick(loc === 'repo' || loc === 'devroom' ? DEV_REPO_LINES : DEV_FIELD_LINES)
+    return pick(loc === 'devroom' ? DEV_REPO_LINES : DEV_FIELD_LINES)
   }
   return pick(role === 'po' ? PO_LINES : SM_LINES)
 }
@@ -338,11 +323,11 @@ export function standupFor(candidates: GameEvent[]): StandupVoice[] {
   const cands = candidates.slice(0, 3)
   const used = new Set<DailyRole>()
   const assigned: { c: GameEvent; role: DailyRole | null }[] = []
-  // 1巡目: 役割を割り当て。リポジトリ／開発室の候補は“コードの人”＝開発（瀬川）を優先（リポジトリへ誘導）、
+  // 1巡目: 役割を割り当て。開発室の候補（＝画面の中でコードに触れる）は“コードの人”＝開発（瀬川）を優先、
   //         それ以外はセグメント親和（PO=価値/SM=プロセス/開発=技術）。
   for (const c of cands) {
     const loc = locationOf(c)
-    const want: DailyRole = loc === 'repo' || loc === 'devroom' ? 'dev' : SEGMENT_LEAD[c.segment]
+    const want: DailyRole = loc === 'devroom' ? 'dev' : SEGMENT_LEAD[c.segment]
     if (!used.has(want)) {
       used.add(want)
       assigned.push({ c, role: want })

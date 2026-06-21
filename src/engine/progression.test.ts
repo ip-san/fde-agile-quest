@@ -421,7 +421,7 @@ describe('arriveCore — 競合する候補から1つ選ぶ（見送り＝機会
   it('候補でない場所＝今日は静か（peekLocation のみ・候補は維持）', () => {
     const t = travelCore()
     const candLocs = new Set(t.dailyCandidates.map((id) => locationOf(EVENTS.find((e) => e.id === id)!)))
-    const quiet = (['warehouse', 'serverroom', 'client', 'soumu', 'jinji', 'keiri', 'repo', 'devroom'] as const).find(
+    const quiet = (['warehouse', 'serverroom', 'client', 'soumu', 'jinji', 'keiri', 'devroom'] as const).find(
       (l) => !candLocs.has(l)
     )!
     const peeked = arriveCore(t, quiet)
@@ -501,7 +501,7 @@ describe('生成AIトークン（消費型リソース）', () => {
 describe('repoStats（リポジトリ＝開発の量と質を映す）', () => {
   it('技術イベント数(PR)・トークン・カバレッジ・負債を導出する', () => {
     const stats = repoStats({
-      resolvedIds: new Set(['s2-daily-repo-aicode']), // segment team / location repo＝技術
+      resolvedIds: new Set(['s2-daily-repo-aicode']), // segment team / location devroom＝技術
       flags: new Set(['aiOverreliance']),
       aiTokens: 800,
       repoCoverage: 45,

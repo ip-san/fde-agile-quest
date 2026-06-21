@@ -364,6 +364,9 @@ export function Board() {
               onClick={() => setRepoOpen(true)}
               className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-cyan-200 transition hover:bg-slate-800 active:scale-95"
             >
+              <span className="text-base" aria-hidden="true">
+                🗂️
+              </span>
               リポジトリ
             </button>
             <button
@@ -371,6 +374,9 @@ export function Board() {
               onClick={() => setBacklogOpen(true)}
               className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-emerald-200 transition hover:bg-slate-800 active:scale-95"
             >
+              <span className="text-base" aria-hidden="true">
+                📋
+              </span>
               バックログ
             </button>
             <button
@@ -378,6 +384,9 @@ export function Board() {
               onClick={() => setBookOpen(true)}
               className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-sky-200 transition hover:bg-slate-800 active:scale-95"
             >
+              <span className="text-base" aria-hidden="true">
+                📖
+              </span>
               心得 {seenPrecepts.size}/{PRECEPTS.length}
             </button>
             <button
@@ -385,6 +394,9 @@ export function Board() {
               onClick={() => setPrologueOpen(true)}
               className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-slate-300 transition hover:bg-slate-800 active:scale-95"
             >
+              <span className="text-base" aria-hidden="true">
+                📜
+              </span>
               あらすじ
             </button>
             <button

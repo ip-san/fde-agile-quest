@@ -53,8 +53,9 @@ export type GameFlag =
 export type Status = 'playing' | 'travel' | 'event' | 'ended'
 
 /** 主人公が動き回る場所。現地6箇所（倉庫/電算室/会議室/総務部/人事部/経理部）＋リモート接続の開発室。
- *  デイリーのマップ移動で選ぶ */
-export type LocationId = 'warehouse' | 'serverroom' | 'client' | 'soumu' | 'jinji' | 'keiri' | 'repo' | 'devroom'
+ *  デイリーのマップ移動で選ぶ。リポジトリはコードに触れる“画面の中”であり行き先ではない
+ *  （状態確認は下部メニューの専用パネル、コード作業は開発室に繋いで行う）。 */
+export type LocationId = 'warehouse' | 'serverroom' | 'client' | 'soumu' | 'jinji' | 'keiri' | 'devroom'
 
 /** リモート・デイリースクラムで話す役割（画面の向こうのルミクラウドのチーム）。
  *  役割ごとに「ヒントの観点」が違う＝スクラムの役割を自然に学ぶ */
