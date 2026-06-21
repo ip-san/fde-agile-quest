@@ -91,7 +91,7 @@ export function BacklogPanel({ onClose }: Props) {
         aria-labelledby="backlog-panel-title"
         className={`flex max-h-[90vh] w-full flex-col rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl ${
           // カンバン（スプリント中）は広い画面で横長ボードにするため幅を広げる。プランニングは従来の縦長(md)。
-          isPlanning ? 'max-w-md' : 'max-w-md lg:max-w-5xl'
+          isPlanning ? 'max-w-md' : 'max-w-md lg:max-w-5xl xl:max-w-6xl'
         }`}
       >
         <header className="flex items-center justify-between gap-3 border-b border-slate-800 px-5 py-3">
@@ -259,7 +259,7 @@ function PlanningView({
 
   const { draft, verdict } = editState
   const dirty = !sameOrder(draft, officialActive)
-  // 上位優先（飛ばし入れ禁止）では“次に入れられる1件”だけが addable。毎行 canAddToForecast を呼ぶと O(n²) なので、
+  // 上位優先（飛ばし入れ禁止）では"次に入れられる1件"だけが addable。毎行 canAddToForecast を呼ぶと O(n²) なので、
   // PO 確定順(backlogOrder)上で最初に入れられる id を一度だけ求めて使い回す（その1件＝addable、他は不可）。
   const nextAddableId = useMemo(() => {
     const coreForSelect = { sprintForecast, backlogDone, unrefinedPbis, backlogOrder }
@@ -282,7 +282,7 @@ function PlanningView({
   const resolveProposal = (tier: ExecTier) => {
     const v = reviewBacklogProposal({ sprintIndex, backlogDone, backlogOrder }, [...draft, ...doneList], tier)
     commitBacklogOrder(v.order)
-    // PO が確定した順を draft に同期（採用/補正/却下のいずれでも“今の公式順”を映す）。verdict は残して結果を見せる。
+    // PO が確定した順を draft に同期（採用/補正/却下のいずれでも"今の公式順"を映す）。verdict は残して結果を見せる。
     setEditState({ draft: v.order.filter((id) => !doneSet.has(id)), verdict: v })
     setProposing(false)
   }
@@ -342,7 +342,7 @@ function PlanningView({
             const isDone = doneSet.has(id)
             const isForecast = forecastSet.has(id)
             const draftPos = draft.indexOf(id)
-            // 上位優先：この項目が“次に入れられる1件”か（飛ばし入れ禁止）。
+            // 上位優先：この項目が"次に入れられる1件"か（飛ばし入れ禁止）。
             const addable = id === nextAddableId
             return (
               <li
@@ -481,7 +481,7 @@ function PlanningView({
           )}
           {dirty && (
             <p className="text-xs leading-relaxed text-amber-300/90">
-              並べ替えは“提案”の下書き中。「＋
+              並べ替えは"提案"の下書き中。「＋
               スプリントへ」はPOが確定した順から選べます——先にこの並びをPOに提案して通すと、その順で選べるようになります。
             </p>
           )}
@@ -654,7 +654,7 @@ function KanbanView({
   const capacity = reviewCapacityFor(retroImprovements)
   const fpts = forecastPoints({ sprintForecast })
   const over = fpts > capacity
-  // 途中で引き込める候補も“上位優先”に揃える＝canAddToForecast（上位を全部入れてからでないと下位は引けない）。
+  // 途中で引き込める候補も"上位優先"に揃える＝canAddToForecast（上位を全部入れてからでないと下位は引けない）。
   // プランニングの選択と同じ規律にすることで、途中追加でも飛ばし入れを許さない（engine 側のガードと UI を一致させる）。
   const pullable = useMemo(() => {
     const coreForPull = { sprintForecast, backlogDone: core.backlogDone, unrefinedPbis, backlogOrder }
@@ -672,84 +672,143 @@ function KanbanView({
 
   return (
     <>
-      <p className="text-xs leading-relaxed text-slate-400">
-        <RichText text="開発そのものは AI が担う（着手＝生成）。価値は人の{{レビュー}}にある。In Progress は WIP=2 で詰まり、{{制約理論}}どおりレビューがボトルネックになる。" />
-      </p>
-
-      {/* 予測量 vs 容量（オーバーフォーキャストの可視化）。超過分は終わらず持ち越しになる。 */}
-      <section
-        className={`rounded-xl border p-3 ${over ? 'border-amber-500/40 bg-amber-500/5' : 'border-sky-500/30 bg-sky-500/5'}`}
-      >
-        <div className="mb-1.5 flex items-center justify-between">
-          <h3 className="px-0.5 text-xs font-bold text-sky-300">
-            <RichText text="{{スプリントバックログ}}" />
-            <span className="ml-1 font-normal text-sky-400/70">予測量</span>
-          </h3>
-          <span className={`text-xs font-bold tabular-nums ${over ? 'text-amber-300' : 'text-sky-200'}`}>
-            {fpts} / {capacity} pt
+      {/* ── 広い画面（lg+）：メーター類をコンパクトなツールバーに圧縮し、ボードをファーストビューへ ── */}
+      <div className="hidden lg:flex lg:items-center lg:gap-3 lg:rounded-xl lg:border lg:border-slate-700/60 lg:bg-slate-800/30 lg:px-3 lg:py-2">
+        {/* 説明 */}
+        <p className="min-w-0 flex-1 text-[11px] leading-relaxed text-slate-400">
+          <RichText text="着手＝AI生成。価値は人の{{レビュー}}にある。{{制約理論}}どおりレビューがボトルネック。" />
+        </p>
+        {/* 予測量バー */}
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="text-[11px] font-semibold text-sky-300">予測</span>
+          <div className="h-2 w-20 overflow-hidden rounded-full bg-slate-700">
+            <div
+              className={`h-full rounded-full transition-all ${over ? 'bg-amber-500' : 'bg-sky-400'}`}
+              style={{ width: `${Math.min(100, capacity ? (fpts / capacity) * 100 : 0)}%` }}
+            />
+          </div>
+          <span className={`tabular-nums text-[11px] font-bold ${over ? 'text-amber-300' : 'text-sky-200'}`}>
+            {fpts}/{capacity}pt
+            {over && (
+              <span className="ml-1 text-amber-300" aria-label="超過">
+                !
+              </span>
+            )}
           </span>
         </div>
-        <div className="h-2 overflow-hidden rounded-full bg-slate-700">
-          <div
-            className={`h-full rounded-full transition-all ${over ? 'bg-amber-500' : 'bg-sky-400'}`}
-            style={{ width: `${Math.min(100, capacity ? (fpts / capacity) * 100 : 0)}%` }}
-          />
-        </div>
-        {over ? (
-          <p role="note" className="mt-1.5 text-[11px] leading-relaxed text-amber-300">
-            容量（人の{<RichText text="{{レビュー}}" />}・{capacity}pt）を超えて積んでいます。これは“悪手”ではなく
-            <span className="font-semibold">賭け</span>
-            ——多く積んでゴールに挑むのも一手。ただし終わらなかった分はスプリント末に
-            {<RichText text="{{キャリーオーバー}}" />}（次へ持ち越し）。commitment
-            はスプリントゴールであって全部終える約束ではない。
-          </p>
-        ) : (
-          <p className="mt-1.5 text-[11px] leading-relaxed text-slate-400">
-            容量の目安＝人の{<RichText text="{{レビュー}}" />}（{capacity}
-            pt/スプリント）。余裕があれば下で追加を引き込めます。
-          </p>
-        )}
-      </section>
-
-      {/* レビュー容量＋WIP メーター */}
-      <div className="flex gap-2">
-        <div className="flex-1 rounded-xl bg-slate-800/40 px-3 py-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-300">レビュー容量</span>
-            <span className="tabular-nums text-slate-300">
-              {reviewCapacity} / {maxReview}
-              {maxReview > REVIEW_CAPACITY && <span className="ml-1 text-emerald-400">🔧</span>}
-            </span>
-          </div>
-          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-700">
+        {/* レビュー容量 */}
+        <div className="flex shrink-0 items-center gap-1.5 text-[11px]">
+          <span className="text-slate-400">レビュー</span>
+          <div className="h-2 w-14 overflow-hidden rounded-full bg-slate-700">
             <div
               className="h-full rounded-full bg-emerald-400"
               style={{ width: `${(Math.max(0, reviewCapacity) / maxReview) * 100}%` }}
             />
           </div>
+          <span className="tabular-nums text-slate-300">
+            {reviewCapacity}/{maxReview}
+            {maxReview > REVIEW_CAPACITY && <span className="ml-0.5 text-emerald-400">🔧</span>}
+          </span>
         </div>
-        <div className="rounded-xl bg-slate-800/40 px-3 py-2 text-center">
-          <div className="text-xs text-slate-300">
+        {/* WIP */}
+        <div className="flex shrink-0 items-center gap-1 text-[11px]">
+          <span className="text-slate-400">
             <RichText text="{{仕掛り}}" />
-          </div>
-          <div className="tabular-nums text-sm text-slate-200">
+          </span>
+          <span className="tabular-nums font-bold text-slate-200">
             {inProgress.length}/{wipMax}
-            {wipMax < WIP_LIMIT && <span className="ml-1 text-emerald-400">🔧</span>}
-          </div>
+            {wipMax < WIP_LIMIT && <span className="ml-0.5 text-emerald-400">🔧</span>}
+          </span>
         </div>
+        {/* 業務外メッセージ */}
+        {!isWork && (
+          <span className="shrink-0 rounded bg-slate-700 px-2 py-0.5 text-[10px] text-slate-400">
+            デイリーのみ操作可
+          </span>
+        )}
       </div>
 
-      {!isWork && (
-        <p className="rounded-lg bg-slate-800/40 px-3 py-1.5 text-xs text-slate-400">
-          着手・レビューはデイリー（業務中）に行えます。
+      {/* ── 狭い画面（lg未満）：従来の縦積みメーター表示 ── */}
+      <div className="lg:hidden">
+        <p className="text-xs leading-relaxed text-slate-400">
+          <RichText text="開発そのものは AI が担う（着手＝生成）。価値は人の{{レビュー}}にある。In Progress は WIP=2 で詰まり、{{制約理論}}どおりレビューがボトルネックになる。" />
         </p>
-      )}
 
-      {/* カンバン3列：広い画面(lg〜)では横並びにして“ボード感”を出す。狭い画面は縦積み。
+        {/* 予測量 vs 容量（オーバーフォーキャストの可視化）。超過分は終わらず持ち越しになる。 */}
+        <section
+          className={`mt-3 rounded-xl border p-3 ${over ? 'border-amber-500/40 bg-amber-500/5' : 'border-sky-500/30 bg-sky-500/5'}`}
+        >
+          <div className="mb-1.5 flex items-center justify-between">
+            <h3 className="px-0.5 text-xs font-bold text-sky-300">
+              <RichText text="{{スプリントバックログ}}" />
+              <span className="ml-1 font-normal text-sky-400/70">予測量</span>
+            </h3>
+            <span className={`text-xs font-bold tabular-nums ${over ? 'text-amber-300' : 'text-sky-200'}`}>
+              {fpts} / {capacity} pt
+            </span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-slate-700">
+            <div
+              className={`h-full rounded-full transition-all ${over ? 'bg-amber-500' : 'bg-sky-400'}`}
+              style={{ width: `${Math.min(100, capacity ? (fpts / capacity) * 100 : 0)}%` }}
+            />
+          </div>
+          {over ? (
+            <p role="note" className="mt-1.5 text-[11px] leading-relaxed text-amber-300">
+              容量（人の{<RichText text="{{レビュー}}" />}・{capacity}pt）を超えて積んでいます。これは"悪手"ではなく
+              <span className="font-semibold">賭け</span>
+              ——多く積んでゴールに挑むのも一手。ただし終わらなかった分はスプリント末に
+              {<RichText text="{{キャリーオーバー}}" />}（次へ持ち越し）。commitment
+              はスプリントゴールであって全部終える約束ではない。
+            </p>
+          ) : (
+            <p className="mt-1.5 text-[11px] leading-relaxed text-slate-400">
+              容量の目安＝人の{<RichText text="{{レビュー}}" />}（{capacity}
+              pt/スプリント）。余裕があれば下で追加を引き込めます。
+            </p>
+          )}
+        </section>
+
+        {/* レビュー容量＋WIP メーター */}
+        <div className="mt-3 flex gap-2">
+          <div className="flex-1 rounded-xl bg-slate-800/40 px-3 py-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-300">レビュー容量</span>
+              <span className="tabular-nums text-slate-300">
+                {reviewCapacity} / {maxReview}
+                {maxReview > REVIEW_CAPACITY && <span className="ml-1 text-emerald-400">🔧</span>}
+              </span>
+            </div>
+            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-700">
+              <div
+                className="h-full rounded-full bg-emerald-400"
+                style={{ width: `${(Math.max(0, reviewCapacity) / maxReview) * 100}%` }}
+              />
+            </div>
+          </div>
+          <div className="rounded-xl bg-slate-800/40 px-3 py-2 text-center">
+            <div className="text-xs text-slate-300">
+              <RichText text="{{仕掛り}}" />
+            </div>
+            <div className="tabular-nums text-sm text-slate-200">
+              {inProgress.length}/{wipMax}
+              {wipMax < WIP_LIMIT && <span className="ml-1 text-emerald-400">🔧</span>}
+            </div>
+          </div>
+        </div>
+
+        {!isWork && (
+          <p className="mt-3 rounded-lg bg-slate-800/40 px-3 py-1.5 text-xs text-slate-400">
+            着手・レビューはデイリー（業務中）に行えます。
+          </p>
+        )}
+      </div>
+
+      {/* カンバン3列：広い画面(lg〜)では横並びにして"ボード感"を出す。狭い画面は縦積み。
           列は上端揃え(items-start)で、各列が中身の高さに収まる（空列が無駄に伸びない）。 */}
       <div className="grid gap-3 lg:grid-cols-3 lg:items-start">
         {/* To Do */}
-        <Column title="To Do" tone="text-slate-300" count={todo.length}>
+        <Column title="To Do" tone="text-slate-300" headerBg="bg-slate-700/40" count={todo.length}>
           {todo.map((id) => {
             const item = backlogItem(id)
             if (!item) return null
@@ -777,7 +836,12 @@ function KanbanView({
         </Column>
 
         {/* In Progress */}
-        <Column title="In Progress（着手中）" tone="text-amber-200" count={inProgress.length}>
+        <Column
+          title="In Progress（着手中）"
+          tone="text-amber-200"
+          headerBg="bg-amber-500/10"
+          count={inProgress.length}
+        >
           {inProgress.map((id) => {
             const item = backlogItem(id)
             if (!item) return null
@@ -842,7 +906,7 @@ function KanbanView({
         </Column>
 
         {/* Done */}
-        <Column title="Done（完了）" tone="text-emerald-300" count={done.length}>
+        <Column title="Done（完了）" tone="text-emerald-300" headerBg="bg-emerald-500/10" count={done.length}>
           {done.map((id) => {
             const item = backlogItem(id)
             if (!item) return null
@@ -1007,20 +1071,31 @@ function ProductBacklogReadOnly({ backlogOrder, doneSet }: { backlogOrder: strin
 function Column({
   title,
   tone,
+  headerBg,
   count,
   children,
 }: {
   title: string
   tone: string
+  /** 広い画面のカラムヘッダ背景（レーン識別色）。例: "bg-slate-700/50" */
+  headerBg: string
   count: number
   children: React.ReactNode
 }) {
   return (
-    <section className="rounded-xl bg-slate-900/40 p-2">
-      <h3 className={`mb-1.5 px-1 text-xs font-bold ${tone}`}>
-        {title} <span className="text-slate-400">({count})</span>
+    <section className="flex flex-col rounded-xl border border-slate-700/60 bg-slate-800/30 overflow-hidden">
+      {/* カラムヘッダ：狭い画面は従来の軽量表示、広い画面はレーンヘッダとして背景で区別 */}
+      <h3 className={`flex items-center justify-between gap-2 px-3 py-2 text-xs font-bold ${tone} ${headerBg}`}>
+        <span>{title}</span>
+        <span
+          className="rounded-full bg-slate-900/40 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-slate-400"
+          aria-label={`${count}件`}
+        >
+          {count}
+        </span>
       </h3>
-      <div className="space-y-1.5">{children}</div>
+      {/* カード領域：最小高さを確保して空でもレーンの高さが保たれる（lg以上） */}
+      <div className="flex flex-col gap-1.5 p-2 lg:min-h-[120px]">{children}</div>
     </section>
   )
 }
@@ -1063,7 +1138,9 @@ function Card({
 }
 
 function Empty() {
-  return <p className="px-1 py-1 text-xs text-slate-400">— なし —</p>
+  return (
+    <p className="flex flex-1 items-center justify-center px-1 py-4 text-xs text-slate-500 lg:min-h-[80px]">— なし —</p>
+  )
 }
 
 // ───────────────────────── PBI 共通バッジ群（ステークホルダー＋レガシー） ─────────────────────────
