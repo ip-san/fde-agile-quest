@@ -25,9 +25,12 @@
 export type NameId =
   | 'lumen'
   | 'cargo'
-  | 'parent'
-  | 'grandparent'
+  | 'parentCo'
+  | 'groupHq'
   | 'product'
+  | 'powerDevice'
+  | 'powerDeviceUniv'
+  | 'subsidyAgency'
   | 'kuon'
   | 'takano'
   | 'segawa'
@@ -48,7 +51,7 @@ export interface NameDef {
   name: string
   /** ふりがな（人物カードなどで name に添えて出す。任意） */
   reading?: string
-  kind: 'company' | 'person'
+  kind: 'company' | 'person' | 'org' | 'tech'
   /** canonical 以外にも本文に現れる別綴り（例: 「カルゴ物流」の略称「カルゴ」）。
    *  これらも name へ置換される（リネーム時に取りこぼさないため） */
   also?: string[]
@@ -65,9 +68,18 @@ export const NAMES: Record<NameId, NameDef> = {
     kind: 'company',
     also: ['カルゴ'],
   },
-  parent: { canonical: 'ジェネリック電機', name: '東邦重電', kind: 'company' },
-  grandparent: { canonical: 'ジェネリックロジスティクス', name: '東邦ロジスティクス', kind: 'company' },
+  // 企業階層: 東邦重電(総本山・総合電機) > 東邦ロジスティクス(中間持株・物流) > 翠流物流(舞台)。
+  // キーは翠流物流から見た関係: parentCo=直接の親(ロジ) / groupHq=グループ総本山(電機)。報告は下→上(ロジ→電機)。
+  parentCo: { canonical: 'ジェネリックロジスティクス', name: '東邦ロジスティクス', kind: 'company' },
+  groupHq: { canonical: 'ジェネリック電機', name: '東邦重電', kind: 'company' },
   product: { canonical: 'StockPilot', name: 'StockPilot', kind: 'company' },
+  // ── 第二章への伏線の固有名詞。現状は恒等(canonical===name)＝表示は不変だが、ここに登録して
+  //    “データ層は localizeDeep で一発リネーム可能”に統一する（孤立した生文字列を残さない）。
+  //    注意: powerDeviceUniv は powerDevice「倍力装置」を内包する。将来リネームするなら両方の name を
+  //    揃えて変えること（片方だけ非恒等にすると、長い綴り優先でも部分一致で大学名が壊れうる）。
+  powerDevice: { canonical: '倍力装置', name: '倍力装置', kind: 'tech' },
+  powerDeviceUniv: { canonical: '国立倍力装置開発大学院大学', name: '国立倍力装置開発大学院大学', kind: 'org' },
+  subsidyAgency: { canonical: '税源開発機構', name: '税源開発機構', kind: 'org' },
   // ── 人物（hero=「あなた」は固有名を持たないので登録しない） ──
   kuon: { canonical: '久遠', name: '久遠', reading: 'くおん', kind: 'person' },
   takano: { canonical: '鷹野', name: '鷹野', reading: 'たかの', kind: 'person' },

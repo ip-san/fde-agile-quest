@@ -25,7 +25,7 @@ export const AVAILABLE_IMAGES = new Set<string>([
   // 状況（問題）の個別画像 public/img/{eventId}.jpg
   's2-daily-ghost-stock', // 空の棚＝在るはずの機材が無い（不正暴露の入口）
   's2-daily-showcase-visit', // スーツの視察団と手書き台帳の田淵さん・期待と現実のギャップ
-  's2-physical-ai-showcase', // 二足歩行ロボット＋産業用アームの試作お披露目（フィジカルAIの実物）
+  's1-physical-ai-showcase', // 二足歩行ロボット＋産業用アームの試作お披露目（フィジカルAIの実物）
   's2-daily-missed-context', // 「うちの流れと違う」と田淵さんに指摘される的外れなMVP（現場ヒアリング省略の代償）
   's2-daily-mvp', // スマホで手書きメモを撮影するFDE・小さな一手の着想（MVP）
   's2-daily-repo-aicode', // AI生成コードを前に思案するFDE（AIに書かせるか自分で書くか）

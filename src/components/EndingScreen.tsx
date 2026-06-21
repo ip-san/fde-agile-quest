@@ -214,11 +214,11 @@ export function EndingScreen({
             To be continued — 次章へ
           </p>
           <p className="text-sm leading-relaxed text-amber-100/90">
-            ——後日、グループの定例報告。{displayName('grandparent')}は、さらに上の{displayName('parent')}
+            ——後日、グループの定例報告。{displayName('parentCo')}は、さらに上の{displayName('groupHq')}
             へ、こう上げたという。「フィジカルAI実証、順調に進んでおります。現場のIT化が効きました——
             {displayName('lumen')}のおかげで」。あなたが現場で積み上げた本物の一歩は、いつのまにか
-            “実証は進んでいる”という見栄えの数字に書き換えられていた。倍力装置の華々しいお披露目は、
-            まだ終わっていない。次の舞台は、その奥にある。
+            “実証は進んでいる”という見栄えの数字に書き換えられていた。{displayName('powerDevice')}
+            の華々しいお披露目は、まだ終わっていない。次の舞台は、その奥にある。
           </p>
           {/* 不正の伏線を掴んだ周回だけ、個人の“違和感”の引きを重ねる。決着はつけず（§6.5）、
               主人公の"姿勢"だけを選ばせて繰り延べを焦らしに変える。 */}

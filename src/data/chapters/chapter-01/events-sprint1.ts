@@ -1209,10 +1209,9 @@ export const SPRINT1_EVENTS: GameEvent[] = [
   // デモ機の足元パネルに産学官連携・補助金・倍力装置の“匂わせ”を仕込む（伏線のみ。第1章では断定・
   // 証拠化せず、回収は第二章＝STORY §6.5。Ch2 の芽を摘まない）。
   // どの選択でも showcasePressure を立てる“保証役”を兼ねる（S2 視察・S3 報告の縦糸へ確実に繋ぐ）。
-  // ※ id は歴史的に s2- 始まりだが、画像(public/img/s2-physical-ai-showcase.jpg)と precepts の
-  //   キー安定のため据え置く（gameplay 上は sprint:1）。
+  // ※ id/画像(public/img/s1-physical-ai-showcase.jpg)/precepts キーは gameplay の sprint:1 に揃えて統一。
   {
-    id: 's2-physical-ai-showcase',
+    id: 's1-physical-ai-showcase',
     sprint: 1,
     ceremony: 'daily',
     segment: 'chance',

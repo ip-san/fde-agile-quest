@@ -134,7 +134,7 @@
     - ⚠ とりあえず“AIらしい”画面を急ごしらえして、体裁だけ整える `{ trust: 1, insight: -1 }` →showcasePressure
     - 「実証の前に、まず基本のIT化と自動化が要る」と現実を正直に上げる `{ insight: 1, culture: 1 }` →showcasePressure
 
-- **試作ロボットのお披露目** `s2-physical-ai-showcase`（チャンス） 心得:1,19
+- **試作ロボットのお披露目** `s1-physical-ai-showcase`（チャンス） 心得:1,19
     - ⚠ 親会社が本気で張る技術だ。「これ、早くうちにも」とタイミングを逃さず上に同調する `{ trust: 1, insight: -1 }` →showcasePressure
     - ロボットが動く前提（誤りのないデータ・整った棚と動線）に気づき、「まず土台のIT化が先だ」と構造から受け止める `{ insight: 1 }` →showcasePressure
     - 田淵さんの隣に立ち、ベテランの目に映るデモ機を聞いてみる `{ culture: 1 }` →showcasePressure
