@@ -8,12 +8,21 @@ const N = SEGMENTS.length
 const SLICE = 360 / N
 const CX = 100
 const CY = 100
-const R = 92
+const R = 80
 
 /** 中心からの「上基準・時計回り角度」を画面座標へ */
 function polar(angleDeg: number, radius: number) {
   const rad = (angleDeg * Math.PI) / 180
   return { x: CX + radius * Math.sin(rad), y: CY - radius * Math.cos(rad) }
+}
+
+/** hex(#rrggbb) を明暗調整。amt>0 で明るく(白寄せ)、amt<0 で暗く */
+function shade(hex: string, amt: number) {
+  const n = parseInt(hex.slice(1), 16)
+  const ch = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((c) =>
+    Math.max(0, Math.min(255, Math.round(amt < 0 ? c * (1 + amt) : c + (255 - c) * amt)))
+  )
+  return `#${((1 << 24) + (ch[0] << 16) + (ch[1] << 8) + ch[2]).toString(16).slice(1)}`
 }
 
 function slicePath(i: number) {
@@ -117,14 +126,27 @@ export function Roulette({ disabled, onResult }: Props) {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <div className="relative">
-        {/* ポインタ（上・下向き三角） */}
-        <div className="absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1">
-          <div className="h-0 w-0 border-x-[12px] border-t-[20px] border-x-transparent border-t-amber-300 drop-shadow" />
-        </div>
+      {/* 盤面そのものもクリックで回せる（初見ユーザーは盤面を押しがち）。アクセシブルな導線は下の「回す」ボタン＋SPACE が担うので、
+          この盤面ボタンは aria-hidden・非フォーカスにして二重読み上げ/二重タブ停止を避ける（マウス操作の利便だけ足す）。 */}
+      <button
+        type="button"
+        onClick={spin}
+        disabled={disabled || spinning}
+        aria-hidden="true"
+        tabIndex={-1}
+        className="relative h-56 w-56 rounded-full border-0 bg-transparent p-0 min-[400px]:h-64 min-[400px]:w-64 sm:h-72 sm:w-72 disabled:cursor-default [&:not(:disabled)]:cursor-pointer"
+      >
+        {/* 盤面の落ち影（回転しても向きが変わらないよう静止レイヤに） */}
+        <div
+          className="absolute inset-[6px] rounded-full"
+          style={{ boxShadow: '0 14px 34px rgba(2,6,23,0.55), inset 0 0 0 1px rgba(255,255,255,0.04)' }}
+          aria-hidden="true"
+        />
+
+        {/* 回転する盤面：スライス・区切り・ラベル */}
         <svg
-          viewBox="0 0 200 200"
-          className="h-56 w-56 min-[400px]:h-64 min-[400px]:w-64 sm:h-72 sm:w-72"
+          viewBox="-8 -8 216 216"
+          className="absolute inset-0 h-full w-full"
           style={{
             transform: `rotate(${rotation}deg)`,
             transition: spinning && !reduceMotion ? 'transform 3.6s cubic-bezier(0.17, 0.67, 0.12, 0.99)' : 'none',
@@ -132,30 +154,110 @@ export function Roulette({ disabled, onResult }: Props) {
           onTransitionEnd={handleTransitionEnd}
           aria-hidden="true"
         >
+          <defs>
+            {SEGMENTS.map((seg) => {
+              const base = SEGMENT_COLORS[seg]
+              return (
+                <radialGradient key={seg} id={`seg-${seg}`} cx="50%" cy="50%" r="62%">
+                  <stop offset="0%" stopColor={shade(base, 0.4)} />
+                  <stop offset="58%" stopColor={base} />
+                  <stop offset="100%" stopColor={shade(base, -0.22)} />
+                </radialGradient>
+              )
+            })}
+          </defs>
+
           {SEGMENTS.map((seg, i) => {
             const mid = i * SLICE + SLICE / 2
-            const lp = polar(mid, R * 0.62)
+            const lp = polar(mid, R * 0.64)
             return (
               <g key={seg}>
-                <path d={slicePath(i)} fill={SEGMENT_COLORS[seg]} stroke="#0f172a" strokeWidth={2} />
+                <path
+                  d={slicePath(i)}
+                  fill={`url(#seg-${seg})`}
+                  stroke="rgba(255,255,255,0.55)"
+                  strokeWidth={1.25}
+                  strokeLinejoin="round"
+                />
                 <text
                   x={lp.x}
                   y={lp.y}
                   textAnchor="middle"
                   dominantBaseline="middle"
                   transform={`rotate(${mid}, ${lp.x.toFixed(2)}, ${lp.y.toFixed(2)})`}
-                  fontSize="11"
-                  fontWeight="700"
+                  fontSize="12"
+                  fontWeight="800"
                   fill="#0f172a"
+                  style={{ letterSpacing: '0.04em', paintOrder: 'stroke' }}
+                  stroke="rgba(255,255,255,0.35)"
+                  strokeWidth={0.6}
                 >
                   {SEGMENT_LABELS[seg]}
                 </text>
               </g>
             )
           })}
-          <circle cx={CX} cy={CY} r={14} fill="#f8fafc" stroke="#0f172a" strokeWidth={2} />
         </svg>
-      </div>
+
+        {/* 静止オーバーレイ：金ベゼル・ガラス光沢・中央ハブ（回転しない枠と艶） */}
+        <svg viewBox="-8 -8 216 216" className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
+          <defs>
+            {/* 金のベゼル（光沢のあるゴールド） */}
+            <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#fff7d6" />
+              <stop offset="28%" stopColor="#fcd34d" />
+              <stop offset="60%" stopColor="#d97706" />
+              <stop offset="100%" stopColor="#7c2d12" />
+            </linearGradient>
+            <radialGradient id="gloss" cx="34%" cy="24%" r="74%">
+              <stop offset="0%" stopColor="rgba(255,255,255,0.42)" />
+              <stop offset="32%" stopColor="rgba(255,255,255,0.12)" />
+              <stop offset="60%" stopColor="rgba(255,255,255,0)" />
+            </radialGradient>
+            <radialGradient id="hub" cx="38%" cy="30%" r="72%">
+              <stop offset="0%" stopColor="#fff7d6" />
+              <stop offset="50%" stopColor="#fcd34d" />
+              <stop offset="100%" stopColor="#b45309" />
+            </radialGradient>
+          </defs>
+
+          {/* 金のベゼル：太い金枠＋内外の締め＋内側ハイライト */}
+          <circle cx={CX} cy={CY} r={R + 5} fill="none" stroke="url(#gold)" strokeWidth={10} />
+          <circle cx={CX} cy={CY} r={R + 10} fill="none" stroke="rgba(120,53,15,0.9)" strokeWidth={1.5} />
+          <circle cx={CX} cy={CY} r={R} fill="none" stroke="rgba(255,247,214,0.85)" strokeWidth={1.25} />
+
+          {/* ガラス光沢（上部から差す反射） */}
+          <circle cx={CX} cy={CY} r={R - 1} fill="url(#gloss)" />
+
+          {/* 中央ハブ（ゴールド） */}
+          <circle cx={CX} cy={CY} r={18} fill="url(#hub)" stroke="#7c2d12" strokeWidth={1.5} />
+          <circle cx={CX} cy={CY} r={8} fill="#7c2d12" />
+          <circle cx={CX - 2.2} cy={CY - 2.2} r={2.6} fill="rgba(255,247,214,0.9)" />
+        </svg>
+
+        {/* ポインタ（上から差し込む宝石風の指針・回転しない） */}
+        <svg
+          viewBox="0 0 32 30"
+          className="absolute left-1/2 top-0 z-10 h-8 w-8 -translate-x-1/2 -translate-y-[42%] drop-shadow-[0_3px_4px_rgba(2,6,23,0.5)]"
+          aria-hidden="true"
+        >
+          <defs>
+            <linearGradient id="needle" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#fde68a" />
+              <stop offset="55%" stopColor="#fbbf24" />
+              <stop offset="100%" stopColor="#d97706" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M16 29 L4 6 Q16 0 28 6 Z"
+            fill="url(#needle)"
+            stroke="#78350f"
+            strokeWidth={1.5}
+            strokeLinejoin="round"
+          />
+          <path d="M16 26 L9 8 Q16 5 23 8 Z" fill="rgba(255,255,255,0.35)" />
+        </svg>
+      </button>
 
       <button
         type="button"
@@ -163,7 +265,7 @@ export function Roulette({ disabled, onResult }: Props) {
         disabled={disabled || spinning}
         data-focus-return
         aria-label="ルーレットを回して、その日の出来事を引く"
-        className="rounded-xl bg-sky-500 px-8 py-3 text-lg font-bold text-slate-950 shadow-lg shadow-sky-500/30 transition hover:bg-sky-400 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-600 disabled:text-slate-400 disabled:shadow-none"
+        className="rounded-xl bg-[var(--accent)] px-8 py-3 text-lg font-bold text-[var(--bg)] shadow-lg shadow-[var(--accent)]/30 transition hover:bg-[var(--accent-hover)] active:scale-95 disabled:cursor-not-allowed disabled:bg-[var(--border-strong)] disabled:text-[var(--text-disabled)] disabled:shadow-none"
       >
         {spinning ? '回転中…' : '回す（SPACE）'}
       </button>

@@ -1708,6 +1708,8 @@ export const SPRINT2_EVENTS: GameEvent[] = [
   // ── 買収の皮肉アーク（実証ショーケース）。親会社の試作ロボットお披露目を見学する ──
   // フィジカルAIを“概念”から“目に見えるモノ”にする回。実物は派手だが、土台（データ・手順）の
   // 上にしか乗らない——という学びの芯。視察団来訪（visit）とは別物の“見学”として両立。
+  // 縦糸：pinned で必ず通す。お披露目で“フィジカルAIの実物”を見ておくと、後段（s2 幽霊在庫＝
+  // 帳簿だけの機材／s3 循環取引・実証報告）が何の話か腑に落ちる＝後の物語の土台になる。
   {
     id: 's2-physical-ai-showcase',
     sprint: 2,
@@ -1715,6 +1717,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     segment: 'chance',
     location: 'warehouse',
     requiresFlag: 'showcasePressure',
+    pinned: true,
     hints: {
       po: '親会社が試作ロボットをうちの倉庫でお披露目してる。一度、自分の目で見てきて。',
       sm: 'グループの実証デモが倉庫の一角で動いてる。何が現実で何が見栄えか、見極めてきて。',

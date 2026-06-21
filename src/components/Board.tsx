@@ -12,9 +12,12 @@ import { seedFor } from '../lib/seed'
 import { useEngagement } from '../store/engagementStore'
 import type { Ceremony, Choice } from '../types'
 
-// バックログ操作パネルは“開いた時だけ”要るモーダル＝コード分割で初期バンドルから外す（オンデマンド読込）。
+// バックログ操作パネル・遊び方・都度教示は"開いた時だけ"要るモーダル＝コード分割で初期バンドルから外す。
 const BacklogPanel = lazy(() => import('./BacklogPanel').then((m) => ({ default: m.BacklogPanel })))
+const HowToPlay = lazy(() => import('./HowToPlay').then((m) => ({ default: m.HowToPlay })))
+const Coachmark = lazy(() => import('./Coachmark').then((m) => ({ default: m.Coachmark })))
 
+import { COACHMARK_KEYS } from '../data/coachmarks'
 import { CustomerValueBar } from './CustomerValueBar'
 import { DeductionModal } from './DeductionModal'
 import { EventLog } from './EventLog'
@@ -32,6 +35,11 @@ import { Travel } from './Travel'
 
 const PROLOGUE_SEEN_KEY = 'fde-agile-quest:prologue-seen'
 const prologueSeen = (): boolean => readBool(PROLOGUE_SEEN_KEY)
+
+// 都度教示（コーチマーク）の既読管理。キーはセレモニー名 or 'intro'。
+const coachKeyOf = (k: string): string => `fde-agile-quest:coach:${k}`
+const coachSeen = (k: string): boolean => readBool(coachKeyOf(k))
+const markCoachSeen = (k: string): void => writeBool(coachKeyOf(k), true)
 
 // 時限選択（LIPS）の設定。既定OFF（学習を妨げないため opt-in）。localStorage 永続。
 const TIMED_CHOICE_KEY = 'fde-agile-quest:timed-choice'
@@ -89,10 +97,21 @@ export function Board() {
     writeBool(PROLOGUE_SEEN_KEY, true)
     setPrologueOpen(false)
   }
+  // 「遊び方」リファレンスの開閉。
+  const [howToOpen, setHowToOpen] = useState(false)
+  // 都度教示の再評価トリガ（既読は localStorage が真実源。閉じたら再レンダーして次の有無を評価）。
+  const [, bumpCoach] = useState(0)
 
   const sprint = SPRINTS[Math.min(sprintIndex, SPRINTS.length - 1)]
   const ceremony: Ceremony = sprint.beats[Math.min(beatIndex, sprint.beats.length - 1)]
   const useRoulette = isRouletteCeremony(ceremony)
+
+  // プランニングの進行ゲート：ゴールを決めたら、スプリントバックログ（予測）を1件以上組むまで開始できない。
+  // ＝スプリント計画の成果物（選択した PBI）を必ず作らせる。ゴール選択イベント自体は妨げない。
+  const planningGoalSet = ceremony === 'planning' && !!sprintGoals[sprintIndex]
+  const sprintBacklogEmpty = sprintForecast.length === 0
+  const planningBlocked = planningGoalSet && sprintBacklogEmpty
+  const proceedLabel = planningGoalSet ? '▶ スプリントを始める' : '▶ 進める'
 
   // デイリー未着手リマインダーの条件
   // 「To Do が残っている」= sprintForecast に未 done の id がある
@@ -126,9 +145,33 @@ export function Board() {
     [meters, rs.coverage, rs.debtScore, rs.deliveredItems]
   )
 
+  // 都度教示：プロローグ後、その場面で“未読”のコーチマークを1つ出す（intro を最優先、次に現セレモニー）。
+  // イベント/移動/結果/他モーダル中は出さない。localStorage が真実源で、coachVersion は閉じた後の再評価用。
+  // localStorage が真実源なので毎レンダー算出（コスト極小）。dismiss 時の bumpCoach 再レンダーで自然に更新。
+  // 出すコーチマークの“キー”だけを決める（本文は遅延の Coachmark 側が引く＝初期バンドルを軽く）。
+  const pendingCoachKey = (() => {
+    if (prologueOpen || howToOpen || bookOpen || repoOpen || backlogOpen) return null
+    if (status !== 'playing' || result || currentEvent) return null
+    if (!coachSeen('intro')) return 'intro'
+    return COACHMARK_KEYS.includes(ceremony) && !coachSeen(ceremony) ? ceremony : null
+  })()
+
+  // 初回の“実行ミニゲーム”だけ、判断→実行の関係を1度説明してから本体を出す（選択直後の「？」を解消）。
+  const minigameCoachKey =
+    pendingChoice && status === 'event' && currentEvent && !result && !coachSeen('minigame') ? 'minigame' : null
+  // いま出すコーチマークのキー（プレイ中のセレモニー教示 or 初回ミニゲーム教示。両者は排他）。
+  const activeCoachKey = minigameCoachKey ?? pendingCoachKey
+
   // モーダル表示中は背後を支援技術ツリー/操作から外す（aria-modal 任せにしない）
   const modalOpen =
-    (status === 'event' && !!currentEvent && !result) || !!result || bookOpen || prologueOpen || repoOpen || backlogOpen
+    (status === 'event' && !!currentEvent && !result) ||
+    !!result ||
+    bookOpen ||
+    prologueOpen ||
+    repoOpen ||
+    backlogOpen ||
+    howToOpen ||
+    !!activeCoachKey
 
   return (
     <>
@@ -150,8 +193,8 @@ export function Board() {
               aria-pressed={timed}
               aria-label={timed ? '時限選択をオフにする' : '時限選択をオンにする（時間切れは静観）'}
               title={timed ? '時限選択：ON（時間切れ＝静観）' : '時限選択：OFF'}
-              className={`flex h-9 w-9 items-center justify-center rounded-lg text-base transition hover:bg-slate-800 active:scale-95 ${
-                timed ? 'text-amber-300' : 'text-slate-500'
+              className={`flex h-9 w-9 items-center justify-center rounded-lg text-base transition hover:bg-[var(--panel)] active:scale-95 ${
+                timed ? 'text-amber-300' : 'text-[var(--text-sub)]'
               }`}
             >
               <span aria-hidden="true">⏱</span>
@@ -161,27 +204,27 @@ export function Board() {
               onClick={() => setMuted(toggleMuted())}
               aria-pressed={muted}
               aria-label={muted ? '効果音をオンにする' : '効果音をオフにする'}
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-base text-slate-400 transition hover:bg-slate-800 hover:text-slate-200 active:scale-95"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-base text-[var(--text-sub)] transition hover:bg-[var(--panel)] hover:text-[var(--text-body)] active:scale-95"
             >
               <span aria-hidden="true">{muted ? '🔇' : '🔊'}</span>
             </button>
           </div>
-          <p className="text-xs text-slate-400">{chapterTitle}</p>
-          <h1 className="mt-0.5 pr-20 text-lg font-bold text-slate-100">{sprint.title}</h1>
+          <p className="text-xs text-[var(--text-sub)]">{chapterTitle}</p>
+          <h1 className="mt-0.5 pr-20 text-lg font-bold text-[var(--text)]">{sprint.title}</h1>
           {/* プロダクトゴール＝章全体の到達点（PO所有・不変）。各スプリントゴールはこれに連なる。
               スプリントゴールの上に置いて「ゴールの階層（Product→Sprint）」を見せる。 */}
-          <p className="mt-1 text-xs text-slate-400">
+          <p className="mt-1 text-xs text-[var(--text-sub)]">
             <RichText text="{{プロダクトゴール}}" />：<span className="text-violet-300">{PRODUCT_GOAL}</span>
           </p>
           {/* スプリントゴールはプランニングの"成果"。プレイヤーがプランニングで選んだ狙いを表示する。
             未決定（プランニング中）は伏せ、選んだら現す（Scrum: ゴールはプランニングで決まる）。 */}
-          <p className="mt-0.5 text-xs text-slate-400">
+          <p className="mt-0.5 text-xs text-[var(--text-sub)]">
             ↳ スプリントゴール：
             {(() => {
               const chosen = sprintGoals[sprintIndex]
-              if (chosen) return <span className="text-sky-300">{chosen}</span>
-              if (ceremony === 'planning') return <span className="text-slate-400">プランニングで決める…</span>
-              return <span className="text-sky-300">{sprint.goal}</span>
+              if (chosen) return <span className="text-amber-300">{chosen}</span>
+              if (ceremony === 'planning') return <span className="text-[var(--text-sub)]">プランニングで決める…</span>
+              return <span className="text-amber-300">{sprint.goal}</span>
             })()}
           </p>
         </header>
@@ -205,28 +248,28 @@ export function Board() {
             会心 {greatStreak} 連鎖中 — 次も会心ならコード品質ボーナス増
           </p>
         )}
-        <p className="-mt-2 text-center text-xs leading-snug text-slate-400">
+        <p className="-mt-2 text-center text-xs leading-snug text-[var(--text-sub)]">
           どれか1つでも <span className="text-rose-400">0</span> になると案件は終了。削りすぎは命取り。
         </p>
 
         {/* スプリント進捗ドット */}
-        <div className="flex items-center gap-2 text-xs text-slate-400">
+        <div className="flex items-center gap-2 text-xs text-[var(--text-sub)]">
           <span>Sprint</span>
           {SPRINTS.map((sp, i) => (
             <span
               key={sp.n}
               className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ${
                 i < sprintIndex
-                  ? 'bg-sky-500 text-slate-950'
+                  ? 'bg-[var(--accent)] text-[var(--bg)]'
                   : i === sprintIndex
-                    ? 'bg-sky-400/30 text-sky-200 ring-2 ring-sky-400'
-                    : 'bg-slate-800 text-slate-400'
+                    ? 'bg-[var(--accent)]/30 text-amber-200 ring-2 ring-[var(--accent)]'
+                    : 'bg-[var(--panel)] text-[var(--text-sub)]'
               }`}
             >
               {sp.n}
             </span>
           ))}
-          <span className="text-slate-400">/ 全{SPRINTS.length}</span>
+          <span className="text-[var(--text-sub)]">/ 全{SPRINTS.length}</span>
         </div>
 
         {/* セレモニー・トラック（現スプリント内の進行） */}
@@ -241,10 +284,10 @@ export function Board() {
                 key={`${b}-${i}`}
                 className={`flex-1 shrink-0 whitespace-nowrap rounded-lg px-1.5 py-1.5 text-center text-[11px] font-semibold min-w-[2.75rem] ${
                   state === 'done'
-                    ? 'bg-slate-700/60 text-slate-400'
+                    ? 'bg-[var(--border)]/60 text-[var(--text-sub)]'
                     : state === 'current'
-                      ? 'bg-sky-500/20 text-sky-200 ring-1 ring-sky-400'
-                      : 'bg-slate-800/40 text-slate-400'
+                      ? 'bg-[var(--accent)]/20 text-amber-200 ring-1 ring-[var(--accent)]'
+                      : 'bg-[var(--panel)]/40 text-[var(--text-sub)]'
                 }`}
                 title={b === 'daily' ? `${CEREMONY_LABELS[b]} ${dailyNo}日目` : CEREMONY_LABELS[b]}
               >
@@ -267,9 +310,9 @@ export function Board() {
             />
           ) : (
             <>
-              <p className="text-sm text-slate-300">
-                いまは <span className="font-bold text-sky-300">{CEREMONY_LABELS[ceremony]}</span>
-                <span className="ml-1 text-xs text-slate-400">
+              <p className="text-sm text-[var(--text-body)]">
+                いまは <span className="font-bold text-amber-300">{CEREMONY_LABELS[ceremony]}</span>
+                <span className="ml-1 text-xs text-[var(--text-sub)]">
                   {useRoulette ? '— 回して、その日の出来事を見る' : '— 進めて始める'}
                 </span>
               </p>
@@ -289,19 +332,30 @@ export function Board() {
                 <button
                   type="button"
                   onClick={proceed}
-                  disabled={status !== 'playing' || !!result}
+                  disabled={status !== 'playing' || !!result || planningBlocked}
+                  aria-describedby={planningBlocked ? 'planning-gate-hint' : undefined}
                   data-focus-return
-                  className="rounded-xl bg-sky-500 px-10 py-3 text-lg font-bold text-slate-950 shadow-lg shadow-sky-500/30 transition hover:bg-sky-400 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-600 disabled:text-slate-400 disabled:shadow-none"
+                  className="rounded-xl bg-[var(--accent)] px-10 py-3 text-lg font-bold text-[var(--bg)] shadow-lg shadow-[var(--accent)]/30 transition hover:bg-[var(--accent-hover)] active:scale-95 disabled:cursor-not-allowed disabled:bg-[var(--border-strong)] disabled:text-[var(--text-disabled)] disabled:shadow-none"
                 >
-                  ▶ 進める
+                  {proceedLabel}
                 </button>
               )}
-              {/* プランニングでは"予測（スプリントバックログ）"を組み立てられる。非ブロッキングの誘導。 */}
+              {/* プランニングのゲート：ゴールを決めたのに予測が空なら、開始できない理由を示す（ブロッキング誘導）。 */}
+              {planningBlocked && (
+                <p
+                  id="planning-gate-hint"
+                  role="note"
+                  className="max-w-xs text-center text-xs leading-relaxed text-amber-300"
+                >
+                  スプリントバックログが空です。スプリントの成果物は「ゴール＋選んだ項目」。下の「プロダクトバックログから予測を選ぶ」で1件以上入れてから開始します。
+                </p>
+              )}
+              {/* プランニングでは"予測（スプリントバックログ）"を組み立てる。空のままでは開始できない（上のゲート）。 */}
               {ceremony === 'planning' && (
                 <button
                   type="button"
                   onClick={() => setBacklogOpen(true)}
-                  className="rounded-lg border border-sky-500/40 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-200 transition hover:bg-sky-500/20 active:scale-95"
+                  className="rounded-lg border border-amber-400/40 bg-[var(--accent)]/10 px-4 py-2 text-sm font-semibold text-amber-200 transition hover:bg-[var(--accent)]/20 active:scale-95"
                 >
                   プロダクトバックログから予測を選ぶ
                 </button>
@@ -315,7 +369,7 @@ export function Board() {
                   onClick={() => setBacklogOpen(true)}
                   className={
                     showDevReminder
-                      ? 'rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-slate-100 transition hover:bg-emerald-500 active:scale-95'
+                      ? 'rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-[var(--bg)] transition hover:bg-emerald-500 active:scale-95'
                       : 'rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-500/20 active:scale-95'
                   }
                 >
@@ -335,7 +389,7 @@ export function Board() {
               <h2 className="mb-1.5 px-1 text-xs font-semibold text-amber-300">未回収の伏線（{open.length}）</h2>
               <ul className="space-y-1 px-1">
                 {open.map((t) => (
-                  <li key={t.flag} className="text-xs leading-snug text-slate-300">
+                  <li key={t.flag} className="text-xs leading-snug text-[var(--text-body)]">
                     ・{t.teaser}
                   </li>
                 ))}
@@ -345,8 +399,8 @@ export function Board() {
         })()}
 
         {/* イベントログ */}
-        <section className="rounded-2xl bg-slate-900/40 p-3">
-          <h2 className="mb-2 px-1 text-xs font-semibold text-slate-400">イベントログ</h2>
+        <section className="rounded-2xl bg-[var(--card)]/40 p-3">
+          <h2 className="mb-2 px-1 text-xs font-semibold text-[var(--text-sub)]">イベントログ</h2>
           <div className="max-h-40 overflow-y-auto">
             <EventLog log={log} />
           </div>
@@ -356,13 +410,13 @@ export function Board() {
           モーダル表示中は親が inert になるため無効化される（z は modal=40 の下）。 */}
         <nav
           aria-label="ツール"
-          className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-800 bg-slate-900/95 px-safe pb-safe pt-1.5 backdrop-blur"
+          className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--border)] bg-[var(--card)]/95 px-safe pb-safe pt-1.5 backdrop-blur"
         >
           <div className="mx-auto flex max-w-2xl items-stretch gap-1">
             <button
               type="button"
               onClick={() => setRepoOpen(true)}
-              className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-cyan-200 transition hover:bg-slate-800 active:scale-95"
+              className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-cyan-200 transition hover:bg-[var(--panel)] active:scale-95"
             >
               <span className="text-base" aria-hidden="true">
                 🗂️
@@ -372,7 +426,7 @@ export function Board() {
             <button
               type="button"
               onClick={() => setBacklogOpen(true)}
-              className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-emerald-200 transition hover:bg-slate-800 active:scale-95"
+              className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-emerald-200 transition hover:bg-[var(--panel)] active:scale-95"
             >
               <span className="text-base" aria-hidden="true">
                 📋
@@ -381,8 +435,18 @@ export function Board() {
             </button>
             <button
               type="button"
+              onClick={() => setHowToOpen(true)}
+              className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-sky-200 transition hover:bg-[var(--panel)] active:scale-95"
+            >
+              <span className="text-base" aria-hidden="true">
+                💡
+              </span>
+              遊び方
+            </button>
+            <button
+              type="button"
               onClick={() => setBookOpen(true)}
-              className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-sky-200 transition hover:bg-slate-800 active:scale-95"
+              className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-amber-200 transition hover:bg-[var(--panel)] active:scale-95"
             >
               <span className="text-base" aria-hidden="true">
                 📖
@@ -392,7 +456,7 @@ export function Board() {
             <button
               type="button"
               onClick={() => setPrologueOpen(true)}
-              className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-slate-300 transition hover:bg-slate-800 active:scale-95"
+              className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-[var(--text-body)] transition hover:bg-[var(--panel)] active:scale-95"
             >
               <span className="text-base" aria-hidden="true">
                 📜
@@ -402,7 +466,7 @@ export function Board() {
             <button
               type="button"
               onClick={reset}
-              className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-slate-300 transition hover:bg-slate-800 active:scale-95"
+              className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium text-[var(--text-body)] transition hover:bg-[var(--panel)] active:scale-95"
             >
               <span className="text-base" aria-hidden="true">
                 ↻
@@ -432,8 +496,8 @@ export function Board() {
         />
       )}
 
-      {/* 実行ミニゲーム（選択後・結果前）。出来=tier で主正メーターを倍率調整 */}
-      {status === 'event' && currentEvent && !result && pendingChoice && (
+      {/* 実行ミニゲーム（選択後・結果前）。出来=tier で主正メーターを倍率調整。初回は説明コーチマークを先に出す */}
+      {status === 'event' && currentEvent && !result && pendingChoice && !minigameCoachKey && (
         <MiniGame
           kind={miniGameKindFor(currentEvent)}
           seed={seedFor(currentEvent.id)}
@@ -468,6 +532,26 @@ export function Board() {
 
       {/* プロローグ（初回自動・以降は「あらすじ」から） */}
       {prologueOpen && <Prologue onClose={closePrologue} />}
+
+      {/* 遊び方リファレンス（下部メニュー「遊び方」から・いつでも。オンデマンド読込） */}
+      {howToOpen && (
+        <Suspense fallback={null}>
+          <HowToPlay onClose={() => setHowToOpen(false)} />
+        </Suspense>
+      )}
+
+      {/* 都度教示：その場面/初回ミニゲームに初めて来たとき1度だけ。閉じたら既読化し再評価。オンデマンド読込。 */}
+      {activeCoachKey && (
+        <Suspense fallback={null}>
+          <Coachmark
+            coachKey={activeCoachKey}
+            onClose={() => {
+              markCoachSeen(activeCoachKey)
+              bumpCoach((v) => v + 1)
+            }}
+          />
+        </Suspense>
+      )}
     </>
   )
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { GLOSSARY } from '../glossary'
 import { SEED_BY_ID, SEEDS } from '../seeds'
-import { EVENTS } from './chapter-01'
+import { EVENTS, SPRINTS } from './chapter-01'
 
 // ───────────────────────────────────────────────────────────
 // 用語カバレッジ監査
@@ -119,16 +119,30 @@ describe('縦糸の入口（pinned）の整合性', () => {
     expect(bad, `daily 以外の pinned: ${bad.join(', ')}`).toEqual([])
   })
 
-  it('1スプリントの pinned は高々1つ（強制提示は先頭1件のため複数あると取りこぼす）', () => {
+  it('1スプリントの pinned 数 ≤ そのスプリントのデイリー数（末尾から1日1件ずつ全部強制できる）', () => {
+    // spinCore は「未遭遇 pinned ≤ 残りデイリー数」になった時点で末尾デイリーから1件ずつ強制する。
+    // 総数がデイリー数を超えなければ、全 pinned を必ず通せる（取りこぼさない）。
+    const dailyCountOf = (sprintNo: number) =>
+      SPRINTS.find((s) => s.n === sprintNo)?.beats.filter((b) => b === 'daily').length ?? 0
     const bySprint = new Map<number, number>()
     for (const e of pinned) bySprint.set(e.sprint, (bySprint.get(e.sprint) ?? 0) + 1)
-    const over = [...bySprint].filter(([, n]) => n > 1).map(([s]) => `S${s}`)
-    expect(over, `pinned が2つ以上のスプリント: ${over.join(', ')}`).toEqual([])
+    const over = [...bySprint]
+      .filter(([sprintNo, n]) => n > dailyCountOf(sprintNo))
+      .map(([s, n]) => `S${s}(${n}>${dailyCountOf(s)})`)
+    expect(over, `pinned がデイリー数を超えるスプリント: ${over.join(', ')}`).toEqual([])
   })
 
-  it('pinned は requiresFlag を持たない（無条件に出る入口）', () => {
-    const bad = pinned.filter((e) => e.requiresFlag).map((e) => e.id)
-    expect(bad, `requiresFlag 付き pinned: ${bad.join(', ')}`).toEqual([])
+  it('requiresFlag 付き pinned は、そのフラグを確実に立てる“保証役”の pinned が先行する', () => {
+    // pinned は原則「無条件に出る入口」。ただし requiresFlag 付きでも、そのフラグを全選択で立てる
+    // 無条件 pinned（保証役）が同一以前のスプリントにあれば、フラグは必ず立つので入口として成立する。
+    // 例: s2-physical-ai-showcase(要 showcasePressure) は s1-daily-showcase-order(無条件 pinned・
+    //     全選択で showcasePressure を立てる) が S1 で必ず通るため、S2 で確実に出る。
+    const guarantees = (flag: string) =>
+      pinned.some((g) => !g.requiresFlag && g.choices.length > 0 && g.choices.every((c) => c.setsFlag === flag))
+    const bad = pinned
+      .filter((e) => e.requiresFlag && !guarantees(e.requiresFlag))
+      .map((e) => `${e.id}(要${e.requiresFlag})`)
+    expect(bad, `フラグの保証役が無い pinned: ${bad.join(', ')}`).toEqual([])
   })
 })
 

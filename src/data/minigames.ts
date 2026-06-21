@@ -72,6 +72,13 @@ const THEME_GOOD: Record<HearingTheme, string[]> = {
     'まず小さく任せて確かめるなら、どこからにしますか？',
     '人が最後に確かめる関所は、どこに残しますか？',
   ],
+  // 説得＝PO への並べ替え提案を“価値の論拠”で通す。良論拠＝顧客価値・スプリントゴール・現場の事実・依存関係。
+  persuade: [
+    'この順なら、今スプリントのゴールに直結する価値を先に届けられます',
+    '現場で確かめた事実だと、この項目が顧客価値にいちばん効きます',
+    '上位の依存を先に片づけるので、結局この順が最短で価値が出ます',
+    'これを上げると、後続のリスクが減って届けきれる確度が上がります',
+  ],
 }
 
 const THEME_BAD: Record<HearingTheme, string[]> = {
@@ -107,6 +114,12 @@ const THEME_BAD: Record<HearingTheme, string[]> = {
     '速くて優秀なんだから、全部任せてしまっていいですよね？',
     '失敗したら、その時に考えればよくないですか？',
     'AIがやってくれるなら、もう人は見なくていいですよね？',
+  ],
+  // 弱い論拠＝個人都合・前例踏襲・権威・勘（PO は価値で動く＝これでは優先順位を動かせない）。
+  persuade: [
+    'とにかく自分が作りやすい順にしてもらえませんか',
+    '前もこうだったので、今回もこの順でいいですよね',
+    '細かい理由は抜きで、これで通してもらえますか',
   ],
 }
 
@@ -197,6 +210,7 @@ const HEARING_TITLE: Record<HearingTheme, string> = {
   team: 'チームの本音を引き出す',
   chousa: '事実の裏を取る',
   inin: '任せる線を見極める',
+  persuade: 'PO を価値で説得する',
 }
 
 /** ヒアリング・ミニゲームの見出し（テーマ＝相手・場面で出し分け。未指定は現場主義の標準） */
@@ -212,6 +226,7 @@ const HEARING_PROMPT: Record<HearingTheme, string> = {
   team: 'チームに、どの問いを投げる？',
   chousa: '事実の裏に、どの問いを当てる？',
   inin: 'AIに任せる前に、どの問いを置く？',
+  persuade: 'PO に、どの論拠で並べ替えを通す？',
 }
 
 /** ヒアリング・ミニゲームの設問リード文（相手・場面で出し分け。未指定は現場主義の標準） */
@@ -227,12 +242,20 @@ const HEARING_CTA: Record<HearingTheme, string> = {
   team: 'この2つで掘り下げる',
   chousa: 'この2つで裏を取る',
   inin: 'この2つで線を引く',
+  persuade: 'この2つで説得する',
 }
 
 /** ヒアリング確定ボタンのラベル（相手・場面で出し分け。未指定は現場主義の標準） */
 export function hearingCtaFor(theme?: HearingTheme): string {
   return theme ? HEARING_CTA[theme] : HEARING_CTA.genba
 }
+
+/** PO 説得ミニゲームの論拠デッキ（良論拠3＋弱論拠2）。MiniGameHearing に hearingOptions として渡す。
+ *  良＝価値・ゴール・現場の事実・依存／弱＝個人都合・前例・権威。2つ選んで良の数で great/good/poor。 */
+export const PERSUADE_DECK: HearingOption[] = [
+  ...THEME_GOOD.persuade.map((text) => ({ text, good: true })),
+  ...THEME_BAD.persuade.map((text) => ({ text, good: false })),
+]
 
 /** ヒアリングの採点：選んだ2問のうち良問の数で great/good/poor。 */
 export function scoreHearing(picked: HearingOption[]): ExecTier {

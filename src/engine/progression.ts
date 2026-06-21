@@ -332,6 +332,14 @@ export function isRouletteCeremony(ceremony: Ceremony): boolean {
   return ceremony === 'daily'
 }
 
+/** プランニングを終えてスプリントを開始してよいか。
+ *  ＝スプリントバックログ（選択した PBI＝予測）が1件以上あること。スプリント計画の成果物は
+ *  「スプリントゴール＋選択した PBI＋実行計画」(Scrum Guide 2020) なので、選択ゼロでは計画未完了。
+ *  この関門は「プランニングのビートを抜ける」瞬間だけに効く（ゴール選択イベント自体は妨げない）。 */
+export function canLeavePlanning(core: Pick<ProgressCore, 'sprintForecast'>): boolean {
+  return core.sprintForecast.length > 0
+}
+
 /** 「進める」: セグメント不問で、現セレモニーの最初の出せるイベントを引く（重要分岐を必ず出す）。
  *  単発セレモニー（Planning/Review/Retro＝会議）はマップ移動を挟まず直接イベントへ */
 export function proceedCore(core: ProgressCore): ProgressCore {
@@ -341,7 +349,12 @@ export function proceedCore(core: ProgressCore): ProgressCore {
   const sprintNo = SPRINTS[core.sprintIndex].n
   const avail = availableEvents(EVENTS, sprintNo, ceremony, core.resolvedIds, core.flags)
   const event = avail[0] ?? null
-  if (!event) return advanceCore(core)
+  if (!event) {
+    // プランニングはスプリントバックログ（予測）が空のままでは終えられない＝計画の成果物が無い。
+    // ゴール選択を済ませても予測ゼロなら「進める」は素通り（no-op）。UI 側でもボタンを無効化して誘導する。
+    if (ceremony === 'planning' && !canLeavePlanning(core)) return core
+    return advanceCore(core)
+  }
   return {
     ...core,
     currentEvent: event,
@@ -403,12 +416,15 @@ export function spinCore(core: ProgressCore, segment: Segment, pickRandom: numbe
   const avail = availableEvents(EVENTS, sprintNo, ceremony, core.resolvedIds, core.flags)
 
   if (ceremony === 'daily') {
-    // 縦糸の入口(pinned)を見逃したまま終わらせない：そのスプリントの最後のデイリーで未遭遇なら必ず提示する
-    // （それまでのデイリーは drawCandidates が pinned を最優先候補に据えるので自然に出やすい）。
+    // 縦糸の入口(pinned)を見逃したまま終わらせない：未遭遇の pinned が「残りデイリー数」以上に
+    // 溜まったら、スプリント末側のデイリーから1つずつ強制提示する。これで pinned が複数あっても
+    // （例：S2 の ghost-stock と physical-ai-showcase）全部を必ず通す。残りに余裕がある間は
+    // drawCandidates が pinned を最優先候補に据えるので、自然に出やすいまま体験を妨げない。
     const beats = SPRINTS[core.sprintIndex]?.beats ?? []
-    const isLastDaily = !beats.slice(core.beatIndex + 1).includes('daily')
+    const remainingDailies = beats.slice(core.beatIndex).filter((b) => b === 'daily').length
     const pinned = avail.filter((e) => e.pinned)
-    const cands = isLastDaily && pinned.length > 0 ? [pinned[0]] : drawCandidates(avail, segment, pickRandom)
+    const mustForcePinned = pinned.length > 0 && remainingDailies <= pinned.length
+    const cands = mustForcePinned ? [pinned[0]] : drawCandidates(avail, segment, pickRandom)
     if (cands.length === 0) return advanceCore(core)
     return {
       ...core,
@@ -422,7 +438,11 @@ export function spinCore(core: ProgressCore, segment: Segment, pickRandom: numbe
   }
   // 単発セレモニー（テスト等で spin される場合）＝1つ引いて直接 event
   const { event } = drawEvent(avail, segment, pickRandom)
-  if (!event) return advanceCore(core)
+  // proceedCore と同じ関門：空のスプリントバックログのままプランニングを抜けさせない
+  if (!event) {
+    if (ceremony === 'planning' && !canLeavePlanning(core)) return core
+    return advanceCore(core)
+  }
   return {
     ...core,
     currentEvent: event,
@@ -609,6 +629,22 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
       unexpected: false,
       status: 'ended',
       ending: FAILURE_EPILOGUES[zeroed],
+      result,
+      pendingLocation: null,
+      peekLocation: null,
+      dailyCandidates: [],
+    }
+  }
+
+  // プランニングのゴール選択は“即・次へ”進めない：ゴールを定めたら、その場に留まって
+  // スプリントバックログ（予測）を組む。明示的に「進める」を押して初めてスプリントが始まる
+  // ＝計画の成果物（選択した PBI）を作る一手を必ず通す。result は出して結果は見せる。
+  if (event.ceremony === 'planning') {
+    return {
+      ...base,
+      currentEvent: null,
+      unexpected: false,
+      status: 'playing',
       result,
       pendingLocation: null,
       peekLocation: null,

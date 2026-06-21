@@ -2,6 +2,23 @@
 
 :root {
   color-scheme: dark;
+
+  /* ゲーム世界のテーマトークン（温かいチャコール＆琥珀）。
+   * 配色を変えるときは原則ここだけを編集する。各コンポーネントは bg-[var(--card)] のように参照する。
+   * 開発系画面（RepoPanel/BacklogPanel）はクールな slate を別途維持するため、これらは使わない。 */
+  --bg: #1c1a17; /* 世界の地色／アクセント上の暗文字 */
+  --bg-deep: #14120f; /* 最深・スクリム下地・トラック */
+  --card: #211f1b; /* カード／モーダル背景 */
+  --panel: #2a2723; /* パネル／ホバー／浮き面 */
+  --border: #3a352f; /* 通常ボーダー */
+  --border-strong: #4a443c; /* 強いボーダー／disabled 背景 */
+  --text: #f1ece3; /* 見出し・最重要 */
+  --text-body: #ddd6ca; /* 本文 */
+  --text-sub: #b5ab9d; /* サブ・補足 */
+  --text-disabled: #6b645b; /* 無効・装飾 */
+  --accent: #e0a93f; /* 主要ボタン／アクセント（金） */
+  --accent-hover: #c8923a; /* アクセントのホバー */
+  --link: #e8c26a; /* リンク・強調語（明るい金） */
 }
 
 /* Safe Area（ノッチ／ホームインジケータ）を尊重するパディング・ユーティリティ。
@@ -26,8 +43,8 @@ body,
 
 body {
   margin: 0;
-  background: #0f172a;
-  color: #e2e8f0;
+  background: var(--bg);
+  color: var(--text);
   font-family:
     'Hiragino Kaku Gothic ProN', 'Noto Sans JP', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;

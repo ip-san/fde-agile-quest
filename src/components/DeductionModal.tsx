@@ -14,7 +14,7 @@ interface Props {
 
 /**
  * 選択の前の「現場の本音を見抜く」推理ステップ。
- * 建前・ノイズに紛れた本音（真の制約）を1つ当てる＝逆転裁判の“見抜く/突きつける”快感の移植。
+ * 建前・ノイズに紛れた本音（真の制約）を1つ当てる＝逆転裁判の"見抜く/突きつける"快感の移植。
  * 当てると決定的瞬間の演出＋本音ヒント開示、外すとミス演出。どちらも選択へは進める（行き止まりにしない）。
  *
  * TODO(gamedesign): miss 文が正解を強く示唆し消去法化しやすい。外しても reveal の核心を一部見せ
@@ -40,29 +40,31 @@ export function DeductionModal({ event, onResolve }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-slate-700 bg-slate-900 shadow-2xl sm:max-h-[90vh] sm:rounded-2xl"
+        className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-[var(--border)] bg-[var(--card)] shadow-2xl sm:max-h-[90vh] sm:rounded-2xl"
       >
         <header
           className="flex flex-wrap items-center gap-2 rounded-t-2xl px-5 py-3"
           style={{ backgroundColor: `${SEGMENT_COLORS[event.segment]}22` }}
         >
-          <span className="rounded-full bg-slate-950/60 px-2.5 py-0.5 text-xs font-bold text-slate-200">
+          <span className="rounded-full bg-[var(--bg-deep)]/60 px-2.5 py-0.5 text-xs font-bold text-[var(--text-body)]">
             {ACTION_LABELS[event.ceremony]}
           </span>
           <span
-            className="rounded-full px-2.5 py-0.5 text-xs font-bold text-slate-950"
+            className="rounded-full px-2.5 py-0.5 text-xs font-bold text-[var(--bg)]"
             style={{ backgroundColor: SEGMENT_COLORS[event.segment] }}
           >
             {SEGMENT_LABELS[event.segment]}
           </span>
-          <span className="rounded-full bg-amber-400/20 px-2.5 py-0.5 text-xs font-bold text-amber-200">推理</span>
-          <h2 id={titleId} className="w-full text-base font-bold text-slate-100">
+          <span className="rounded-full bg-[var(--link)]/20 px-2.5 py-0.5 text-xs font-bold text-[var(--link)]">
+            推理
+          </span>
+          <h2 id={titleId} className="w-full text-base font-bold text-[var(--text)]">
             {event.title}
           </h2>
         </header>
 
         <div className="space-y-4 px-5 pt-4 pb-safe">
-          <p className="text-sm leading-relaxed text-slate-200">
+          <p className="text-sm leading-relaxed text-[var(--text-body)]">
             <RichText text={event.narrative} />
           </p>
 
@@ -74,7 +76,7 @@ export function DeductionModal({ event, onResolve }: Props) {
 
           {!picked ? (
             <div className="space-y-2">
-              <p className="text-xs font-semibold text-slate-400">どれが現場の本音だ？</p>
+              <p className="text-xs font-semibold text-[var(--text-sub)]">どれが現場の本音だ？</p>
               {d.options.map((o) => (
                 <button
                   key={o.id}
@@ -83,9 +85,9 @@ export function DeductionModal({ event, onResolve }: Props) {
                     setPicked(o)
                     sfxReveal(o.truth ? 'impact' : 'bad')
                   }}
-                  className="group block w-full rounded-xl border border-slate-700 bg-slate-800/40 px-4 py-3 text-left transition hover:border-amber-400 hover:bg-slate-800"
+                  className="group block w-full rounded-xl border border-[var(--border)] bg-[var(--panel)]/40 px-4 py-3 text-left transition hover:border-[var(--link)] hover:bg-[var(--panel)]"
                 >
-                  <span className="block text-sm font-medium text-slate-100">
+                  <span className="block text-sm font-medium text-[var(--text)]">
                     <RichText text={o.text} interactive={false} />
                   </span>
                 </button>
@@ -102,7 +104,7 @@ export function DeductionModal({ event, onResolve }: Props) {
                 <p className={`text-sm font-bold ${correct ? 'text-amber-200' : 'text-rose-200'}`}>
                   {correct ? <>見抜いた！</> : '— 読み違えた'}
                 </p>
-                <p className="mt-1 text-sm text-slate-200">
+                <p className="mt-1 text-sm text-[var(--text-body)]">
                   {correct ? (
                     <RichText text={d.reveal} />
                   ) : (
@@ -110,7 +112,7 @@ export function DeductionModal({ event, onResolve }: Props) {
                   )}
                 </p>
                 {!correct && (
-                  <p className="mt-1.5 text-xs text-slate-400">
+                  <p className="mt-1.5 text-xs text-[var(--text-sub)]">
                     （本音を外すと、現場の核心が見えないまま選ぶことになる）
                   </p>
                 )}
@@ -120,7 +122,7 @@ export function DeductionModal({ event, onResolve }: Props) {
                 type="button"
                 onClick={() => onResolve(correct)}
                 data-initial-focus
-                className="w-full rounded-xl bg-sky-500 py-3 font-bold text-slate-950 transition hover:bg-sky-400 active:scale-95"
+                className="w-full rounded-xl bg-[var(--accent)] py-3 font-bold text-[var(--bg)] transition hover:bg-[var(--accent-hover)] active:scale-95"
               >
                 判断へ進む（Enter）
               </button>

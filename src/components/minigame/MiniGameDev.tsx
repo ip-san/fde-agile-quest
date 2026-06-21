@@ -59,14 +59,14 @@ function DevTiming({ onResolve }: { onResolve: (tier: ExecTier) => void }) {
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-slate-300">
-        実装のキメどころ。 <span className="text-slate-400">中央の的でタイミングよく止める</span>
+      <p className="text-sm text-[var(--text-body)]">
+        実装のキメどころ。 <span className="text-[var(--text-sub)]">中央の的でタイミングよく止める</span>
       </p>
-      <div className="relative h-9 overflow-hidden rounded-lg border border-slate-700 bg-slate-800">
+      <div className="relative h-9 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--panel)]">
         {/* 的（中央のグリーンゾーン） */}
         <div className="absolute inset-y-0 left-1/2 w-[16%] -translate-x-1/2 bg-emerald-500/25" />
         <div className="absolute inset-y-0 left-1/2 w-[44%] -translate-x-1/2 border-x border-emerald-400/20" />
-        {/* マーカー */}
+        {/* マーカー（意味色：動くマーカーとして sky-300 維持） */}
         <div
           className="absolute inset-y-0 w-1.5 -translate-x-1/2 rounded bg-sky-300 shadow shadow-sky-500/50"
           style={{ left: `${pos}%` }}
@@ -78,7 +78,7 @@ function DevTiming({ onResolve }: { onResolve: (tier: ExecTier) => void }) {
         onClick={stop}
         disabled={stopped}
         data-initial-focus
-        className="w-full rounded-xl bg-sky-500 py-2.5 font-bold text-slate-950 transition hover:bg-sky-400 active:scale-95 disabled:bg-slate-600 disabled:text-slate-400"
+        className="w-full rounded-xl bg-[var(--accent)] py-2.5 font-bold text-[var(--bg)] transition hover:bg-[var(--accent-hover)] active:scale-95 disabled:bg-[var(--border-strong)] disabled:text-[var(--text-disabled)]"
       >
         {stopped ? '——' : '止める（SPACE）'}
       </button>

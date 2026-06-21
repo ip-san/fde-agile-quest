@@ -21,7 +21,7 @@ const EFFECT_LABEL: Record<keyof Effects, string> = {
 function EffectDeltas({ effects }: { effects: Effects }) {
   const entries = (Object.keys(effects) as (keyof Effects)[]).filter((k) => effects[k] !== 0)
   if (entries.length === 0) {
-    return <span className="text-sm text-slate-400">メーターの変化はなかった</span>
+    return <span className="text-sm text-[var(--text-sub)]">メーターの変化はなかった</span>
   }
   return (
     <span className="flex flex-wrap items-center gap-2">
@@ -44,7 +44,7 @@ function EffectDeltas({ effects }: { effects: Effects }) {
   )
 }
 
-const KIND_LABEL = { dev: '開発', hearing: 'ヒアリング', review: 'レビュー' } as const
+const KIND_LABEL = { dev: '開発', hearing: 'ヒアリング', review: 'レビュー', persuade: '交渉' } as const
 
 /** 選択後ミニゲームの出来バッジ。great=主正+1上乗せ / good=標準 / poor=伸びしろ取り逃し */
 function ExecBadge({ result }: { result: ResultView }) {
@@ -60,7 +60,7 @@ function ExecBadge({ result }: { result: ResultView }) {
     primary && delta > 0 ? `${primary}の伸びを ＋${delta}` : null,
     skillCov > 0 ? `コード品質を ＋${skillCov}%` : null,
   ].filter(Boolean)
-  // 2連鎖以上は“実装の波”を頭に出して、続けて会心するほど効くことを体感させる。
+  // 2連鎖以上は"実装の波"を頭に出して、続けて会心するほど効くことを体感させる。
   const streakLabel = streak >= 2 ? `${streak}連鎖！ ` : ''
   const conf =
     tier === 'great'
@@ -85,7 +85,7 @@ function ExecBadge({ result }: { result: ResultView }) {
                 : `${kind}の詰めが甘かった`,
           }
         : {
-            cls: 'border-slate-700 bg-slate-800/40 text-slate-300',
+            cls: 'border-[var(--border)] bg-[var(--panel)]/40 text-[var(--text-body)]',
             icon: '○',
             text: `無難に${kind}をやり切った`,
           }
@@ -97,31 +97,31 @@ function ExecBadge({ result }: { result: ResultView }) {
   )
 }
 
-/** スプリントレビューの“成果”＝スプリントバックログの精算。DoD は二値（部分点なし）。
+/** スプリントレビューの"成果"＝スプリントバックログの精算。DoD は二値（部分点なし）。
  *  容量を超えて予測した分はキャリーオーバーになり、健全な予測は culture を後押しする。 */
 function BacklogReviewBlock({ review }: { review: BacklogReview }) {
   const cd = review.cultureDelta
   const vg = review.valueGain
   return (
-    <div className="space-y-2 rounded-xl border border-slate-700 bg-slate-800/40 px-4 py-3">
+    <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--panel)]/40 px-4 py-3">
       <div className="flex items-center justify-between">
-        <p className="text-[11px] font-semibold text-slate-400">スプリントバックログの精算</p>
+        <p className="text-[11px] font-semibold text-[var(--text-sub)]">スプリントバックログの精算</p>
         <span className="tabular-nums text-xs text-emerald-300">
           ベロシティ {review.velocity}pt（完了 {review.done.length}件）
         </span>
       </div>
 
-      {/* このスプリントで北極星（顧客価値）をどれだけ伸ばしたか＝“成果の前進”を主役級に見せる。 */}
+      {/* このスプリントで北極星（顧客価値）をどれだけ伸ばしたか＝"成果の前進"を主役級に見せる。 */}
       {vg !== undefined && (
         <div
           className={`flex items-center justify-between rounded-lg px-3 py-2 ${
-            vg > 0 ? 'bg-amber-400/10 ring-1 ring-amber-400/30' : 'bg-slate-800/60'
+            vg > 0 ? 'bg-[var(--accent)]/10 ring-1 ring-[var(--accent)]/30' : 'bg-[var(--panel)]/60'
           }`}
         >
           <span className="text-xs font-semibold text-amber-100">このスプリントで伸ばした顧客価値</span>
           <span
             className={`text-base font-extrabold tabular-nums ${
-              vg > 0 ? 'text-amber-300' : vg < 0 ? 'text-rose-300' : 'text-slate-400'
+              vg > 0 ? 'text-amber-300' : vg < 0 ? 'text-rose-300' : 'text-[var(--text-sub)]'
             }`}
           >
             {vg > 0 ? `▲ +${vg}` : vg < 0 ? `▼ ${vg}` : '±0'}
@@ -134,15 +134,15 @@ function BacklogReviewBlock({ review }: { review: BacklogReview }) {
           <p className="mb-1 text-xs text-emerald-300">✓ 完成（DoD達成）</p>
           <ul className="space-y-0.5">
             {review.done.map((d) => (
-              <li key={d.id} className="flex items-start gap-1.5 text-sm text-slate-200">
-                <span className="shrink-0 tabular-nums text-[11px] text-slate-400">{d.estimate}pt</span>
+              <li key={d.id} className="flex items-start gap-1.5 text-sm text-[var(--text-body)]">
+                <span className="shrink-0 tabular-nums text-[11px] text-[var(--text-sub)]">{d.estimate}pt</span>
                 <RichText text={d.title} />
               </li>
             ))}
           </ul>
         </div>
       ) : (
-        <p className="text-xs text-slate-400">この予測では、完成（DoD達成）した項目はなかった。</p>
+        <p className="text-xs text-[var(--text-sub)]">この予測では、完成（DoD達成）した項目はなかった。</p>
       )}
 
       {review.carryover.length > 0 && (
@@ -150,13 +150,13 @@ function BacklogReviewBlock({ review }: { review: BacklogReview }) {
           <p className="mb-1 text-xs text-rose-300">↪ キャリーオーバー（次へ持ち越し）</p>
           <ul className="space-y-0.5">
             {review.carryover.map((d) => (
-              <li key={d.id} className="flex items-start gap-1.5 text-sm text-slate-300">
-                <span className="shrink-0 tabular-nums text-[11px] text-slate-400">{d.estimate}pt</span>
+              <li key={d.id} className="flex items-start gap-1.5 text-sm text-[var(--text-body)]">
+                <span className="shrink-0 tabular-nums text-[11px] text-[var(--text-sub)]">{d.estimate}pt</span>
                 <RichText text={d.title} />
               </li>
             ))}
           </ul>
-          <p className="mt-1 text-xs text-slate-400">
+          <p className="mt-1 text-xs text-[var(--text-sub)]">
             完成しなかった分は部分点なしでプロダクトバックログに戻り、改めて並べ替えられる。
           </p>
         </div>
@@ -204,8 +204,8 @@ function SeedReveal({ seedId, seedNew }: { seedId?: string; seedNew?: boolean })
       <p className="text-[11px] font-semibold text-emerald-300">
         次の機能の種を{seedNew ? '発見' : '再確認'}（StockPilotへ還元）
       </p>
-      <p className="text-sm font-medium text-slate-100">{seed.title}</p>
-      <p className="text-[11px] text-slate-400">現場から：{seed.from}</p>
+      <p className="text-sm font-medium text-[var(--text)]">{seed.title}</p>
+      <p className="text-[11px] text-[var(--text-sub)]">現場から：{seed.from}</p>
     </div>
   )
 }
@@ -217,7 +217,7 @@ interface Props {
   onContinue: () => void
 }
 
-/** 開示演出のフラッシュ色。閃光は“決定的瞬間”だけに絞る（impact のみ／danger は別途 rose）。
+/** 開示演出のフラッシュ色。閃光は"決定的瞬間"だけに絞る（impact のみ／danger は別途 rose）。
  *  good/bad/normal は音のみ＝結果画面の閃光過多と認知負荷を避ける。 */
 const FLASH_COLOR: Record<RevealKind, string | null> = {
   impact: '#fbbf24', // amber-400 ＝「異議あり！」の閃光に相当
@@ -234,7 +234,7 @@ export function ResultModal({ result, meters, onContinue }: Props) {
   const imgKey = resultImage(result.eventId, result.choiceId, result.segment)
 
   // この判断で「致命圏」へ削られたメーター（効果が負、かつ適用後の値が DANGER_AT 以下）。
-  // 差し引きプラスでも、削りすぎは命取り——というトレードオフを“追い詰められる緊張”として見せる。
+  // 差し引きプラスでも、削りすぎは命取り——というトレードオフを"追い詰められる緊張"として見せる。
   const dangerMeters = (Object.keys(METER_FULL_LABEL) as (keyof Meters)[]).filter(
     (k) => (result.effects[k] ?? 0) < 0 && meters[k] <= METER_CRITICAL
   )
@@ -267,22 +267,22 @@ export function ResultModal({ result, meters, onContinue }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-slate-700 bg-slate-900 shadow-2xl sm:max-h-[90vh] sm:rounded-2xl"
+        className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-[var(--border)] bg-[var(--card)] shadow-2xl sm:max-h-[90vh] sm:rounded-2xl"
       >
         <header
           className="flex flex-wrap items-center gap-2 px-5 py-3"
           style={{ backgroundColor: `${SEGMENT_COLORS[result.segment]}22` }}
         >
-          <span className="rounded-full bg-slate-950/60 px-2.5 py-0.5 text-xs font-bold text-slate-200">
+          <span className="rounded-full bg-[var(--bg-deep)]/60 px-2.5 py-0.5 text-xs font-bold text-[var(--text-body)]">
             {ACTION_LABELS[result.ceremony]}
           </span>
           <span
-            className="rounded-full px-2.5 py-0.5 text-xs font-bold text-slate-950"
+            className="rounded-full px-2.5 py-0.5 text-xs font-bold text-[var(--bg)]"
             style={{ backgroundColor: SEGMENT_COLORS[result.segment] }}
           >
             {SEGMENT_LABELS[result.segment]}
           </span>
-          <h2 id={titleId} className="w-full text-base font-bold text-slate-100">
+          <h2 id={titleId} className="w-full text-base font-bold text-[var(--text)]">
             {result.eventTitle}
           </h2>
         </header>
@@ -301,9 +301,9 @@ export function ResultModal({ result, meters, onContinue }: Props) {
 
         <div className="space-y-4 px-5 py-4">
           {/* 選んだ判断 */}
-          <div className="rounded-xl border border-slate-700 bg-slate-800/40 px-4 py-2.5">
-            <p className="text-[11px] font-semibold text-slate-400">あなたの判断</p>
-            <p className="text-sm font-medium text-slate-100">
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)]/40 px-4 py-2.5">
+            <p className="text-[11px] font-semibold text-[var(--text-sub)]">あなたの判断</p>
+            <p className="text-sm font-medium text-[var(--text)]">
               {result.warn && (
                 <span className="mr-1" aria-hidden="true">
                   ⚠
@@ -315,8 +315,8 @@ export function ResultModal({ result, meters, onContinue }: Props) {
 
           {/* 何が起きたか（結果文を一度ちゃんと見せる） */}
           <div>
-            <p className="mb-1 text-[11px] font-semibold text-slate-400">結果</p>
-            <p className="text-[15px] leading-relaxed text-slate-100">
+            <p className="mb-1 text-[11px] font-semibold text-[var(--text-sub)]">結果</p>
+            <p className="text-[15px] leading-relaxed text-[var(--text)]">
               <RichText text={result.resultText} />
             </p>
           </div>
@@ -336,7 +336,7 @@ export function ResultModal({ result, meters, onContinue }: Props) {
               <p className={`text-sm font-bold ${onBrink ? 'text-rose-200' : 'text-amber-200'}`}>
                 <span aria-hidden="true">⚠</span> {onBrink ? '危険水域——あと一歩で案件終了' : '危険水域'}
               </p>
-              <p className="mt-0.5 text-xs text-slate-300">
+              <p className="mt-0.5 text-xs text-[var(--text-body)]">
                 {dangerMeters.map((k, i) => (
                   <span key={k}>
                     {i > 0 && '／'}
@@ -355,8 +355,8 @@ export function ResultModal({ result, meters, onContinue }: Props) {
           <ExecBadge result={result} />
 
           {/* メーター増減 */}
-          <div className="flex items-center gap-2 border-t border-slate-800 pt-3">
-            <span className="text-[11px] font-semibold text-slate-400">メーター</span>
+          <div className="flex items-center gap-2 border-t border-[var(--panel)] pt-3">
+            <span className="text-[11px] font-semibold text-[var(--text-sub)]">メーター</span>
             <EffectDeltas effects={result.effects} />
           </div>
 
@@ -380,8 +380,8 @@ export function ResultModal({ result, meters, onContinue }: Props) {
           {result.discoveredPbi && (
             <div className="space-y-1 rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-2.5">
               <p className="text-[11px] font-semibold text-rose-300">現場の声から、新しいバックログ項目が見つかった</p>
-              <p className="text-sm font-medium text-slate-100">『{result.discoveredPbi.title}』</p>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-sm font-medium text-[var(--text)]">『{result.discoveredPbi.title}』</p>
+              <p className="text-[11px] text-[var(--text-sub)]">
                 プロダクトバックログに追加。次のプランニングで優先順位を検討しましょう。
               </p>
             </div>
@@ -390,7 +390,7 @@ export function ResultModal({ result, meters, onContinue }: Props) {
           {/* 生成AIトークンの消費（AIに頼った選択のみ） */}
           {result.tokenSpent ? (
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold text-slate-400">AIトークン</span>
+              <span className="text-[11px] font-semibold text-[var(--text-sub)]">AIトークン</span>
               <span className="rounded-lg bg-cyan-500/15 px-2.5 py-1 text-sm font-bold tabular-nums text-cyan-300">
                 ▼ −{result.tokenSpent}
               </span>
@@ -400,7 +400,7 @@ export function ResultModal({ result, meters, onContinue }: Props) {
           {/* リポジトリ：コード（カバレッジ）／技術的負債の増減 */}
           {result.coverageDelta || result.debtDelta ? (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-semibold text-slate-400">リポジトリ</span>
+              <span className="text-[11px] font-semibold text-[var(--text-sub)]">リポジトリ</span>
               {result.coverageDelta ? (
                 <span
                   className={`rounded-lg px-2.5 py-1 text-sm font-bold tabular-nums ${result.coverageDelta > 0 ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'}`}
@@ -423,14 +423,14 @@ export function ResultModal({ result, meters, onContinue }: Props) {
           {/* スプリントレビュー：スプリントバックログの精算（done/キャリーオーバー/ベロシティ） */}
           {result.backlogReview && <BacklogReviewBlock review={result.backlogReview} />}
 
-          {/* この場面のFDE心得（手帳に集まる）。新規だけ全文で“獲得”を演出し、
+          {/* この場面のFDE心得（手帳に集まる）。新規だけ全文で"獲得"を演出し、
               既出は手帳に集約済みなので小さなチップに畳む（説教の二重化を避ける）。 */}
           {result.precepts.length > 0 &&
             (() => {
               const newIds = result.precepts.filter((id) => result.newPreceptIds.includes(id))
               const seenIds = result.precepts.filter((id) => !result.newPreceptIds.includes(id))
               return (
-                <div className="space-y-2 border-t border-slate-800 pt-3">
+                <div className="space-y-2 border-t border-[var(--panel)] pt-3">
                   {newIds.length > 0 && (
                     <div className="space-y-1.5">
                       <span className="text-[11px] font-semibold text-amber-300">心得を獲得</span>
@@ -440,10 +440,10 @@ export function ResultModal({ result, meters, onContinue }: Props) {
                         return (
                           <div
                             key={id}
-                            className="flex items-start gap-2 rounded-lg bg-amber-400/10 px-2.5 py-1.5 text-sm ring-1 ring-amber-400/30"
+                            className="flex items-start gap-2 rounded-lg bg-[var(--accent)]/10 px-2.5 py-1.5 text-sm ring-1 ring-[var(--accent)]/30"
                           >
                             <span className="mt-0.5 shrink-0 tabular-nums text-[11px] text-amber-300/80">#{id}</span>
-                            <span className="text-slate-100">{p.text}</span>
+                            <span className="text-[var(--text)]">{p.text}</span>
                           </div>
                         )
                       })}
@@ -451,12 +451,12 @@ export function ResultModal({ result, meters, onContinue }: Props) {
                   )}
                   {seenIds.length > 0 && (
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-[11px] text-slate-400">この場面の心得</span>
+                      <span className="text-[11px] text-[var(--text-sub)]">この場面の心得</span>
                       {seenIds.map((id) => (
                         <span
                           key={id}
                           title={PRECEPT_BY_ID[id]?.text}
-                          className="rounded bg-slate-800/60 px-1.5 py-0.5 text-[11px] tabular-nums text-slate-400"
+                          className="rounded bg-[var(--panel)]/60 px-1.5 py-0.5 text-[11px] tabular-nums text-[var(--text-sub)]"
                         >
                           #{id}
                         </span>
@@ -468,12 +468,12 @@ export function ResultModal({ result, meters, onContinue }: Props) {
             })()}
 
           {/* 主CTAはスクロール内容の最下部に sticky 固定し、常に親指の届く位置に置く（HIG） */}
-          <div className="sticky bottom-0 -mx-5 -mb-4 border-t border-slate-800 bg-slate-900/95 px-5 py-3 pb-safe backdrop-blur">
+          <div className="sticky bottom-0 -mx-5 -mb-4 border-t border-[var(--border)] bg-[var(--card)]/95 px-5 py-3 pb-safe backdrop-blur">
             <button
               type="button"
               onClick={onContinue}
               data-initial-focus
-              className="w-full rounded-xl bg-sky-500 py-3 font-bold text-slate-950 transition hover:bg-sky-400 active:scale-95"
+              className="w-full rounded-xl bg-[var(--accent)] py-3 font-bold text-[var(--bg)] transition hover:bg-[var(--accent-hover)] active:scale-95"
             >
               次へ（Enter）
             </button>

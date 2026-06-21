@@ -1,4 +1,4 @@
-import { type HearingOption, type HearingTheme, hearingTitleFor } from '../../data/minigames'
+import { type HearingOption, type HearingTheme, hearingTitleFor, PERSUADE_DECK } from '../../data/minigames'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
 import type { ExecTier, MiniGameKind } from '../../types'
 import { MiniGameDev } from './MiniGameDev'
@@ -25,6 +25,9 @@ function buildHeading(kind: MiniGameKind, theme?: HearingTheme): { tag: string; 
   if (kind === 'hearing') {
     return { tag: '実行：ヒアリング', title: hearingTitleFor(theme) }
   }
+  if (kind === 'persuade') {
+    return { tag: '実行：交渉', title: hearingTitleFor('persuade') }
+  }
   return HEADING[kind]
 }
 
@@ -40,17 +43,17 @@ export function MiniGame({ kind, seed, theme, hearingOptions, onDone, onSkip }: 
         role="dialog"
         aria-modal="true"
         aria-label={`${h.tag}：${h.title}`}
-        className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-slate-700 bg-slate-900 shadow-2xl sm:max-h-[90vh] sm:rounded-2xl"
+        className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-[var(--border)] bg-[var(--card)] shadow-2xl sm:max-h-[90vh] sm:rounded-2xl"
       >
-        <header className="flex items-center justify-between gap-2 border-b border-slate-800 px-5 py-3">
+        <header className="flex items-center justify-between gap-2 border-b border-[var(--panel)] px-5 py-3">
           <div>
-            <p className="text-[11px] font-semibold tracking-wide text-sky-400">{h.tag}</p>
-            <h2 className="text-base font-bold text-slate-100">{h.title}</h2>
+            <p className="text-[11px] font-semibold tracking-wide text-amber-400">{h.tag}</p>
+            <h2 className="text-base font-bold text-[var(--text)]">{h.title}</h2>
           </div>
           <button
             type="button"
             onClick={onSkip}
-            className="inline-flex min-h-[44px] shrink-0 items-center rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-400 transition hover:bg-slate-800"
+            className="inline-flex min-h-[44px] shrink-0 items-center rounded-lg border border-[var(--border)] px-3 py-2 text-xs text-[var(--text-sub)] transition hover:bg-[var(--panel)]"
           >
             スキップ
           </button>
@@ -61,10 +64,13 @@ export function MiniGame({ kind, seed, theme, hearingOptions, onDone, onSkip }: 
             <MiniGameDev seed={seed} onResolve={onDone} />
           ) : kind === 'review' ? (
             <MiniGameReview seed={seed} onResolve={onDone} />
+          ) : kind === 'persuade' ? (
+            // PO 説得＝ヒアリングの選択機構を流用し、価値の論拠デッキ(PERSUADE_DECK)を出す
+            <MiniGameHearing seed={seed} theme="persuade" hearingOptions={PERSUADE_DECK} onResolve={onDone} />
           ) : (
             <MiniGameHearing seed={seed} theme={theme} hearingOptions={hearingOptions} onResolve={onDone} />
           )}
-          <p className="mt-3 text-center text-xs text-slate-400">
+          <p className="mt-3 text-center text-xs text-[var(--text-sub)]">
             ※ 出来が、選んだ判断の伸びを上下させる（スキップ＝標準）
           </p>
         </div>

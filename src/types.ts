@@ -67,12 +67,13 @@ export type Ceremony = 'planning' | 'daily' | 'review' | 'retro'
 /** ルーレットのセグメント＝イベントの種類（現場の不確実性） */
 export type Segment = 'genba' | 'kokyaku' | 'team' | 'trouble' | 'chance'
 
-/** 選択後の「実行」ミニゲームの種類（開発＝タイミング型／ヒアリング＝選択型／レビュー＝AI差分の点検） */
-export type MiniGameKind = 'dev' | 'hearing' | 'review'
+/** 選択後の「実行」ミニゲームの種類（開発＝タイミング型／ヒアリング＝選択型／レビュー＝AI差分の点検／
+ *  説得＝PO への並べ替え提案を“価値の論拠”で通す選択型）。 */
+export type MiniGameKind = 'dev' | 'hearing' | 'review' | 'persuade'
 
-/** ヒアリングの問いを「相手・場面」で変えるテーマ（現場/依頼主/機会/チーム）。
+/** ヒアリング／説得の問い・論拠を「相手・場面」で変えるテーマ（現場/依頼主/機会/チーム…／PO説得=persuade）。
  *  既定はイベントの segment から導出（hearingThemeFor）。問いプール・見出しは minigames.ts。 */
-export type HearingTheme = 'genba' | 'kokyaku' | 'chance' | 'team' | 'chousa' | 'inin'
+export type HearingTheme = 'genba' | 'kokyaku' | 'chance' | 'team' | 'chousa' | 'inin' | 'persuade'
 
 /** ミニゲームの出来。倍率＝選択の主正メーターを great:+1 / good:±0 / poor:-1 する */
 export type ExecTier = 'great' | 'good' | 'poor'

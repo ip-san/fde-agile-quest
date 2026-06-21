@@ -30,20 +30,20 @@ function Pips({ icon, label, value, color }: { icon: string; label: string; valu
           ? 'bg-rose-900/40 ring-1 ring-rose-500/70 motion-safe:animate-pulse'
           : low
             ? 'bg-amber-900/20 ring-1 ring-amber-500/40'
-            : 'bg-slate-800/60'
+            : 'bg-[var(--panel)]/60'
       }`}
     >
       <div className="mb-1 flex items-center justify-between text-xs">
-        <span className="truncate text-slate-300">
+        <span className="truncate text-[var(--text-body)]">
           <span aria-hidden="true">{icon}</span> {label}
         </span>
-        <span className={`tabular-nums ${critical ? 'font-bold text-rose-300' : 'text-slate-400'}`}>
+        <span className={`tabular-nums ${critical ? 'font-bold text-rose-300' : 'text-[var(--text-sub)]'}`}>
           {critical ? <span aria-hidden="true">⚠</span> : null}
           {value}/{METER_MAX}
         </span>
       </div>
       <div
-        className="h-2 overflow-hidden rounded-full bg-slate-700"
+        className="h-2 overflow-hidden rounded-full bg-[var(--border)]"
         role="progressbar"
         aria-label={`${label}${critical ? '（残りわずか）' : ''}`}
         aria-valuenow={value}
