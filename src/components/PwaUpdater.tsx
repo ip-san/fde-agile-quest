@@ -22,15 +22,15 @@ export function PwaUpdater() {
       aria-live="polite"
       className="fixed inset-x-0 bottom-0 z-[70] flex justify-center px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
     >
-      <div className="flex w-full max-w-md items-center gap-3 rounded-xl border border-sky-500/40 bg-slate-900/98 px-4 py-3 shadow-2xl shadow-black/50 backdrop-blur">
-        <span className="flex-1 text-sm text-slate-200">
+      <div className="flex w-full max-w-md items-center gap-3 rounded-xl border border-[var(--accent)]/40 bg-[var(--card)]/95 px-4 py-3 shadow-2xl shadow-black/50 backdrop-blur">
+        <span className="flex-1 text-sm text-[var(--text-body)]">
           {needRefresh ? '新しいバージョンがあります。' : 'オフラインでも遊べるようになりました。'}
         </span>
         {needRefresh && (
           <button
             type="button"
             onClick={() => updateServiceWorker(true)}
-            className="shrink-0 rounded-lg bg-sky-500 px-3 py-1.5 text-sm font-bold text-slate-950 transition hover:bg-sky-400 active:scale-95"
+            className="shrink-0 rounded-lg bg-[var(--accent)] px-3 py-1.5 text-sm font-bold text-[var(--bg)] transition hover:bg-[var(--accent-hover)] active:scale-95"
           >
             更新
           </button>
@@ -39,7 +39,7 @@ export function PwaUpdater() {
           type="button"
           onClick={close}
           aria-label="閉じる"
-          className="shrink-0 rounded-lg border border-slate-700 px-2.5 py-1.5 text-sm text-slate-400 transition hover:bg-slate-800"
+          className="shrink-0 rounded-lg border border-[var(--border)] px-2.5 py-1.5 text-sm text-[var(--text-sub)] transition hover:bg-[var(--panel)]"
         >
           {needRefresh ? '後で' : '閉じる'}
         </button>
