@@ -36,7 +36,8 @@ export const CHAPTER_TITLE = '第1章「沈黙する基幹システム」'
 
 /** プロダクトゴール（章全体の到達点）。各スプリントゴールはこれに連なる（Scrum: ゴールの階層）。
  *  S1 沈黙の診断 → S2 最小版で誤出荷を減らす → S3 文化を残す、が連なって目指す将来の状態。 */
-export const PRODUCT_GOAL = '現場の言葉で動き続ける仕組みと文化を残し、カルゴ物流に本物の顧客価値を届ける'
+// 地の文の社名を表示名へ。Board.tsx は RichText を通さず生表示するため、定義側で置換しておく。
+export const PRODUCT_GOAL = localizeDeep('現場の言葉で動き続ける仕組みと文化を残し、カルゴ物流に本物の顧客価値を届ける')
 
 export const STARTING_METERS: Meters = {
   trust: 5,

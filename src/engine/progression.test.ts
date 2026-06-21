@@ -918,8 +918,9 @@ describe('dismissResultCore', () => {
 
 describe('spinCore — 縦糸の入口(pinned)の強制提示', () => {
   // S1/S2 beats: [planning, daily×5, review, retro] → デイリーは beatIndex 1..5。
-  // pinned（S1）: s1-daily-hideknowhow（主軸の入口）＋ s1-daily-showcase-order（ショーケース弧の入口）。
-  // pinned（S2）: s2-daily-ghost-stock（不正暴露の入口）＋ s2-physical-ai-showcase（フィジカルAIお披露目）。
+  // pinned（S1）: s1-daily-hideknowhow（主軸の入口）＋ s1-daily-showcase-order（ショーケース弧の入口）
+  //   ＋ s2-physical-ai-showcase（フィジカルAIお披露目。序盤で必ず見せるため S1 へ前倒し。id は資産安定のため据置）。
+  // pinned（S2）: s2-daily-ghost-stock（不正暴露の入口）のみ。
   // 未遭遇の pinned が「残りデイリー数」以上に溜まったら、末尾のデイリーから1つずつ必ず提示する。
   const at = (sprintIndex: number, beatIndex: number, over: Partial<ProgressCore> = {}): ProgressCore => ({
     ...freshCore(STARTING_METERS),
@@ -935,21 +936,27 @@ describe('spinCore — 縦糸の入口(pinned)の強制提示', () => {
     expect(next.dailyCandidates).toEqual(['s1-daily-hideknowhow']) // avail 先頭の pinned
   })
 
-  it('複数 pinned は末尾の複数デイリーで全部強制される（残2日・未遭遇2件→順に強制）', () => {
-    // beatIndex 4（最後から2日目）: 残りデイリー2・未遭遇 pinned 2件 → 強制が始まる
-    const day4 = spinCore(at(0, 4), 'kokyaku', 0)
-    expect(day4.dailyCandidates).toEqual(['s1-daily-hideknowhow'])
-    // 1件目を消化していれば、最終日に残りの pinned が強制される
-    const day5 = spinCore(at(0, 5, { resolvedIds: new Set(['s1-daily-hideknowhow']) }), 'kokyaku', 0)
-    expect(day5.dailyCandidates).toEqual(['s1-daily-showcase-order'])
+  it('複数 pinned は末尾の複数デイリーで全部強制される（S1・未遭遇3件→末尾3日で順に強制）', () => {
+    // S1 pinned は3件（hideknowhow / showcase-order / physical-ai-showcase）。
+    // beatIndex 3（残りデイリー3）で「残り≤未遭遇」になり強制が始まる。
+    const day3 = spinCore(at(0, 3), 'kokyaku', 0)
+    expect(day3.dailyCandidates).toEqual(['s1-daily-hideknowhow']) // avail 先頭の pinned
+    // 1件目を消化していれば、次のデイリーで2件目が強制される
+    const day4 = spinCore(at(0, 4, { resolvedIds: new Set(['s1-daily-hideknowhow']) }), 'kokyaku', 0)
+    expect(day4.dailyCandidates).toEqual(['s1-daily-showcase-order'])
+    // 2件消化していれば、最終日に残りの pinned（お披露目）が強制される
+    const day5 = spinCore(
+      at(0, 5, { resolvedIds: new Set(['s1-daily-hideknowhow', 's1-daily-showcase-order']) }),
+      'kokyaku',
+      0
+    )
+    expect(day5.dailyCandidates).toEqual(['s2-physical-ai-showcase'])
   })
 
-  it('S2: ghost-stock と physical-ai-showcase は末尾2日で必ず通る（showcasePressure 前提）', () => {
-    const flags = new Set<GameFlag>(['showcasePressure']) // S1 で必ず立つ前提
-    const day4 = spinCore(at(1, 4, { flags }), 'genba', 0)
-    expect(day4.dailyCandidates).toEqual(['s2-daily-ghost-stock'])
-    const day5 = spinCore(at(1, 5, { flags, resolvedIds: new Set(['s2-daily-ghost-stock']) }), 'genba', 0)
-    expect(day5.dailyCandidates).toEqual(['s2-physical-ai-showcase'])
+  it('S2: ghost-stock は最終デイリーで必ず通る（S2 唯一の pinned）', () => {
+    // お披露目を S1 へ前倒ししたため、S2 の pinned は ghost-stock のみ。残り1日で強制される。
+    const day5 = spinCore(at(1, 5), 'genba', 0)
+    expect(day5.dailyCandidates).toEqual(['s2-daily-ghost-stock'])
   })
 
   it('pinned が全て解決済みなら強制せず通常の候補を引く', () => {

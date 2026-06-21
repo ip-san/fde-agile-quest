@@ -12,10 +12,11 @@ afterEach(() => {
 
 describe('localizeNames — 既定（リネーム無し）は恒等', () => {
   it('name===canonical のとき本文はそのまま返る', () => {
-    expect(localizeNames('カルゴ物流の倉庫で結城係長と話す')).toBe('カルゴ物流の倉庫で結城係長と話す')
+    // 結城は name===canonical（未リネーム）なので地の文はそのまま返る
+    expect(localizeNames('倉庫で結城係長と話す')).toBe('倉庫で結城係長と話す')
   })
   it('displayName / nameWithReading は登録値を返す', () => {
-    expect(displayName('cargo')).toBe('カルゴ物流')
+    expect(displayName('cargo')).toBe('翠流物流')
     expect(displayName('yuki')).toBe('結城')
     expect(nameWithReading('yuki')).toBe('結城（ゆうき）')
     expect(nameWithReading('product')).toBe('StockPilot') // reading 無しは name のみ

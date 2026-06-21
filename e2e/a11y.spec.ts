@@ -19,7 +19,14 @@ async function seriousViolations(page: Page) {
 
 // プロローグを既読にして盤面から始める（ルーレットの乱数に触れず決定的に検査する）
 async function gotoBoard(page: Page) {
-  await page.addInitScript(() => localStorage.setItem('fde-agile-quest:prologue-seen', '1'))
+  await page.addInitScript(() => {
+    localStorage.setItem('fde-agile-quest:prologue-seen', '1')
+    // 都度教示(コーチマーク)は遅延ロードで盤面に被さり、クリックを遮る（z-40 オーバーレイ）。
+    // 既読化して抑止し、a11y テストのパネル操作を決定的にする（盤面の本来の a11y は別テストで担保）。
+    for (const k of ['intro', 'planning', 'daily', 'review', 'retro', 'minigame']) {
+      localStorage.setItem(`fde-agile-quest:coach:${k}`, '1')
+    }
+  })
   await page.goto('/')
 }
 
