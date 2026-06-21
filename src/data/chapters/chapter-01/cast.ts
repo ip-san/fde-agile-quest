@@ -84,7 +84,7 @@ const RAW_CAST: Character[] = [
   {
     id: 'segawa',
     name: '瀬川（せがわ）',
-    role: 'ルミクラウド開発室の若手エンジニア（スクラム: 開発者・リモート）',
+    role: 'ルミクラウド開発室の若手プロダクトエンジニア（スクラム: 開発者・リモート）',
     side: 'lumen',
     archetype: '画面越しの相棒',
     blurb:
