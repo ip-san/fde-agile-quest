@@ -40,6 +40,9 @@ const TIER_MULT: Record<'great' | 'good' | 'poor', number> = { great: 1.5, good:
 /** 深いレビューで積むテストカバレッジ(%)／浅いレビューで増える技術的負債 */
 const COVERAGE_PER_THOROUGH = 4
 const DEBT_PER_QUICK = 1
+/** フロー改善（レトロで WIP を下げた＝focus）中、深いレビューが追加で積む coverage(%)。
+ *  ＝wip レバーの固有メリット（レビューの“質”）。capacity レバー（レビューの“量”）と等価で別ベクトル。 */
+const FOCUS_COVERAGE_BONUS = 2
 const REPO_COVERAGE_CAP = 100
 
 /** 現在ビートが“作業中（デイリー）”か。着手/レビューはこの間だけ可能。 */
@@ -240,12 +243,17 @@ export function reviewItem(core: ProgressCore, pbiId: string, depth: ReviewDepth
   const gain = REVIEW_GAIN[depth] * TIER_MULT[tier] * drag
   const prog = (core.reviewProgress[pbiId] ?? 0) + gain
 
-  // リポジトリ品質：深いレビュー＝テストで coverage を積む（負債ドラッグ込み）／浅い＝負債が増える
+  // リポジトリ品質：深いレビュー＝テストで coverage を積む（負債ドラッグ込み）／浅い＝負債が増える。
+  // ★フロー改善（レトロで WIP を下げた＝focus）中は「一つに集中して仕上げる」ので深いレビューの質が上がる
+  //   ＝coverage を多く積む（FOCUS_COVERAGE_BONUS）。これが capacity 投資（=レビュー回数の量）に対する
+  //   wip 投資（=レビューの質）の固有メリット＝両レバーを等価で別ベクトルにし、単一正解化を避ける。
+  const focused = wipLimitFor(core.retroImprovements) < WIP_LIMIT
   let repoCoverage = core.repoCoverage
   let repoDebt = core.repoDebt
-  if (depth === 'thorough')
-    repoCoverage = Math.min(REPO_COVERAGE_CAP, repoCoverage + Math.round(COVERAGE_PER_THOROUGH * drag))
-  else repoDebt = repoDebt + DEBT_PER_QUICK
+  if (depth === 'thorough') {
+    const perThorough = COVERAGE_PER_THOROUGH + (focused ? FOCUS_COVERAGE_BONUS : 0)
+    repoCoverage = Math.min(REPO_COVERAGE_CAP, repoCoverage + Math.round(perThorough * drag))
+  } else repoDebt = repoDebt + DEBT_PER_QUICK
 
   const reviewProgress: Record<string, number> = { ...core.reviewProgress, [pbiId]: prog }
   let inProgress = core.inProgress
