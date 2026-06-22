@@ -666,6 +666,80 @@ const REVIEW_CASES: ReviewCase[] = [
     takeaway:
       'AIはパッケージ名すら創作する。実在・提供元・ダウンロード実績を人が確かめてから入れる——AIの「定番だ」は、攻撃の入口になりうる。',
   },
+  // 16. LGTM罠：ついで帳票の日次出荷件数を数える集計。差分は健全（正しく数えている）。
+  //     一見「全件スキャンでは？」「件数なのに四捨五入では？」とツッコミたくなるが、いずれも問題ない。
+  {
+    pbi: 'pbi-evt-extra-reports',
+    task: '“ついで帳票”の一つ、日次の出荷件数を数える集計を書いて',
+    diff: [
+      { tag: 'add', text: 'SELECT ship_date, COUNT(*) AS cnt   -- 日ごとに出荷の行数を数える' },
+      { tag: 'add', text: 'FROM shipments' },
+      { tag: 'add', text: "WHERE ship_date = '2026-06-22'      -- その日の分だけに絞る" },
+      { tag: 'add', text: 'GROUP BY ship_date;' },
+      { tag: 'ctx', text: '// shipments は1出荷=1行。ship_date は日付型（時刻を持たない）。' },
+    ],
+    aiNote: '日次の出荷件数を出しました。素直な集計です。',
+    options: [
+      { text: 'WHERE で日付を1日に絞っているのに重いのでは——いや、絞り込みも GROUP BY も適切で問題ない', issue: false },
+      { text: 'COUNT(*) は行数を二重に数えそう——いや、1出荷1行なので件数として正しい', issue: false },
+      { text: 'GROUP BY を入れる必要があるのか——1日に絞っていても件数の見出しに日付が残り、害は無い', issue: false },
+      { text: '日付をクエリに直書きせず変数にしたい（好み）', issue: false },
+      { text: '別名は cnt より count_value が読みやすい（ささい）', issue: false },
+    ],
+    takeaway:
+      'コードが健全なら通していい（LGTM）。“念のため”の空振り指摘もレビューの時間を食うコストだ。問題が無いものに問題を作らない。',
+  },
+  // 17. LGTM罠：ついで要望の一つ、出荷予定の前日リマインド判定。差分は健全（境界・日跨ぎも正しい）。
+  //     一見「>= は境界がおかしいのでは」「翌日も拾うのでは」と疑いたくなるが、いずれも正しい。
+  {
+    pbi: 'pbi-evt-followups',
+    task: '“ついで要望”の一つ、出荷予定日の前日にリマインドを出す判定を書いて',
+    diff: [
+      { tag: 'add', text: 'const daysLeft = diffInDays(shipDate, today)  // 出荷日まで何日か' },
+      { tag: 'add', text: 'if (daysLeft === 1) remind()                   // ちょうど前日だけ通知' },
+      { tag: 'ctx', text: '// diffInDays は日付の差（時刻は無視）。当日=0、前日=1、過ぎた分は負。' },
+    ],
+    aiNote: '前日のリマインドを入れました。当日や過ぎた分には鳴りません。',
+    options: [
+      {
+        text: '=== 1 でなく <= 1 にすべきでは——いや、それだと当日(0)も鳴る。前日だけなら === 1 が正しい',
+        issue: false,
+      },
+      { text: '過ぎた出荷（負の値）を弾いていないのでは——いや、=== 1 に一致しないので鳴らず、問題ない', issue: false },
+      { text: '時刻まで見ないと前日判定がずれるのでは——日付の差で見ており、前日リマインドには十分', issue: false },
+      { text: '関数名 remind より notify に揃えたい（好み）', issue: false },
+      { text: 'daysLeft は const より分かりやすい名前にしたい（ささい）', issue: false },
+    ],
+    takeaway:
+      '“怪しく見える”と“間違っている”は別。境界(=== 1)を読んで前日だけだと確かめたら、それで通していい。疑いすぎの捏造指摘は出さない。',
+  },
+  // 18. LGTM罠：荷主向けダッシュボードの充足率表示。差分は健全（ゼロ除算も丸めも正しく扱う）。
+  //     一見「0で割るのでは」「四捨五入で誤差が出るのでは」と思わせるが、ガードも丸めも妥当。
+  {
+    pbi: 'pbi-evt-exec-feature',
+    task: '荷主向け{{ダッシュボード}}に{{充足率}}（出荷できた割合）の表示を足して',
+    diff: [
+      { tag: 'add', text: 'if (ordered === 0) return "—"             // 注文ゼロなら割合は出さず横棒' },
+      { tag: 'add', text: 'const rate = Math.round((shipped / ordered) * 100) // 百分率に丸める' },
+      { tag: 'ctx', text: '// shipped=出荷できた数、ordered=注文数。表示は整数%でよい（荷主向けの概況）。' },
+    ],
+    aiNote: '充足率を整数%で出しました。注文ゼロの日も落ちません。',
+    options: [
+      {
+        text: 'ordered が0だと0で割って落ちるのでは——いや、先にゼロを判定して横棒を返している。割らない',
+        issue: false,
+      },
+      { text: '四捨五入で本当の割合とズレるのでは——荷主向けの概況表示なら整数%で十分で、害は無い', issue: false },
+      {
+        text: 'shipped が ordered を超えたら100%超えになるのでは——超過出荷は別の異常で、この表示の責務ではない',
+        issue: false,
+      },
+      { text: '横棒は "—" より "N/A" が分かりやすい（好み）', issue: false },
+      { text: 'rate は const でなく説明変数を挟みたい（ささい）', issue: false },
+    ],
+    takeaway:
+      'ガード（ゼロ除算の回避）も丸めも妥当なら、それは健全なコードだ。レビューは“問題を見つける場”であって“問題を作る場”ではない。',
+  },
 ]
 
 /** レビューの1ラウンド：AI差分＋点検すべき選択肢（提示順はシードでシャッフル）。 */
@@ -716,11 +790,15 @@ export function dealReview(seed: number, pbiId?: string, variety = false): Revie
 }
 
 /** レビューの採点：本物の指摘を拾えたか／空振り（過信・ささい）を出していないか。
- *  great＝本物2つを的確に・空振り0／good＝1つ以上拾い空振り1まで／poor＝それ未満（＝AIを素通し）。 */
-export function scoreReview(picked: ReviewFlag[]): ExecTier {
+ *  realCount＝この作問に実在する本物の指摘数（既定 2）。0 の作問＝コードは健全＝「問題なし(LGTM)」が正解。
+ *  great＝拾うべきを全部拾い空振り0（issue0 の回は"LGTMで出す"が great）／poor＝空振り2以上 or 取りこぼし2以上
+ *  （疑いすぎ／AIを素通し）／good＝その間。
+ *  ＝「本物2つ探す」を固定解にせず、"何も無いのに指摘を捏造する"も"素通し"も同じく戒める。 */
+export function scoreReview(picked: ReviewFlag[], realCount: number = REVIEW_REAL_COUNT): ExecTier {
   const caught = picked.filter((o) => o.issue).length
   const wrong = picked.filter((o) => !o.issue).length
-  if (caught >= REVIEW_REAL_COUNT && wrong === 0) return 'great'
-  if (caught >= 1 && wrong <= 1) return 'good'
-  return 'poor'
+  const missed = Math.max(0, realCount - caught)
+  if (wrong === 0 && missed === 0) return 'great'
+  if (wrong >= 2 || missed >= 2) return 'poor'
+  return 'good'
 }

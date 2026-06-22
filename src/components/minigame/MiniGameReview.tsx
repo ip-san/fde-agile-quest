@@ -61,7 +61,15 @@ export function MiniGameReview({ seed, pbiId, variety, onResolve }: Props) {
     registerToggle(i, has)
     setPicked((p) => (has ? p.filter((x) => x !== i) : [...p, i]))
   }
-  const submit = () => setTier(scoreReview(picked.map((i) => round.options[i])))
+  // この作問に実在する本物の指摘数を渡す＝LGTM(指摘0)が正解の"健全コード"回も正しく採点できる。
+  const realCount = round.options.filter((o) => o.issue).length
+  const submit = () =>
+    setTier(
+      scoreReview(
+        picked.map((i) => round.options[i]),
+        realCount
+      )
+    )
 
   return (
     <div className="space-y-3">
