@@ -12,7 +12,7 @@ import {
   forecastPoints,
   GEN_TOKEN_COST,
   isDiscoverablePbi,
-  REVIEW_CAPACITY,
+  REVIEW_CAPACITY_PER_DAY,
   reviewCapacityFor,
   WIP_LIMIT,
   wipLimitFor,
@@ -82,8 +82,8 @@ export function KanbanView({
   const maxReview = reviewCapacityFor(core.retroImprovements)
   const wipMax = wipLimitFor(core.retroImprovements)
 
-  // 容量の目安＝人のレビュー容量。予測がこれを超えると、終わらない分は持ち越しになる（補助実践の目安・ガイドの規定ではない）。
-  // maxReview と同一値（どちらも人のレビュー容量）。派生にして二重算出・将来の乖離を防ぐ。
+  // 容量の目安＝1日あたりのレビュー容量。予測がこれを超えると、終わらない分は持ち越しになる（補助実践の目安・ガイドの規定ではない）。
+  // maxReview と同一値（どちらも1日のレビュー容量）。派生にして二重算出・将来の乖離を防ぐ。
   const capacity = maxReview
   const fpts = forecastPoints({ sprintForecast: core.sprintForecast })
   const over = fpts > capacity
@@ -114,7 +114,7 @@ export function KanbanView({
       <div className="hidden lg:flex lg:items-center lg:gap-3 lg:rounded-xl lg:border lg:border-slate-700/60 lg:bg-slate-800/30 lg:px-3 lg:py-2">
         {/* 説明 */}
         <p className="min-w-0 flex-1 text-[11px] leading-relaxed text-slate-400">
-          <RichText text="着手＝AI生成。価値は人の{{レビュー}}にある。{{制約理論}}どおりレビューがボトルネック。" />
+          <RichText text="着手＝AI生成。AIにどこまでレビューさせ、人がどれぐらい確かめるか——{{制約理論}}どおり1日のレビュー容量がボトルネック。" />
         </p>
         {/* 予測量バー */}
         <div className="flex shrink-0 items-center gap-2">
@@ -136,7 +136,7 @@ export function KanbanView({
         </div>
         {/* レビュー容量 */}
         <div className="flex shrink-0 items-center gap-1.5 text-[11px]">
-          <span className="text-slate-400">レビュー</span>
+          <span className="text-slate-400">1日のレビュー</span>
           <div className="h-2 w-14 overflow-hidden rounded-full bg-slate-700">
             <div
               className="h-full rounded-full bg-emerald-400"
@@ -145,7 +145,7 @@ export function KanbanView({
           </div>
           <span className="tabular-nums text-slate-300">
             {core.reviewCapacity}/{maxReview}
-            {maxReview > REVIEW_CAPACITY && <span className="ml-0.5 text-emerald-400">🔧</span>}
+            {maxReview > REVIEW_CAPACITY_PER_DAY && <span className="ml-0.5 text-emerald-400">🔧</span>}
           </span>
         </div>
         {/* WIP */}
@@ -169,7 +169,7 @@ export function KanbanView({
       {/* ── 狭い画面（lg未満）：従来の縦積みメーター表示 ── */}
       <div className="lg:hidden">
         <p className="text-xs leading-relaxed text-slate-400">
-          <RichText text="開発そのものは AI が担う（着手＝生成）。価値は人の{{レビュー}}にある。In Progress は{{仕掛り}}上限で詰まり、{{制約理論}}どおりレビューがボトルネックになる。" />
+          <RichText text="開発そのものは AI が担う（着手＝生成）。AIにどこまで任せ、人がどれぐらい確かめるか——この配分が勝負。In Progress は{{仕掛り}}上限で詰まり、{{制約理論}}どおり1日のレビュー容量がボトルネックになる。" />
         </p>
 
         {/* 予測量 vs 容量（予測の超過（オーバー）の可視化）。超過分は終わらず持ち越しになる。 */}
@@ -193,7 +193,7 @@ export function KanbanView({
           </div>
           {over ? (
             <p role="note" className="mt-1.5 text-[11px] leading-relaxed text-amber-300">
-              容量（人の{<RichText text="{{レビュー}}" />}・{capacity}pt）を超えて積んでいます。これは"悪手"ではなく
+              1日のレビュー容量（{capacity}pt）を超えて積んでいます。これは"悪手"ではなく
               <span className="font-semibold">賭け</span>
               ——多く積んでゴールに挑むのも一手。ただし終わらなかった分はスプリント末に
               {<RichText text="{{キャリーオーバー}}" />}（次へ持ち越し）。commitment
@@ -201,8 +201,8 @@ export function KanbanView({
             </p>
           ) : (
             <p className="mt-1.5 text-[11px] leading-relaxed text-slate-400">
-              容量の目安＝人の{<RichText text="{{レビュー}}" />}（{capacity}
-              pt/スプリント）。余裕があれば下で追加を引き込めます。
+              1日のレビュー容量（{capacity}
+              pt）。余裕があれば下で追加を引き込めます。毎デイリー開始時に回復・使い切りです。
             </p>
           )}
         </section>
@@ -211,10 +211,10 @@ export function KanbanView({
         <div className="mt-3 flex gap-2">
           <div className="flex-1 rounded-xl bg-slate-800/40 px-3 py-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-300">レビュー容量</span>
+              <span className="text-slate-300">1日のレビュー容量</span>
               <span className="tabular-nums text-slate-300">
                 {core.reviewCapacity} / {maxReview}
-                {maxReview > REVIEW_CAPACITY && <span className="ml-1 text-emerald-400">🔧</span>}
+                {maxReview > REVIEW_CAPACITY_PER_DAY && <span className="ml-1 text-emerald-400">🔧</span>}
               </span>
             </div>
             <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-700">
@@ -223,6 +223,11 @@ export function KanbanView({
                 style={{ width: `${(Math.max(0, core.reviewCapacity) / maxReview) * 100}%` }}
               />
             </div>
+            {core.reviewCapacity <= 0 && (
+              <p className="mt-1 text-[10px] leading-tight text-emerald-400/80">
+                明日のデイリーで回復します（使い切り・繰り越しなし）
+              </p>
+            )}
           </div>
           <div className="rounded-xl bg-slate-800/40 px-3 py-2 text-center">
             <div className="text-xs text-slate-300">
@@ -309,7 +314,7 @@ export function KanbanView({
                           }}
                           className="flex-1 rounded-lg bg-slate-700 px-2 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-slate-600 active:scale-95"
                         >
-                          <RichText text="浅い：DoDを妥協（速いが負債）" interactive={false} />
+                          <RichText text="浅い：AIに任せて速く通す（{{完成の定義}}妥協・負債）" interactive={false} />
                         </button>
                         <button
                           type="button"
@@ -319,7 +324,7 @@ export function KanbanView({
                           }}
                           className="flex-1 rounded-lg bg-emerald-600 px-2 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-emerald-500 active:scale-95"
                         >
-                          <RichText text="深い：{{完成の定義}}を満たす（テスト/品質）" interactive={false} />
+                          <RichText text="深い：人が確かめる（{{完成の定義}}達成・品質）" interactive={false} />
                         </button>
                       </div>
                     ) : (
@@ -328,7 +333,9 @@ export function KanbanView({
                         onClick={() => setDepthFor(id)}
                         disabled={!reviewable}
                         title={
-                          !reviewable && core.reviewCapacity <= 0 ? 'レビュー容量切れ（次スプリントで回復）' : undefined
+                          !reviewable && core.reviewCapacity <= 0
+                            ? '今日のレビュー容量切れ（明日のデイリーで回復）'
+                            : undefined
                         }
                         className="self-start rounded-lg bg-emerald-700 px-2.5 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-emerald-600 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
                       >
@@ -358,7 +365,7 @@ export function KanbanView({
               >
                 {undoneSet.has(id) ? (
                   <span
-                    title="浅いレビューで通した＝完成の定義(DoD)を妥協した Ship。後で負債の取り立てが来る。"
+                    title="AIに任せて速く通した（浅い）＝完成の定義(DoD)を妥協した Ship。後で負債の取り立てが来る。"
                     className="shrink-0 self-center rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-300"
                   >
                     ⚠ 浅い

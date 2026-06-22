@@ -53,7 +53,7 @@ export function PlanningView({
   refinePbi,
 }: PlanningProps) {
   const unrefinedSet = useMemo(() => new Set(unrefinedPbis), [unrefinedPbis])
-  // 予測の"目安"＝今スプリントで実際に終わらせられる量。律速は人のレビュー容量なので
+  // 予測の"目安"＝今スプリントで実際に終わらせられる量。律速は1日のレビュー容量なので
   // それを基準にする（前回ベロシティではなく、真のボトルネックに合わせる）。レトロ改善(capacity)を反映。
   const capacity = reviewCapacityFor(retroImprovements)
   // 前回スプリントから持ち越された PBI のうち、まだ未 done のもの
@@ -348,8 +348,8 @@ export function PlanningView({
           />
         </div>
         <p className="mt-1 mb-2 text-xs text-slate-400">
-          容量の目安＝人の{<RichText text="{{レビュー}}" />}（{capacity}
-          pt/スプリント）。超えて入れても終わるのはレビューできた分だけ＝残りは
+          容量の目安＝1日の{<RichText text="{{レビュー}}" />}容量（{capacity}
+          pt/日・毎デイリー回復・使い切り）。超えて入れても終わるのはレビューできた分だけ＝残りは
           {<RichText text="{{キャリーオーバー}}" />}。
         </p>
 
