@@ -116,3 +116,19 @@ describe('openThreads（盤面の未回収伏線）', () => {
     expect(openThreads([], () => false)).toEqual([])
   })
 })
+
+describe('PBI 分割定義（split）の整合性', () => {
+  it('split を持つ PBI は、作業項目の見積り合計が親 PBI の見積りと一致する', () => {
+    const bad = [...PRODUCT_BACKLOG, ...DISCOVERABLE_BACKLOG]
+      .filter((p) => p.split && p.split.length > 0)
+      .filter((p) => (p.split ?? []).reduce((s, w) => s + w.estimate, 0) !== p.estimate)
+      .map((p) => p.id)
+    expect(bad, `分割見積りの合計が親と不一致: ${bad.join(', ')}`).toEqual([])
+  })
+  it('split は2件以上（1件だけの分割は意味がない）', () => {
+    const bad = [...PRODUCT_BACKLOG, ...DISCOVERABLE_BACKLOG]
+      .filter((p) => p.split && p.split.length === 1)
+      .map((p) => p.id)
+    expect(bad, `分割が1件のみのPBI: ${bad.join(', ')}`).toEqual([])
+  })
+})

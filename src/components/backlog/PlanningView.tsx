@@ -6,10 +6,14 @@ import { useMemo, useState } from 'react'
 import {
   backlogItem,
   canAddToForecast,
+  estimateOf,
   forecastPoints,
+  isSbi,
   type ProposalVerdict,
+  parentPbiOf,
   reviewBacklogProposal,
   reviewCapacityFor,
+  titleOf,
 } from '../../engine/backlog'
 import { seedFor } from '../../lib/seed'
 import type { ExecTier } from '../../types'
@@ -34,6 +38,7 @@ export interface PlanningProps {
   unrefinedPbis: string[]
   commitBacklogOrder: (ids: string[]) => void
   toggleForecast: (id: string) => void
+  splitItem: (id: string) => void
   refinePbi: (id: string) => void
 }
 
@@ -50,6 +55,7 @@ export function PlanningView({
   unrefinedPbis,
   commitBacklogOrder,
   toggleForecast,
+  splitItem,
   refinePbi,
 }: PlanningProps) {
   const unrefinedSet = useMemo(() => new Set(unrefinedPbis), [unrefinedPbis])
@@ -61,7 +67,10 @@ export function PlanningView({
   const fpts = forecastPoints({ sprintForecast })
   const over = fpts > capacity
   const doneSet = useMemo(() => new Set(backlogDone), [backlogDone])
-  const forecastSet = useMemo(() => new Set(sprintForecast), [sprintForecast])
+  // 予測は分割後 SBI（`pbi#n`）を含むので、「この PBI を予測に入れたか」は親へ射影して判定する。
+  const forecastParents = useMemo(() => new Set(sprintForecast.map(parentPbiOf)), [sprintForecast])
+  // その PBI を既に作業項目(SBI)へ分割済みか（配下に SBI が一つでも入っている）。
+  const splitParents = useMemo(() => new Set(sprintForecast.filter(isSbi).map(parentPbiOf)), [sprintForecast])
 
   const officialActive = useMemo(() => backlogOrder.filter((id) => !doneSet.has(id)), [backlogOrder, doneSet])
   const doneList = useMemo(() => backlogOrder.filter((id) => doneSet.has(id)), [backlogOrder, doneSet])
@@ -103,8 +112,17 @@ export function PlanningView({
 
   const rows = [...draft, ...doneList]
 
-  // スプリントへ入れた予測（＝スプリントバックログ）。表示は価値順、完了済みは除く。
-  const selected = backlogOrder.filter((id) => forecastSet.has(id) && !doneSet.has(id))
+  // スプリントへ入れた予測（＝スプリントバックログ）。分割後は SBI を含むので forecast の並びをそのまま使う
+  // （splitIntoSbi が親の位置に SBI を挿し込むので、同じ親の作業項目は連続して並ぶ）。完了済み親は除く。
+  const selected = sprintForecast.filter((id) => !doneSet.has(parentPbiOf(id)))
+  // 綱引き内訳は PBI 単位（SBI の estimate は親に合算済み）なので親へ射影して重複排除。
+  const selectedParents = [...new Set(selected.map(parentPbiOf))]
+  // 「外す」は親 PBI 単位で1回だけ出す。各親の先頭 id を一度の走査で求めて O(1) 参照にする（行ごとの findIndex を避ける）。
+  const firstIdOfParent = new Map<string, string>()
+  for (const id of selected) {
+    const p = parentPbiOf(id)
+    if (!firstIdOfParent.has(p)) firstIdOfParent.set(p, id)
+  }
 
   return (
     <>
@@ -154,7 +172,10 @@ export function PlanningView({
             const item = backlogItem(id)
             if (!item) return null
             const isDone = doneSet.has(id)
-            const isForecast = forecastSet.has(id)
+            const isForecast = forecastParents.has(id)
+            const isSplit = splitParents.has(id)
+            // 分割できる：予測に素のまま入っていて（未分割）、split 定義を持つ。プランニング中はこの画面でのみ表示。
+            const splittable = isForecast && !isSplit && !!item.split?.length
             const draftPos = draft.indexOf(id)
             // 上位優先：この項目が"次に入れられる1件"か（飛ばし入れ禁止）。
             const addable = id === nextAddableId
@@ -221,6 +242,40 @@ export function PlanningView({
                     <p className={`mt-1 text-sm ${isDone ? 'text-slate-400 line-through' : 'text-slate-100'}`}>
                       <RichText text={item.title} />
                     </p>
+                    {/* 機構：プランニング Topic Three（PBI→作業項目への分解）。予測に入れた大きめ PBI を
+                        「How（実行計画）」へ割れる。割るかはプレイヤー判断（大きいまま回すのも有効）。 */}
+                    {!isDone && item.split?.length && isForecast && (
+                      <div className="mt-1.5">
+                        {splittable ? (
+                          <button
+                            type="button"
+                            aria-label={`${item.title} を作業項目に分割する`}
+                            title="大きな PBI を How（実行計画）へ分解＝作業項目に割る。各作業項目を独立に着手・レビューできる。ただし割れば着手の手間も仕掛り（WIP）の枠も増える——大きいまま1枚で回すのも有効で、唯一の正解はない。"
+                            onClick={() => splitItem(id)}
+                            className="rounded-lg border border-violet-500/40 bg-violet-500/10 px-2 py-1 text-[11px] font-semibold text-violet-200 transition hover:bg-violet-500/20 active:scale-95"
+                          >
+                            ✂ <RichText text="{{作業項目}}" interactive={false} />
+                            に分割（{item.split.length}件）
+                          </button>
+                        ) : (
+                          <ul className="space-y-0.5" aria-label="分割した作業項目">
+                            {item.split.map((s, n) => (
+                              <li
+                                key={`${id}#${n + 1}`}
+                                className="flex items-center gap-1.5 text-[11px] text-violet-200/90"
+                              >
+                                <span className="rounded bg-violet-500/15 px-1 py-px text-[9px] font-bold tabular-nums text-violet-300">
+                                  {s.estimate}pt
+                                </span>
+                                <span className="truncate">
+                                  <RichText text={s.title} interactive={false} />
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {!isDone &&
@@ -353,8 +408,8 @@ export function PlanningView({
           {<RichText text="{{キャリーオーバー}}" />}。
         </p>
 
-        {/* ステークホルダー内訳（情シス/現場の綱引き） */}
-        <StakeholderBalance forecastIds={selected} />
+        {/* ステークホルダー内訳（情シス/現場の綱引き）。分割した SBI は親に合算済みなので親 id で集計。 */}
+        <StakeholderBalance forecastIds={selectedParents} />
 
         {selected.length === 0 ? (
           <p className="rounded-lg bg-slate-900/40 px-3 py-3 text-center text-xs text-slate-400">
@@ -363,28 +418,47 @@ export function PlanningView({
         ) : (
           <ul className="space-y-1">
             {selected.map((id) => {
-              const item = backlogItem(id)
-              if (!item) return null
+              const parentId = parentPbiOf(id)
+              const parent = backlogItem(parentId)
+              if (!parent) return null
+              const sbi = isSbi(id)
+              // 「外す」は親 PBI 単位（配下 SBI ごと外れる）。同じ親が連続する分割行では先頭にだけ出す。
+              const firstOfParent = firstIdOfParent.get(parentId) === id
               return (
                 <li
                   key={id}
-                  className="flex items-center gap-2 rounded-lg border border-sky-500/30 bg-sky-500/10 px-2.5 py-1.5"
+                  className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 ${
+                    sbi ? 'border-violet-500/30 bg-violet-500/10' : 'border-sky-500/30 bg-sky-500/10'
+                  }`}
                 >
                   <span className="rounded bg-slate-700 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-slate-300">
-                    {item.estimate}pt
+                    {estimateOf(id)}pt
                   </span>
-                  <PbiBadges id={id} stakeholder={item.stakeholder} />
+                  {sbi ? (
+                    <span
+                      title="この一片だけ Done でも納品ではない。親 PBI の作業項目が全部そろって初めて顧客に届く（＝インクリメント）。"
+                      className="rounded bg-violet-500/15 px-1 py-0.5 text-[9px] font-semibold text-violet-300"
+                    >
+                      作業項目
+                    </span>
+                  ) : (
+                    <PbiBadges id={parentId} stakeholder={parent.stakeholder} />
+                  )}
                   <span className="min-w-0 flex-1 truncate text-sm text-slate-100">
-                    <RichText text={item.title} interactive={false} />
+                    <RichText text={titleOf(id)} interactive={false} />
                   </span>
-                  <button
-                    type="button"
-                    aria-label={`${item.title} をスプリントから外す`}
-                    onClick={() => toggleForecast(id)}
-                    className="shrink-0 rounded px-1.5 py-0.5 text-xs text-slate-400 transition hover:bg-slate-700 hover:text-rose-300"
-                  >
-                    外す
-                  </button>
+                  {firstOfParent ? (
+                    <button
+                      type="button"
+                      aria-label={`${parent.title} をスプリントから外す`}
+                      onClick={() => toggleForecast(parentId)}
+                      className="shrink-0 rounded px-1.5 py-0.5 text-xs text-slate-400 transition hover:bg-slate-700 hover:text-rose-300"
+                    >
+                      外す
+                    </button>
+                  ) : (
+                    <span className="w-7 shrink-0" aria-hidden="true" />
+                  )}
                 </li>
               )
             })}

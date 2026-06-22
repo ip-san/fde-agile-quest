@@ -26,6 +26,10 @@ export const PRODUCT_BACKLOG: BacklogItem[] = [
     estimate: 5,
     sprintHint: 1,
     stakeholder: 'genba',
+    split: [
+      { title: '手順をそのまま聞き取る', estimate: 3 },
+      { title: '勘どころを要件に言語化する', estimate: 2 },
+    ],
   },
   {
     id: 'pbi-as-is-flow',
@@ -43,6 +47,10 @@ export const PRODUCT_BACKLOG: BacklogItem[] = [
     estimate: 5,
     sprintHint: 2,
     stakeholder: 'joushi', // 結城が経営に約束した“誤出荷削減”の数字に直結
+    split: [
+      { title: '誤出荷に効く一点を実装する', estimate: 3 },
+      { title: '現場が今日使える形に調整する', estimate: 2 },
+    ],
   },
   {
     id: 'pbi-picking-screen',
@@ -84,6 +92,10 @@ export const PRODUCT_BACKLOG: BacklogItem[] = [
     estimate: 5,
     sprintHint: 3,
     stakeholder: 'joushi', // 指標を可視化＝発注側が成果を見たい関心
+    split: [
+      { title: '主要な指標を集計する', estimate: 2 },
+      { title: '現場が見られる画面にする', estimate: 3 },
+    ],
   },
   {
     id: 'pbi-onboarding',

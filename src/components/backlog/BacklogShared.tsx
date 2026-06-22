@@ -4,7 +4,7 @@
  */
 
 import { SPRINTS } from '../../data/chapters/chapter-01'
-import { backlogItem, isLegacyPbi, LEGACY_PBI_IDS } from '../../engine/backlog'
+import { backlogItem, deliveredPbiIds, isLegacyPbi, LEGACY_PBI_IDS } from '../../engine/backlog'
 import { RichText } from '../RichText'
 
 // ───────────────────────── PBI 共通バッジ群（ステークホルダー＋レガシー） ─────────────────────────
@@ -106,7 +106,8 @@ export function StakeholderBalance({ forecastIds }: { forecastIds: string[] }) {
 
 /** 「太く残す」PBI のサマリ（計画画面に表示）。何件 Ship できたかを一覧する。 */
 export function LegacySummary({ backlogDone }: { backlogDone: readonly string[] }) {
-  const doneSet = new Set(backlogDone)
+  // 納品判定は PBI 単位（分割した PBI は全作業項目完了で納品）＝エンジンの legacyShippedCount と同じ基準。
+  const doneSet = new Set(deliveredPbiIds(backlogDone))
   const shippedCount = LEGACY_PBI_IDS.filter((id) => doneSet.has(id)).length
   const total = LEGACY_PBI_IDS.length
   return (

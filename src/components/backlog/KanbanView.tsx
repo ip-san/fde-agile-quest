@@ -9,11 +9,15 @@ import {
   canAddToForecast,
   canReview,
   canStart,
+  estimateOf,
   forecastPoints,
   GEN_TOKEN_COST,
   isDiscoverablePbi,
+  isSbi,
+  parentPbiOf,
   REVIEW_CAPACITY_PER_DAY,
   reviewCapacityFor,
+  titleOf,
   WIP_LIMIT,
   wipLimitFor,
 } from '../../engine/backlog'
@@ -253,15 +257,16 @@ export function KanbanView({
         {/* To Do */}
         <Column title="To Do" tone="text-slate-300" headerBg="bg-slate-700/40" count={todo.length}>
           {todo.map((id) => {
-            const item = backlogItem(id)
-            if (!item) return null
+            const parent = backlogItem(parentPbiOf(id))
+            if (!parent) return null
             const startable = canStart(core, id)
             return (
               <Card
                 key={id}
-                title={item.title}
-                estimate={item.estimate}
-                badges={<PbiBadges id={id} stakeholder={item.stakeholder} />}
+                title={titleOf(id)}
+                estimate={estimateOf(id)}
+                parentLabel={isSbi(id) ? parent.title : undefined}
+                badges={<PbiBadges id={parentPbiOf(id)} stakeholder={parent.stakeholder} />}
               >
                 <button
                   type="button"
@@ -286,22 +291,24 @@ export function KanbanView({
           count={core.inProgress.length}
         >
           {core.inProgress.map((id) => {
-            const item = backlogItem(id)
-            if (!item) return null
-            const prog = Math.min(item.estimate, reviewProgress[id] ?? 0)
+            const parent = backlogItem(parentPbiOf(id))
+            if (!parent) return null
+            const est = estimateOf(id)
+            const prog = Math.min(est, reviewProgress[id] ?? 0)
             const reviewable = canReview(core, id)
             return (
               <Card
                 key={id}
-                title={item.title}
-                estimate={item.estimate}
-                badges={<PbiBadges id={id} stakeholder={item.stakeholder} />}
+                title={titleOf(id)}
+                estimate={est}
+                parentLabel={isSbi(id) ? parent.title : undefined}
+                badges={<PbiBadges id={parentPbiOf(id)} stakeholder={parent.stakeholder} />}
                 below={
                   <div className="mt-2 flex flex-col gap-1.5">
                     <div className="h-1.5 overflow-hidden rounded-full bg-slate-700">
                       <div
                         className="h-full rounded-full bg-amber-400"
-                        style={{ width: `${item.estimate ? (prog / item.estimate) * 100 : 0}%` }}
+                        style={{ width: `${est ? (prog / est) * 100 : 0}%` }}
                       />
                     </div>
                     {depthFor === id ? (
@@ -353,15 +360,16 @@ export function KanbanView({
         {/* Done */}
         <Column title="Done（完了）" tone="text-emerald-300" headerBg="bg-emerald-500/10" count={done.length}>
           {done.map((id) => {
-            const item = backlogItem(id)
-            if (!item) return null
+            const parent = backlogItem(parentPbiOf(id))
+            if (!parent) return null
             return (
               <Card
                 key={id}
-                title={item.title}
-                estimate={item.estimate}
+                title={titleOf(id)}
+                estimate={estimateOf(id)}
                 dimmed
-                badges={<PbiBadges id={id} stakeholder={item.stakeholder} />}
+                parentLabel={isSbi(id) ? parent.title : undefined}
+                badges={<PbiBadges id={parentPbiOf(id)} stakeholder={parent.stakeholder} />}
               >
                 {undoneSet.has(id) ? (
                   <span
@@ -435,8 +443,10 @@ export function KanbanView({
       {pending && (
         <MiniGame
           kind="review"
+          // シードは作業項目(SBI)単位で個別に＝同じ親PBIの #1/#2 でも別の出題になる。
+          // ただしレビュー教材の選定は親PBI基準（教材は PBI に紐づく）なので pbiId は親へ射影。
           seed={seedFor(pending.id)}
-          pbiId={pending.id}
+          pbiId={parentPbiOf(pending.id)}
           onDone={(tier) => {
             reviewItem(pending.id, pending.depth, tier)
             setPending(null)
@@ -557,6 +567,7 @@ function Card({
   title,
   estimate,
   dimmed,
+  parentLabel,
   children,
   below,
   badges,
@@ -564,6 +575,8 @@ function Card({
   title: string
   estimate: number
   dimmed?: boolean
+  /** 作業項目(SBI)カードのとき、親PBIの見出し（どの大きな項目を割った一片か）を上に小さく示す。 */
+  parentLabel?: string
   /** タイトル行の右に置く小さな操作（着手ボタン・DoD バッジ等）。幅を奪うと崩れるので軽量な要素のみ。 */
   children?: React.ReactNode
   /** タイトル行の"下"に全幅で敷くブロック（進捗バー＋レビュー操作など）。 */
@@ -575,6 +588,17 @@ function Card({
     <div className={`rounded-lg border border-slate-700 bg-slate-800/40 px-3 py-2 ${dimmed ? 'opacity-70' : ''}`}>
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
+          {parentLabel && (
+            <p className="mb-0.5 flex items-center gap-1 truncate text-[10px] font-semibold text-violet-300/80">
+              <span
+                title="この一片だけ Done でも納品ではない。親 PBI の作業項目が全部そろって初めて顧客に届く（＝インクリメント）。"
+                className="rounded bg-violet-500/15 px-1 py-px text-[9px] text-violet-300"
+              >
+                作業項目
+              </span>
+              <RichText text={parentLabel} interactive={false} />
+            </p>
+          )}
           <span className="rounded bg-slate-700 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-slate-300">
             {estimate}pt
           </span>
