@@ -46,7 +46,7 @@ const core = (over: Partial<ProgressCore> = {}): ProgressCore => ({ ...freshCore
 // 発見可（初期は伏せ）PBI。ヒアリングで掘り当てるまでプロダクトバックログに出ない。
 const DISC = 'pbi-disc-label-misread'
 // イベント発（初期は伏せ）PBI。イベント選択（addsPbi）で受け入れるまで出ない。
-const EVT = 'pbi-evt-exec-feature' // 3
+const EVT = 'pbi-evt-exec-feature' // 5
 
 describe('acceptRequestedPbi（イベント発の要望を受け入れる）', () => {
   it('toSprint=false：プロダクトバックログ末尾に積み、暫定見積り（要リファインメント）にする', () => {
