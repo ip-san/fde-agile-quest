@@ -37,6 +37,9 @@ export type GameFlag =
   // カンバン→物語の橋: 浅い(quick)レビューのまま DoD を妥協して Ship した＝undone work。
   // 後段で demofail/debt のトラブル回として“負債の取り立て”を呼ぶ（narrative 側で requiresFlag 配線）。
   | 'shippedUndone'
+  // 締切のために“意図的に技術的負債を借りた”＝後段で取り立てが来る。借りた者勝ちにしない縦糸。
+  // s2-daily-debt choice a の setsFlag で立ち、同じS2終盤の s2-daily-debt-collection で利息／返済として表に出る。
+  | 'borrowedDebt'
   // 機構②: スプリント精算で“どちらのステークホルダーを優先したか”の非対称トレードオフを記録。
   // 一方のゴール項目を届けて他方を未達にした＝後段で後回しにされた側が遅れて反応する（機会コスト型）。
   | 'deprioritizedJoushi' // 情シス(結城)のゴール項目を後回し＝発注者の不安・面子（trust摩擦）として後で響く

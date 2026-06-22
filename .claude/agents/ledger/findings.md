@@ -26,7 +26,8 @@
 1. ~~選択UIの `SelectableItem` 共通化~~ → **[resolved] PR #22**（SelectableCheckItem＋useGlyphSelection 抽出、cpd 7.27%→3.07%）。2026-06-22
 2. ~~BacklogPanel.tsx 1307行の分割~~ → **[resolved] loop/backlogpanel-split-20260622**（backlog/PlanningView.tsx・KanbanView.tsx・BacklogShared.tsx へ分割、振る舞い不変・公開API不変・circular無・knip clean）。2026-06-22
 3. **(物語/学習) S3デイリー requiresFlag回収の過密** — 5枠に対し回収イベントが多数同時解放され一部が死蔵（進行は止まらない＝体験ムラ）。「1周回で確実に拾える上限」の設計。
-4. **(学習・要承認) s2-daily-debt の取り立て連鎖** — 技術的負債を借りる選択に回収イベントが無く「借りた者勝ち」誤読余地。setsFlag→回収イベント追加＝mechanics改変につき総監督承認が必要。
+4. ~~(学習・要承認) s2-daily-debt の取り立て連鎖~~ → **[resolved] loop/debt-collection**（総監督承認のもと新フラグ `borrowedDebt`＝types/threads/store登録、s2-daily-debt choice a に setsFlag＋repo debt+2、新イベント s2-daily-debt-collection を**S2に配置＝#3を悪化させず**、undone-debt とは「約束履行」軸で機構差別化（b: trust据え置き）。story🟢/learning🟢/全ゲート緑）。2026-06-22
+   - [open] (🟡低) learning/story — 取り立てイベントの surface は requiresFlag共通の確率依存（#3 と同根）／先送りの「利息逓増（複利感）」は任意の磨き込み余地。いずれも誤学習はせず・致命でない。
 5. **(UX/a11y・要実機) ミニゲームの SR/音まわり** — グリフ再マウントの VoiceOver/NVDA 通知（実機確認）／MiniGameHearing の上限 aria-live 3s→2s／sfx.ts AudioContext suspended（mobile Safari）初回 tick 無音。
 6. ~~(物語) s3-daily-stuck-base choice b のリカバリ感~~ → **[resolved] loop/carryover-6-7**（s3側resultTextを先回り↔痛んでから追いついた の非対称に、2文へ圧縮）。2026-06-22
 7. ~~(設計・小) Board.tsx bumpCoach→useReducer/useMemo化、Travel.tsx renderRoom/renderMapPin→Room/MapPinコンポーネント化、MiniGameReview revealed分離~~ → **[resolved] loop/carryover-6-7**（振る舞い不変・型統一・dead key除去）。2026-06-22
