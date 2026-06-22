@@ -166,6 +166,24 @@ export function sfxStop(): void {
   tone(ac, { freq: 392, t0: 0.04, dur: 0.12, gain: 0.07 })
 }
 
+/**
+ * AudioContext を"温める"（mobile Safari 等の初回無音対策）。
+ *
+ * 背景: mobile Safari では AudioContext は生成直後 suspended 状態で、
+ * audio() 内の ctx.resume() は async なため、resume 完了前に tone を
+ * スケジュールすると初回が無音になることがある。
+ * 最初のユーザー操作（pointerdown / keydown）でこの関数を呼ぶことで
+ * context を事前に生成＋resume しておき、以降の効果音を確実に鳴らす
+ * （標準的な mobile-audio unlock パターン）。
+ *
+ * - muted 時: audio() が null を返すため no-op（音が無いので温め不要）。
+ * - jsdom / AudioContext 非対応: audio() が安全に null を返すため no-op。
+ * - 冪等: 複数回呼んでも ctx は singleton なので害なし。
+ */
+export function primeAudio(): void {
+  audio()
+}
+
 /** 結果のメーター増減と警告フラグから、開示演出の強度を決める純関数。 */
 export function revealKindFor(effects: Record<string, number | undefined>, warn?: boolean): RevealKind {
   let magnitude = 0
