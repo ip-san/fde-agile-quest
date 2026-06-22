@@ -1,8 +1,10 @@
+import { useEffect } from 'react'
 import { Board } from './components/Board'
 import { EndingScreen } from './components/EndingScreen'
 import { Finale } from './components/Finale'
 import { PwaUpdater } from './components/PwaUpdater'
 import { customerValueBreakdown, repoStats } from './engine/progression'
+import { primeAudio } from './engine/sfx'
 import { useEngagement } from './store/engagementStore'
 
 export default function App() {
@@ -24,6 +26,23 @@ export default function App() {
     valueBaseline,
     valueHistory,
   } = useEngagement()
+
+  // mobile Safari 等の初回無音対策: 最初のユーザー操作で AudioContext を先に生成＋resume する。
+  // （primeAudio は冪等。once 相当のリスナ除去で React19/StrictMode の二重実行でも無害）
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const unlock = () => {
+      primeAudio()
+      window.removeEventListener('pointerdown', unlock)
+      window.removeEventListener('keydown', unlock)
+    }
+    window.addEventListener('pointerdown', unlock)
+    window.addEventListener('keydown', unlock)
+    return () => {
+      window.removeEventListener('pointerdown', unlock)
+      window.removeEventListener('keydown', unlock)
+    }
+  }, [])
 
   // 結果オーバーレイ表示中は、最後の判断の結果を見せ切ってから次へ。
   // 完走後、不正の手がかりを掴んでいれば「暴露の決断」(Finale) → 専用エンディング。

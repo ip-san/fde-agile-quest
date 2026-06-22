@@ -30,8 +30,8 @@
    - [記録] D-1（review/retro 移送）は engine 制約で不可（s2-retro 必須で全員 topDown/genbaTrust→単発ビート占有）。上記ローテーションでデイリー上の死蔵を根治したため D-1 不要。
 4. ~~(学習・要承認) s2-daily-debt の取り立て連鎖~~ → **[resolved] loop/debt-collection**（総監督承認のもと新フラグ `borrowedDebt`＝types/threads/store登録、s2-daily-debt choice a に setsFlag＋repo debt+2、新イベント s2-daily-debt-collection を**S2に配置＝#3を悪化させず**、undone-debt とは「約束履行」軸で機構差別化（b: trust据え置き）。story🟢/learning🟢/全ゲート緑）。2026-06-22
    - [open] (🟡低) learning/story — 取り立てイベントの surface は requiresFlag共通の確率依存（#3 と同根）／先送りの「利息逓増（複利感）」は任意の磨き込み余地。いずれも誤学習はせず・致命でない。
-5. ~~(UX/a11y・要実機) ミニゲームの SR/音まわり~~ → **[resolved/精査] コード変更不要（ux-engineer a11y精査）**: ①グリフ再マウントは `aria-hidden` で SR 通知対象外・状態は `aria-pressed` が伝え既に安全（CSS-only化は iOS<17.4 切捨てのため不採用）／②aria-live 3秒は27字の可読性に必要で短縮せず／③sfx.ts は既に user-gesture 起点で `ctx.resume()`・WebAudio仕様で past-time スケジュールは resume 後に発火＝手当て済み。2026-06-22
-   - [open] (要実機・申し送り) 最終確認は実機のみ: (a) iOS Safari でヒアリング初回タップの tick が鳴るか（初回無音なら resume 完了前スケジュールを再検討）／(b) VoiceOver で選択ON/OFF時に二重読み上げが無いか（期待: aria-pressed の切替のみ）。
+5. ~~(UX/a11y) ミニゲームの SR/音まわり~~ → **[resolved]**: ①グリフ再マウントは `aria-hidden` で SR 通知対象外・状態は `aria-pressed` が伝え安全（変更不要）／②aria-live 3秒は27字の可読性に必要で短縮せず（変更不要）／③**初回 tick 無音を根本対処** → loop/audio-unlock: sfx.ts に `primeAudio()`（AudioContext を生成＋resume して温める）を追加し、App の最初の pointerdown/keydown で一度だけ呼ぶ。resume 完了前スケジュールの競合を論理的に解消（mobile Safari の初回無音をコードで根治・実機確認に依存しない）。sfx.test.ts 新規4件・全ゲート緑(320)。2026-06-22
+   - [open] (任意・実機で観察できれば) VoiceOver で選択ON/OFF が aria-pressed 切替のみで二重読み上げにならないこと（コード上は保証済み・確認は任意）。primeAudio 導入後の iOS 初回 tick が鳴ること（論理的に解消済み・確認は任意）。
 6. ~~(物語) s3-daily-stuck-base choice b のリカバリ感~~ → **[resolved] loop/carryover-6-7**（s3側resultTextを先回り↔痛んでから追いついた の非対称に、2文へ圧縮）。2026-06-22
 7. ~~(設計・小) Board.tsx bumpCoach→useReducer/useMemo化、Travel.tsx renderRoom/renderMapPin→Room/MapPinコンポーネント化、MiniGameReview revealed分離~~ → **[resolved] loop/carryover-6-7**（振る舞い不変・型統一・dead key除去）。2026-06-22
 8. **(設計・小／#2分割中に確認＝既存) PlanningView の editState draft は useState初期値のみで backlogOrder 外部変更時の再同期パスが無い（モーダル再マウント前提で実害低）。KanbanView の `retroImprovements` が独立prop＋coreフィールドの二重ルート（現状同一ソースで無害だが将来乖離リスク）。** いずれも分割前 main から既存・分割で新規導入ではない。
