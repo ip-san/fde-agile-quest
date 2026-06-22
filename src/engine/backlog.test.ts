@@ -5,7 +5,9 @@ import {
   canAddToForecast,
   canPullIntoSprint,
   canReview,
+  canSplit,
   canStart,
+  deliveredPbiIds,
   estimateOf,
   forecastPoints,
   GEN_TOKEN_COST,
@@ -22,6 +24,7 @@ import {
   reviewBacklogProposal,
   reviewCapacityFor,
   reviewItem,
+  splitIntoSbi,
   startItem,
   toggleForecast,
   WIP_LIMIT,
@@ -662,5 +665,69 @@ describe('永続化ラウンドトリップ / 旧セーブ復元', () => {
     expect(restored.backlogOrder).not.toContain('ghost')
     expect(restored.backlogOrder).toHaveLength(PRODUCT_BACKLOG.length) // 欠けた既知 id を補完
     expect(restored.sprintForecast).toEqual([]) // veteran は done、ghost は未知 → 両方除外
+  })
+})
+
+describe('PBI→作業項目(SBI)分割', () => {
+  const V1 = 'pbi-veteran-hearing#1' // split 3
+  const V2 = 'pbi-veteran-hearing#2' // split 2
+  it('プランニング中、forecast の split 持ち PBI を作業項目に展開する（位置を保つ・合計見積り不変）', () => {
+    // veteran は backlogOrder 先頭でないので forecast を直接セット（分割アクションのみを検証）。
+    const before = core({ sprintForecast: [ID.veteran] }) // beat0=planning・素のまま forecast（est5）
+    expect(forecastPoints(before)).toBe(5)
+    const after = splitIntoSbi(before, ID.veteran)
+    expect(after.sprintForecast).toEqual([V1, V2])
+    expect(estimateOf(V1)).toBe(3)
+    expect(estimateOf(V2)).toBe(2)
+    expect(forecastPoints(after)).toBe(5) // 分割しても合計は親と同じ
+  })
+  it('split 定義の無い PBI・プランニング以外・forecast 外は no-op', () => {
+    expect(splitIntoSbi(core({ sprintForecast: [ID.floor] }), ID.floor).sprintForecast).toEqual([ID.floor]) // 分割定義なし
+    const daily = core({ sprintForecast: [ID.veteran], beatIndex: 1 }) // daily（非planning）
+    expect(splitIntoSbi(daily, ID.veteran).sprintForecast).toEqual([ID.veteran]) // 展開されない
+    expect(splitIntoSbi(core(), ID.veteran).sprintForecast).toEqual([]) // forecast 外
+  })
+  it('canSplit: プランニング・split定義あり・forecast に素のまま入っている時だけ true', () => {
+    const planned = core({ sprintForecast: [ID.veteran] })
+    expect(canSplit(planned, ID.veteran)).toBe(true)
+    expect(canSplit(core(), ID.veteran)).toBe(false) // forecast 外
+    expect(canSplit(core({ sprintForecast: [ID.floor] }), ID.floor)).toBe(false) // split 定義なし
+    expect(canSplit(splitIntoSbi(planned, ID.veteran), ID.veteran)).toBe(false) // 既に分割済み（素のidが無い）
+  })
+  it('外す（toggleForecast）は分割済みでも配下の作業項目をまとめて外す', () => {
+    const split = splitIntoSbi(core({ sprintForecast: [ID.veteran] }), ID.veteran)
+    expect(split.sprintForecast).toEqual([V1, V2])
+    const removed = toggleForecast(split, ID.veteran)
+    expect(removed.sprintForecast).toEqual([])
+  })
+  it('各作業項目を独立にレビュー→Done。親PBIは全作業項目完了で“納品”（deliveredPbiIds）', () => {
+    // daily ビートで V1(est3)/V2(est2) をレビュー。thorough gain2 で到達＝Done、全完了で親納品。
+    let c = core({
+      beatIndex: 1,
+      reviewCapacity: 10, // 容量律速を避けて分割→Done→納品の機構だけを検証
+      sprintForecast: [V1, V2],
+      inProgress: [V1, V2],
+      reviewProgress: { [V1]: 0, [V2]: 0 },
+    })
+    // V1 を est3 まで（thorough gain2 × 2回 = 4 ≥ 3）
+    c = reviewItem(c, V1, 'thorough', 'good')
+    c = reviewItem(c, V1, 'thorough', 'good')
+    expect(c.backlogDone).toContain(V1)
+    expect(deliveredPbiIds(c.backlogDone)).not.toContain('pbi-veteran-hearing') // まだ V2 未完＝親は未納品
+    c = reviewItem(c, V2, 'thorough', 'good') // est2、gain2 で Done
+    expect(c.backlogDone).toContain(V2)
+    expect(deliveredPbiIds(c.backlogDone)).toContain('pbi-veteran-hearing') // 全作業項目完了＝親納品
+  })
+  it('deliveredPbiIds: 割らずに素のまま Done した PBI も納品に数える（恒等の安全弁）', () => {
+    expect(deliveredPbiIds([ID.floor, ID.asis])).toEqual(expect.arrayContaining([ID.floor, ID.asis]))
+    expect(deliveredPbiIds([V1])).not.toContain('pbi-veteran-hearing') // 片方だけでは未納品
+  })
+  it('canStart/startItem: 分割後の作業項目(SBI)も着手できる（PBI_BY_ID.has で落とさない）', () => {
+    // daily ビート・予測内の SBI を着手 → In Progress へ。素の PBI と同様に扱える。
+    const c = core({ beatIndex: 1, sprintForecast: [V1, V2] })
+    expect(canStart(c, V1)).toBe(true)
+    const started = startItem(c, V1)
+    expect(started.inProgress).toContain(V1)
+    expect(started.reviewProgress[V1]).toBe(0)
   })
 })

@@ -34,6 +34,7 @@ export function BacklogPanel({ onClose }: Props) {
     unrefinedPbis,
     commitBacklogOrder,
     toggleForecast,
+    splitItem,
     pullIntoSprint,
     refinePbi,
     startItem,
@@ -84,6 +85,7 @@ export function BacklogPanel({ onClose }: Props) {
               unrefinedPbis={unrefinedPbis}
               commitBacklogOrder={commitBacklogOrder}
               toggleForecast={toggleForecast}
+              splitItem={splitItem}
               refinePbi={refinePbi}
             />
           ) : (

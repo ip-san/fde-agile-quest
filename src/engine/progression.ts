@@ -32,6 +32,7 @@ import type {
 } from '../types'
 import {
   backlogItem,
+  deliveredPbiIds,
   isKnownPbi,
   isLegacyEmbedded,
   REVIEW_CAPACITY_PER_DAY,
@@ -268,8 +269,9 @@ export function repoStats(
     tokensUsed: AI_TOKENS_MAX - core.aiTokens,
     tokensLeft: core.aiTokens,
     debt,
-    // 届けたインクリメント＝DoD 達成のバックログ項目（カンバンの Done 通算）
-    deliveredItems: core.backlogDone?.length ?? 0,
+    // 届けたインクリメント＝納品済みの親 PBI 数（分割した PBI は全作業項目完了で1件）。
+    // ＝作業項目(SBI)単位で数えて顧客価値が水増しされるのを防ぐ（SBI不在では Done 数と恒等）。
+    deliveredItems: deliveredPbiIds(core.backlogDone ?? []).length,
   }
 }
 

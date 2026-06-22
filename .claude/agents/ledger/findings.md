@@ -131,3 +131,12 @@
 - [open] (🟡低・磨き込み) logistics: return-flow の良品/不良品分別、stock-reconcile の引当を差異計算に載せる設計、night-shift の保留品所在共有 等、現場リアリティ深掘り余地（issue:false 空振り枠で一部活用済）。
 - [open] (🟡低) learning: コード系作問(===/時刻文字列比較/SELECT等)の専門語が glossary 未登録で初心者負荷・難易度カーブがコード系に偏る。設計コメントの slopsquatting 記述が実装と不一致。
 - [open] (🟡設計) KanbanView の depthFor＋pending 2state を単一 state machine 化／minigames の allGood/allBad が persuade を型でなく実装で除外。
+
+### 2026-06-22 / loop/pbi-sbi-split（PBI→作業項目(SBI)分割のフル機構）
+
+総監督要望「PBIはSBIになる時に分割されるものもある、それも表現したい」→「フル機構（本格分割）」を採用。プランニングで予測内の split 定義持ち PBI を作業項目(SBI)へ分解（splitIntoSbi）。SBI id=`${pbiId}#${n}`。各 SBI を独立に着手・レビューでき、全 SBI 完了で親 PBI を納品（deliveredPbiIds）。velocity は SBI 配分pt合計、顧客価値/legacy/deprioritized は親射影で従来挙動と恒等（SBI不在では identity＝安全弁）。split 定義は3PBI（veteran-hearing/misship-mvp/dashboard-selfserve、各スプリント1つ・全5pt）。glossary に「作業項目」追加。
+
+- 考証: agile🟢（Topic Three として正確・割らない裁量＝Developers discretion・納品はPBI単位）／learning🔴1（作業項目がglossary未登録→登録済）＋🟡（割らない機会コストを文言化→title補強済）／code🔴1（PlanningView selected.findIndex O(n²)→Map化済）＋🔴1（draft/officialActive乖離・理論的=defer）／story🟢（文体整合・UI=作業項目/内部=SBI分離徹底）。全ゲート緑（vitest334/build/size156.8kB<164/CSS9.2<10/e2e3-3 axe/lighthouse）。
+- 修正済: canStart の PBI_BY_ID.has→isKnownPbi（SBI着手不能バグ是正）、glossary「作業項目」登録、O(n²)解消、機会コスト＆「一片Done≠納品」文言、PBIスペース表記統一。
+- [open] (🟡低・defer) code-reviewer: PlanningView の draft state と外部 backlogOrder の乖離は構造的には可能だが本ゲームでは backlogOrder がプランニング中に変わらず実害なし。LegacySummary の deliveredPbiIds 毎レンダー走査（backlog固定サイズ）、canAddToForecast/canStart の backlogDone.includes が O(n)、KanbanView unrefinedPbis の Set化不一致——いずれも微小perf・別イテレーション。
+- [open] (🟡低) agile/learning: glossary desc 内の生「PBI」（既存慣習どおり・desc単体では未定義略語）。split を持つのが5pt大物3件のみで「なぜこの3つだけ分割可能か」は暗黙（split定義の有無）。

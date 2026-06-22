@@ -52,14 +52,63 @@ function isWorkBeat(core: Pick<ProgressCore, 'sprintIndex' | 'beatIndex'>): bool
   return SPRINTS[core.sprintIndex]?.beats[core.beatIndex] === 'daily'
 }
 
+// ── PBI→作業項目（SBI）分割の基盤ヘルパ ──
+// 分割した作業項目の id は `${pbiId}#${n}`（n は1始まり）。'#' は既存 PBI id に出現しないので衝突しない。
+// SBI が一つも存在しない（誰も分割していない）状態では、下のヘルパ・派生はすべて従来挙動と恒等になる。
+
+/** 分割された作業項目（SBI）の id か（'#' を含む）。 */
+export function isSbi(id: string): boolean {
+  return id.includes('#')
+}
+/** SBI id から親 PBI id を返す（素の PBI id はそのまま返す）。 */
+export function parentPbiOf(id: string): string {
+  const i = id.indexOf('#')
+  return i < 0 ? id : id.slice(0, i)
+}
+/** SBI id の作業項目データ（親 PBI の split[n-1]）。SBI でない/未知なら undefined。 */
+function sbiOf(id: string): { title: string; estimate: number } | undefined {
+  const i = id.indexOf('#')
+  if (i < 0) return undefined
+  const n = Number(id.slice(i + 1))
+  if (!Number.isInteger(n) || n < 1) return undefined
+  return PBI_BY_ID.get(id.slice(0, i))?.split?.[n - 1]
+}
+
 /** PBI の元データ（表示用）。未知 id は undefined。 */
 export function backlogItem(id: string): BacklogItem | undefined {
   return PBI_BY_ID.get(id)
 }
 
-/** PBI の見積りポイント（未知 id は 0）。 */
+/** id（PBI または SBI）の表示見出し。SBI は「親PBI名 — 作業項目名」。未知は id をそのまま。 */
+export function titleOf(id: string): string {
+  const sbi = sbiOf(id)
+  if (sbi) return sbi.title
+  return PBI_BY_ID.get(id)?.title ?? id
+}
+
+/** 見積りポイント。SBI なら親 PBI の split 配分、素の PBI なら自身の estimate（未知は 0）。 */
 export function estimateOf(id: string): number {
+  const sbi = sbiOf(id)
+  if (sbi) return sbi.estimate
   return PBI_BY_ID.get(id)?.estimate ?? 0
+}
+
+/** backlogDone（PBI/SBI 混在）から「納品済みの親 PBI 集合」を導出する。
+ *  ・素のまま done になった PBI（割らずに納品）はそのまま納品。
+ *  ・split を持つ PBI は、全 SBI が done になって初めて納品（インクリメント＝PBI 単位）。
+ *  ★SBI が一つも無い状態では「done の素 PBI 集合」と恒等＝既存の PBI 連動機構（顧客価値/legacy/
+ *    deprioritized）を一切変えない。これが分割導入の安全弁。velocity だけは SBI 配分 pt で別途集計する。 */
+export function deliveredPbiIds(backlogDone: readonly string[]): string[] {
+  const done = new Set(backlogDone)
+  const out: string[] = []
+  for (const [id, item] of PBI_BY_ID) {
+    if (done.has(id)) {
+      out.push(id) // 割らずに素のまま納品
+    } else if (item.split?.length && item.split.every((_, i) => done.has(`${id}#${i + 1}`))) {
+      out.push(id) // 全作業項目が完了して納品
+    }
+  }
+  return out
 }
 
 // ── レガシー（「太く残す」）＝去り際にシステムが自分なしで回る状態を残せたか ──
@@ -75,10 +124,11 @@ export function isLegacyPbi(id: string): boolean {
 /** レガシー成立に必要な Ship 数（3項目中）。レビュー容量律速を踏まえ「過半＝2」を閾に置く（調整可）。 */
 const LEGACY_SHIP_THRESHOLD = 2
 
-/** 「太く残す」PBI のうち Ship（DoD達成）した数。 */
+/** 「太く残す」PBI のうち Ship（DoD達成）＝納品済みの数。分割した PBI は全作業項目完了で納品とみなす
+ *  （deliveredPbiIds 経由＝親 PBI 単位）。SBI 不在では done の素集合と恒等。 */
 function legacyShippedCount(backlogDone: readonly string[]): number {
-  const done = new Set(backlogDone)
-  return LEGACY_PBI_IDS.filter((id) => done.has(id)).length
+  const delivered = new Set(deliveredPbiIds(backlogDone))
+  return LEGACY_PBI_IDS.filter((id) => delivered.has(id)).length
 }
 
 /** レガシーが“定着”したか。
@@ -88,9 +138,10 @@ export function isLegacyEmbedded(backlogDone: readonly string[], flags: Readonly
   return legacyShippedCount(backlogDone) >= LEGACY_SHIP_THRESHOLD && !flags.has('soloHero')
 }
 
-/** PBI として既知の id か。 */
+/** 既知の作業 id か（素の PBI、または有効な SBI＝親 PBI の split 範囲内）。
+ *  ＝SBI を含むセーブを restore が破棄しない／canStart 等が SBI を未知として落とさないため。 */
 export function isKnownPbi(id: string): boolean {
-  return PBI_BY_ID.has(id)
+  return PBI_BY_ID.has(id) || sbiOf(id) !== undefined
 }
 
 /** 発見可（初期は伏せ）の PBI か。 */
@@ -146,15 +197,16 @@ export function canAddToForecast(
   if (!PBI_BY_ID.has(pbiId)) return false
   if (core.backlogDone.includes(pbiId)) return false
   if (core.unrefinedPbis.includes(pbiId)) return false
-  if (core.sprintForecast.includes(pbiId)) return false
-  const forecast = new Set(core.sprintForecast)
+  // forecast は分割後 SBI を含むので、親 PBI へ射影して「選択済みか」を判定する（SBI不在では id と恒等）。
+  const forecastParents = new Set(core.sprintForecast.map(parentPbiOf))
+  if (forecastParents.has(pbiId)) return false
   const done = new Set(core.backlogDone)
   const unrefined = new Set(core.unrefinedPbis)
   // 自分より上位（backlogOrder で前）に、未選択の「Ready かつ未done」項目が一つでもあれば飛ばし入れ＝不可。
   for (const other of core.backlogOrder) {
     if (other === pbiId) return true
     const readyActive = PBI_BY_ID.has(other) && !done.has(other) && !unrefined.has(other)
-    if (readyActive && !forecast.has(other)) return false
+    if (readyActive && !forecastParents.has(other)) return false
   }
   return true // id が backlogOrder に無い等は素直に許可（通常は到達しない）
 }
@@ -167,13 +219,36 @@ export function toggleForecast(core: ProgressCore, pbiId: string): ProgressCore 
   if (!isPlanningBeat(core)) return core
   if (!PBI_BY_ID.has(pbiId)) return core
   if (core.backlogDone.includes(pbiId)) return core
-  if (core.sprintForecast.includes(pbiId)) {
-    // 外す：その1件だけ。プレイヤーが積んだ他の予測を巻き添えにしない（理不尽な作業やり直しを避ける）。
-    return { ...core, sprintForecast: core.sprintForecast.filter((id) => id !== pbiId) }
+  // 外す：その PBI（分割済みなら配下の作業項目すべて）を外す。他の予測は巻き添えにしない。
+  if (core.sprintForecast.some((id) => parentPbiOf(id) === pbiId)) {
+    return { ...core, sprintForecast: core.sprintForecast.filter((id) => parentPbiOf(id) !== pbiId) }
   }
-  // 入れる：上位優先の“次の1件”のみ
+  // 入れる：上位優先の“次の1件”のみ（素のまま入れる。分割は splitIntoSbi で後から）
   if (!canAddToForecast(core, pbiId)) return core
   return { ...core, sprintForecast: [...core.sprintForecast, pbiId] }
+}
+
+/** プランニング中、forecast に引いた PBI を「How（実行計画）」へ分解する＝作業項目 #1/#2… に展開する
+ *  （Scrum Guide 2020 スプリントプランニング Topic Three）。split 定義があり・forecast に素のまま入っていて
+ *  ・未分割の PBI のみ対象。割るかはプレイヤー判断（大きいまま1枚で回すのも有効＝過剰分解＝WIP増の代償を学べる）。 */
+export function splitIntoSbi(core: ProgressCore, pbiId: string): ProgressCore {
+  if (!isPlanningBeat(core)) return core
+  const item = PBI_BY_ID.get(pbiId)
+  if (!item?.split?.length) return core
+  const i = core.sprintForecast.indexOf(pbiId) // 素のまま入っている位置（分割済み＝SBIなら -1）
+  if (i < 0) return core
+  const sbiIds = item.split.map((_, n) => `${pbiId}#${n + 1}`)
+  const next = [...core.sprintForecast]
+  next.splice(i, 1, ...sbiIds)
+  return { ...core, sprintForecast: next }
+}
+
+/** その PBI を今、分割できるか（プランニング・split 定義あり・forecast に素のまま入っている）。UI 用。 */
+export function canSplit(
+  core: Pick<ProgressCore, 'sprintIndex' | 'beatIndex' | 'sprintForecast'>,
+  pbiId: string
+): boolean {
+  return isPlanningBeat(core) && !!PBI_BY_ID.get(pbiId)?.split?.length && core.sprintForecast.includes(pbiId)
 }
 
 /** スプリント途中で、その PBI を追加で引き込めるか（スコープ再交渉の可否）。
@@ -296,7 +371,7 @@ export function canStart(
 ): boolean {
   return (
     isWorkBeat(core) &&
-    PBI_BY_ID.has(pbiId) &&
+    isKnownPbi(pbiId) && // 分割後の作業項目(SBI)も着手対象（PBI_BY_ID.has は SBI を落とすので isKnownPbi で判定）
     core.sprintForecast.includes(pbiId) &&
     !core.backlogDone.includes(pbiId) &&
     !core.inProgress.includes(pbiId) &&
@@ -403,10 +478,8 @@ export function resolveSprintBacklog(core: ProgressCore): { core: ProgressCore; 
   const meters = cultureDelta ? { ...core.meters, culture } : core.meters
   const appliedCultureDelta = meters.culture - core.meters.culture
 
-  const toView = (id: string) => {
-    const p = PBI_BY_ID.get(id)
-    return { id, title: p?.title ?? id, estimate: p?.estimate ?? 0 }
-  }
+  // 表示は作業項目(SBI)単位もそのまま見せる（titleOf/estimateOf が SBI を親PBIの split から解決）。
+  const toView = (id: string) => ({ id, title: titleOf(id), estimate: estimateOf(id) })
   const review: BacklogReview = {
     done: doneThisSprint.map(toView),
     carryover: carryIds.map(toView),
@@ -425,16 +498,25 @@ export function resolveSprintBacklog(core: ProgressCore): { core: ProgressCore; 
     // 判定は“今スプリントに予測（forecast）したゴール項目”に限る＝プレイヤーが実際に抱えた約束の範囲。
     //   これにより「容量の都合で最初から積まなかった項目」では発火せず、「両方積んだのに片方だけ終えた＝
     //   どちらを finish するか選んだ」明確なトレードオフのときだけ後回し側のフラグが立つ（過剰発火を防ぐ）。
+    // forecast の項目（分割後は SBI 混在）を親 PBI へ射影し、ゴール判定は親 PBI 単位で行う（SBI不在では恒等）。
+    const forecastByParent = new Map<string, string[]>()
+    for (const id of core.sprintForecast) {
+      const par = parentPbiOf(id)
+      forecastByParent.set(par, [...(forecastByParent.get(par) ?? []), id])
+    }
     const goalForecastOf = (s: 'joushi' | 'genba') =>
-      core.sprintForecast.filter((id) => {
+      [...forecastByParent.keys()].filter((id) => {
         const p = PBI_BY_ID.get(id)
         return p?.sprintHint === sprintNo && p.stakeholder === s
       })
-    // “今スプリントで終えたか”で揃える（delivered/undelivered とも doneThisSprint 基準・O(1)照合）。
-    //   undelivered を通算 doneSet で見ると、done済みが forecast に再混入した時に未達を取りこぼすため此処に統一。
+    // 親 PBI が“今スプリントで納品されたか”＝その親の forecast 構成要素（素のPBI or 全SBI）が全て今sprint Done。
     const doneThisSprintSet = new Set(doneThisSprint)
-    const someDelivered = (ids: string[]) => ids.some((id) => doneThisSprintSet.has(id))
-    const someUndelivered = (ids: string[]) => ids.some((id) => !doneThisSprintSet.has(id))
+    const parentDelivered = (parentId: string) => {
+      const items = forecastByParent.get(parentId) ?? []
+      return items.length > 0 && items.every((id) => doneThisSprintSet.has(id))
+    }
+    const someDelivered = (parents: string[]) => parents.some((id) => parentDelivered(id))
+    const someUndelivered = (parents: string[]) => parents.some((id) => !parentDelivered(id))
     const genbaGoal = goalForecastOf('genba')
     const joushiGoal = goalForecastOf('joushi')
     const addFlag = (f: GameFlag) => {
