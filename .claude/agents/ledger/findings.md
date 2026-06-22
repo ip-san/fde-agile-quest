@@ -38,6 +38,13 @@
    - PlanningView draft: 精査の結果**実害なし**＝プランニング中に officialActive が変わるのは resolveProposal 経由のみ（そこで明示再同期）／toggleForecast・refinePbi は backlogOrder/backlogDone を変えず／セッション跨ぎはモーダル再マウントで再初期化。useState初期値は「作業中の並べ替え保持」の意図で正しく、useEffect再同期を足すと逆に作業破棄の退行になるため**変更せず**。
    - KanbanView retroImprovements: 独立prop を削除し **core.retroImprovements に一本化**（maxReview/wipMax/capacity 全て core 経由）。capacity は maxReview から派生にして二重算出・将来乖離を解消。振る舞い不変・全ゲート緑(320)。2026-06-22
 
+### 歴史的エントリの照合（下の日付別セクションの [open] のうち、上の持ち越しバックログで解消済みのもの）
+2026-06-22 時点で、以下の旧 [open] は持ち越しバックログ #1〜#8 で**解消済み**（旧行の線引きは未更新だが現状は resolved）:
+- 「選択UI重複/SelectableItem 抽出」→ #1（PR #22）。「BacklogPanel 分割・Board/Travel/MiniGameReview リファクタ」→ #2/#7（PR #24/#25）。
+- 「グリフ再マウントSR」「AudioContext 初回無音」「aria-live 短縮」→ #5（精査＋PR #30。SRは aria-hidden で安全・aria-live は可読性維持・音は primeAudio で根治）。
+- 「s3-daily-stuck-base リカバリ感」→ #6（PR #25）。「s2-daily-debt 取り立て連鎖」→ #4（PR #26）。「S3回収の死蔵」→ #3（PR #27/#29、engine 根治）。
+- 残す open（非対応 or 任意）: shake が disabled 確定ボタンに当たる（reduced-motion 緩和済み・任意）／FINALE ドーマント（意図的・下記）／s3-review-topdown b 支配選択（許容・下記）／実機観察（VoiceOver二重読み上げ・iOS初回tick＝コード保証済み）。
+
 ### 対応不要（意図的・記録のみ）
 - chapter-01.ts FINALE/exposed系 — 第1章では到達不能なドーマント（「次章へ繰延」明示済み・意図的）。第2章実装時に活性化。
 - s3-review-topdown choice b の支配選択化 — 逃げ道復活（R5仕様バグ修正）の必然的帰結。「過ちの精算ビート」局面で許容、resultTextの抑制表現で過剰報酬の誤学習も回避済み（learning-designer判定：致命傷なし）。
