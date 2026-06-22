@@ -23,17 +23,19 @@
 下の日付別エントリに散在する `[open]` 🟡 を、showrunner が次イテレーションで拾いやすいよう優先度順に集約した一覧（2026-06-22 / R5 時点）。詳細・根拠は各日付エントリ参照。**着手したら該当行を resolved にし、ここからも消す。**
 
 ### 対応候補（actionable）
-1. **(設計/UX・常連) 選択UIの `SelectableItem` 共通化** — minigame の MiniGame{Hearing,Review}.tsx ＋ MiniGameDevPuzzle のチェックグリフ付き選択ボタンが重複（cpdクローン）。複数ラウンドで再三挙がる。共通コンポーネント/フック抽出。
-2. **(設計) BacklogPanel.tsx 1307行の分割** — KanbanView/PlanningView 切り出し＋ `depthFor`/`pending` を単一 union state へ。規模大・設計レビュー連携。
+1. ~~選択UIの `SelectableItem` 共通化~~ → **[resolved] PR #22**（SelectableCheckItem＋useGlyphSelection 抽出、cpd 7.27%→3.07%）。2026-06-22
+2. ~~BacklogPanel.tsx 1307行の分割~~ → **[resolved] loop/backlogpanel-split-20260622**（backlog/PlanningView.tsx・KanbanView.tsx・BacklogShared.tsx へ分割、振る舞い不変・公開API不変・circular無・knip clean）。2026-06-22
 3. **(物語/学習) S3デイリー requiresFlag回収の過密** — 5枠に対し回収イベントが多数同時解放され一部が死蔵（進行は止まらない＝体験ムラ）。「1周回で確実に拾える上限」の設計。
 4. **(学習・要承認) s2-daily-debt の取り立て連鎖** — 技術的負債を借りる選択に回収イベントが無く「借りた者勝ち」誤読余地。setsFlag→回収イベント追加＝mechanics改変につき総監督承認が必要。
 5. **(UX/a11y・要実機) ミニゲームの SR/音まわり** — グリフ再マウントの VoiceOver/NVDA 通知（実機確認）／MiniGameHearing の上限 aria-live 3s→2s／sfx.ts AudioContext suspended（mobile Safari）初回 tick 無音。
 6. **(物語) s3-daily-stuck-base choice b** — 同一 seed(legacy-bridge)を s1/s3 が出すため、s3 側 resultText をリカバリ感に寄せると学びが明確化。
 7. **(設計・小) Board.tsx の bumpCoach 命名/IIFE の useMemo化、Travel.tsx renderRoom/renderMapPin のコンポーネント化、MiniGameReview の revealed/選択フェーズ分離。**
+8. **(設計・小／#2分割中に確認＝既存) PlanningView の editState draft は useState初期値のみで backlogOrder 外部変更時の再同期パスが無い（モーダル再マウント前提で実害低）。KanbanView の `retroImprovements` が独立prop＋coreフィールドの二重ルート（現状同一ソースで無害だが将来乖離リスク）。** いずれも分割前 main から既存・分割で新規導入ではない。
 
 ### 対応不要（意図的・記録のみ）
 - chapter-01.ts FINALE/exposed系 — 第1章では到達不能なドーマント（「次章へ繰延」明示済み・意図的）。第2章実装時に活性化。
 - s3-review-topdown choice b の支配選択化 — 逃げ道復活（R5仕様バグ修正）の必然的帰結。「過ちの精算ビート」局面で許容、resultTextの抑制表現で過剰報酬の誤学習も回避済み（learning-designer判定：致命傷なし）。
+- 用語「フォーキャスト」→「スプリント予測」（公式日本語訳準拠）= **[resolved] PR #23**（2026-06-22・バックログ外の総監督依頼）。
 
 <!-- ここに指揮者が追記する。 -->
 
