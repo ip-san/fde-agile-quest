@@ -45,7 +45,7 @@ interface Props {
 const sameOrder = (a: string[], b: string[]) => a.length === b.length && a.every((x, i) => x === b[i])
 
 /** スプリントバックログのカンバン操作パネル。
- *  - プランニング中：プロダクトバックログを並べ替え提案（PO承認）し、予測（フォーキャスト）で To Do を組む。
+ *  - プランニング中：プロダクトバックログを並べ替え提案（PO承認）し、スプリント予測で To Do を組む。
  *  - スプリント中（デイリー）：To Do→In Progress（着手＝AI生成・トークン消費・WIP=2）、
  *    In Progress→Done（レビュー＝人のレビュー容量を消費。深さ×ミニゲーム出来で品質）。 */
 export function BacklogPanel({ onClose }: Props) {
@@ -209,7 +209,7 @@ function SprintGoalBanner({
   )
 }
 
-// ───────────────────────── プランニング：PBL 並べ替え提案＋フォーキャスト ─────────────────────────
+// ───────────────────────── プランニング：PBL 並べ替え提案＋スプリント予測 ─────────────────────────
 
 interface PlanningProps {
   sprintIndex: number
@@ -295,7 +295,7 @@ function PlanningView({
   return (
     <>
       <p className="text-xs leading-relaxed text-slate-400">
-        <RichText text="{{プロダクトバックログ}}（価値順）の上位から「＋ スプリントへ」で今スプリントの{{スプリントバックログ}}に入れる＝{{フォーキャスト}}（予測）。下位を上げたいときは、並びをPOに提案（説得）。" />
+        <RichText text="{{プロダクトバックログ}}（価値順）の上位から「＋ スプリントへ」で今スプリントの{{スプリントバックログ}}に入れる＝{{スプリント予測}}。下位を上げたいときは、並びをPOに提案（説得）。" />
       </p>
 
       {/* 入れた予測の即時フィードバック：長いリストを下までスクロールしなくても件数/容量が常に見える。 */}
@@ -664,7 +664,7 @@ function KanbanView({
   if (sprintForecast.length === 0) {
     return (
       <p className="rounded-xl bg-slate-800/40 px-3 py-4 text-center text-sm text-slate-400">
-        このスプリントの予測（To Do）がありません。プランニングで{<RichText text="{{フォーキャスト}}" />}
+        このスプリントの予測（To Do）がありません。プランニングで{<RichText text="{{スプリント予測}}" />}
         しておきましょう。
       </p>
     )
@@ -734,7 +734,7 @@ function KanbanView({
           <RichText text="開発そのものは AI が担う（着手＝生成）。価値は人の{{レビュー}}にある。In Progress は{{仕掛り}}上限で詰まり、{{制約理論}}どおりレビューがボトルネックになる。" />
         </p>
 
-        {/* 予測量 vs 容量（オーバーフォーキャストの可視化）。超過分は終わらず持ち越しになる。 */}
+        {/* 予測量 vs 容量（予測の超過（オーバー）の可視化）。超過分は終わらず持ち越しになる。 */}
         <section
           className={`mt-3 rounded-xl border p-3 ${over ? 'border-amber-500/40 bg-amber-500/5' : 'border-sky-500/30 bg-sky-500/5'}`}
         >
