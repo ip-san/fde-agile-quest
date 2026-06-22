@@ -6,12 +6,14 @@ import { useMemo, useState } from 'react'
 import {
   backlogItem,
   canAddToForecast,
+  dailyBeatsInSprint,
   estimateOf,
   forecastPoints,
   isSbi,
   type ProposalVerdict,
   parentPbiOf,
   reviewBacklogProposal,
+  reviewBudgetForSprint,
   reviewCapacityFor,
   titleOf,
 } from '../../engine/backlog'
@@ -59,9 +61,12 @@ export function PlanningView({
   refinePbi,
 }: PlanningProps) {
   const unrefinedSet = useMemo(() => new Set(unrefinedPbis), [unrefinedPbis])
-  // 予測の"目安"＝今スプリントで実際に終わらせられる量。律速は1日のレビュー容量なので
-  // それを基準にする（前回ベロシティではなく、真のボトルネックに合わせる）。レトロ改善(capacity)を反映。
-  const capacity = reviewCapacityFor(retroImprovements)
+  // 予測の"目安"＝今スプリントで実際に終わらせられる量＝「1日のレビュー容量 × そのスプリントのデイリー日数」。
+  // 日次上限はそのまま日々の律速だが、予測はスプリント全体で組む（早々に片付いて空デイリーにならないように）。
+  // レトロ改善(capacity)は日次を上げるので、その分スプリント全体の目安も増える。
+  const capacity = reviewBudgetForSprint(retroImprovements, sprintIndex)
+  const perDay = reviewCapacityFor(retroImprovements)
+  const days = Math.max(1, dailyBeatsInSprint(sprintIndex))
   // 前回スプリントから持ち越された PBI のうち、まだ未 done のもの
   const carryoverSet = useMemo(() => new Set(lastCarryover), [lastCarryover])
   const fpts = forecastPoints({ sprintForecast })
@@ -403,9 +408,10 @@ export function PlanningView({
           />
         </div>
         <p className="mt-1 mb-2 text-xs text-slate-400">
-          容量の目安＝1日の{<RichText text="{{レビュー}}" />}容量（{capacity}
-          pt/日・毎デイリー回復・使い切り）。超えて入れても終わるのはレビューできた分だけ＝残りは
-          {<RichText text="{{キャリーオーバー}}" />}。
+          容量の目安＝スプリント全体の{<RichText text="{{レビュー}}" />}容量（1日{perDay}pt × {days}日 = {capacity}
+          pt）。日々のレビューは1日{perDay}ptまで（深いレビューはコスト2なので1日1件、浅いレビューなら2件）。毎デイリー
+          回復・使い切り。超えて入れても終わるのはレビューできた分だけ＝残りは{<RichText text="{{キャリーオーバー}}" />}
+          。
         </p>
 
         {/* ステークホルダー内訳（情シス/現場の綱引き）。分割した SBI は親に合算済みなので親 id で集計。 */}

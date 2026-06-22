@@ -20,8 +20,10 @@ const PBI_BY_ID = new Map<string, BacklogItem>(
 export const WIP_LIMIT = 2
 /** 1日（デイリービート）あたりの人間レビュー容量（＝AIの生成を人がどれだけ確かめられるかの日次スループット制約）。
  *  毎 daily ビート開始時にこの値へリセットし、繰り越さない（使い切り）＝「1日で全部投入」はできず日次ペースで流す。
+ *  深いレビュー(thorough)はコスト2なので「1日に深く確かめられるのは1件」。浅い(quick)なら2件。
+ *  ＝1日の余力を簡単には使い果たせない＝仕事がスプリント全体に散る（終盤が空デイリーにならない）。
  *  カンバン/制約理論（ToC）由来の概念で、スクラムのセレモニーではない。レトロ改善(capacity)で恒久的に増やせる。 */
-export const REVIEW_CAPACITY_PER_DAY = 4
+export const REVIEW_CAPACITY_PER_DAY = 2
 
 // ── レトロ改善（機構：Retro 昇格）──
 // レトロでプレイヤーが選んだプロセス改善を retroImprovements に積む（'capacity'/'wip'）。
@@ -29,6 +31,19 @@ export const REVIEW_CAPACITY_PER_DAY = 4
 /** レトロ改善を反映した「1日あたり」レビュー容量（制約理論：ボトルネックを elevate する投資。'capacity' 1つにつき +1/日）。 */
 export function reviewCapacityFor(retroImprovements: readonly string[]): number {
   return REVIEW_CAPACITY_PER_DAY + retroImprovements.filter((x) => x === 'capacity').length
+}
+
+/** そのスプリントの daily ビート数（＝レビュー機会の日数）。予測の“目安”を1日でなくスプリント全体で測るのに使う。 */
+export function dailyBeatsInSprint(sprintIndex: number): number {
+  return (SPRINTS[sprintIndex]?.beats ?? []).filter((b) => b === 'daily').length
+}
+
+/** 予測（スプリントバックログ）の容量目安＝「1日のレビュー容量 × そのスプリントのデイリー日数」。
+ *  ＝プランニングで“今スプリントに収まる量”を1日でなくスプリント全体で見積もる（日次上限はそのまま日々の律速）。
+ *  これにより予測はスプリントサイズで組め、日次上限で作業が全デイリーに散る（早々に片付いて空デイリーにならない）。
+ *  レトロ改善(capacity)も日次容量を上げるので、その分スプリント全体の目安も増える。 */
+export function reviewBudgetForSprint(retroImprovements: readonly string[], sprintIndex: number): number {
+  return reviewCapacityFor(retroImprovements) * Math.max(1, dailyBeatsInSprint(sprintIndex))
 }
 /** レトロ改善を反映した WIP 上限（フロー改善：仕掛りを絞る。'wip' 1つにつき −1、下限1）。 */
 export function wipLimitFor(retroImprovements: readonly string[]): number {

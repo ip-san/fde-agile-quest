@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { displayName } from '../data/chapters/chapter-01/names'
+import { endingImage, imageUrl } from '../data/images'
 import type { ValueBreakdown } from '../engine/progression'
 import type { Epilogue, LogEntry, Meters } from '../types'
 import { CustomerValueBar } from './CustomerValueBar'
@@ -180,6 +181,7 @@ export function EndingScreen({
   const failed = ending.id.startsWith('fail-')
   const rank = valueRank(customerValue)
   const teaser = fraudHint === 'none' ? null : FRAUD_TEASER[fraudHint]
+  const imgKey = endingImage(ending.id)
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center gap-6 px-safe py-10">
@@ -191,6 +193,18 @@ export function EndingScreen({
         </p>
         <h1 className={`mt-2 text-3xl font-bold ${failed ? 'text-rose-300' : 'text-amber-300'}`}>{ending.title}</h1>
       </div>
+
+      {/* 結末の情景画像（実写ドキュメンタリー風・あれば）。未登録なら枠ごと出さない。 */}
+      {imgKey && (
+        <img
+          src={imageUrl(imgKey)}
+          alt=""
+          className="h-40 w-full rounded-2xl object-cover sm:h-56"
+          onError={(e) => {
+            e.currentTarget.style.display = 'none'
+          }}
+        />
+      )}
 
       {failed && <p className="text-center text-xs text-rose-300/80">ゲージが1つでも0になると、案件はここで終わる。</p>}
 
