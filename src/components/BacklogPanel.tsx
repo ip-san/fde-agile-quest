@@ -100,7 +100,6 @@ export function BacklogPanel({ onClose }: Props) {
               reviewCapacity={reviewCapacity}
               aiTokens={aiTokens}
               unrefinedPbis={unrefinedPbis}
-              retroImprovements={retroImprovements}
               startItem={startItem}
               reviewItem={reviewItem}
               pullIntoSprint={pullIntoSprint}

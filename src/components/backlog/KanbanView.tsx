@@ -54,7 +54,6 @@ export interface KanbanProps {
   aiTokens: number
   /** 未リファインメント（暫定見積り）の PBI id。途中引き込みは Ready のみ対象にするため除外に使う。 */
   unrefinedPbis: string[]
-  retroImprovements: string[]
   startItem: (id: string) => void
   reviewItem: (id: string, depth: ReviewDepth, tier: ExecTier) => void
   /** スプリント途中で Ready な PBI を予測に引き込む（スコープ再交渉） */
@@ -76,7 +75,6 @@ export function KanbanView({
   reviewCapacity,
   aiTokens,
   unrefinedPbis,
-  retroImprovements,
   startItem,
   reviewItem,
   pullIntoSprint,
@@ -93,7 +91,8 @@ export function KanbanView({
   const wipMax = wipLimitFor(core.retroImprovements)
 
   // 容量の目安＝人のレビュー容量。予測がこれを超えると、終わらない分は持ち越しになる（補助実践の目安・ガイドの規定ではない）。
-  const capacity = reviewCapacityFor(retroImprovements)
+  // maxReview と同一値（どちらも人のレビュー容量）。派生にして二重算出・将来の乖離を防ぐ。
+  const capacity = maxReview
   const fpts = forecastPoints({ sprintForecast })
   const over = fpts > capacity
   // 途中で引き込める候補も"上位優先"に揃える＝canAddToForecast（上位を全部入れてからでないと下位は引けない）。
