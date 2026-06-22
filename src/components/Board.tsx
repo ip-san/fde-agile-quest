@@ -488,7 +488,7 @@ export function Board() {
         <DeductionModal event={currentEvent} onResolve={(correct) => setDeduction({ id: currentEvent.id, correct })} />
       )}
 
-      {/* イベント＝判断モーダル（選択するとミニゲームへ） */}
+      {/* イベント＝判断モーダル（選択するとミニゲームへ。deduction イベントは即・結果へ差し替え） */}
       {status === 'event' && currentEvent && !result && !pendingChoice && !needsDeduction && (
         <EventModal
           // イベント毎に新規マウントし、時限選択の remaining/firedRef とフォーカストラップを確実にリセット
@@ -498,11 +498,22 @@ export function Board() {
           aiTokens={aiTokens}
           revealHint={revealHint}
           timed={timed}
-          onChoose={setPendingChoice}
+          onChoose={(choice) => {
+            if (currentEvent.deduction) {
+              // deduction イベント：推理の出来を実行 tier に変換して即・結果へ（ミニゲームを差し替え）。
+              // 当てた(great) / 外した(good)。外しても poor にはしない（reveal 喪失が既に代償）。
+              // deductionBonus は渡さない（0）＝ tier 昇格と二重取りを避ける。
+              choose(choice, deducedCorrect ? 'great' : 'good', 0)
+            } else {
+              // 非 deduction イベント：従来どおりミニゲームへ
+              setPendingChoice(choice)
+            }
+          }}
         />
       )}
 
       {/* 実行ミニゲーム（選択後・結果前）。出来=tier で主正メーターを倍率調整。初回は説明コーチマークを先に出す */}
+      {/* deduction イベントはここに到達しない（onChoose 内で即 choose 済み） */}
       {status === 'event' && currentEvent && !result && pendingChoice && !minigameCoachKey && (
         <Suspense fallback={null}>
           <MiniGame
