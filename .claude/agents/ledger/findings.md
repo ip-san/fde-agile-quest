@@ -150,3 +150,14 @@
 - [open] (🟡低・defer) code: addsPbi.toSprint を optional のままにした（??false、ergonomics優先）。PBI_BY_ID 3配列合流＋出所再判定は将来 origin 必須化で簡素化余地。KanbanView/progression のCPDクローン（閾値内）。
 - [open] (🟢設計判断) s3-a の trust 不付与は narrative-designer 判断で意図的維持（成功機運下で焦点だけ溶ける最も苦い型）。
 - 全11ゲート緑（typecheck/lint/test344/circular/knip/typecov99.73%/cpd/build/size157.73kB<164/CSS9.2<10/lighthouse/e2e3-3 axe）。
+
+### 2026-06-22 / loop/all-agent-review-r7（R7/R8全エージェント＋ミニゲーム多様化＋レビュー容量の絞り込み）
+
+総監督の連続フィードバック2件を反映（同一ブランチ）。
+1. 「連続レビューで同じミニゲームは面白くない」→ dealReview に variety を追加。初回は題材一致、再レビュー/同じ親PBIの別SBIは題材一致を避けて別作問へ巡回（KanbanView が項目×進捗×SBI位置でシード/variety算出）。
+2. 「レビュー余力を簡単に使い果たし後半が空デイリー。1日のレビューを絞るのが先決」→ REVIEW_CAPACITY_PER_DAY 4→2（深いレビュー=1日1件）。予測の目安を「1日容量」から「スプリント全体容量＝1日×デイリー日数(=5)」へ付け替え（reviewBudgetForSprint/dailyBeatsInSprint）。日次上限で作業がスプリント全体に散り、後半の空デイリーが解消。
+
+- 考証: agile🔴(progression.ts DELIVERY_TARGET コメントの旧値=4)＋🟡(STORY.md/テストコメントの=4残存・forecast10pt vs実効7-8pt の慢性キャリーオーバー懸念=要プレイテスト)／ux🔴(KanbanView が日数を capacity/maxReview で逆算→PlanningView と計算路非対称)＋🟡(lgツールバー予測のスコープ無表示・over文の式非対称・「コスト2=1日1件」圧縮)。
+- 反映済: DELIVERY_TARGET コメントを2基準へ更新、STORY.md §4.4 を =2＋reviewBudgetForSprint へ同期、テストコメントの旧値是正、KanbanView を dailyBeatsInSprint 直接参照に、lg「予測(全体)」スコープ表示＋over文に式追加、Planning文言の平易化。
+- [open] (🟡・要プレイテスト) 容量 4→2 半減後、DELIVERY_TARGET=9 が妥当か／forecast満タンで慢性キャリーオーバーにならないか実測（agile指摘）。great1.5倍・quick広消化・スコープ再交渉が緩和弁。
+- 全11ゲート緑（test348/build/size157.89kB/circular/knip/typecov/cpd/lighthouse/e2e3-3/axe）。R7は全8エージェント🔴ゼロ、R8クリーン。

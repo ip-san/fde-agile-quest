@@ -176,3 +176,9 @@ export function eventImage(event: GameEvent): string | null {
 export function resultImage(eventId: string, choiceId: string, _segment: Segment): string | null {
   return pick([`${eventId}__${choiceId}__r`])
 }
+
+/** エンディング／フィナーレの情景画像キー（public/img/ending-{id}.jpg）。
+ *  登録済みキーが無ければ null（＝枠を出さない）。endingId は Epilogue.id（例 'trueFde', 'fail-trust', 'finale-expose'）。 */
+export function endingImage(endingId: string): string | null {
+  return pick([`ending-${endingId}`])
+}

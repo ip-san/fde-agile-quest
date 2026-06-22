@@ -9,6 +9,7 @@ import {
   canAddToForecast,
   canReview,
   canStart,
+  dailyBeatsInSprint,
   estimateOf,
   forecastPoints,
   GEN_TOKEN_COST,
@@ -17,6 +18,7 @@ import {
   isSbi,
   parentPbiOf,
   REVIEW_CAPACITY_PER_DAY,
+  reviewBudgetForSprint,
   reviewCapacityFor,
   titleOf,
   WIP_LIMIT,
@@ -87,9 +89,11 @@ export function KanbanView({
   const maxReview = reviewCapacityFor(core.retroImprovements)
   const wipMax = wipLimitFor(core.retroImprovements)
 
-  // 容量の目安＝1日あたりのレビュー容量。予測がこれを超えると、終わらない分は持ち越しになる（補助実践の目安・ガイドの規定ではない）。
-  // maxReview と同一値（どちらも1日のレビュー容量）。派生にして二重算出・将来の乖離を防ぐ。
-  const capacity = maxReview
+  // 予測量の目安＝スプリント全体のレビュー容量（1日の容量 × そのスプリントのデイリー日数）。
+  // 日次上限(maxReview)はそのまま日々の律速だが、予測超過の判定はスプリント全体の容量で見る
+  // （早々に片付いて空デイリーにならないよう、予測はスプリントサイズで組む設計）。
+  const capacity = reviewBudgetForSprint(core.retroImprovements, core.sprintIndex)
+  const days = Math.max(1, dailyBeatsInSprint(core.sprintIndex))
   const fpts = forecastPoints({ sprintForecast: core.sprintForecast })
   const over = fpts > capacity
   // 途中で引き込める候補も"上位優先"に揃える＝canAddToForecast（上位を全部入れてからでないと下位は引けない）。
@@ -121,9 +125,14 @@ export function KanbanView({
         <p className="min-w-0 flex-1 text-[11px] leading-relaxed text-slate-400">
           <RichText text="着手＝AI生成。AIにどこまでレビューさせ、人がどれぐらい確かめるか——{{制約理論}}どおり1日のレビュー容量がボトルネック。" />
         </p>
-        {/* 予測量バー */}
+        {/* 予測量バー（スプリント全体の容量に対する積み具合。隣の「1日のレビュー」とはスコープが違う） */}
         <div className="flex shrink-0 items-center gap-2">
-          <span className="text-[11px] font-semibold text-sky-300">予測</span>
+          <span
+            className="text-[11px] font-semibold text-sky-300"
+            title="スプリント全体の予測量／スプリント全体のレビュー容量"
+          >
+            予測<span className="font-normal text-sky-400/70">(全体)</span>
+          </span>
           <div className="h-2 w-20 overflow-hidden rounded-full bg-slate-700">
             <div
               className={`h-full rounded-full transition-all ${over ? 'bg-amber-500' : 'bg-sky-400'}`}
@@ -198,16 +207,16 @@ export function KanbanView({
           </div>
           {over ? (
             <p role="note" className="mt-1.5 text-[11px] leading-relaxed text-amber-300">
-              1日のレビュー容量（{capacity}pt）を超えて積んでいます。これは"悪手"ではなく
-              <span className="font-semibold">賭け</span>
-              ——多く積んでゴールに挑むのも一手。ただし終わらなかった分はスプリント末に
-              {<RichText text="{{キャリーオーバー}}" />}（次へ持ち越し）。commitment
+              スプリント全体のレビュー容量（{capacity}pt＝1日{maxReview}pt×{days}日）を超えて積んでいます。これは
+              "悪手"ではなく<span className="font-semibold">賭け</span>
+              ——多く積んでゴールに挑むのも一手。ただし日々のレビューは1日{maxReview}ptに絞られ、終わらなかった分は
+              スプリント末に{<RichText text="{{キャリーオーバー}}" />}（次へ持ち越し）。commitment
               はスプリントゴールであって全部終える約束ではない。
             </p>
           ) : (
             <p className="mt-1.5 text-[11px] leading-relaxed text-slate-400">
-              1日のレビュー容量（{capacity}
-              pt）。余裕があれば下で追加を引き込めます。毎デイリー開始時に回復・使い切りです。
+              スプリント全体のレビュー容量（{capacity}pt＝1日{maxReview}pt×{days}日）。日々は1日
+              {maxReview}pt に絞られ、余裕があれば下で追加を引き込めます。毎デイリー回復・使い切りです。
             </p>
           )}
         </section>
@@ -441,23 +450,35 @@ export function KanbanView({
       <ProductBacklogReadOnly backlogOrder={backlogOrder} doneSet={doneSet} />
 
       {/* レビュー・ミニゲーム（深さ確定後） */}
-      {pending && (
-        <MiniGame
-          kind="review"
-          // シードは作業項目(SBI)単位で個別に＝同じ親PBIの #1/#2 でも別の出題になる。
-          // ただしレビュー教材の選定は親PBI基準（教材は PBI に紐づく）なので pbiId は親へ射影。
-          seed={seedFor(pending.id)}
-          pbiId={parentPbiOf(pending.id)}
-          onDone={(tier) => {
-            reviewItem(pending.id, pending.depth, tier)
-            setPending(null)
-          }}
-          onSkip={() => {
-            reviewItem(pending.id, pending.depth, 'good')
-            setPending(null)
-          }}
-        />
-      )}
+      {pending &&
+        (() => {
+          // 連続レビューで同じミニゲームが続かないようにする。
+          // ・初回レビュー（まだ進捗0）かつ親PBIの先頭作業項目 → 題材一致の作問（タスクに合った出題）。
+          // ・再レビュー（進捗>0）や、同じ親PBIの2件目以降の作業項目(SBI) → 題材一致を避けて別の作問へ。
+          const hash = pending.id.indexOf('#')
+          const sbiOffset = hash >= 0 ? Math.max(0, (Number(pending.id.slice(hash + 1)) || 1) - 1) : 0
+          const prog = reviewProgress[pending.id] ?? 0
+          const variety = prog > 0 || sbiOffset > 0
+          // シードは「項目 × これまでの進捗 × 作業項目位置」で変える＝再レビューごとに別の作問・別の並びになる。
+          const seed = seedFor(`${pending.id}:${Math.round(prog * 100)}:${sbiOffset}`)
+          return (
+            <MiniGame
+              kind="review"
+              seed={seed}
+              // レビュー教材の選定は親PBI基準（教材は PBI に紐づく）なので pbiId は親へ射影。
+              pbiId={parentPbiOf(pending.id)}
+              reviewVariety={variety}
+              onDone={(tier) => {
+                reviewItem(pending.id, pending.depth, tier)
+                setPending(null)
+              }}
+              onSkip={() => {
+                reviewItem(pending.id, pending.depth, 'good')
+                setPending(null)
+              }}
+            />
+          )
+        })()}
     </>
   )
 }

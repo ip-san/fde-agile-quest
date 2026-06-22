@@ -8,6 +8,8 @@ interface Props {
   seed: number
   /** レビュー対象 PBI の id。あればそのタスク内容に一致する作問を出す（無ければ seed で巡回）。 */
   pbiId?: string
+  /** 2回目以降のレビュー（再レビュー／同じ親PBIの別作業項目）。true なら題材一致を避けて別の作問を出す。 */
+  variety?: boolean
   onResolve: (tier: ExecTier) => void
 }
 
@@ -36,8 +38,8 @@ function RevealedRow({ option, picked }: RevealedRowProps) {
 
 /** レビュー・ミニゲーム：AI が書いた差分を点検し、人が拾うべき指摘を選ぶ（AI時代の人間レビュー）。
  *  選択 → 答え合わせ（拾えた/見逃し/空振り＋気づき）→ 確定、の2段。LGTM（0件）も"出せる"。 */
-export function MiniGameReview({ seed, pbiId, onResolve }: Props) {
-  const [round] = useState<ReviewRound>(() => dealReview(seed, pbiId))
+export function MiniGameReview({ seed, pbiId, variety, onResolve }: Props) {
+  const [round] = useState<ReviewRound>(() => dealReview(seed, pbiId, variety))
   const [picked, setPicked] = useState<number[]>([])
   const [tier, setTier] = useState<ExecTier | null>(null) // null＝選択中、確定後は答え合わせ表示
 

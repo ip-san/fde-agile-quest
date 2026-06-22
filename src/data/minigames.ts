@@ -284,9 +284,9 @@ export function scoreTiming(pos: number): ExecTier {
 // ───────────────────────────────────────────────────────────
 // レビュー（AI時代の人間レビュー）：開発そのものは AI が担う＝着手は生成。価値は人の点検にある。
 // AI が書いた差分＋「AI の自己申告メモ」を見せ、人間のレビュアーが拾うべき指摘を選ばせる。
-// 題材は Claude / Codex を使い込む人の失敗談から：秘密の直書き・流出、架空パッケージ
-// （slopsquatting＝もっともらしい嘘の依存）、WHERE 抜けの破壊的削除、動いて見えるが誤り
-// （代入/比較・境界）、過剰実装と既存破壊（理解負債）。ワナは「AI が言うなら通す」過信と瑣末な好み。
+// 題材は Claude / Codex を使い込む人の失敗談から：秘密の直書き・無断送信、動いて見えるが誤り
+// （代入/比較・境界・単位）、二重計上や状態遷移の取り違え、権限/範囲（全件公開）の見落とし、
+// 正常系しか残さない手順、エッジ（日跨ぎ・時間帯の端）の取りこぼし。ワナは「AI が言うなら通す」過信と瑣末な好み。
 // 各ケースは“拾うべき指摘”をちょうど2つ持つ（REVIEW_REAL_COUNT）。
 // ───────────────────────────────────────────────────────────
 export const REVIEW_REAL_COUNT = 2
@@ -647,11 +647,27 @@ export function reviewCasePbiIds(): string[] {
   return REVIEW_CASES.map((c) => c.pbi)
 }
 
-/** レビューの1ラウンドを選ぶ。pbiId があればそのタスク内容に一致する作問を優先（無ければ seed で巡回）。
- *  選択肢はシャッフルして提示（毎回同じ並びを避ける）。 */
-export function dealReview(seed: number, pbiId?: string): ReviewRound {
-  const matched = pbiId ? REVIEW_CASE_BY_PBI.get(pbiId) : undefined
-  const c = matched ?? REVIEW_CASES[((seed % REVIEW_CASES.length) + REVIEW_CASES.length) % REVIEW_CASES.length]
+/** レビューの1ラウンドを選ぶ。
+ *  - 通常（variety=false）：pbiId があればそのタスク内容に一致する作問を出す（初回レビュー＝題材一致）。
+ *  - variety=true：同じ項目を再レビュー／同じ親PBIの別の作業項目(SBI)をレビューする2回目以降。
+ *    題材一致の作問を“避けて” seed で別の作問に巡回させ、連続レビューで同じミニゲームが続かないようにする
+ *    （＝何度も見ると別の種類の問題が出てくる、という体験。AIコードレビューの実感に沿う）。
+ *  選択肢はいずれもシャッフルして提示（毎回同じ並びを避ける）。 */
+export function dealReview(seed: number, pbiId?: string, variety = false): ReviewRound {
+  const n = REVIEW_CASES.length
+  const matchedIdx = pbiId ? REVIEW_CASES.findIndex((c) => c.pbi === pbiId) : -1
+  const mod = (x: number, m: number) => ((x % m) + m) % m
+  let idx: number
+  if (!variety && matchedIdx >= 0) {
+    idx = matchedIdx // 初回＝題材一致を出す
+  } else if (matchedIdx >= 0 && n > 1) {
+    // 2回目以降＝題材一致を除いた残りから seed で1つ選ぶ（必ず初回と別の作問になる）
+    const r = mod(seed, n - 1)
+    idx = r >= matchedIdx ? r + 1 : r
+  } else {
+    idx = mod(seed, n) // 題材一致が無い項目（イベント発PBI等）は全作問から巡回
+  }
+  const c = REVIEW_CASES[idx]
   const options = shuffle(c.options, seed + 5)
   return { task: c.task, diff: c.diff, aiNote: c.aiNote, options, takeaway: c.takeaway }
 }

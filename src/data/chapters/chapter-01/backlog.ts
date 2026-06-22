@@ -88,12 +88,12 @@ export const PRODUCT_BACKLOG: BacklogItem[] = [
   {
     id: 'pbi-dashboard-selfserve',
     title: '現場が自分で見られる{{ダッシュボード}}を用意する',
-    detail: '主要な指標を現場が自分で見て、自分で動けるように。',
+    detail: '{{誤出荷率}}・{{充足率}}・当日の出荷残といった、現場が自分で見て自分で動ける指標を一画面に。',
     estimate: 5,
     sprintHint: 3,
     stakeholder: 'joushi', // 指標を可視化＝発注側が成果を見たい関心
     split: [
-      { title: '主要な指標を集計する', estimate: 2 },
+      { title: '誤出荷率・充足率・出荷残を集計する', estimate: 2 },
       { title: '現場が見られる画面にする', estimate: 3 },
     ],
   },
@@ -178,9 +178,10 @@ export const EVENT_BACKLOG: BacklogItem[] = [
   {
     // s2-daily-goalcreep「揺らぐスプリントゴール」：経営が今期に、と差し込む別機能。
     id: 'pbi-evt-exec-feature',
-    title: '経営が「今期に」と求める別機能を入れる',
-    detail: '誤出荷削減のゴールとは別筋。経営の体面に直結し、結城さんは断りきれずに持ってきた。',
-    estimate: 3,
+    title: '荷主向けに実績を見せる{{ダッシュボード}}を今期に出す',
+    detail:
+      '誤出荷削減のゴールとは別筋。荷主への提案で「実績が一目で見える画面が要る」と経営が今期に欲しがり、結城さんは断りきれずに持ってきた。見栄えの裏で、どの数字をどう集計するか——見えない工数が膨らむ。',
+    estimate: 5,
     sprintHint: 2,
     origin: 'event',
     stakeholder: 'joushi',
