@@ -25,7 +25,8 @@
 ### 対応候補（actionable）
 1. ~~選択UIの `SelectableItem` 共通化~~ → **[resolved] PR #22**（SelectableCheckItem＋useGlyphSelection 抽出、cpd 7.27%→3.07%）。2026-06-22
 2. ~~BacklogPanel.tsx 1307行の分割~~ → **[resolved] loop/backlogpanel-split-20260622**（backlog/PlanningView.tsx・KanbanView.tsx・BacklogShared.tsx へ分割、振る舞い不変・公開API不変・circular無・knip clean）。2026-06-22
-3. **(物語/学習) S3デイリー requiresFlag回収の過密** — 5枠に対し回収イベントが多数同時解放され一部が死蔵（進行は止まらない＝体験ムラ）。「1周回で確実に拾える上限」の設計。
+3. ~~(物語/学習) S3デイリー requiresFlag回収の過密~~ → **[resolved/部分] loop/s3-recovery-declutter**（D-3: location分散で「1場所1代表」衝突を緩和＝serverroomの山4→2・fraudClue3件を別location維持・rework→warehouse/joushi-deprioritized→client。data のみ・engine無改修・313緑）。2026-06-22
+   - [open] (記録) **D-1（自分の選択の帰結を review/retro へ確実提示）は engine 制約で不可**＝s2-retro が必須で全員 topDown/genbaTrust を立て、s3-review/retro 単発ビートが常にそのバリアント(avail[0])に占有されるため、deprioritized/soloHero を移すと到達不能になる。到達不能を作らないため見送り。残る死蔵（枠5<同時解放6+）は変動＝味として A 許容（agile-expert 推奨どおり）。根治には engine 改修（drawの回収複数提示等）が必要＝別途要判断。
 4. ~~(学習・要承認) s2-daily-debt の取り立て連鎖~~ → **[resolved] loop/debt-collection**（総監督承認のもと新フラグ `borrowedDebt`＝types/threads/store登録、s2-daily-debt choice a に setsFlag＋repo debt+2、新イベント s2-daily-debt-collection を**S2に配置＝#3を悪化させず**、undone-debt とは「約束履行」軸で機構差別化（b: trust据え置き）。story🟢/learning🟢/全ゲート緑）。2026-06-22
    - [open] (🟡低) learning/story — 取り立てイベントの surface は requiresFlag共通の確率依存（#3 と同根）／先送りの「利息逓増（複利感）」は任意の磨き込み余地。いずれも誤学習はせず・致命でない。
 5. **(UX/a11y・要実機) ミニゲームの SR/音まわり** — グリフ再マウントの VoiceOver/NVDA 通知（実機確認）／MiniGameHearing の上限 aria-live 3s→2s／sfx.ts AudioContext suspended（mobile Safari）初回 tick 無音。
