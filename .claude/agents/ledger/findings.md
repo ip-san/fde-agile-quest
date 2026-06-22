@@ -34,7 +34,9 @@
    - [open] (任意・実機で観察できれば) VoiceOver で選択ON/OFF が aria-pressed 切替のみで二重読み上げにならないこと（コード上は保証済み・確認は任意）。primeAudio 導入後の iOS 初回 tick が鳴ること（論理的に解消済み・確認は任意）。
 6. ~~(物語) s3-daily-stuck-base choice b のリカバリ感~~ → **[resolved] loop/carryover-6-7**（s3側resultTextを先回り↔痛んでから追いついた の非対称に、2文へ圧縮）。2026-06-22
 7. ~~(設計・小) Board.tsx bumpCoach→useReducer/useMemo化、Travel.tsx renderRoom/renderMapPin→Room/MapPinコンポーネント化、MiniGameReview revealed分離~~ → **[resolved] loop/carryover-6-7**（振る舞い不変・型統一・dead key除去）。2026-06-22
-8. **(設計・小／#2分割中に確認＝既存) PlanningView の editState draft は useState初期値のみで backlogOrder 外部変更時の再同期パスが無い（モーダル再マウント前提で実害低）。KanbanView の `retroImprovements` が独立prop＋coreフィールドの二重ルート（現状同一ソースで無害だが将来乖離リスク）。** いずれも分割前 main から既存・分割で新規導入ではない。
+8. ~~(設計・小／既存) PlanningView draft再同期 / KanbanView retroImprovements二重ルート~~ → **[resolved] loop/kanban-retro-unify**:
+   - PlanningView draft: 精査の結果**実害なし**＝プランニング中に officialActive が変わるのは resolveProposal 経由のみ（そこで明示再同期）／toggleForecast・refinePbi は backlogOrder/backlogDone を変えず／セッション跨ぎはモーダル再マウントで再初期化。useState初期値は「作業中の並べ替え保持」の意図で正しく、useEffect再同期を足すと逆に作業破棄の退行になるため**変更せず**。
+   - KanbanView retroImprovements: 独立prop を削除し **core.retroImprovements に一本化**（maxReview/wipMax/capacity 全て core 経由）。capacity は maxReview から派生にして二重算出・将来乖離を解消。振る舞い不変・全ゲート緑(320)。2026-06-22
 
 ### 対応不要（意図的・記録のみ）
 - chapter-01.ts FINALE/exposed系 — 第1章では到達不能なドーマント（「次章へ繰延」明示済み・意図的）。第2章実装時に活性化。
