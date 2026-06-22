@@ -140,3 +140,13 @@
 - 修正済: canStart の PBI_BY_ID.has→isKnownPbi（SBI着手不能バグ是正）、glossary「作業項目」登録、O(n²)解消、機会コスト＆「一片Done≠納品」文言、PBIスペース表記統一。
 - [open] (🟡低・defer) code-reviewer: PlanningView の draft state と外部 backlogOrder の乖離は構造的には可能だが本ゲームでは backlogOrder がプランニング中に変わらず実害なし。LegacySummary の deliveredPbiIds 毎レンダー走査（backlog固定サイズ）、canAddToForecast/canStart の backlogDone.includes が O(n)、KanbanView unrefinedPbis の Set化不一致——いずれも微小perf・別イテレーション。
 - [open] (🟡低) agile/learning: glossary desc 内の生「PBI」（既存慣習どおり・desc単体では未定義略語）。split を持つのが5pt大物3件のみで「なぜこの3つだけ分割可能か」は暗黙（split定義の有無）。
+
+### 2026-06-22 / loop/event-pbi（イベントでPBIが追加される／スプリントに割り込みで頼まれる機構）
+
+総監督要望「イベントでPBIが追加されたり、スプリントに加えてくれと頼まれる」→既存の3イベント（s1-daily-scope/s2-daily-goalcreep/s3-daily-scope-creep）に Choice.addsPbi を配線（“すでにそれっぽいイベントがある、それを使って”の指示どおり既存を活用）。新フィールド addsPbi:{id,toSprint?}＝toSprint:true は今スプリント予測へ割り込み（容量超過→キャリーオーバーで代償）、false はプロダクトバックログへ暫定見積りで積む（revealPbi へ委譲）。EVENT_BACKLOG（origin:'event'、3要望PBI）。同じ要望で「断れず今やる」vs「次のため形に残す」を対比。
+
+- 考証: agile🟡（s2割り込み＝ゴール危うくする変更の論点／PO所有・即Readyの簡略化／s3-bプロダクトゴール語義）／learning🟡（“割り込み＝常に悪”の単一価値化リスク・ResultModal無条件文言）／story🟡（s3-b label語義・s3-a trustトーン差）／code🔴（origin'hearing'×discoverable重複・EVENT_BACKLOGがdiscoverable:trueでisDiscoverablePbi破綻）＋🟡数件。
+- 反映済: origin型を'event'のみに簡素化＋EVENT_BACKLOGからdiscoverable除去（発見可と排他・isDiscoverablePbi正常化）、acceptRequestedPbi false-pathをrevealPbi委譲＋toSprintにsprintForecast二重追加ガード、restore補完コメント明示。narrative-designerがs2/s3-aに“PO再交渉した差し替えは正道”の幅を追記（単一価値化回避）・s2-aにゴール危うくする変更の論点・s1-a“積む＝悪”を“リファインメントせず放置が悪”へ・s3-b label→プロダクトバックログ最上位。ResultModal toSprint文言を条件付き（容量を超えれば…PO再交渉）へ。
+- [open] (🟡低・defer) code: addsPbi.toSprint を optional のままにした（??false、ergonomics優先）。PBI_BY_ID 3配列合流＋出所再判定は将来 origin 必須化で簡素化余地。KanbanView/progression のCPDクローン（閾値内）。
+- [open] (🟢設計判断) s3-a の trust 不付与は narrative-designer 判断で意図的維持（成功機運下で焦点だけ溶ける最も苦い型）。
+- 全11ゲート緑（typecheck/lint/test344/circular/knip/typecov99.73%/cpd/build/size157.73kB<164/CSS9.2<10/lighthouse/e2e3-3 axe）。

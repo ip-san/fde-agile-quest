@@ -387,6 +387,29 @@ export function ResultModal({ result, meters, onContinue }: Props) {
             </div>
           )}
 
+          {/* イベントで受けた要望PBI：今スプリントへ割り込み（toSprint）か、次のために積んだか で出し分ける。 */}
+          {result.addedPbi && (
+            <div
+              className={`space-y-1 rounded-xl border px-4 py-2.5 ${
+                result.addedPbi.toSprint ? 'border-amber-500/50 bg-amber-500/10' : 'border-sky-500/40 bg-sky-500/10'
+              }`}
+            >
+              <p
+                className={`text-[11px] font-semibold ${result.addedPbi.toSprint ? 'text-amber-300' : 'text-sky-300'}`}
+              >
+                {result.addedPbi.toSprint
+                  ? '⚠ 割り込みを受けた：今スプリントに要望を差し込んだ'
+                  : '要望をプロダクトバックログに積んだ'}
+              </p>
+              <p className="text-sm font-medium text-[var(--text)]">『{result.addedPbi.title}』</p>
+              <p className="text-[11px] text-[var(--text-sub)]">
+                {result.addedPbi.toSprint
+                  ? '今スプリントの予測が増えた。1日のレビュー容量を超えれば、その分は終わらず持ち越しに——スプリントゴールを危うくしうる。PO と再交渉し、ゴールを守れる範囲か見極めを。'
+                  : '次のプランニングで Ready 化し、優先順位を検討しましょう。今の焦点は守られた。'}
+              </p>
+            </div>
+          )}
+
           {/* 生成AIトークンの消費（AIに頼った選択のみ） */}
           {result.tokenSpent ? (
             <div className="flex items-center gap-2">

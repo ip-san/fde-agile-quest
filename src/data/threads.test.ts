@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { GameFlag } from '../types'
-import { DISCOVERABLE_BACKLOG, EVENTS, PRODUCT_BACKLOG, SPRINTS } from './chapters/chapter-01'
+import { DISCOVERABLE_BACKLOG, EVENT_BACKLOG, EVENTS, PRODUCT_BACKLOG, SPRINTS } from './chapters/chapter-01'
 import { openThreads, THREADS } from './threads'
 
 // 伏線レジストリ（threads.ts）の宣言と、章データ（setsFlag/missedFlag/requiresFlag）の整合を検証する。
@@ -130,5 +130,33 @@ describe('PBI 分割定義（split）の整合性', () => {
       .filter((p) => p.split && p.split.length === 1)
       .map((p) => p.id)
     expect(bad, `分割が1件のみのPBI: ${bad.join(', ')}`).toEqual([])
+  })
+})
+
+describe('イベント発PBI（addsPbi / EVENT_BACKLOG）の整合性', () => {
+  // 全イベント選択肢の addsPbi を収集
+  const addsRefs = EVENTS.flatMap((e) => e.choices.flatMap((c) => (c.addsPbi ? [c.addsPbi.id] : [])))
+  const eventIds = new Set(EVENT_BACKLOG.map((p) => p.id))
+
+  it('Choice.addsPbi が参照する id はすべて EVENT_BACKLOG に存在する（タイポ・未定義の検知）', () => {
+    const unknown = [...new Set(addsRefs)].filter((id) => !eventIds.has(id))
+    expect(unknown, `EVENT_BACKLOG に無い addsPbi 参照: ${unknown.join(', ')}`).toEqual([])
+  })
+
+  it('EVENT_BACKLOG の各項目は origin:"event"（発見可 discoverable とは別系統＝重複フラグを持たない）', () => {
+    const bad = EVENT_BACKLOG.filter((p) => p.origin !== 'event' || p.discoverable === true).map((p) => p.id)
+    expect(bad, `origin 不整合 or discoverable と重複: ${bad.join(', ')}`).toEqual([])
+  })
+
+  it('EVENT_BACKLOG の id は PRODUCT_BACKLOG/DISCOVERABLE_BACKLOG と衝突しない（単一ソース）', () => {
+    const others = new Set([...PRODUCT_BACKLOG, ...DISCOVERABLE_BACKLOG].map((p) => p.id))
+    const collide = EVENT_BACKLOG.filter((p) => others.has(p.id)).map((p) => p.id)
+    expect(collide, `id 衝突: ${collide.join(', ')}`).toEqual([])
+  })
+
+  it('各 EVENT_BACKLOG 項目は、少なくとも1つのイベント選択から受け入れ可能（孤立要望なし）', () => {
+    const referenced = new Set(addsRefs)
+    const orphan = EVENT_BACKLOG.filter((p) => !referenced.has(p.id)).map((p) => p.id)
+    expect(orphan, `どの選択からも受け入れられない要望: ${orphan.join(', ')}`).toEqual([])
   })
 })

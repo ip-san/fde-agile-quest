@@ -154,3 +154,45 @@ export const DISCOVERABLE_BACKLOG: BacklogItem[] = [
     discoverable: true,
   },
 ]
+
+// ───────────────────────────────────────────────────────────
+// イベント発バックログ（EVENT_BACKLOG）。
+// ステークホルダーが“イベントで持ち込む”新しい要望。初期は伏せ（discoverable）、
+// 該当イベントの選択（Choice.addsPbi）で初めてプロダクトバックログに現れる。
+// ＝「断れずにスプリントへ割り込ませる」か「次のために形に残す」かを、同じ要望で対比させる機構の素材。
+// 初期は伏せ（freshCore の backlogOrder に入らない）。origin:'event' で UI バッジを発見可(discoverable)と
+// 出し分ける（acceptRequestedPbi が追加を担う）。discoverable は付けない＝発見可PBIとは別系統。
+// ───────────────────────────────────────────────────────────
+export const EVENT_BACKLOG: BacklogItem[] = [
+  {
+    // s1-daily-scope「増えていく要望」：結城が次々に足す“ついで帳票”。
+    id: 'pbi-evt-extra-reports',
+    title: '結城さんが足したがる“ついで帳票”を束ねる',
+    detail: '「これも」「あれも」と積み上がった追加帳票。今のゴールには効かないが、要望として消えはしない。',
+    estimate: 2,
+    sprintHint: 1,
+    // 初期は伏せ（freshCore の backlogOrder に入らない）。origin:'event' で発見可(discoverable)と区別する。
+    origin: 'event',
+    stakeholder: 'joushi',
+  },
+  {
+    // s2-daily-goalcreep「揺らぐスプリントゴール」：経営が今期に、と差し込む別機能。
+    id: 'pbi-evt-exec-feature',
+    title: '経営が「今期に」と求める別機能を入れる',
+    detail: '誤出荷削減のゴールとは別筋。経営の体面に直結し、結城さんは断りきれずに持ってきた。',
+    estimate: 3,
+    sprintHint: 2,
+    origin: 'event',
+    stakeholder: 'joushi',
+  },
+  {
+    // s3-daily-scope-creep「ついでにあれも」：成功の機運で一気に膨らむ追加要望。
+    id: 'pbi-evt-followups',
+    title: '成功の機運で膨らんだ“ついで要望”を捌く',
+    detail: '成果が出た途端あれもこれもと噴き出した要望群。勢いに乗るほど、焦点は溶けやすい。',
+    estimate: 3,
+    sprintHint: 3,
+    origin: 'event',
+    stakeholder: 'joushi',
+  },
+]

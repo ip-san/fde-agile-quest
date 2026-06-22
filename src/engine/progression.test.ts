@@ -154,6 +154,22 @@ describe('chooseCore — 効果適用と結果ビュー', () => {
     expect(next.beatIndex).toBe(1)
     expect(next.status).toBe('playing')
   })
+  it('addsPbi(toSprint=true)：イベント要望を今スプリント予測へ割り込ませ、result.addedPbi を添える', () => {
+    const next = chooseCore(
+      eventCore({ meters: m() }),
+      choice({}, { addsPbi: { id: 'pbi-evt-exec-feature', toSprint: true } })
+    )
+    expect(next.sprintForecast).toContain('pbi-evt-exec-feature')
+    expect(next.backlogOrder).toContain('pbi-evt-exec-feature')
+    expect(next.result?.addedPbi).toEqual({ id: 'pbi-evt-exec-feature', title: expect.any(String), toSprint: true })
+  })
+  it('addsPbi(toSprint=false)：要望を次のためにプロダクトバックログへ積む（予測には入れない・暫定見積り）', () => {
+    const next = chooseCore(eventCore({ meters: m() }), choice({}, { addsPbi: { id: 'pbi-evt-extra-reports' } }))
+    expect(next.backlogOrder).toContain('pbi-evt-extra-reports')
+    expect(next.sprintForecast).not.toContain('pbi-evt-extra-reports')
+    expect(next.unrefinedPbis).toContain('pbi-evt-extra-reports')
+    expect(next.result?.addedPbi?.toSprint).toBe(false)
+  })
   it('選択ごとに log エントリが1件追記され、選んだ event/choice の内容を保持する', () => {
     const before = eventCore({ meters: m() })
     const next = chooseCore(before, choice({ trust: 1 }))

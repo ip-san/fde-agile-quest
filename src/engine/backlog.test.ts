@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { PRODUCT_BACKLOG, STARTING_METERS } from '../data/chapters/chapter-01'
 import type { Choice, GameEvent } from '../types'
 import {
+  acceptRequestedPbi,
   canAddToForecast,
   canPullIntoSprint,
   canReview,
@@ -12,6 +13,7 @@ import {
   forecastPoints,
   GEN_TOKEN_COST,
   isDiscoverablePbi,
+  isEventPbi,
   isKnownPbi,
   isUnrefinedPbi,
   moveBacklogItem,
@@ -43,6 +45,37 @@ const core = (over: Partial<ProgressCore> = {}): ProgressCore => ({ ...freshCore
 
 // 発見可（初期は伏せ）PBI。ヒアリングで掘り当てるまでプロダクトバックログに出ない。
 const DISC = 'pbi-disc-label-misread'
+// イベント発（初期は伏せ）PBI。イベント選択（addsPbi）で受け入れるまで出ない。
+const EVT = 'pbi-evt-exec-feature' // 3
+
+describe('acceptRequestedPbi（イベント発の要望を受け入れる）', () => {
+  it('toSprint=false：プロダクトバックログ末尾に積み、暫定見積り（要リファインメント）にする', () => {
+    const { core: next, added } = acceptRequestedPbi(core(), EVT, false)
+    expect(added?.id).toBe(EVT)
+    expect(next.backlogOrder).toContain(EVT)
+    expect(next.backlogOrder[next.backlogOrder.length - 1]).toBe(EVT) // 末尾
+    expect(next.unrefinedPbis).toContain(EVT) // Ready でない
+    expect(next.sprintForecast).not.toContain(EVT) // 今スプリントには入れない
+  })
+  it('toSprint=true：今スプリント予測へ割り込みで足し、Ready 扱い（unrefined にしない）', () => {
+    const { core: next, added } = acceptRequestedPbi(core(), EVT, true)
+    expect(added?.id).toBe(EVT)
+    expect(next.backlogOrder).toContain(EVT) // 全体像にも現れる
+    expect(next.sprintForecast).toContain(EVT) // 今スプリントへ割り込み
+    expect(next.unrefinedPbis).not.toContain(EVT) // 合意済み＝即着手可
+  })
+  it('既に backlogOrder にある／未知の id は no-op（added:null・二重追加しない）', () => {
+    const once = acceptRequestedPbi(core(), EVT, false).core
+    const { core: twice, added } = acceptRequestedPbi(once, EVT, false)
+    expect(added).toBeNull()
+    expect(twice.backlogOrder.filter((id) => id === EVT)).toHaveLength(1)
+    expect(acceptRequestedPbi(core(), 'pbi-nope', true).added).toBeNull()
+  })
+  it('isEventPbi はイベント発PBIにだけ真（通常PBIには偽）', () => {
+    expect(isEventPbi(EVT)).toBe(true)
+    expect(isEventPbi(ID.floor)).toBe(false)
+  })
+})
 
 describe('toggleForecast', () => {
   it('プランニング中（freshCore=beat0）は予測に出し入れできる', () => {
