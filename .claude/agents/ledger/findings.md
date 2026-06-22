@@ -52,6 +52,19 @@
 
 <!-- ここに指揮者が追記する。 -->
 
+### 2026-06-22 / loop/all-agents-review-r6（全エージェント総出レビュー R6＝#20〜#32 反映後の再点検）
+
+専門家5＋監修3を現状 main 全体に並列適用。R5以降の大量マージ（用語リネーム・BacklogPanel分割・負債連鎖・S3ローテーション・音unlock 等）の再点検。
+
+- [評価] code-reviewer 🔴2 はいずれも**誤検知**: PlanningView doneSet stale（commitBacklogOrder は backlogOrder のみ変更・backlogDone 不変）／MiniGameReview useEffect focus（confirmRef は revealed 時のみ描画＝useEffect が正しい）。learning の「カルゴ物流が画面に出る」も誤解（EVENTS=localizeDeep で表示時に翠流物流へ置換）。→ R6 実🔴ゼロ。
+- [resolved] (🟡) fde / events-sprint2.ts s2-daily-debt-collection b — 「利息がつかず」が冒頭「利息はもう数え始めている」と矛盾 → 「利息が積み上がる前に止めたぶん累積は小さく済み」に是正。
+- [resolved] (🟡) logistics / events-sprint3.ts s3-review-topdown/trust — 「自動化したピッキング/自動仕分けの本番稼働」が第1章「自動化はまだ夢・土台のIT化が先」と乖離 → 「写真入力の叩き台から育てた“ピッキング照合の自動チェック”（現品データと棚番マスタを突合しずれを弾く・派手なロボットではない）」にリスコープ。topdown=崩れ/trust=現場の勘で弾く の対比は温存。logistics🟢/learning🟢で確認。
+- [resolved] (🟡) learning / precepts.ts — debt-collection と undone-debt が同一タグ[97,13] → debt-collection を[97,78]（78「口頭合意を信じるな、形にしろ」＝口頭の約束をバックログ期日へ形にして履行）に差別化。
+- [resolved] (🟡) story / events-sprint3.ts s3-daily-stuck-base b — 機会コスト明記の揺れ → b に「その場しのぎで見せる側の信頼+は取り逃す＝根治に賭けた機会コスト」を追記（a の trust+1 と対応）。
+- [resolved] (🟡) code-reviewer / KanbanView — flat prop と core の二重管理（sprintForecast/inProgress/reviewCapacity/aiTokens＋inProgSet）を core 経由に一本化（retroImprovements 一本化の延長）。
+- [open] (🟡/設計) code-reviewer / KanbanView doneSet — core.backlogDone と二重だが ProductBacklogReadOnly への受け渡しで設計判断が要るため据え置き。
+- 監査サマリ: 専門家 fde🟢/agile🟢/ai-dx🟢/logistics🟢/robotics🟢・監修 story🟢/learning🟢/code🟢。Round3→4 で dry（実🔴ゼロ・対応すべき🟡ゼロ）。全ゲート緑（vitest320/circular/knip/type-coverage99.72%/cpd<2%/build/size161.7kB<164/e2e3-3 axe/lighthouse）。
+
 ### 2026-06-20 / loop/ux-select-feedback-20260620（選択フィードバック: tick音+check-pop）
 
 - [resolved] (🔴) code-reviewer / MiniGameHearing.tsx — 上限2ガードが stale クロージャの `picked.length` 依存で、連打（同一レンダー内の複数 toggle）で3件選択され得た。→ `setPicked` updater 内に `p.length >= 2` の二重ガードを追加し状態を権威化、`sfxTick` は updater 外維持で StrictMode 音重複も回避。（round1→2 / 2026-06-20 / PR #3）
