@@ -22,6 +22,7 @@ export const AVAILABLE_IMAGES = new Set<string>([
   's1-daily-warehouse__b__r', // 田淵さんの手書き台帳を一緒に覗く（信頼の入口）
   's2-daily-ghost-stock__b__r', // 空の棚番をデータと照合する手元（不正暴露の入口・結果）
   's2-retro__b__r', // FDEと田淵さんが並んで手順書を書く（genbaTrust選択の結果・信頼の入口）
+  's1-plan-goal__b__r', // 倉庫で田淵さんの手書き台帳を一緒に指でなぞり現場の流れを聞き取る（なぜ画面が使われないかを突き止める・前向きな現場）
   // 状況（問題）の個別画像 public/img/{eventId}.jpg
   's2-daily-ghost-stock', // 空の棚＝在るはずの機材が無い（不正暴露の入口）
   's2-daily-showcase-visit', // スーツの視察団と手書き台帳の田淵さん・期待と現実のギャップ
