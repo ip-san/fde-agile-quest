@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { type DiffLine, dealReview, type ReviewFlag, type ReviewRound, scoreReview } from '../../data/minigames'
 import type { ExecTier } from '../../types'
+import { RichText } from '../RichText'
 import { SelectableCheckItem } from './SelectableCheckItem'
 import { useGlyphSelection } from './useGlyphSelection'
 
@@ -31,7 +32,7 @@ function RevealedRow({ option, picked }: RevealedRowProps) {
   return (
     <li className={`rounded-xl border px-4 py-2.5 text-sm ${cellStyle}`}>
       <span className="mr-2 text-[11px] font-bold">{mark}</span>
-      {option.text}
+      <RichText text={option.text} interactive={false} />
     </li>
   )
 }
@@ -72,7 +73,9 @@ export function MiniGameReview({ seed, pbiId, variety, onResolve }: Props) {
       {/* AI に頼んだこと */}
       <div className="rounded-lg border border-[var(--border)] bg-[var(--panel)]/40 px-3 py-2 text-xs">
         <span className="font-semibold text-[var(--text-sub)]">頼んだこと：</span>
-        <span className="text-[var(--text-body)]">{round.task}</span>
+        <span className="text-[var(--text-body)]">
+          <RichText text={round.task} interactive={false} />
+        </span>
       </div>
 
       {/* AI が書いた差分 */}
@@ -80,7 +83,7 @@ export function MiniGameReview({ seed, pbiId, variety, onResolve }: Props) {
 
       {/* AI の自己申告（過信を誘うメモ）— text-sky-400 は意味色（AIを示す色）として保持 */}
       <p className="rounded-lg bg-[var(--panel)]/40 px-3 py-1.5 text-xs text-[var(--text-sub)]">
-        <span className="font-semibold text-sky-400">🤖 AI：</span> {round.aiNote}
+        <span className="font-semibold text-sky-400">🤖 AI：</span> <RichText text={round.aiNote} interactive={false} />
       </p>
 
       {/* 点検項目 */}
@@ -100,7 +103,7 @@ export function MiniGameReview({ seed, pbiId, variety, onResolve }: Props) {
                 onToggle={() => toggle(i)}
                 initialFocus={i === 0}
               >
-                {o.text}
+                <RichText text={o.text} interactive={false} />
               </SelectableCheckItem>
             </li>
           )
@@ -111,7 +114,8 @@ export function MiniGameReview({ seed, pbiId, variety, onResolve }: Props) {
         <>
           {/* 気づきは学習ポイント（意味色なし・情報色）なので amber-500/sky はそのまま amber に統一 */}
           <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs leading-relaxed text-[var(--text-body)]">
-            <span className="font-semibold text-amber-300">気づき：</span> {round.takeaway}
+            <span className="font-semibold text-amber-300">気づき：</span>{' '}
+            <RichText text={round.takeaway} interactive={false} />
           </p>
           <button
             ref={confirmRef}

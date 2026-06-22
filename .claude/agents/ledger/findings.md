@@ -161,3 +161,14 @@
 - 反映済: DELIVERY_TARGET コメントを2基準へ更新、STORY.md §4.4 を =2＋reviewBudgetForSprint へ同期、テストコメントの旧値是正、KanbanView を dailyBeatsInSprint 直接参照に、lg「予測(全体)」スコープ表示＋over文に式追加、Planning文言の平易化。
 - [open] (🟡・要プレイテスト) 容量 4→2 半減後、DELIVERY_TARGET=9 が妥当か／forecast満タンで慢性キャリーオーバーにならないか実測（agile指摘）。great1.5倍・quick広消化・スコープ再交渉が緩和弁。
 - 全11ゲート緑（test348/build/size157.89kB/circular/knip/typecov/cpd/lighthouse/e2e3-3/axe）。R7は全8エージェント🔴ゼロ、R8クリーン。
+
+### 2026-06-22 / loop/all-agent-review-r9（R9全エージェント＋波括弧バグ＋難読漢字一掃）
+
+全8エージェント R9 レビュー＝**ゲーム破綻🔴ゼロ**。総監督の連続フィードバック2件＋code指摘を反映。
+1. 【総監督】「波括弧が選択肢に残っている」→ レビューミニゲーム(MiniGameReview)が option/task/aiNote/takeaway を生表示し {{用語}} の波括弧がリーク。RichText 化で修正（ヒアリングは元々RichText・dev/persuadeは無問題＝レビューのみの漏れ）。
+2. 【総監督】「『瑣末』が難読」→ narrative-designer が瑣末/些末→ささい、軋む→きしむ、綻び→ほころび、訊く→聞く、苛立つ→いら立つ、辻褄→つじつま をプレイヤー表示全データで一掃（events/minigames/threads/cast）。
+3. 【code🔴】KanbanView pullable を filter→find に（上位優先＝次の1件のみ該当、nextAddableId と一貫）。
+4. 【learning🟡】レビュー深さ二択ラベルを機会コスト型に（浅い=広く速く通す/負債、深い=一点を深く固める/品質）＝quick の単一劣位化を解消。
+- R10 再レビュー：story/learning「クリーン」。全11ゲート緑（test348/build/size157.85kB/lighthouse/e2e/axe）。
+- [open] (🟡・defer) code: deliveredPbiIds の PBI_BY_ID 全件走査（呼出増時の設計リスク）、MiniGameReview の DiffView key に l.text 混在（静的diffで実害なし・index keyはlint抵触で据置）、useState lazy init は MiniGame の位置再利用に依存（key 明示は将来の保険）。
+- [open] (🟡・narrative判断/未対応) fde: s1-retro capacityレバー語りとレバー実体の微ズレ／s1-daily-showcase-order b の正直上申に政治コスト(trust)が乗らない／s1-daily-incident に hearingOptions 無し。ai-dx: slopsquatting題材の14ケース未収録（実在脅威・追加余地）。learning: great で消化が伸びる旨の文言化・レビュー作問への顧客KPI軸。agile: velocity と「部分点なし(インクリメント)」のプレイヤー向け差別化文言。DELIVERY_TARGET=9 は容量半減後の妥当性をプレイテストで要観察（継続open）。

@@ -56,7 +56,7 @@ export const THREADS: Record<GameFlag, Thread> = {
     setVia: ['choice'],
     payoffVia: ['event'],
     note: 'トップダウンで押し込む→反発・形骸化イベント',
-    teaser: '上から通したやり方に、軋みが残っている。',
+    teaser: '上から通したやり方に、きしみが残っている。',
   },
   fraudClue: {
     setVia: ['choice'],
@@ -88,7 +88,7 @@ export const THREADS: Record<GameFlag, Thread> = {
     setVia: ['missed'],
     payoffVia: ['event'],
     note: '基盤更新を見送る→後で詰まるイベント',
-    teaser: '後回しにした基盤が、静かに軋んでいる。',
+    teaser: '後回しにした基盤が、静かにきしんでいる。',
   },
   missedNightShift: {
     // ①の信頼ゲート見逃しの“顕在化”。2経路で立つ：
@@ -138,7 +138,7 @@ export const THREADS: Record<GameFlag, Thread> = {
     // さらに choice a 自身が repo.debt+2 を積むので、負債スコアでも実際にツケが残る（score）。
     setVia: ['choice'],
     payoffVia: ['event', 'score'],
-    note: '締切のため意図的に負債を借りる（s2-daily-debt a＝結城さんに「後で必ず返す」と握った約束つきの借入）→負債スコア＋ s2-daily-debt-collection（同S2終盤に早くも軋む取り立て。約束履行で回収＝守れば信頼据え置き／反故で破ると重い）で回収。借りた者勝ちにしない。shippedUndoneの“黙ったDoD妥協”とは別軸＝約束したか否か',
+    note: '締切のため意図的に負債を借りる（s2-daily-debt a＝結城さんに「後で必ず返す」と握った約束つきの借入）→負債スコア＋ s2-daily-debt-collection（同S2終盤に早くもきしむ取り立て。約束履行で回収＝守れば信頼据え置き／反故で破ると重い）で回収。借りた者勝ちにしない。shippedUndoneの“黙ったDoD妥協”とは別軸＝約束したか否か',
     teaser: '「後で必ず返す」と握った約束の、期日が近づいている。',
   },
   deprioritizedJoushi: {

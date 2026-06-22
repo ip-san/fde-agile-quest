@@ -14,14 +14,16 @@ if (!key) {
   process.exit(1)
 }
 
-const dl = join(homedir(), 'Downloads')
+// 取り込み元: 既定は ~/Downloads。IMPORT_SRC があればそこを優先
+// （フルディスクアクセス未許可ターミナルで ~/Downloads が読めない場合の回避用）。
+const dl = process.env.IMPORT_SRC || join(homedir(), 'Downloads')
 const candidates = readdirSync(dl)
   .filter((f) => /^Gemini_Generated_Image_.*\.(png|jpe?g|webp)$/i.test(f))
   .map((f) => ({ f, t: statSync(join(dl, f)).mtimeMs }))
   .sort((a, b) => b.t - a.t)
 
 if (candidates.length === 0) {
-  console.error('Gemini_Generated_Image_* が ~/Downloads にありません')
+  console.error(`Gemini_Generated_Image_* が ${dl} にありません`)
   process.exit(1)
 }
 

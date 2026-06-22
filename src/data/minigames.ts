@@ -286,7 +286,7 @@ export function scoreTiming(pos: number): ExecTier {
 // AI が書いた差分＋「AI の自己申告メモ」を見せ、人間のレビュアーが拾うべき指摘を選ばせる。
 // 題材は Claude / Codex を使い込む人の失敗談から：秘密の直書き・無断送信、動いて見えるが誤り
 // （代入/比較・境界・単位）、二重計上や状態遷移の取り違え、権限/範囲（全件公開）の見落とし、
-// 正常系しか残さない手順、エッジ（日跨ぎ・時間帯の端）の取りこぼし。ワナは「AI が言うなら通す」過信と瑣末な好み。
+// 正常系しか残さない手順、エッジ（日跨ぎ・時間帯の端）の取りこぼし。ワナは「AI が言うなら通す」過信とささいな好み。
 // 各ケースは“拾うべき指摘”をちょうど2つ持つ（REVIEW_REAL_COUNT）。
 // ───────────────────────────────────────────────────────────
 export const REVIEW_REAL_COUNT = 2
@@ -300,7 +300,7 @@ export interface DiffLine {
 /** レビューで挙げうる指摘。issue=true は“この差分の本当の問題”（拾うのが正解）。 */
 export interface ReviewFlag {
   text: string
-  /** true＝拾うべき本物の問題／false＝過信・論点ずれ・瑣末な好み（拾うと空振り） */
+  /** true＝拾うべき本物の問題／false＝過信・論点ずれ・ささいな好み（拾うと空振り） */
   issue: boolean
 }
 
@@ -335,7 +335,7 @@ const REVIEW_CASES: ReviewCase[] = [
       { text: '「沈黙」を“満足”と要約したのは飛躍。なぜ開かないかの理由を取りこぼしている', issue: true },
       { text: 'AIが要約したのだから、要望は現場が言った通りのはず', issue: false },
       { text: '箇条書きは「・」より「-」で揃えたい（好み）', issue: false },
-      { text: '見出しに日付を入れた方が整う（瑣末）', issue: false },
+      { text: '見出しに日付を入れた方が整う（ささい）', issue: false },
     ],
     takeaway: 'AIの要約は“言っていないこと”を足し、沈黙を勝手に解釈する。生メモと付き合わせて人が確かめる。',
   },
@@ -353,7 +353,7 @@ const REVIEW_CASES: ReviewCase[] = [
       { text: '「湿り・二重ラベルは別棚に避ける」という肝心の例外判断が、要件から丸ごと落ちている', issue: true },
       { text: '「例外は無し」は事実に反する。勘どころを“一般論”にすり替えていて、ここに誤出荷の芽がある', issue: true },
       { text: 'AIが手順化したのだから、現場の勘もちゃんと反映されているはず', issue: false },
-      { text: '番号は全角より半角に統一したい（瑣末）', issue: false },
+      { text: '番号は全角より半角に統一したい（ささい）', issue: false },
       { text: '手順は表形式にした方が読みやすい（好み）', issue: false },
     ],
     takeaway: '暗黙知の価値は“例外の見分け”にある。AIが一般化で消した勘どころこそ、人が拾って残す。',
@@ -371,9 +371,9 @@ const REVIEW_CASES: ReviewCase[] = [
     options: [
       { text: '返品・急ぎ便の“別ルート”が削られている。現場が隠した例外分岐こそ可視化の目的', issue: true },
       { text: '一本道に均してしまうと、{{誤出荷率}}が上がる発生点（分岐の合流）が図から消える', issue: true },
-      { text: 'AIが「主要な流れ」と判断したのだから、省いた例外は些末なはず', issue: false },
+      { text: 'AIが「主要な流れ」と判断したのだから、省いた例外はささいなはず', issue: false },
       { text: '矢印は「→」より「⇒」が見栄えする（好み）', issue: false },
-      { text: '図のタイトルを中央寄せにしたい（瑣末）', issue: false },
+      { text: '図のタイトルを中央寄せにしたい（ささい）', issue: false },
     ],
     takeaway: 'As-Is図の価値は“例外分岐”にある。AIが綺麗に均した一本道は、現実の事故ポイントを隠す。',
   },
@@ -397,7 +397,7 @@ const REVIEW_CASES: ReviewCase[] = [
         issue: true,
       },
       { text: "'在庫不足' は定数にすべき（好み）", issue: false },
-      { text: '波括弧の改行スタイルを揃えたい（瑣末）', issue: false },
+      { text: '波括弧の改行スタイルを揃えたい（ささい）', issue: false },
       { text: '「テストも通した」と書いてあるので信じてよい', issue: false },
     ],
     takeaway: '動いて見えても中身は別物。代入/比較や境界（超過 > と等価 =）は、人が読んで確かめる。',
@@ -417,7 +417,7 @@ const REVIEW_CASES: ReviewCase[] = [
       { text: '入力検証が無い。4桁の決まりに反する値も raw のまま通り、取り違えの元になる', issue: true },
       { text: 'AIが画面を整えたのだから、項目名も現場に合っているはず', issue: false },
       { text: 'ボタンの色は青より緑が映える（好み）', issue: false },
-      { text: '欄の幅を少し広げたい（瑣末）', issue: false },
+      { text: '欄の幅を少し広げたい（ささい）', issue: false },
     ],
     takeaway: '画面は“現場の言葉”で書く。英語ラベルと検証なしの入力は、使われない画面に逆戻りさせる。',
   },
@@ -439,7 +439,7 @@ const REVIEW_CASES: ReviewCase[] = [
       },
       { text: 'AIが「数字も合っている」と言うなら、計算は正しいはず', issue: false },
       { text: '変数名 diff は delta にしたい（好み）', issue: false },
-      { text: 'コメントは行末でなく上の行に置きたい（瑣末）', issue: false },
+      { text: 'コメントは行末でなく上の行に置きたい（ささい）', issue: false },
     ],
     takeaway: '照合は“二重計上”と“単位”で狂う。合計が出ること（動く）と、正しいことは別。原票で裏を取る。',
   },
@@ -464,7 +464,7 @@ const REVIEW_CASES: ReviewCase[] = [
       },
       { text: 'AIが「動作確認OK」と言うなら、そのまま通していい', issue: false },
       { text: 'send より post という関数名に統一したい（好み）', issue: false },
-      { text: 'url の文字列は二重引用符より一重引用符で揃えたい（瑣末）', issue: false },
+      { text: 'url の文字列は二重引用符より一重引用符で揃えたい（ささい）', issue: false },
     ],
     takeaway: '声を集める前に“誰の情報を外に出すか”を見る。秘密直書きと無断送信は、信頼を一発で失う。',
   },
@@ -489,7 +489,7 @@ const REVIEW_CASES: ReviewCase[] = [
       },
       { text: 'AIが簡潔にまとめたのだから、正常時だけで十分なはず', issue: false },
       { text: '見出しは ## より # の方が目立つ（好み）', issue: false },
-      { text: '手順番号を縦に並べたい（瑣末）', issue: false },
+      { text: '手順番号を縦に並べたい（ささい）', issue: false },
     ],
     takeaway: 'Runbookの価値は“異常時”にある。AIが残す正常系だけの手順は、引き継いだ人を本番で立ち往生させる。',
   },
@@ -508,7 +508,7 @@ const REVIEW_CASES: ReviewCase[] = [
       { text: 'WHERE も LIMIT も無い全件スキャン。テーブルが育つと毎回重く、現場の画面が固まる', issue: true },
       { text: 'AIが書いたクエリなら、見える範囲も適切に絞られているはず', issue: false },
       { text: 'SELECT * より列を明示したいが、動くので後回しでよい（好み）', issue: false },
-      { text: 'コメントは英語に統一したい（瑣末）', issue: false },
+      { text: 'コメントは英語に統一したい（ささい）', issue: false },
     ],
     takeaway: '“誰でも見える”は便利の顔をした事故。集計は権限（誰に見せるか）と範囲（全件か）を人が点検する。',
   },
@@ -527,7 +527,7 @@ const REVIEW_CASES: ReviewCase[] = [
       { text: '「眺めて完了」で終わり、誰が立ち会い・どこで確認するかが無い。形だけで定着しない', issue: true },
       { text: 'AIがまとめたのだから、必要なステップは網羅されているはず', issue: false },
       { text: 'チェックは [ ] より絵文字が親しみやすい（好み）', issue: false },
-      { text: '項目の語尾を「する」で揃えたい（瑣末）', issue: false },
+      { text: '項目の語尾を「する」で揃えたい（ささい）', issue: false },
     ],
     takeaway: '導線は“抜けたら困る必須”で測る。AIの軽い手順は、安全や立会いという外せない一歩を落とす。',
   },
@@ -549,7 +549,7 @@ const REVIEW_CASES: ReviewCase[] = [
       },
       { text: 'AIが「両方入れた」と言うなら、安全網として機能するはず', issue: false },
       { text: 'alert より notify という名前が好み（好み）', issue: false },
-      { text: 'コメントの位置を揃えたい（瑣末）', issue: false },
+      { text: 'コメントの位置を揃えたい（ささい）', issue: false },
     ],
     takeaway: '安全網ほど中身を疑う。鳴らない閾値と“消してから戻す”手順は、いざという時に役に立たない。',
   },
@@ -571,7 +571,7 @@ const REVIEW_CASES: ReviewCase[] = [
       { text: '全棚番を一律で黄色にすると、どれも目立って差が消える。逆に別の取り違えを生む', issue: true },
       { text: 'AIが「間違えません」と言うのだから、混同は解消されたはず', issue: false },
       { text: '色は黄より橙が映える（好み）', issue: false },
-      { text: 'padStart は8でなく定数にしたい（瑣末）', issue: false },
+      { text: 'padStart は8でなく定数にしたい（ささい）', issue: false },
     ],
     takeaway: '“見やすく”は目的でなく手段。違う桁を際立たせる工夫でなければ、似た棚番の取り違えは消えない。',
   },
@@ -593,7 +593,7 @@ const REVIEW_CASES: ReviewCase[] = [
       { text: '時間帯フィルタが 08:00〜20:00。22:00〜翌6:00 の夜勤帯がまるごと条件から外れている', issue: true },
       { text: 'AIが「漏れはない」と言うのだから、夜勤も拾えているはず', issue: false },
       { text: 'carry は handover という名前にしたい（好み）', issue: false },
-      { text: '時刻は文字列より数値で持ちたい（瑣末）', issue: false },
+      { text: '時刻は文字列より数値で持ちたい（ささい）', issue: false },
     ],
     takeaway: 'エッジは“日跨ぎ・時間帯の端”に潜む。AIの「漏れなし」を、現場の夜勤シフトに当てて人が確かめる。',
   },
@@ -672,7 +672,7 @@ export function dealReview(seed: number, pbiId?: string, variety = false): Revie
   return { task: c.task, diff: c.diff, aiNote: c.aiNote, options, takeaway: c.takeaway }
 }
 
-/** レビューの採点：本物の指摘を拾えたか／空振り（過信・瑣末）を出していないか。
+/** レビューの採点：本物の指摘を拾えたか／空振り（過信・ささい）を出していないか。
  *  great＝本物2つを的確に・空振り0／good＝1つ以上拾い空振り1まで／poor＝それ未満（＝AIを素通し）。 */
 export function scoreReview(picked: ReviewFlag[]): ExecTier {
   const caught = picked.filter((o) => o.issue).length
