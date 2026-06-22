@@ -83,7 +83,7 @@ export interface ProgressCore {
   // ── バックログ（daily ルーレットとは独立した別レイヤー）──
   /** プロダクトバックログの現在の優先順位（PBI id 列。初期＝シード順、プレイヤーが提案で並べ替え） */
   backlogOrder: string[]
-  /** 今スプリントの予測（フォーキャスト）＝スプリントバックログに引いた PBI id 群 */
+  /** 今スプリントのスプリント予測＝スプリントバックログに引いた PBI id 群 */
   sprintForecast: string[]
   /** DoD 達成済み PBI id（キャンペーン通算） */
   backlogDone: string[]

@@ -115,7 +115,7 @@ export function isUnrefinedPbi(core: Pick<ProgressCore, 'unrefinedPbis'>, id: st
 }
 
 /** 発見した PBI を“リファインメント”して Ready にする（プランニング中・未リファインメントのみ）。
- *  ＝掘り当てた仕事は暫定のまま予測に積めず、見積りを確かめて Ready にして初めてフォーキャストできる。 */
+ *  ＝掘り当てた仕事は暫定のまま予測に積めず、見積りを確かめて Ready にして初めてスプリント予測に積める。 */
 export function refinePbi(core: ProgressCore, pbiId: string): ProgressCore {
   if (!isPlanningBeat(core)) return core
   if (!core.unrefinedPbis.includes(pbiId)) return core
