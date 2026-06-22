@@ -41,6 +41,108 @@ const MAP_PIN_COORDS: Record<string, { x: number; y: number }> = {
   you: { x: 50, y: 56 },
 }
 
+// ─────────────────────────────────────────────────────────
+// 小コンポーネント（Travel 内でのみ使用）
+// ─────────────────────────────────────────────────────────
+
+/** Room・MapPin 双方が共有するプロパティ型 */
+type LocationButtonProps = {
+  id: LocationId
+  selectedId: LocationId
+  liveLocations: Set<LocationId>
+  initialFocus: boolean
+  onSelect: (id: LocationId) => void
+  onTravel: (id: LocationId) => void
+}
+
+/** 見取り図の"部屋"ボタン。1度目のタップで選択、選択中の再タップで向かう。 */
+function Room({ id, selectedId, liveLocations, initialFocus, onSelect, onTravel }: LocationButtonProps) {
+  const loc = LOCATIONS[id]
+  const live = liveLocations.has(id)
+  const selected = id === selectedId
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      aria-label={`${loc.label}${live ? '（今日の論点）' : ''}`}
+      data-initial-focus={initialFocus ? '' : undefined}
+      onClick={() => (selected ? onTravel(id) : onSelect(id))}
+      className={`group relative -m-px flex min-h-[62px] w-full flex-col items-center justify-center gap-0.5 border-2 p-1 text-center shadow-inner transition active:scale-95 ${
+        selected
+          ? 'z-10 border-amber-300 bg-amber-900/50'
+          : live
+            ? 'z-10 border-amber-400/70 bg-amber-950/40 hover:bg-amber-900/40'
+            : 'border-[var(--border-strong)]/70 bg-[var(--card)]/45 hover:z-10 hover:border-amber-400/70 hover:bg-[var(--panel)]/60'
+      }`}
+    >
+      {live && (
+        <span aria-hidden="true" className="absolute right-1 top-0.5 text-[11px] leading-none text-amber-300">
+          ★
+        </span>
+      )}
+      <span aria-hidden="true" className="text-xl leading-none">
+        {loc.emoji}
+      </span>
+      <span
+        className={`text-[10px] font-bold leading-none ${
+          selected ? 'text-amber-100' : live ? 'text-amber-200' : 'text-[var(--text-body)]'
+        }`}
+      >
+        {loc.short}
+      </span>
+    </button>
+  )
+}
+
+/** 俯瞰イラストマップ上の"ピン"。タップ→詳細、選択中の再タップで向かう。 */
+function MapPin({ id, selectedId, liveLocations, initialFocus, onSelect, onTravel }: LocationButtonProps) {
+  const loc = LOCATIONS[id]
+  const live = liveLocations.has(id)
+  const selected = id === selectedId
+  const c = MAP_PIN_COORDS[id] ?? { x: 50, y: 50 }
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      aria-label={`${loc.label}${live ? '（今日の論点）' : ''}`}
+      data-initial-focus={initialFocus ? '' : undefined}
+      onClick={() => (selected ? onTravel(id) : onSelect(id))}
+      style={{ left: `${c.x}%`, top: `${c.y}%` }}
+      className="group absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-0.5 transition active:scale-95"
+    >
+      <span
+        className={`relative flex h-9 w-9 items-center justify-center rounded-full border-2 text-base shadow-lg backdrop-blur-sm transition ${
+          selected
+            ? 'border-amber-300 bg-amber-900/85 ring-2 ring-[var(--accent)]/50'
+            : live
+              ? 'border-amber-300 bg-amber-950/80 ring-2 ring-[var(--accent)]/50'
+              : 'border-[var(--border)]/70 bg-[var(--card)]/80 group-hover:border-amber-300'
+        }`}
+      >
+        <span aria-hidden="true">{loc.emoji}</span>
+        {live && (
+          <span aria-hidden="true" className="absolute -right-1 -top-2 text-xs leading-none text-amber-300">
+            ★
+          </span>
+        )}
+      </span>
+      <span
+        className={`max-w-[6rem] truncate rounded px-1 text-[10px] font-bold leading-tight shadow-sm ${
+          selected
+            ? 'bg-amber-500/30 text-amber-50'
+            : live
+              ? 'bg-amber-500/25 text-amber-100'
+              : 'bg-[var(--bg-deep)]/70 text-[var(--text-body)]'
+        }`}
+      >
+        {loc.short}
+      </span>
+    </button>
+  )
+}
+
+// ─────────────────────────────────────────────────────────
+
 /** リモート・デイリースクラム（競合する主張）＋現地マップ。
  *  3役がそれぞれ別の場所のイベントを推す。1つだけ選べる——見送った重要事は後で響く。 */
 export function Travel({ candidates, peekLocation, onTravel }: Props) {
@@ -61,97 +163,8 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
     () => LOCATION_ORDER.find((id) => liveLocations.has(id)) ?? 'warehouse'
   )
 
-  /** 見取り図の"部屋"。1度目のタップで選択（下に詳細）、選択中の部屋をもう一度押すと向かう。
-   *  ★＝今日の論点（朝会で誰かが推した場所）。壁線＝border-2 で部屋らしく描く。 */
-  const renderRoom = (id: LocationId, initialFocus: boolean) => {
-    const loc = LOCATIONS[id]
-    const live = liveLocations.has(id)
-    const selected = id === selectedId
-    return (
-      <button
-        key={id}
-        type="button"
-        aria-pressed={selected}
-        aria-label={`${loc.label}${live ? '（今日の論点）' : ''}`}
-        data-initial-focus={initialFocus ? '' : undefined}
-        onClick={() => (selected ? onTravel(id) : setSelectedId(id))}
-        className={`group relative -m-px flex min-h-[62px] w-full flex-col items-center justify-center gap-0.5 border-2 p-1 text-center shadow-inner transition active:scale-95 ${
-          selected
-            ? 'z-10 border-amber-300 bg-amber-900/50'
-            : live
-              ? 'z-10 border-amber-400/70 bg-amber-950/40 hover:bg-amber-900/40'
-              : 'border-[var(--border-strong)]/70 bg-[var(--card)]/45 hover:z-10 hover:border-amber-400/70 hover:bg-[var(--panel)]/60'
-        }`}
-      >
-        {live && (
-          <span aria-hidden="true" className="absolute right-1 top-0.5 text-[11px] leading-none text-amber-300">
-            ★
-          </span>
-        )}
-        <span aria-hidden="true" className="text-xl leading-none">
-          {loc.emoji}
-        </span>
-        <span
-          className={`text-[10px] font-bold leading-none ${
-            selected ? 'text-amber-100' : live ? 'text-amber-200' : 'text-[var(--text-body)]'
-          }`}
-        >
-          {loc.short}
-        </span>
-      </button>
-    )
-  }
-
   // 俯瞰イラストマップ画像が取り込み済みなら背景画像マップ、無ければ見取り図にフォールバック。
   const hasMapImg = AVAILABLE_IMAGES.has(MAP_IMG)
-
-  /** 画像マップ上の"ピン"。背景イラストの上に重ねる。タップ→詳細、選択中の再タップで向かう。 */
-  const renderMapPin = (id: LocationId, initialFocus: boolean) => {
-    const loc = LOCATIONS[id]
-    const live = liveLocations.has(id)
-    const selected = id === selectedId
-    const c = MAP_PIN_COORDS[id] ?? { x: 50, y: 50 }
-    return (
-      <button
-        key={id}
-        type="button"
-        aria-pressed={selected}
-        aria-label={`${loc.label}${live ? '（今日の論点）' : ''}`}
-        data-initial-focus={initialFocus ? '' : undefined}
-        onClick={() => (selected ? onTravel(id) : setSelectedId(id))}
-        style={{ left: `${c.x}%`, top: `${c.y}%` }}
-        className="group absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-0.5 transition active:scale-95"
-      >
-        <span
-          className={`relative flex h-9 w-9 items-center justify-center rounded-full border-2 text-base shadow-lg backdrop-blur-sm transition ${
-            selected
-              ? 'border-amber-300 bg-amber-900/85 ring-2 ring-[var(--accent)]/50'
-              : live
-                ? 'border-amber-300 bg-amber-950/80 ring-2 ring-[var(--accent)]/50'
-                : 'border-[var(--border)]/70 bg-[var(--card)]/80 group-hover:border-amber-300'
-          }`}
-        >
-          <span aria-hidden="true">{loc.emoji}</span>
-          {live && (
-            <span aria-hidden="true" className="absolute -right-1 -top-2 text-xs leading-none text-amber-300">
-              ★
-            </span>
-          )}
-        </span>
-        <span
-          className={`max-w-[6rem] truncate rounded px-1 text-[10px] font-bold leading-tight shadow-sm ${
-            selected
-              ? 'bg-amber-500/30 text-amber-50'
-              : live
-                ? 'bg-amber-500/25 text-amber-100'
-                : 'bg-[var(--bg-deep)]/70 text-[var(--text-body)]'
-          }`}
-        >
-          {loc.short}
-        </span>
-      </button>
-    )
-  }
 
   // 見取り図の行（フォールバック）：上段＝奥の3部屋、下段＝手前の3部屋（倉庫/電算室/会議室 ｜ 総務/人事/経理）
   const backRooms = floorRooms.slice(0, 3)
@@ -276,7 +289,17 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
               <span className="text-[8px] font-bold text-amber-300">N</span>
             </span>
             {/* 拠点ピン */}
-            {floorRooms.map((id, i) => renderMapPin(id, i === 0))}
+            {floorRooms.map((id, i) => (
+              <MapPin
+                key={id}
+                id={id}
+                selectedId={selectedId}
+                liveLocations={liveLocations}
+                initialFocus={i === 0}
+                onSelect={setSelectedId}
+                onTravel={onTravel}
+              />
+            ))}
             {/* 現在地ピン（あなた） */}
             <div
               className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center"
@@ -306,7 +329,19 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
             </div>
 
             {/* 奥の3部屋（壁を共有して間取り図に） */}
-            <div className="grid grid-cols-3">{backRooms.map((id, i) => renderRoom(id, i === 0))}</div>
+            <div className="grid grid-cols-3">
+              {backRooms.map((id, i) => (
+                <Room
+                  key={id}
+                  id={id}
+                  selectedId={selectedId}
+                  liveLocations={liveLocations}
+                  initialFocus={i === 0}
+                  onSelect={setSelectedId}
+                  onTravel={onTravel}
+                />
+              ))}
+            </div>
 
             {/* 廊下（部屋をつなぐ通路）＋現在地 */}
             <div className="my-1.5 flex items-center justify-center gap-2 rounded border border-dashed border-[var(--border-strong)]/60 bg-[var(--panel)]/30 py-1 text-[9px] font-semibold text-[var(--text-sub)]">
@@ -324,7 +359,19 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
             </div>
 
             {/* 手前の3部屋（壁を共有して間取り図に） */}
-            <div className="grid grid-cols-3">{frontRooms.map((id) => renderRoom(id, false))}</div>
+            <div className="grid grid-cols-3">
+              {frontRooms.map((id) => (
+                <Room
+                  key={id}
+                  id={id}
+                  selectedId={selectedId}
+                  liveLocations={liveLocations}
+                  initialFocus={false}
+                  onSelect={setSelectedId}
+                  onTravel={onTravel}
+                />
+              ))}
+            </div>
           </div>
         )}
 
@@ -340,7 +387,14 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
             <div className="mt-1.5 flex flex-wrap justify-center gap-1.5">
               {digitalLocations.map((id) => (
                 <div key={id} className="w-[calc(50%-0.375rem/2)]">
-                  {renderRoom(id, false)}
+                  <Room
+                    id={id}
+                    selectedId={selectedId}
+                    liveLocations={liveLocations}
+                    initialFocus={false}
+                    onSelect={setSelectedId}
+                    onTravel={onTravel}
+                  />
                 </div>
               ))}
             </div>
