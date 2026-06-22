@@ -731,7 +731,7 @@ function KanbanView({
       {/* ── 狭い画面（lg未満）：従来の縦積みメーター表示 ── */}
       <div className="lg:hidden">
         <p className="text-xs leading-relaxed text-slate-400">
-          <RichText text="開発そのものは AI が担う（着手＝生成）。価値は人の{{レビュー}}にある。In Progress は WIP=2 で詰まり、{{制約理論}}どおりレビューがボトルネックになる。" />
+          <RichText text="開発そのものは AI が担う（着手＝生成）。価値は人の{{レビュー}}にある。In Progress は{{仕掛り}}上限で詰まり、{{制約理論}}どおりレビューがボトルネックになる。" />
         </p>
 
         {/* 予測量 vs 容量（オーバーフォーキャストの可視化）。超過分は終わらず持ち越しになる。 */}
