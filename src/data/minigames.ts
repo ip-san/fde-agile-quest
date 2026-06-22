@@ -774,11 +774,14 @@ export function dealReview(seed: number, pbiId?: string, variety = false): Revie
   const n = REVIEW_CASES.length
   const matchedIdx = pbiId ? REVIEW_CASES.findIndex((c) => c.pbi === pbiId) : -1
   const mod = (x: number, m: number) => ((x % m) + m) % m
+  // 初回でも 1/3（mod(seed,3)===0）は“題材一致”を外して別作問に振る＝「初回＝本物2つ確定」のメタ確定を崩す。
+  // ＝初回からも「今回は罠か正味か」を diff を読んで確かめる必要が出る（題材一致の良さは 2/3 で温存）。
+  const surprise = !variety && matchedIdx >= 0 && mod(seed, 3) === 0
   let idx: number
-  if (!variety && matchedIdx >= 0) {
-    idx = matchedIdx // 初回＝題材一致を出す
+  if (!variety && !surprise && matchedIdx >= 0) {
+    idx = matchedIdx // 初回（大半）＝題材一致を出す
   } else if (matchedIdx >= 0 && n > 1) {
-    // 2回目以降＝題材一致を除いた残りから seed で1つ選ぶ（必ず初回と別の作問になる）
+    // 再レビュー or 初回の“振れ”＝題材一致を除いた残りから seed で1つ選ぶ（必ず題材一致と別の作問になる）
     const r = mod(seed, n - 1)
     idx = r >= matchedIdx ? r + 1 : r
   } else {
