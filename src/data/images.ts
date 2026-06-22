@@ -27,6 +27,7 @@ export const AVAILABLE_IMAGES = new Set<string>([
   'ending-finale', // 輪ゴムで束ねた伝票＋USBを手に「循環取引 証拠資料」のファイルを前に決断の直前（フィナーレ画面）
   'ending-hero', // 一人の机に同僚が群がり頼られるFDE・本人がいないと回らない（属人化＝頼れる英雄/単一障害点）
   'ending-trueFde', // 夕陽のドックへ背を向け去るFDE・現場はハンディ端末を自力で使いこなす（仕組みが根付いた最良の結末）
+  'ending-fail-trust', // 誰もいない会議室で閉じたノートPCの前に一人天を仰ぐFDE（信頼が崩れ案件終了・最悪の結末）
   // 状況（問題）の個別画像 public/img/{eventId}.jpg
   's2-daily-ghost-stock', // 空の棚＝在るはずの機材が無い（不正暴露の入口）
   's2-daily-showcase-visit', // スーツの視察団と手書き台帳の田淵さん・期待と現実のギャップ
