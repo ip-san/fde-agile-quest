@@ -3,8 +3,43 @@ import { displayName } from '../data/chapters/chapter-01/names'
 import { AVAILABLE_IMAGES, imageUrl } from '../data/images'
 import { LOCATION_ORDER, LOCATIONS, QUIET_BY_LOCATION, type StandupVoice, standupFor } from '../data/locations'
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
+import { seedFor } from '../lib/seed'
 import type { GameEvent, LocationId } from '../types'
 import { RichText } from './RichText'
+
+// ─────────────────────────────────────────────────────────
+// 朝会の導入文演出
+// candidates の id 群を連結してシードを取り、毎朝同じ状況なら同じ表示。
+// ─────────────────────────────────────────────────────────
+
+/** candidates からバイト単位で決定的なシード値を生成 */
+function atmosphereSeedFrom(candidates: GameEvent[]): number {
+  return seedFor(candidates.map((c) => c.id).join('|'))
+}
+
+/** 候補が2〜3件（通常の朝）の導入文パターン。観点が割れている事実を伝える。 */
+const INTRO_MULTI: readonly string[] = [
+  '観点が割れている。どの声も、観点を添えるだけ——',
+  '今朝は意見が割れた。どの声も、観点を添えるだけ——',
+  '見立てがバラけている。どの声も、観点を添えるだけ——',
+  '優先順位で声が分かれた。どの声も、観点を添えるだけ——',
+] as const
+
+/** 候補が1件（論点が1つに絞られた日）の導入文パターン。
+ *  機構上 candidates が1件なのは「選択肢が乏しい/争点が1つ」の日（available枯れ・pinned単独）。
+ *  三者が"合意"したわけではないため、その誤読を避ける中立な表現にする。 */
+const INTRO_SINGLE: readonly string[] = [
+  '今日は論点が1つに絞られた静かな朝だ。どの声も、観点を添えるだけ——',
+  '今朝は争点が1つ。どの声も、観点を添えるだけ——',
+  '今日の議題は一本に絞られている。どの声も、観点を添えるだけ——',
+] as const
+
+/** 候補数に基づく事実ベースのラベル。実状態と連動しないフレーバーは使わない。 */
+function candidateCountBadge(isSingle: boolean): { label: string; className: string } {
+  return isSingle
+    ? { label: '論点は1つ', className: 'bg-slate-500/15 text-slate-300 border-slate-500/30' }
+    : { label: '論点が割れている', className: 'bg-violet-500/15 text-violet-300 border-violet-500/30' }
+}
 
 interface Props {
   /** 今日の"競合する候補"（別々の場所・最大3）。3役がそれぞれ別の候補を推す */
@@ -150,6 +185,17 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
   const liveLocations = new Set(voices.map((v) => v.location))
   const reduceMotion = usePrefersReducedMotion()
 
+  // ── 朝会の導入文・論点数バッジ ──────────────────────────
+  const atmoSeed = atmosphereSeedFrom(candidates)
+  const isSingleCandidate = candidates.length === 1
+  // 導入文：候補数で出し分け、複数パターンをseedで選択
+  const introVariant = isSingleCandidate
+    ? INTRO_SINGLE[atmoSeed % INTRO_SINGLE.length]
+    : INTRO_MULTI[atmoSeed % INTRO_MULTI.length]
+  // バッジ：候補数という実状態に忠実な事実ベースのラベル
+  const atmosphereBadge = candidateCountBadge(isSingleCandidate)
+  // ── ここまで ──────────────────────────────────────
+
   // マップは"地理"として読ませる。ゾーンは2つ：
   //  ・物理の建物（見取り図に描く部屋）＝歩いて回る
   //  ・画面の中（デジタル）＝リモートの開発室。物理の部屋とは別物。
@@ -178,7 +224,17 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
       {/* リモート朝会パネル（競合する主張） */}
       <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/60 p-3">
         <div className="mb-2 flex items-center justify-between px-1">
-          <h2 className="text-sm font-bold text-[var(--text)]">リモート・デイリースクラム</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-bold text-[var(--text)]">リモート・デイリースクラム</h2>
+            {/* 論点数バッジ：candidates の件数（実状態）を事実ベースで表示 */}
+            <span
+              aria-live="polite"
+              aria-atomic="true"
+              className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold ${atmosphereBadge.className}`}
+            >
+              {atmosphereBadge.label}
+            </span>
+          </div>
           <span className="flex items-center gap-1 text-[11px] font-semibold text-rose-300">
             <span
               className={`inline-block h-2 w-2 rounded-full bg-rose-500 ${reduceMotion ? '' : 'animate-pulse'}`}
@@ -187,9 +243,10 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
             LIVE
           </span>
         </div>
+        {/* 導入文：候補数に応じて framing を切り替え、複数パターンで単調さを崩す */}
         <p className="mb-2.5 px-1 text-[11px] text-[var(--text-sub)]">
           本社{displayName('lumen')}
-          のチームが、各自の観点（価値／プロセス／技術）で気づきを共有する。PO・SMは観点を添えるだけ——
+          のチームが、各自の観点（価値／プロセス／技術）で気づきを共有する。{introVariant}
           <span className="text-[var(--text-body)]">
             朝会の主役は開発者。今日どこへ向かうかを決めるのは、あなた自身だ
           </span>
