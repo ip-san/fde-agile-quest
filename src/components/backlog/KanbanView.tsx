@@ -380,7 +380,8 @@ export function KanbanView({
         <section className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3">
           <h3 className="mb-1 px-0.5 text-xs font-bold text-emerald-300">
             スプリントに追加（
-            <RichText text="{{スコープ再交渉}}" interactive={false} />）
+            {/* 見出し内だがボタンの入れ子ではないので interactive（用語チップ）にして解説を出す */}
+            <RichText text="{{スコープ再交渉}}" />）
           </h3>
           <p className="mb-2 text-[11px] leading-relaxed text-slate-400">
             予測より早く片づき、容量に余裕が出たら Ready な項目を追加で引き込めます。
