@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { scoreTiming } from '../../data/minigames'
+import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion'
 import type { ExecTier } from '../../types'
 import { MiniGameDevPuzzle } from './MiniGameDevPuzzle'
 
@@ -8,13 +9,10 @@ interface Props {
   onResolve: (tier: ExecTier) => void
 }
 
-const prefersReducedMotion = () =>
-  typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-
 /** 開発ミニゲーム：タイミング型（マーカーを的で止める）とパズル型（手順の並べ替え）を
  *  シードで出し分ける。reduced-motion 時は動きの無いパズル型に固定。 */
 export function MiniGameDev({ seed, onResolve }: Props) {
-  const [reduced] = useState(prefersReducedMotion)
+  const reduced = usePrefersReducedMotion()
   const usePuzzle = reduced || seed % 2 === 0
   return usePuzzle ? <MiniGameDevPuzzle seed={seed} onResolve={onResolve} /> : <DevTiming onResolve={onResolve} />
 }
@@ -26,6 +24,10 @@ function DevTiming({ onResolve }: { onResolve: (tier: ExecTier) => void }) {
   const posRef = useRef(0)
   const dirRef = useRef(1)
   const rafRef = useRef<number | null>(null)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // 親が不安定な関数参照を渡しても stale closure にならないよう ref で安定化
+  const onResolveRef = useRef(onResolve)
+  onResolveRef.current = onResolve
 
   useEffect(() => {
     const speed = 1.4 // %/frame ≈ 往復1.2秒程度
@@ -45,6 +47,7 @@ function DevTiming({ onResolve }: { onResolve: (tier: ExecTier) => void }) {
     rafRef.current = requestAnimationFrame(tick)
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      if (timerRef.current) clearTimeout(timerRef.current)
     }
   }, [])
 
@@ -54,7 +57,7 @@ function DevTiming({ onResolve }: { onResolve: (tier: ExecTier) => void }) {
     if (rafRef.current) cancelAnimationFrame(rafRef.current)
     const tier = scoreTiming(posRef.current)
     // 結果を一瞬見せてから解決（バーが止まったのを視認できるように）
-    window.setTimeout(() => onResolve(tier), 420)
+    timerRef.current = setTimeout(() => onResolveRef.current(tier), 420)
   }
 
   return (

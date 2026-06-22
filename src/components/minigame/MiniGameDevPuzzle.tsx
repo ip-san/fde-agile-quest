@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { type DevFlow, dealDevFlow, scoreSequence } from '../../data/minigames'
 import type { ExecTier } from '../../types'
 
@@ -13,6 +13,20 @@ export function MiniGameDevPuzzle({ seed, onResolve }: Props) {
   const [answer, setAnswer] = useState<string[]>([]) // 置いた順
   const remaining = flow.steps.filter((s) => !answer.includes(s))
   const full = answer.length === flow.steps.length
+
+  // full になった瞬間に確定ボタンへフォーカスを移す（MiniGameReview と同じ方式）
+  // hasFocusedRef: full が false→true するたびにSRが二重アナウンスしないよう1回だけ発火する
+  const confirmRef = useRef<HTMLButtonElement>(null)
+  const hasFocusedRef = useRef(false)
+  useEffect(() => {
+    if (full && !hasFocusedRef.current) {
+      hasFocusedRef.current = true
+      confirmRef.current?.focus()
+    } else if (!full) {
+      // タイルを外して full が false に戻ったらリセット（次に full になった時も1回発火する）
+      hasFocusedRef.current = false
+    }
+  }, [full])
 
   const place = (s: string) => setAnswer((a) => (a.includes(s) ? a : [...a, s]))
   const remove = (s: string) => setAnswer((a) => a.filter((x) => x !== s))
@@ -69,10 +83,10 @@ export function MiniGameDevPuzzle({ seed, onResolve }: Props) {
       )}
 
       <button
+        ref={confirmRef}
         type="button"
         disabled={!full}
         onClick={() => onResolve(scoreSequence(answer, flow.correct))}
-        data-initial-focus={full ? true : undefined}
         className="min-h-[44px] w-full rounded-xl bg-[var(--accent)] py-3 font-bold text-[var(--bg)] transition hover:bg-[var(--accent-hover)] active:scale-95 disabled:cursor-not-allowed disabled:bg-[var(--border-strong)] disabled:text-[var(--text-disabled)]"
       >
         {full ? 'この手順で組み上げる' : `あと ${flow.steps.length - answer.length} つ`}
