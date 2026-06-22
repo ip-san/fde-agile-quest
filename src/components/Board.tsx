@@ -518,7 +518,9 @@ export function Board() {
         <Suspense fallback={null}>
           <MiniGame
             kind={miniGameKindFor(currentEvent)}
-            seed={seedFor(currentEvent.id)}
+            // 周回（generation）をシードに混ぜる＝2周目以降は同じイベントでもヒアリングの問い/dev の並びが変わる
+            // （レビュー側の周回多様化と一貫。1周内はイベントが一度しか出ないので体験は安定）。
+            seed={seedFor(`${currentEvent.id}:${generation}`)}
             theme={currentEvent.hearingTheme ?? hearingThemeFor(currentEvent.segment)}
             hearingOptions={currentEvent.hearingOptions}
             onDone={(tier) => {

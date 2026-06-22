@@ -34,11 +34,20 @@ const INTRO_SINGLE: readonly string[] = [
   '今日の議題は一本に絞られている。どの声も、観点を添えるだけ——',
 ] as const
 
-/** 候補数に基づく事実ベースのラベル。実状態と連動しないフレーバーは使わない。 */
-function candidateCountBadge(isSingle: boolean): { label: string; className: string } {
-  return isSingle
-    ? { label: '論点は1つ', className: 'bg-slate-500/15 text-slate-300 border-slate-500/30' }
-    : { label: '論点が割れている', className: 'bg-violet-500/15 text-violet-300 border-violet-500/30' }
+/** 候補が1件で、その1件が「回収（過去の選択の帰結＝requiresFlag）」のときの導入文。
+ *  ＝避けられない清算の日。"静かな朝"と取り違えないよう、先送りが満期で戻ってきた緊張を出す。 */
+const INTRO_RECKONING: readonly string[] = [
+  '先送りにした一件が、今日まっすぐ戻ってきた。逃げ場はない——',
+  'あの時の判断のツケが、いま満期で取り立てに来た——',
+  '積み残したものが、今朝とうとう表面化した。今日はこれと向き合う——',
+] as const
+
+/** 朝会の論点バッジ。実状態（候補数・清算か）に忠実なラベルのみ。フレーバーの捏造はしない。 */
+function candidateCountBadge(mode: 'reckoning' | 'single' | 'multi'): { label: string; className: string } {
+  if (mode === 'reckoning')
+    return { label: '清算の日', className: 'bg-amber-500/15 text-amber-300 border-amber-500/40' }
+  if (mode === 'single') return { label: '論点は1つ', className: 'bg-slate-500/15 text-slate-300 border-slate-500/30' }
+  return { label: '論点が割れている', className: 'bg-violet-500/15 text-violet-300 border-violet-500/30' }
 }
 
 interface Props {
@@ -188,12 +197,18 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
   // ── 朝会の導入文・論点数バッジ ──────────────────────────
   const atmoSeed = atmosphereSeedFrom(candidates)
   const isSingleCandidate = candidates.length === 1
-  // 導入文：候補数で出し分け、複数パターンをseedで選択
-  const introVariant = isSingleCandidate
-    ? INTRO_SINGLE[atmoSeed % INTRO_SINGLE.length]
-    : INTRO_MULTI[atmoSeed % INTRO_MULTI.length]
-  // バッジ：候補数という実状態に忠実な事実ベースのラベル
-  const atmosphereBadge = candidateCountBadge(isSingleCandidate)
+  // 清算の日＝候補1件で、その1件が回収（過去の選択の帰結＝requiresFlag・非pinned）。spinCore の focused day。
+  // ただ available が枯れて1件になった"静かな朝"とは別物として演出する（緊張 vs 弛緩を取り違えない）。
+  const isReckoning = isSingleCandidate && !!candidates[0]?.requiresFlag && !candidates[0]?.pinned
+  const mode = isReckoning ? 'reckoning' : isSingleCandidate ? 'single' : 'multi'
+  // 導入文：清算の日／論点1つの静かな朝／割れた朝 で出し分け、複数パターンをseedで選択
+  const introVariant = isReckoning
+    ? INTRO_RECKONING[atmoSeed % INTRO_RECKONING.length]
+    : isSingleCandidate
+      ? INTRO_SINGLE[atmoSeed % INTRO_SINGLE.length]
+      : INTRO_MULTI[atmoSeed % INTRO_MULTI.length]
+  // バッジ：実状態（清算か／候補数）に忠実な事実ベースのラベル
+  const atmosphereBadge = candidateCountBadge(mode)
   // ── ここまで ──────────────────────────────────────
 
   // マップは"地理"として読ませる。ゾーンは2つ：
