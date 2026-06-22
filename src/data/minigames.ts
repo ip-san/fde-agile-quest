@@ -1,5 +1,7 @@
 import type { ExecTier, HearingOption, HearingTheme } from '../types'
 
+export { hearingThemeFor } from '../lib/hearingTheme'
+
 export type { HearingOption, HearingTheme }
 
 // ───────────────────────────────────────────────────────────
@@ -194,14 +196,6 @@ function allBad(): string[] {
   ]
 }
 
-/** イベントのセグメントからヒアリングのテーマを決める（hearing は genba/kokyaku/chance/team で発火）。
- *  trouble をヒアリングにする場合は、調査=genba／対人=team を event.hearingTheme で明示する想定。 */
-export function hearingThemeFor(segment: string): HearingTheme {
-  return segment === 'genba' || segment === 'kokyaku' || segment === 'chance' || segment === 'team'
-    ? segment
-    : 'kokyaku'
-}
-
 // ヒアリングの見出しは相手・場面で変える（“現場”固定だと顧客/機会の場面と噛み合わないため）。
 const HEARING_TITLE: Record<HearingTheme, string> = {
   genba: '現場の声を掘る',
@@ -311,6 +305,8 @@ export interface ReviewFlag {
 }
 
 interface ReviewCase {
+  /** 一致する PBI（このタスク向けに AI が生成した成果物をレビューする＝1対1対応） */
+  pbi: string
   /** AI に頼んだこと */
   task: string
   /** AI が書いた差分 */
@@ -324,85 +320,308 @@ interface ReviewCase {
 }
 
 const REVIEW_CASES: ReviewCase[] = [
+  // 1. 現場観察 → AIが観察メモを要約。ハルシネーションで言ってない要件を捏造／沈黙の理由を取りこぼし
   {
-    task: '外部の配送APIに接続する処理を追加して',
+    pbi: 'pbi-floor-observe',
+    task: '倉庫で録った観察メモを、要件の箇条書きに要約して',
     diff: [
-      { tag: 'ctx', text: 'const url = "https://api.ship.example/v1"' },
-      { tag: 'add', text: 'const API_KEY = "sk-live-7Q2x...c91a" // とりあえず直書き' },
-      { tag: 'add', text: 'fetch(url, { headers: { Authorization: `Bearer ${API_KEY}` } })' },
+      { tag: 'ctx', text: '# 観察メモ（生）：田淵さん「画面は…まあ、開いてない」。棚の前で長く沈黙。' },
+      { tag: 'add', text: '- 要件: 在庫の自動発注機能が欲しいとの強い要望あり' },
+      { tag: 'add', text: '- 結論: 現場は画面の使い勝手に満足。大きな課題はなし' },
     ],
-    aiNote: '動作確認OK。すぐ使えます。',
+    aiNote: 'メモから要点を抽出しました。要望も拾えています。',
     options: [
-      { text: 'APIキーが直書き。環境変数へ出し、.gitignore とコミット前検知を確認したい', issue: true },
-      { text: 'この鍵、本物なら既に漏洩扱い。無効化とローテーションが要る', issue: true },
-      { text: 'AIが「動作確認OK」と言うなら、そのまま通していい', issue: false },
-      { text: 'fetch より axios に統一したい（好みの範囲）', issue: false },
-      { text: '変数名 API_KEY は分かりやすいので問題なし', issue: false },
+      { text: '「自動発注が欲しい」は生メモに無い。AIが要件を{{ハルシネーション}}（捏造）している', issue: true },
+      { text: '「沈黙」を“満足”と要約したのは飛躍。なぜ開かないかの理由を取りこぼしている', issue: true },
+      { text: 'AIが要約したのだから、要望は現場が言った通りのはず', issue: false },
+      { text: '箇条書きは「・」より「-」で揃えたい（好み）', issue: false },
+      { text: '見出しに日付を入れた方が整う（瑣末）', issue: false },
     ],
-    takeaway: '秘密の直書きとAIの「OK」を信じない。鍵は環境変数＋コミット前検知で止める。',
+    takeaway: 'AIの要約は“言っていないこと”を足し、沈黙を勝手に解釈する。生メモと付き合わせて人が確かめる。',
   },
+  // 2. ベテラン聞き取り → AIが暗黙知を要件化。勘どころ（例外の見分け）を一般論にすり替え
   {
-    task: '日付を「2026年6月20日」形式に整える処理を追加して',
+    pbi: 'pbi-veteran-hearing',
+    task: '田淵さんへの聞き取りを、誰でも従える手順書にまとめて',
     diff: [
-      { tag: 'add', text: "import { wareki } from 'jp-date-pretty'   // 提案された依存" },
-      { tag: 'add', text: "return wareki(d, 'YYYY年M月D日')" },
+      { tag: 'ctx', text: '# 聞き取り：「箱が湿ってたり、ラベルが二重に貼ってある時は“勘”で別棚に避ける」' },
+      { tag: 'add', text: '1. 入荷した品は、番号順に棚へ格納する' },
+      { tag: 'add', text: '2. 例外はとくに無し。手順どおりに進めれば誤出荷は起きない' },
     ],
-    aiNote: '定番ライブラリなので入れておきました。',
+    aiNote: 'ベテランのやり方を、一般的な標準手順に整理しました。',
     options: [
-      { text: 'jp-date-pretty が実在するか、公式レジストリで名前を目視確認したい', issue: true },
-      { text: 'install を AI に自動実行させない設定か。架空名に攻撃者が先回りする例がある', issue: true },
-      { text: '「定番」と書いてあるし実在するはず。そのまま通そう', issue: false },
-      { text: '書式は YYYY/MM/DD に統一したい（好み）', issue: false },
-      { text: 'import は1行にまとめた方が綺麗（瑣末）', issue: false },
+      { text: '「湿り・二重ラベルは別棚に避ける」という肝心の例外判断が、要件から丸ごと落ちている', issue: true },
+      { text: '「例外は無し」は事実に反する。勘どころを“一般論”にすり替えていて、ここに誤出荷の芽がある', issue: true },
+      { text: 'AIが手順化したのだから、現場の勘もちゃんと反映されているはず', issue: false },
+      { text: '番号は全角より半角に統一したい（瑣末）', issue: false },
+      { text: '手順は表形式にした方が読みやすい（好み）', issue: false },
     ],
-    takeaway: 'AIは「もっともらしい嘘」の依存名を出す。名前の実在を人が確かめてから入れる。',
+    takeaway: '暗黙知の価値は“例外の見分け”にある。AIが一般化で消した勘どころこそ、人が拾って残す。',
   },
+  // 3. 出荷フロー可視化 → AIがAs-Isフローを生成。現場が隠した例外分岐が抜ける
   {
-    task: '退会済みのユーザー行を片付けて',
-    diff: [{ tag: 'add', text: 'DELETE FROM users;   -- 退会者を整理' }],
-    aiNote: 'シンプルに書きました。',
-    options: [
-      { text: 'WHERE 句が無い。全件消える。対象範囲とバックアップを先に確認したい', issue: true },
-      { text: '本番DBに直接つながっていないか、戻せる（可逆）か確認したい', issue: true },
-      { text: 'コメントは英語に統一したい（瑣末）', issue: false },
-      { text: '速度のためインデックスを足すべき（論点ずれ）', issue: false },
-      { text: 'AIが書いたSQLなら、条件は合っているはず', issue: false },
-    ],
-    takeaway: '消す系は範囲と可逆性を最優先で見る。WHERE 抜けはAIの典型的な事故。',
-  },
-  {
-    task: '在庫が0以下なら表示を「品切れ」にして',
+    pbi: 'pbi-as-is-flow',
+    task: '今の出荷フロー（As-Is）を、分岐込みの一枚図にして',
     diff: [
-      { tag: 'add', text: 'if (stock = 0) {' },
-      { tag: 'add', text: "  label = '品切れ'" },
+      { tag: 'ctx', text: '# 現状フロー（手書きメモ起こし）' },
+      { tag: 'add', text: '受注 → ピッキング → 検品 → 出荷  ※一本道' },
+      { tag: 'del', text: '（メモ余白の走り書き）返品・急ぎ便はここで別ルートに抜ける' },
+    ],
+    aiNote: '主要な流れを綺麗な一本道に整理しました。例外は省いています。',
+    options: [
+      { text: '返品・急ぎ便の“別ルート”が削られている。現場が隠した例外分岐こそ可視化の目的', issue: true },
+      { text: '一本道に均してしまうと、{{誤出荷率}}が上がる発生点（分岐の合流）が図から消える', issue: true },
+      { text: 'AIが「主要な流れ」と判断したのだから、省いた例外は些末なはず', issue: false },
+      { text: '矢印は「→」より「⇒」が見栄えする（好み）', issue: false },
+      { text: '図のタイトルを中央寄せにしたい（瑣末）', issue: false },
+    ],
+    takeaway: 'As-Is図の価値は“例外分岐”にある。AIが綺麗に均した一本道は、現実の事故ポイントを隠す。',
+  },
+  // 4. 誤出荷削減MVP → 誤出荷判定コード。境界条件（代入/比較・0以下）※既存「在庫0以下」題材を移植
+  {
+    pbi: 'pbi-misship-mvp',
+    task: '出荷数が在庫を超えたら「在庫不足」で止める判定を入れて',
+    diff: [
+      { tag: 'add', text: 'if (order = stock) {        // 注文数と在庫を比較' },
+      { tag: 'add', text: "  block('在庫不足')" },
       { tag: 'add', text: '}' },
     ],
-    aiNote: 'テストも通したので大丈夫です。',
+    aiNote: 'テストも通したので大丈夫です。すぐ誤出荷が減ります。',
     options: [
-      { text: 'stock = 0 は代入。比較は ===。常に真になり毎回書き換わる', issue: true },
-      { text: '「0以下」の指示なのに 0 だけ判定。マイナス在庫が漏れる（<= 0 では）', issue: true },
-      { text: "'品切れ' は定数 SOLD_OUT にすべき（好み）", issue: false },
+      {
+        text: 'order = stock は比較(===)でなく代入。条件式で stock を order に代入しており、本来の比較が機能しない',
+        issue: true,
+      },
+      {
+        text: '比較を直しても「超えたら」止めたいのに「等しい時」しか見ない。order > stock の超過が素通りする',
+        issue: true,
+      },
+      { text: "'在庫不足' は定数にすべき（好み）", issue: false },
       { text: '波括弧の改行スタイルを揃えたい（瑣末）', issue: false },
       { text: '「テストも通した」と書いてあるので信じてよい', issue: false },
     ],
-    takeaway: '動いて見えても中身は別物。代入/比較や境界条件（0以下）は人が読んで確かめる。',
+    takeaway: '動いて見えても中身は別物。代入/比較や境界（超過 > と等価 =）は、人が読んで確かめる。',
   },
+  // 5. ピッキング画面 → 現場の言葉と項目名の不一致／入力検証欠落
   {
-    task: 'ログイン画面に「パスワードを表示」ボタンを1つ追加して',
+    pbi: 'pbi-picking-screen',
+    task: '{{ピッキング}}画面に「棚番」入力欄を追加して',
     diff: [
-      { tag: 'add', text: 'パスワード表示トグルを追加' },
-      { tag: 'add', text: 'ついでに認証モジュールを全面書き換え／キャッシュ層を新設' },
-      { tag: 'del', text: '既存の入力バリデーションを削除' },
+      { tag: 'add', text: 'label = "Location ID"          // 棚の場所を入れる欄' },
+      { tag: 'add', text: 'value = input.raw              // 入力をそのまま採用' },
+      { tag: 'ctx', text: '// 現場の呼び方は「棚番（たなばん）」。英数字4桁の決まり。' },
     ],
-    aiNote: 'まとめて整理しておきました。',
+    aiNote: '欄を足しました。見た目もそれっぽく整えています。',
     options: [
-      { text: '頼んだのはボタン1つ。認証の全面書き換えは過剰。差分を最小に戻したい', issue: true },
-      { text: '既存のバリデーションが消えている。意図せず壊していないか', issue: true },
-      { text: 'キャッシュ層、良さそうなのでまとめて入れてしまおう', issue: false },
-      { text: 'ボタンのラベルは「表示/非表示」が親切（好み）', issue: false },
-      { text: '行は増えたが、AIが書いたなら整合は取れているはず', issue: false },
+      { text: 'ラベルが "Location ID"。現場の言葉「棚番」と違い、誰も自分の欄と分からない', issue: true },
+      { text: '入力検証が無い。4桁の決まりに反する値も raw のまま通り、取り違えの元になる', issue: true },
+      { text: 'AIが画面を整えたのだから、項目名も現場に合っているはず', issue: false },
+      { text: 'ボタンの色は青より緑が映える（好み）', issue: false },
+      { text: '欄の幅を少し広げたい（瑣末）', issue: false },
     ],
-    takeaway: '指示より大きい差分は赤信号。過剰実装と「自分が理解できない変更」を通さない。',
+    takeaway: '画面は“現場の言葉”で書く。英語ラベルと検証なしの入力は、使われない画面に逆戻りさせる。',
+  },
+  // 6. 在庫照合 → 帳簿vs実在庫の差分計算。代入/比較・丸め・二重計上
+  {
+    pbi: 'pbi-stock-reconcile',
+    task: '帳簿在庫と実在庫の差（{{棚卸}}差異）を計算して',
+    diff: [
+      { tag: 'add', text: 'diff = Math.round(book - actual)      // 差異を四捨五入' },
+      { tag: 'add', text: 'diff = diff + reserved + reserved     // 引当分を加える' },
+      { tag: 'ctx', text: '// book=帳簿、actual=実在庫、reserved=出荷引当（予約済）' },
+    ],
+    aiNote: '差異が一目で出るようにしました。数字も合っています。',
+    options: [
+      { text: 'reserved を2回足している（二重計上）。差異が引当分だけ水増しされる', issue: true },
+      {
+        text: '個数の差異を四捨五入する意味がない。端数が出る時点で元データが小数＝単位の取り違えを疑うべき',
+        issue: true,
+      },
+      { text: 'AIが「数字も合っている」と言うなら、計算は正しいはず', issue: false },
+      { text: '変数名 diff は delta にしたい（好み）', issue: false },
+      { text: 'コメントは行末でなく上の行に置きたい（瑣末）', issue: false },
+    ],
+    takeaway: '照合は“二重計上”と“単位”で狂う。合計が出ること（動く）と、正しいことは別。原票で裏を取る。',
+  },
+  // 7. フィードバック収集 → 取引先/個人情報の扱い・秘密直書き ※既存「秘密直書き」題材を移植
+  {
+    pbi: 'pbi-feedback-loop',
+    task: '現場の声を外部のアンケートサービスに送る処理を追加して',
+    diff: [
+      { tag: 'ctx', text: 'const url = "https://survey.example/v1/collect"' },
+      { tag: 'add', text: 'const API_KEY = "sk-live-7Q2x...c91a"   // とりあえず直書き' },
+      { tag: 'add', text: 'send(url, { name: user.fullName, note: text }) // 氏名も同送' },
+    ],
+    aiNote: '動作確認OK。声がすぐ集まります。',
+    options: [
+      {
+        text: 'APIキーが直書き。環境変数へ出し、コミット前検知を確認したい。本物なら既に漏洩扱いで無効化が要る',
+        issue: true,
+      },
+      {
+        text: '取引先・現場の氏名を外部サービスへ無断送信している。同意と秘匿（個人情報の扱い）を先に確認したい',
+        issue: true,
+      },
+      { text: 'AIが「動作確認OK」と言うなら、そのまま通していい', issue: false },
+      { text: 'send より post という関数名に統一したい（好み）', issue: false },
+      { text: 'url の文字列は二重引用符より一重引用符で揃えたい（瑣末）', issue: false },
+    ],
+    takeaway: '声を集める前に“誰の情報を外に出すか”を見る。秘密直書きと無断送信は、信頼を一発で失う。',
+  },
+  // 8. 運用手順文書化 → Runbook生成。ロールバック/例外手順が抜ける
+  {
+    pbi: 'pbi-handoff-doc',
+    task: '日次の在庫取り込みを引き継ぐ運用手順書（Runbook）を書いて',
+    diff: [
+      { tag: 'add', text: '## 手順' },
+      { tag: 'add', text: '1. バッチを実行する  2. 「完了」と出れば終わり' },
+      { tag: 'del', text: '（旧メモ）失敗時は前日のバックアップへ戻す。二重取り込みに注意' },
+    ],
+    aiNote: '正常時の流れを簡潔にまとめました。これで引き継げます。',
+    options: [
+      {
+        text: '失敗時に戻す（{{ロールバック}}）手順が削られている。引き継ぎ手順の肝は“異常時にどうするか”',
+        issue: true,
+      },
+      {
+        text: '「二重取り込みに注意」という例外の注意書きが消えた。再実行で在庫が二重に乗る事故が防げない',
+        issue: true,
+      },
+      { text: 'AIが簡潔にまとめたのだから、正常時だけで十分なはず', issue: false },
+      { text: '見出しは ## より # の方が目立つ（好み）', issue: false },
+      { text: '手順番号を縦に並べたい（瑣末）', issue: false },
+    ],
+    takeaway: 'Runbookの価値は“異常時”にある。AIが残す正常系だけの手順は、引き継いだ人を本番で立ち往生させる。',
+  },
+  // 9. ダッシュボード → 集計クエリ。全件スキャン／権限制御欠落 ※既存「WHERE抜け」題材を発展（破壊→閲覧範囲）
+  {
+    pbi: 'pbi-dashboard-selfserve',
+    task: '現場が自分で見られる在庫ダッシュボードの集計クエリを書いて',
+    diff: [
+      { tag: 'add', text: 'SELECT * FROM stock_all;   -- 全在庫を取得' },
+      { tag: 'add', text: '-- 表示は全件。誰がアクセスしても同じ結果を返す' },
+      { tag: 'ctx', text: '-- stock_all には他拠点・取引先別の機微な原価も含まれる' },
+    ],
+    aiNote: 'シンプルに全件出るようにしました。すぐ見られます。',
+    options: [
+      { text: '権限制御が無い。誰でも他拠点や取引先別の原価まで見えてしまう。閲覧範囲を絞る条件が要る', issue: true },
+      { text: 'WHERE も LIMIT も無い全件スキャン。テーブルが育つと毎回重く、現場の画面が固まる', issue: true },
+      { text: 'AIが書いたクエリなら、見える範囲も適切に絞られているはず', issue: false },
+      { text: 'SELECT * より列を明示したいが、動くので後回しでよい（好み）', issue: false },
+      { text: 'コメントは英語に統一したい（瑣末）', issue: false },
+    ],
+    takeaway: '“誰でも見える”は便利の顔をした事故。集計は権限（誰に見せるか）と範囲（全件か）を人が点検する。',
+  },
+  // 10. オンボーディング → 導線/チェックリスト。必須ステップ抜け
+  {
+    pbi: 'pbi-onboarding',
+    task: '新メンバーが初日にたどる{{オンボーディング}}チェックリストを作って',
+    diff: [
+      { tag: 'add', text: '- [ ] 社内システムにログインする' },
+      { tag: 'add', text: '- [ ] 倉庫マップを眺める  → 以上で完了' },
+      { tag: 'del', text: '（旧資料）安全教育（フォーク動線・立入禁止帯）を初日に必ず受講' },
+    ],
+    aiNote: '初日にやることを手早くまとめました。これで迷いません。',
+    options: [
+      { text: '必須の安全教育（フォーク動線・立入禁止帯）が抜けている。倉庫では初日の事故に直結する', issue: true },
+      { text: '「眺めて完了」で終わり、誰が立ち会い・どこで確認するかが無い。形だけで定着しない', issue: true },
+      { text: 'AIがまとめたのだから、必要なステップは網羅されているはず', issue: false },
+      { text: 'チェックは [ ] より絵文字が親しみやすい（好み）', issue: false },
+      { text: '項目の語尾を「する」で揃えたい（瑣末）', issue: false },
+    ],
+    takeaway: '導線は“抜けたら困る必須”で測る。AIの軽い手順は、安全や立会いという外せない一歩を落とす。',
+  },
+  // 11. 監視・ロールバック → 監視/ロールバックコード。アラート閾値の穴／戻し方が不可逆
+  {
+    pbi: 'pbi-monitoring',
+    task: '誤出荷が増えたら警告し、いざという時に戻せる監視を入れて',
+    diff: [
+      { tag: 'add', text: 'if (misshipRate > 100) alert()      // 閾値オーバーで通知' },
+      { tag: 'add', text: 'function rollback() { truncate("stock"); restore() } // 空にして書き戻す' },
+      { tag: 'ctx', text: '// misshipRate は百分率（0〜100）。restore は同じ stock へ truncate 後 insert で書き戻す' },
+    ],
+    aiNote: '監視と戻し機能、両方入れました。これで安心です。',
+    options: [
+      { text: '閾値が >100。百分率は最大100だから、この警告は永久に鳴らない（閾値の穴）', issue: true },
+      {
+        text: 'ロールバックが先に truncate で本番の stock を空にしてから書き戻す。途中で失敗すると本番が空のまま戻せない（不可逆）',
+        issue: true,
+      },
+      { text: 'AIが「両方入れた」と言うなら、安全網として機能するはず', issue: false },
+      { text: 'alert より notify という名前が好み（好み）', issue: false },
+      { text: 'コメントの位置を揃えたい（瑣末）', issue: false },
+    ],
+    takeaway: '安全網ほど中身を疑う。鳴らない閾値と“消してから戻す”手順は、いざという時に役に立たない。',
+  },
+  // 12. 棚番見間違い表示 → 表示コード。似た棚番の混同が解消されない／別の混乱を生む
+  {
+    pbi: 'pbi-disc-label-misread',
+    task: '似た棚番（A-1207 と A-1027）の取り違えを、表示で防いで',
+    diff: [
+      { tag: 'add', text: 'display = shelf.padStart(8, "0")   // 桁を0で揃える' },
+      { tag: 'add', text: 'color = "yellow"                   // 全棚番を黄色で強調' },
+      { tag: 'ctx', text: '// 狙い：1207 と 1027 の“真ん中の桁違い”を見分けやすくする' },
+    ],
+    aiNote: '見やすく強調しました。これで間違えません。',
+    options: [
+      {
+        text: '0埋めで桁を揃えても、1207 と 1027 の“真ん中の入れ替わり”は見分けやすくならない。狙いを外している',
+        issue: true,
+      },
+      { text: '全棚番を一律で黄色にすると、どれも目立って差が消える。逆に別の取り違えを生む', issue: true },
+      { text: 'AIが「間違えません」と言うのだから、混同は解消されたはず', issue: false },
+      { text: '色は黄より橙が映える（好み）', issue: false },
+      { text: 'padStart は8でなく定数にしたい（瑣末）', issue: false },
+    ],
+    takeaway: '“見やすく”は目的でなく手段。違う桁を際立たせる工夫でなければ、似た棚番の取り違えは消えない。',
+  },
+  // 13. 夜勤引き継ぎ → 引き継ぎロジック。夜勤帯のエッジケース漏れ
+  {
+    pbi: 'pbi-disc-night-shift',
+    task: '夜勤から日勤への申し送りを、未完タスクの自動引き継ぎにして',
+    diff: [
+      { tag: 'add', text: 'const handoff = tasks.filter(t => t.day === today)  // 当日分を渡す' },
+      { tag: 'add', text: 'if (t.start >= "08:00" && t.start < "20:00") carry(t) // 日中帯のみ' },
+      { tag: 'ctx', text: '// 夜勤は 22:00〜翌6:00。日付をまたぐ。' },
+    ],
+    aiNote: '当日のタスクを引き継ぐようにしました。漏れはありません。',
+    options: [
+      {
+        text: '夜勤は日付をまたぐのに t.day === today で当日分だけ。0時跨ぎの夜勤タスクが引き継ぎから抜ける',
+        issue: true,
+      },
+      { text: '時間帯フィルタが 08:00〜20:00。22:00〜翌6:00 の夜勤帯がまるごと条件から外れている', issue: true },
+      { text: 'AIが「漏れはない」と言うのだから、夜勤も拾えているはず', issue: false },
+      { text: 'carry は handover という名前にしたい（好み）', issue: false },
+      { text: '時刻は文字列より数値で持ちたい（瑣末）', issue: false },
+    ],
+    takeaway: 'エッジは“日跨ぎ・時間帯の端”に潜む。AIの「漏れなし」を、現場の夜勤シフトに当てて人が確かめる。',
+  },
+  // 14. 返品戻し入れ → 返品フロー。在庫戻しの二重計上／状態遷移バグ
+  {
+    pbi: 'pbi-disc-return-flow',
+    task: '返品された品を在庫に戻す処理を書いて',
+    diff: [
+      { tag: 'add', text: 'stock += item.qty            // 返品を全数そのまま在庫に戻す' },
+      { tag: 'add', text: 'stock += item.qty            // 検品OK分も戻す' },
+      { tag: 'add', text: 'item.status = "received"     // 受領のまま据え置き' },
+      { tag: 'ctx', text: '// 状態遷移: "received"(受領) → "inspected"(検品) → "restocked"(戻し入れ済=最終)' },
+    ],
+    aiNote: '返品分を在庫に反映しました。テスト済みです。',
+    options: [
+      { text: '在庫に2回足している（二重計上）。返品1個が2個として戻り、帳簿差異の元になる', issue: true },
+      {
+        text: '状態が "received"(受領) のまま最終状態 "restocked" へ進まない。再戻しを許し、同じ品が次の処理で再び戻る',
+        issue: true,
+      },
+      { text: 'AIが「テスト済み」と言うのだから、戻し数は合っているはず', issue: false },
+      {
+        text: '検品で良品/不良品を分けず全数戻している。不良品まで在庫に乗るが、まずは戻し数を直すのが先（後回しでよい）',
+        issue: false,
+      },
+      { text: 'status は英語より日本語が分かりやすい（好み）', issue: false },
+    ],
+    takeaway: '戻し入れは“二重計上”と“状態遷移”で狂う。在庫が増えること（動く）と、正しく一度だけ戻ることは別。',
   },
 ]
 
@@ -415,9 +634,24 @@ export interface ReviewRound {
   takeaway: string
 }
 
-/** レビューの1ラウンドをシードで選ぶ。選択肢はシャッフルして提示（毎回同じ並びを避ける）。 */
-export function dealReview(seed: number): ReviewRound {
-  const c = REVIEW_CASES[((seed % REVIEW_CASES.length) + REVIEW_CASES.length) % REVIEW_CASES.length]
+/** PBI id → そのタスク内容に一致するレビュー作問。レビューする PBI に合った題材を出すための索引。 */
+const REVIEW_CASE_BY_PBI = new Map<string, ReviewCase>(REVIEW_CASES.map((c) => [c.pbi, c]))
+
+/** ある PBI に一致するレビュー作問があるか（テスト/カバレッジ確認用）。 */
+export function hasReviewCaseForPbi(pbiId: string): boolean {
+  return REVIEW_CASE_BY_PBI.has(pbiId)
+}
+
+/** レビュー作問が紐づく PBI id の一覧（テスト用）。実在しない PBI への孤児作問が無いか検査するのに使う。 */
+export function reviewCasePbiIds(): string[] {
+  return REVIEW_CASES.map((c) => c.pbi)
+}
+
+/** レビューの1ラウンドを選ぶ。pbiId があればそのタスク内容に一致する作問を優先（無ければ seed で巡回）。
+ *  選択肢はシャッフルして提示（毎回同じ並びを避ける）。 */
+export function dealReview(seed: number, pbiId?: string): ReviewRound {
+  const matched = pbiId ? REVIEW_CASE_BY_PBI.get(pbiId) : undefined
+  const c = matched ?? REVIEW_CASES[((seed % REVIEW_CASES.length) + REVIEW_CASES.length) % REVIEW_CASES.length]
   const options = shuffle(c.options, seed + 5)
   return { task: c.task, diff: c.diff, aiNote: c.aiNote, options, takeaway: c.takeaway }
 }

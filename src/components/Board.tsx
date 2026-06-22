@@ -1,21 +1,23 @@
 import { lazy, Suspense, useMemo, useReducer, useState } from 'react'
 import { CEREMONY_LABELS, CEREMONY_SHORT, EVENTS, PRODUCT_GOAL, SPRINTS } from '../data/chapters/chapter-01'
-import { hearingThemeFor } from '../data/minigames'
 import { PRECEPTS } from '../data/precepts'
 import { openThreads } from '../data/threads'
 import { GEN_TOKEN_COST } from '../engine/backlog'
 import { miniGameKindFor } from '../engine/game'
 import { customerValueBreakdown, isRouletteCeremony, repoStats } from '../engine/progression'
 import { isMuted, toggleMuted } from '../engine/sfx'
+import { hearingThemeFor } from '../lib/hearingTheme'
 import { readBool, writeBool } from '../lib/persist'
 import { seedFor } from '../lib/seed'
 import { useEngagement } from '../store/engagementStore'
 import type { Ceremony, Choice } from '../types'
 
 // バックログ操作パネル・遊び方・都度教示は"開いた時だけ"要るモーダル＝コード分割で初期バンドルから外す。
+// MiniGame（hearingミニゲーム系 + review系データ含む）も選択後にのみ表示されるため lazy 化して初期バンドルを軽量化。
 const BacklogPanel = lazy(() => import('./BacklogPanel').then((m) => ({ default: m.BacklogPanel })))
 const HowToPlay = lazy(() => import('./HowToPlay').then((m) => ({ default: m.HowToPlay })))
 const Coachmark = lazy(() => import('./Coachmark').then((m) => ({ default: m.Coachmark })))
+const MiniGame = lazy(() => import('./minigame/MiniGame').then((m) => ({ default: m.MiniGame })))
 
 import { COACHMARK_KEYS } from '../data/coachmarks'
 import { CustomerValueBar } from './CustomerValueBar'
@@ -23,7 +25,6 @@ import { DeductionModal } from './DeductionModal'
 import { EventLog } from './EventLog'
 import { EventModal } from './EventModal'
 import { MeterHUD } from './MeterHUD'
-import { MiniGame } from './minigame/MiniGame'
 import { PreceptBook } from './PreceptBook'
 import { Prologue } from './Prologue'
 import { RepoPanel } from './RepoPanel'
@@ -502,20 +503,22 @@ export function Board() {
 
       {/* 実行ミニゲーム（選択後・結果前）。出来=tier で主正メーターを倍率調整。初回は説明コーチマークを先に出す */}
       {status === 'event' && currentEvent && !result && pendingChoice && !minigameCoachKey && (
-        <MiniGame
-          kind={miniGameKindFor(currentEvent)}
-          seed={seedFor(currentEvent.id)}
-          theme={currentEvent.hearingTheme ?? hearingThemeFor(currentEvent.segment)}
-          hearingOptions={currentEvent.hearingOptions}
-          onDone={(tier) => {
-            choose(pendingChoice, tier, deductionBonus)
-            setPendingChoice(null)
-          }}
-          onSkip={() => {
-            choose(pendingChoice, 'good', deductionBonus)
-            setPendingChoice(null)
-          }}
-        />
+        <Suspense fallback={null}>
+          <MiniGame
+            kind={miniGameKindFor(currentEvent)}
+            seed={seedFor(currentEvent.id)}
+            theme={currentEvent.hearingTheme ?? hearingThemeFor(currentEvent.segment)}
+            hearingOptions={currentEvent.hearingOptions}
+            onDone={(tier) => {
+              choose(pendingChoice, tier, deductionBonus)
+              setPendingChoice(null)
+            }}
+            onSkip={() => {
+              choose(pendingChoice, 'good', deductionBonus)
+              setPendingChoice(null)
+            }}
+          />
+        </Suspense>
       )}
 
       {/* 結果オーバーレイ（判断直後に一度ちゃんと見せる） */}

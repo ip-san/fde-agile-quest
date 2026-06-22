@@ -8,6 +8,8 @@ import { MiniGameReview } from './MiniGameReview'
 interface Props {
   kind: MiniGameKind
   seed: number
+  /** レビュー対象 PBI の id（review のみ使用）。あればタスク内容に一致する作問を出す。 */
+  pbiId?: string
   /** ヒアリングの問いを相手・場面で変えるテーマ（hearing のみ使用） */
   theme?: HearingTheme
   /** イベント固有のヒアリング問い（hearing のみ使用。あればシャッフルして優先提示） */
@@ -32,7 +34,7 @@ function buildHeading(kind: MiniGameKind, theme?: HearingTheme): { tag: string; 
 }
 
 /** 選択後に挟む「実行」ミニゲーム。出来が選択の主正メーターを倍率調整する。Esc/スキップで標準(good)。 */
-export function MiniGame({ kind, seed, theme, hearingOptions, onDone, onSkip }: Props) {
+export function MiniGame({ kind, seed, pbiId, theme, hearingOptions, onDone, onSkip }: Props) {
   const ref = useFocusTrap<HTMLDivElement>(onSkip)
   const h = buildHeading(kind, theme)
 
@@ -63,7 +65,7 @@ export function MiniGame({ kind, seed, theme, hearingOptions, onDone, onSkip }: 
           {kind === 'dev' ? (
             <MiniGameDev seed={seed} onResolve={onDone} />
           ) : kind === 'review' ? (
-            <MiniGameReview seed={seed} onResolve={onDone} />
+            <MiniGameReview seed={seed} pbiId={pbiId} onResolve={onDone} />
           ) : kind === 'persuade' ? (
             // PO 説得＝ヒアリングの選択機構を流用し、価値の論拠デッキ(PERSUADE_DECK)を出す
             <MiniGameHearing seed={seed} theme="persuade" hearingOptions={PERSUADE_DECK} onResolve={onDone} />

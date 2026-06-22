@@ -436,6 +436,7 @@ export function KanbanView({
         <MiniGame
           kind="review"
           seed={seedFor(pending.id)}
+          pbiId={pending.id}
           onDone={(tier) => {
             reviewItem(pending.id, pending.depth, tier)
             setPending(null)

@@ -122,3 +122,12 @@
 - [open] (🟡) learning / s2-daily-debt — 技術的負債を借りる選択に取り立て連鎖が無く「借りた者勝ち」誤読余地。setsFlag/新イベント接続=mechanics改変につきスコープ外。
 - [open] (🟡/設計) code-reviewer / BacklogPanel.tsx 1307行・state machine union化、Board.tsx命名/IIFE、Travel.tsx renderRoom/Pinコンポーネント化 — リファクタ規模大・設計判断。別イテレーション。
 - 監査サマリ: 専門家fde🟢logistics🟢robotics🟢ai-dx🟢agile🟢／監修story🟢learning🟢code🟢。**ゲーム整合性: ソフトロック/クラッシュ/到達不能/結末不定の🔴ゼロ**（エンディングは`match:()=>true`＋`?? endings[last]`で二重網羅・フラグ配線はthreads.test/term-coverage/game.testで構造担保・discoversPbi手動検証OK）。全ゲート緑（vitest313/build/size160.47kB<164/CSS9.15<10/e2e3-3 axe/lighthouse）。round3＋仕様バグ修正再考証で dry。
+
+### 2026-06-22 / loop/review-minigame-pbi-cases（レビューミニゲームのバリエーション拡充＋PBI内容連動）
+
+総監督要望: レビューミニゲームのバリエーション増・タスク内容に一致。AIが各タスク用に生成した成果物を人がレビューする14作問（PBI 1対1）に作り替え。dealReview(seed, pbiId) で一致作問を優先。size 増は MiniGame の lazy 化＋hearingTheme.ts 抽出で吸収（JS 156kB）。
+
+- 考証: ai-dx🔴2（return-flow状態値/monitoring restore不可逆）＋misship「常に真」誤り→修正済。logistics🟢（現場リアル・棚番中央桁/夜勤日跨ぎ等が秀逸）。learning🟢（過信罠が全14件一貫）。code🔴（orphanテスト欠如→reviewCasePbiIds export＋逆方向テスト追加）。全ゲート緑(325)。
+- [open] (🟡低・磨き込み) logistics: return-flow の良品/不良品分別、stock-reconcile の引当を差異計算に載せる設計、night-shift の保留品所在共有 等、現場リアリティ深掘り余地（issue:false 空振り枠で一部活用済）。
+- [open] (🟡低) learning: コード系作問(===/時刻文字列比較/SELECT等)の専門語が glossary 未登録で初心者負荷・難易度カーブがコード系に偏る。設計コメントの slopsquatting 記述が実装と不一致。
+- [open] (🟡設計) KanbanView の depthFor＋pending 2state を単一 state machine 化／minigames の allGood/allBad が persuade を型でなく実装で除外。

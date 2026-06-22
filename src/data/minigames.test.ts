@@ -1,19 +1,46 @@
 import { describe, expect, it } from 'vitest'
+import { DISCOVERABLE_BACKLOG, PRODUCT_BACKLOG } from './chapters/chapter-01'
 import {
   dealDevFlow,
   dealHearing,
   dealReview,
   type HearingTheme,
+  hasReviewCaseForPbi,
   hearingCtaFor,
   hearingPromptFor,
   hearingThemeFor,
   hearingTitleFor,
   REVIEW_REAL_COUNT,
+  reviewCasePbiIds,
   scoreHearing,
   scoreReview,
   scoreSequence,
   scoreTiming,
 } from './minigames'
+
+describe('レビュー作問のPBI連動（タスク内容に一致した作問が出る）', () => {
+  it('レビューしうる全PBIに、内容が一致するレビュー作問がある（取りこぼし防止）', () => {
+    const pbis = [...PRODUCT_BACKLOG, ...DISCOVERABLE_BACKLOG]
+    const missing = pbis.filter((p) => !hasReviewCaseForPbi(p.id)).map((p) => p.id)
+    expect(missing, `レビュー作問が無いPBI: ${missing.join(', ')}`).toEqual([])
+  })
+  it('pbiId 指定時は seed によらず同じ（そのタスクに一致した）作問が出る', () => {
+    const a = dealReview(0, 'pbi-stock-reconcile')
+    const b = dealReview(50, 'pbi-stock-reconcile')
+    expect(a.task).toBe(b.task) // 作問は PBI で決まる＝タスク内容に連動
+    expect(a.options.filter((o) => o.issue)).toHaveLength(REVIEW_REAL_COUNT)
+  })
+  it('レビュー作問の pbi はすべて実在する PBI を指す（孤児作問が無い・逆方向）', () => {
+    const pbiIds = new Set([...PRODUCT_BACKLOG, ...DISCOVERABLE_BACKLOG].map((p) => p.id))
+    const orphans = reviewCasePbiIds().filter((id) => !pbiIds.has(id))
+    expect(orphans, `実在しないPBIを指す孤児作問: ${orphans.join(', ')}`).toEqual([])
+  })
+  it('pbiId 無し（フォールバック）は seed で巡回し、本物指摘2つの作問を返す', () => {
+    const r = dealReview(0)
+    expect(r.task).not.toBe('')
+    expect(r.options.filter((o) => o.issue)).toHaveLength(REVIEW_REAL_COUNT)
+  })
+})
 
 describe('dealHearing', () => {
   it('良2・悪3 の5択を返し、同じ seed で決定的', () => {
