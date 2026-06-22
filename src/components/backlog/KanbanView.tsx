@@ -56,6 +56,8 @@ export interface KanbanProps {
   reviewProgress: Record<string, number>
   /** 未リファインメント（暫定見積り）の PBI id。途中引き込みは Ready のみ対象にするため除外に使う。 */
   unrefinedPbis: string[]
+  /** 周回カウンタ（リセットで+1）。レビュー作問のシードに混ぜ、周回ごとに"振れ/出題"を変える＝周回勢のメタ暗記を防ぐ。 */
+  generation: number
   startItem: (id: string) => void
   reviewItem: (id: string, depth: ReviewDepth, tier: ExecTier) => void
   /** スプリント途中で Ready な PBI を予測に引き込む（スコープ再交渉） */
@@ -72,6 +74,7 @@ export function KanbanView({
   undoneSet,
   reviewProgress,
   unrefinedPbis,
+  generation,
   startItem,
   reviewItem,
   pullIntoSprint,
@@ -461,8 +464,9 @@ export function KanbanView({
           const sbiOffset = hash >= 0 ? Math.max(0, (Number(pending.id.slice(hash + 1)) || 1) - 1) : 0
           const prog = reviewProgress[pending.id] ?? 0
           const variety = prog > 0 || sbiOffset > 0
-          // シードは「項目 × これまでの進捗 × 作業項目位置」で変える＝再レビューごとに別の作問・別の並びになる。
-          const seed = seedFor(`${pending.id}:${Math.round(prog * 100)}:${sbiOffset}`)
+          // シードは「項目 × これまでの進捗 × 作業項目位置 × 周回」で変える＝再レビューごとに別の作問・別の並び、
+          // かつ周回（generation）ごとに"初回の振れ/出題"も変わる＝周回勢が「このPBIは初回でも罠」と暗記するのを防ぐ。
+          const seed = seedFor(`${pending.id}:${Math.round(prog * 100)}:${sbiOffset}:${generation}`)
           return (
             <MiniGame
               // seed が変われば作問を作り直す＝再レビューで確実に別インスタンスにする（lazy init の取り違え防止）。

@@ -32,6 +32,7 @@ export function BacklogPanel({ onClose }: Props) {
     sprintGoals,
     retroImprovements,
     unrefinedPbis,
+    generation,
     commitBacklogOrder,
     toggleForecast,
     splitItem,
@@ -96,6 +97,7 @@ export function BacklogPanel({ onClose }: Props) {
               undoneSet={undoneSet}
               reviewProgress={reviewProgress}
               unrefinedPbis={unrefinedPbis}
+              generation={generation}
               startItem={startItem}
               reviewItem={reviewItem}
               pullIntoSprint={pullIntoSprint}
