@@ -376,15 +376,31 @@ export function proceedCore(core: ProgressCore): ProgressCore {
   }
 }
 
+/** 0以上の整数オフセット n と要素数 len から、巡回開始インデックスを返す（負値・小数・len=0 安全）。
+ *  drawCandidates の回収ローテーションで使う。契約（負値/小数/len=0 の正規化）をテストで固定するため export。 */
+export function rotateStart(n: number, len: number): number {
+  if (len <= 0) return 0
+  const t = Math.trunc(n)
+  return ((t % len) + len) % len
+}
+
 /** 朝会の“競合する今日の候補”を引く（別々の場所・最大3。1場所につき代表1つ）。
  *  優先順位: ①フラグで解放された“回収/不正暴露”イベント（苦労して立てたフラグの帰結は必ず出す）
  *  → ②セグメント一致 → ③残りは場所順を seed で回す。これで「見送り」の機会損失や不正暴露アークが
- *  確実に響く（available は requiresFlag を満たした物だけなので、requiresFlag 付き＝“掴んだ報酬”）。 */
-export function drawCandidates(available: GameEvent[], segment: Segment, pickRandom: number): GameEvent[] {
+ *  確実に響く（available は requiresFlag を満たした物だけなので、requiresFlag 付き＝“掴んだ報酬”）。
+ *
+ *  rotate: 回収（requiresFlag）の候補化を日替わりで巡回させるオフセット（＝そのスプリントでのデイリー
+ *  通算位置。spinCore が beatIndex を渡す）。回収の“死蔵”（立てたフラグの帰結が5日間一度も候補に出ない）を
+ *  rotate で二重に解消する:
+ *    (a) 場所の並びを日替わりでずらす＝回収場所が4つ以上でも先頭3つに固定されず全場所に出番が回る。
+ *    (b) 同一場所に回収が複数ある時、その場所の代表を日替わりで選び直す＝場所内2件目以降も埋もれない。
+ *  窓は1日3・1場所1代表なので、5日(=デイリー枠)の総露出は最大15(場所×日)。現データの同時解放数では
+ *  実質すべて候補化されるが、capacity(15スロット)を超える極端な同時解放では一部が当日内に回り切らない
+ *  ことがある（＝終盤がツケの清算で埋まる自然な飽和。ソフトロックではない）。pinned は入口なので先頭固定。 */
+export function drawCandidates(available: GameEvent[], segment: Segment, pickRandom: number, rotate = 0): GameEvent[] {
   if (available.length === 0) return []
-  // 場所ごとの代表。フラグ解放イベントを最優先で代表に据える（同じ場所に通常イベントがあっても勝つ）。
+  // 場所ごとの代表（②③の汎用イベント用フォールバック含む）。回収/pinned を最優先で代表に据える。
   const repByLoc = new Map<LocationId, GameEvent>()
-  // 回収（requiresFlag）／縦糸の入口（pinned）を場所の代表として最優先で据える
   for (const e of available) {
     if (!e.requiresFlag && !e.pinned) continue
     const l = locationOf(e)
@@ -395,9 +411,32 @@ export function drawCandidates(available: GameEvent[], segment: Segment, pickRan
     if (!repByLoc.has(l)) repByLoc.set(l, e)
   }
 
+  // 回収（requiresFlag・非pinned）を場所ごとに集める。同一場所に複数あれば rotate で代表を日替わりに
+  // 選び直し、その場所の代表を上書きする（同一場所内の死蔵を解消）。pinned は入口なので対象外（先頭固定）。
+  const recByLoc = new Map<LocationId, GameEvent[]>()
+  const pinnedLocs: LocationId[] = []
+  for (const e of available) {
+    const l = locationOf(e)
+    if (e.pinned) {
+      if (!pinnedLocs.includes(l)) pinnedLocs.push(l)
+      continue
+    }
+    if (!e.requiresFlag) continue
+    const arr = recByLoc.get(l)
+    if (arr) arr.push(e)
+    else recByLoc.set(l, [e])
+  }
+  for (const [l, arr] of recByLoc) repByLoc.set(l, arr[rotateStart(rotate, arr.length)])
+
   const order: LocationId[] = []
-  // ① フラグ解放／縦糸の入口イベントの場所を先頭に（複数あれば全部、最大3で頭打ち）
-  for (const [l, e] of repByLoc) if ((e.requiresFlag || e.pinned) && !order.includes(l)) order.push(l)
+  // ① 入口(pinned)→回収(requiresFlag) の順で先頭に。pinned は元順で固定、回収場所は rotate で先頭をずらす。
+  for (const l of pinnedLocs) if (!order.includes(l)) order.push(l)
+  const recoveryLocs = [...recByLoc.keys()]
+  const rStart = rotateStart(rotate, recoveryLocs.length)
+  for (let k = 0; k < recoveryLocs.length; k++) {
+    const l = recoveryLocs[(rStart + k) % recoveryLocs.length]
+    if (!order.includes(l)) order.push(l)
+  }
   // ② セグメント一致の場所
   const matching = available.find((e) => e.segment === segment)
   const matchLoc = matching ? locationOf(matching) : null
@@ -435,7 +474,8 @@ export function spinCore(core: ProgressCore, segment: Segment, pickRandom: numbe
     const remainingDailies = beats.slice(core.beatIndex).filter((b) => b === 'daily').length
     const pinned = avail.filter((e) => e.pinned)
     const mustForcePinned = pinned.length > 0 && remainingDailies <= pinned.length
-    const cands = mustForcePinned ? [pinned[0]] : drawCandidates(avail, segment, pickRandom)
+    // beatIndex を rotate に渡し、回収（requiresFlag）場所を日替わりで巡回させる（死蔵の解消）。
+    const cands = mustForcePinned ? [pinned[0]] : drawCandidates(avail, segment, pickRandom, core.beatIndex)
     if (cands.length === 0) return advanceCore(core)
     return {
       ...core,
