@@ -34,7 +34,7 @@ import {
   backlogItem,
   isKnownPbi,
   isLegacyEmbedded,
-  REVIEW_CAPACITY,
+  REVIEW_CAPACITY_PER_DAY,
   resolveSprintBacklog,
   revealPbi,
   reviewCapacityFor,
@@ -104,7 +104,7 @@ export interface ProgressCore {
   inProgress: string[]
   /** In Progress 各項目の累積レビュー点（id→点）。見積りに達すると Done */
   reviewProgress: Record<string, number>
-  /** 今スプリントの残レビュー容量（人の希少資源。毎スプリント REVIEW_CAPACITY にリセット） */
+  /** 今日（デイリービート）の残レビュー容量。毎 daily ビート開始時に reviewCapacityFor へリセット・繰り越しなし＝日次スループット制約 */
   reviewCapacity: number
   /** 直前スプリントのレビューで終わらせきれず持ち越した PBI id 群（次プランニングで「↪前回持ち越し」表示に使う）。
    *  レビュー精算で carryIds を書き、次レビューで上書きされる。初期＝[]。 */
@@ -224,7 +224,7 @@ export function freshCore(starting: Meters): ProgressCore {
     greatStreak: 0,
     inProgress: [],
     reviewProgress: {},
-    reviewCapacity: REVIEW_CAPACITY,
+    reviewCapacity: REVIEW_CAPACITY_PER_DAY,
     lastCarryover: [],
     retroImprovements: [],
     unrefinedPbis: [],
@@ -302,19 +302,21 @@ export function advanceCore(core: ProgressCore, result: ResultView | null = null
   let sprintIndex = core.sprintIndex
   let beatIndex = core.beatIndex + 1
 
+  // スプリント末を越えたら次スプリントへ（reviewCapacity のリセットはこの境界ではなく、下の「daily 進入」で判定する）。
   const crossedSprintBoundary = beatIndex >= SPRINTS[sprintIndex].beats.length
   if (crossedSprintBoundary) {
     sprintIndex += 1
     beatIndex = 0
   }
 
-  // スプリント境界を越えた（retro→次スプリントの planning へ）場合、
-  // レトロ改善（capacity）が retroImprovements に積まれた状態で新スプリントへ入るため、
-  // reviewCapacity を reviewCapacityFor(retroImprovements) に即時同期する。
-  // これで wip レバー（wipLimitFor を毎回ライブ導出）と同じく「次スプリントから即時」に効く。
-  // ※ review ビートの resolveSprintBacklog も同値でリセットするが、それはそのスプリントの
-  //   retroImprovements（retro 前）を使うため capacity レバー適用が1スプリント遅れる問題があった。
-  const reviewCapacity = crossedSprintBoundary ? reviewCapacityFor(core.retroImprovements) : core.reviewCapacity
+  // レビュー容量は「1日（daily ビート）あたり」の日次資源。進入先が daily ビートなら、その日の容量を
+  // reviewCapacityFor(retroImprovements) へリセットする（毎日満タン・前日残は繰り越さない＝使い切り）。
+  // daily 以外（planning/review/retro）では消費できないので据え置き。これにより:
+  //  ・「1日で全部投入」できず、レビューを5日に分散させる日次ペーシングになる
+  //  ・スプリント途中で使い切っても翌日 daily で回復＝手詰まりが構造的に起きない
+  //  ・retroImprovements を毎回参照するので capacity レバーは「次スプリント最初の daily から即時」に効く
+  const enteredBeat = SPRINTS[sprintIndex]?.beats[beatIndex] ?? null
+  const reviewCapacity = enteredBeat === 'daily' ? reviewCapacityFor(core.retroImprovements) : core.reviewCapacity
 
   const base = {
     ...core,
@@ -871,10 +873,11 @@ function clamp01(v: number, max: number): number {
 }
 
 /** 「顧客価値」で“届けきった”とみなすインクリメント数の目安（delivery 項の満点基準）。
- *  3スプリント×レビュー容量(REVIEW_CAPACITY)から現実的に到達しうる本数に置く。
- *  大きすぎると delivery 項が常に低空飛行で死に、小さすぎるとすぐ天井に張り付くため、
- *  「強いプレイで届けきれる」ラインに調整する。 */
-export const DELIVERY_TARGET = 6
+ *  日次化（REVIEW_CAPACITY_PER_DAY=4 × daily5 × 3sprint ≒ 理論60pt前進力／素good実効45-50pt）で
+ *  捌ける本数が増えた（PB全14件中、強いプレイで10-12件Ship）ため、旧6（プール制6pt/sprint時代）から 9 へ。
+ *  ＝「強いプレイで届けきれるが、全完遂ではない」ラインに置き、終盤まで delivery 項の伸びを残す。
+ *  ※pt前進力でなく item 数基準なので、最終的な量感は監修プレイテストで実測・再調整の余地あり。 */
+export const DELIVERY_TARGET = 9
 
 /** valueHistory のうち、指定スプリントより前で最後に記録された顧客価値を返す（無ければ baseline）。
  *  スプリントを飛ばして未記録の枠があっても、直近の実績値を辿って“伸び”の基準にする。 */

@@ -15,15 +15,17 @@ const PBI_BY_ID = new Map<string, BacklogItem>([...PRODUCT_BACKLOG, ...DISCOVERA
 // ── カンバン／レビューのバランス定数（暫定・調整可）──
 /** 同時着手の上限（In Progress 列の WIP 制限。仕掛りを学ぶ）。レトロ改善で下げられる（下限1）。 */
 export const WIP_LIMIT = 2
-/** 1スプリントの人間レビュー容量（毎スプリントこの値にリセット＝ボトルネック資源）。レトロ改善で増やせる。 */
-export const REVIEW_CAPACITY = 6
+/** 1日（デイリービート）あたりの人間レビュー容量（＝AIの生成を人がどれだけ確かめられるかの日次スループット制約）。
+ *  毎 daily ビート開始時にこの値へリセットし、繰り越さない（使い切り）＝「1日で全部投入」はできず日次ペースで流す。
+ *  カンバン/制約理論（ToC）由来の概念で、スクラムのセレモニーではない。レトロ改善(capacity)で恒久的に増やせる。 */
+export const REVIEW_CAPACITY_PER_DAY = 4
 
 // ── レトロ改善（機構：Retro 昇格）──
 // レトロでプレイヤーが選んだプロセス改善を retroImprovements に積む（'capacity'/'wip'）。
 // 1レトロ1つ＝他は見送り（機会コスト）。次スプリント以降のパラメータに永続して効く。
-/** レトロ改善を反映したレビュー容量（制約理論：ボトルネックを広げる投資。'capacity' 1つにつき +1）。 */
+/** レトロ改善を反映した「1日あたり」レビュー容量（制約理論：ボトルネックを elevate する投資。'capacity' 1つにつき +1/日）。 */
 export function reviewCapacityFor(retroImprovements: readonly string[]): number {
-  return REVIEW_CAPACITY + retroImprovements.filter((x) => x === 'capacity').length
+  return REVIEW_CAPACITY_PER_DAY + retroImprovements.filter((x) => x === 'capacity').length
 }
 /** レトロ改善を反映した WIP 上限（フロー改善：仕掛りを絞る。'wip' 1つにつき −1、下限1）。 */
 export function wipLimitFor(retroImprovements: readonly string[]): number {
@@ -453,8 +455,8 @@ export function resolveSprintBacklog(core: ProgressCore): { core: ProgressCore; 
     sprintForecast: [],
     inProgress: [],
     reviewProgress: {},
-    // レビュー容量は満タンにリセット＝レトロ改善（capacity 投資）を反映した上限まで戻す
-    reviewCapacity: reviewCapacityFor(core.retroImprovements),
+    // reviewCapacity はここでは触らない＝日次資源なので、次スプリント最初の daily ビート進入時に
+    // advanceCore が reviewCapacityFor(retroImprovements) へリセットする（精算ビートで戻す意味はもう無い）。
     // 次プランニングで「↪前回持ち越し」を示すため、終わらせきれなかった分を記録（done なら []）
     lastCarryover: carryIds,
   }

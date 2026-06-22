@@ -52,6 +52,16 @@
 
 <!-- ここに指揮者が追記する。 -->
 
+### 2026-06-22 / loop/review-capacity-per-day（レビュー容量の「1日あたり化」再設計＋AI/人レビュー配分フレーミング）
+
+総監督要望: (a)「1日で全部投入できる」不自然さの解消＝日次ペーシング／(b) AI駆動のスピード感（2日目に手詰まりにせず工夫で多く消化）／(c) 全完遂不可はOKだが現状2〜3itemは少なすぎ／(d) 表現は「価値はレビュー」でなく「AIにどこまでレビューさせ、人がどれぐらい確かめるか」の配分。agile-expert 2回考証で per-day 値を 2→3→**4** に収束。
+
+- engine: `REVIEW_CAPACITY=6`(プール/sprint)→`REVIEW_CAPACITY_PER_DAY=4`。advanceCore で **daily ビート進入時に reviewCapacityFor(retroImprovements) へリセット・繰り越しなし**（旧スプリント境界リセットを置換）。resolveSprintBacklog の容量リセット除去（日次資源化）。capacityレバー=+1/日・WIP=2据え置き・TIER(great1.5)経路維持＝スキルで高スループット。`DELIVERY_TARGET` 6→9（スループット増で delivery 項の早期飽和を回避）。
+- 表現: 「価値はレビュー」断定を全削除→配分フレーミング（KanbanView/HowToPlay/glossary{{制約理論}}{{レビュー}}/STORY§3,§4.4,§5/s1・s2-retro capacityレバー）。深さ=浅い「AIに任せて速く通す」/深い「人が確かめる」。容量0時「明日のデイリーで回復・使い切り」明示。
+- レビュー: code-reviewer（🔴は crossedSprintBoundary 変数名の可読性指摘＝バグでない・コメント追記で defuse）／agile🟢（仕様一致）／story🟢（配分フレーミング完遂・§3.5→§3 修正）。全ゲート緑(321/build/size161.69<164/e2e/lighthouse)。
+- [open] (要プレイテスト/監修) 日次化でスループット約3倍。**LEGACY_SHIP_THRESHOLD=2 / deprioritizedJoushi・Genba フラグ / DELIVERY_TARGET(item基準)** が「容量に余裕がある世界」で死に機構化/緩みすぎないかを実機プレイで実測し、必要なら閾値再調整（forecast上限・PBI総量・閾値）。今回コード値は DELIVERY_TARGET のみ調整、他は据え置き。
+- [参考] 憲章は「4スプリント」だが実装/STORYは3スプリントで一貫（既存の doc 乖離・本件範囲外）。
+
 ### 2026-06-22 / loop/all-agents-review-r6（全エージェント総出レビュー R6＝#20〜#32 反映後の再点検）
 
 専門家5＋監修3を現状 main 全体に並列適用。R5以降の大量マージ（用語リネーム・BacklogPanel分割・負債連鎖・S3ローテーション・音unlock 等）の再点検。
