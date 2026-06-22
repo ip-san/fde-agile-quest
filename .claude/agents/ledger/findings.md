@@ -172,3 +172,15 @@
 - R10 再レビュー：story/learning「クリーン」。全11ゲート緑（test348/build/size157.85kB/lighthouse/e2e/axe）。
 - [open] (🟡・defer) code: deliveredPbiIds の PBI_BY_ID 全件走査（呼出増時の設計リスク）、MiniGameReview の DiffView key に l.text 混在（静的diffで実害なし・index keyはlint抵触で据置）、useState lazy init は MiniGame の位置再利用に依存（key 明示は将来の保険）。
 - [open] (🟡・narrative判断/未対応) fde: s1-retro capacityレバー語りとレバー実体の微ズレ／s1-daily-showcase-order b の正直上申に政治コスト(trust)が乗らない／s1-daily-incident に hearingOptions 無し。ai-dx: slopsquatting題材の14ケース未収録（実在脅威・追加余地）。learning: great で消化が伸びる旨の文言化・レビュー作問への顧客KPI軸。agile: velocity と「部分点なし(インクリメント)」のプレイヤー向け差別化文言。DELIVERY_TARGET=9 は容量半減後の妥当性をプレイテストで要観察（継続open）。
+
+### 2026-06-23 / loop/all-agent-review-r11（R11/R12全エージェント adversarial）
+
+全8エージェント R11（adversarial）＝**ゲーム破綻🔴ゼロ**。出た 🟡 のうち実害/価値のあるものを反映。
+- code: Board の backlogDone.includes→doneSet メモ化、LegacySummary の deliveredPbiIds を useMemo 化、ミニゲーム選択肢 key を `${i}-${text}` で衝突回避、レビュー MiniGame に key={seed}（lazy init 取り違え防止）。
+- agile: ResultModal「巻込−1（WIP違反）」→「フロー停滞＝未完の積み残し」に是正（WIP上限違反は canStart で常に防がれ発生しない＝誤読防止）。
+- fde: s1-daily-showcase-order b（正直な上申）に trust−1 を追加＝「正直は無料・迎合は得」の逆メッセージ解消（pinnedの弧入口・他S1正論選択と同じ trust− の払い方）。STORY.md §6.6 を実装に同期。
+- ai-dx: slopsquatting 題材をレビュー作問 case15 として追加（pbi-evt-exec-feature=荷主向けダッシュボードにAIが実在しない描画npmを import 提案）。glossary に「スロップスクワッティング」登録。コア PBI の1:1カバレッジは温存（EVENT_BACKLOG 側に追加）。
+- story: s3-daily-ai-regression タイトル「モデル更新、突然のバカ」→「ある朝、AIが昨日を忘れた」（情景寄りに統一）。
+- R12 再レビュー：ai-dx「クリーン」、story「クリーン」（STORY.md同期で解消）、全11ゲート緑（test348/build/size158.13kB/lighthouse/e2e/axe）。logistics/robotics は R11「クリーン」。
+- [open] (🟡・defer) code: canAddToForecast の per-call Set再構築（N×M・backlog~20で実害軽微・署名変更要）。ai-dx: トークン経済の単位（着手80 vs 丸投げ500=実コストか贅沢税か）の文言明示。learning(R11出力欠落)・great消化伸び文言・レビュー作問への顧客KPI軸は継続。
+- [note] 画像パイプラインの未コミット差分（scripts/import-image.mjs / src/data/images.ts / public/img/*.jpg）はレビュー作業と無関係につき本コミットに含めず別管理。
