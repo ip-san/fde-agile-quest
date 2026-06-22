@@ -332,6 +332,19 @@ describe('resolveSprintBacklog（カンバン精算）', () => {
     expect(review.cultureDelta).toBe(-1)
   })
 
+  it('予測過多でも着手分は完遂・未着手を持ち越し（仕掛りゼロ）なら culture +1', () => {
+    // 予測を多めに積み、着手した floor/veteran は Done。asis は一度も着手せず持ち越し。
+    // ペナルティ判定は仕掛り(inProgress)基準＝未着手の積み過ぎは罰しない（Scrum: 未完了PBIを戻すのは正常）。
+    const c = core({
+      sprintForecast: [ID.floor, ID.veteran, ID.asis],
+      backlogDone: [ID.floor, ID.veteran],
+      inProgress: [],
+    })
+    const { review } = resolveSprintBacklog(c)
+    expect(review.carryover.map((d) => d.id)).toEqual([ID.asis])
+    expect(review.cultureDelta).toBe(1)
+  })
+
   it('culture 上限10はクランプし実差分を報告', () => {
     const c = core({
       meters: { ...STARTING_METERS, culture: 10 },

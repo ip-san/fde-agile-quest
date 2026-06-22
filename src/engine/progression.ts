@@ -417,8 +417,9 @@ export function spinCore(core: ProgressCore, segment: Segment, pickRandom: numbe
 
   if (ceremony === 'daily') {
     // 縦糸の入口(pinned)を見逃したまま終わらせない：未遭遇の pinned が「残りデイリー数」以上に
-    // 溜まったら、スプリント末側のデイリーから1つずつ強制提示する。これで pinned が複数あっても
-    // （例：S2 の ghost-stock と physical-ai-showcase）全部を必ず通す。残りに余裕がある間は
+    // 溜まったら、スプリント末側のデイリーから1つずつ強制提示する。これで同一スプリント内に
+    // pinned が複数あっても（例：S1 の hideknowhow/showcase-order/physical-ai-showcase の3件。
+    // S2 は ghost-stock の1件）末尾デイリーで1件ずつ全て通す。残りに余裕がある間は
     // drawCandidates が pinned を最優先候補に据えるので、自然に出やすいまま体験を妨げない。
     const beats = SPRINTS[core.sprintIndex]?.beats ?? []
     const remainingDailies = beats.slice(core.beatIndex).filter((b) => b === 'daily').length

@@ -166,7 +166,7 @@ function BacklogReviewBlock({ review }: { review: BacklogReview }) {
         <p className={`text-xs ${cd > 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
           {cd > 0
             ? '巻込 ▲ +1：着手したものを WIP を守って終わらせた（持続可能なペース）。'
-            : '巻込 ▼ −1：着手したものを終わらせきれず、持ち越した。'}
+            : '巻込 ▼ −1：着手した仕掛りを終わらせきれず、持ち越した（WIP 違反）。'}
         </p>
       )}
     </div>
