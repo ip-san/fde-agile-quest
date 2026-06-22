@@ -332,6 +332,10 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     sprint: 2,
     ceremony: 'daily',
     segment: 'team',
+    // 行動の芯＝二分したチームを KPI という価値の論拠で動かし合意を取る＝説得（迎合・気合は悪手）。
+    minigame: 'persuade',
+    // 注: persuade は汎用の論拠デッキ(PERSUADE_DECK)を出すため、下の hearingOptions は実際には未使用（残置）。
+    // 将来 dev/hearing に戻す余地として残すだけで、ミニゲームの出題には反映されない。
     title: '優先順位の綱引き',
     narrative:
       '「予測機能が先だ」「いや写真入力だろ」。チームが二つに割れたまま、誰も交通整理をしない。あなたはエンジニアとして呼ばれた。だが、整理する人がいない。',
@@ -432,6 +436,10 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     sprint: 2,
     ceremony: 'daily',
     segment: 'kokyaku',
+    // 行動の芯＝経営を「業務の変化」という価値の論拠で動かす＝説得（見栄えの資料で取り繕うは悪手）。
+    minigame: 'persuade',
+    // 注: persuade は汎用の論拠デッキ(PERSUADE_DECK)を出すため、下の hearingOptions は実際には未使用（残置）。
+    // 将来 dev/hearing に戻す余地として残すだけで、ミニゲームの出題には反映されない。
     title: '進捗を説明しろ',
     narrative: '経営会議で「進捗を説明しろ」と。立派な資料を作るか、動くデモを見せるか。',
     hearingOptions: [
@@ -862,6 +870,10 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     sprint: 2,
     ceremony: 'daily',
     segment: 'kokyaku',
+    // 行動の芯＝結城/PO とスプリントゴールを価値の論拠で再交渉する＝説得（断れず呑む/全部詰めるは悪手）。
+    minigame: 'persuade',
+    // 注: persuade は汎用の論拠デッキ(PERSUADE_DECK)を出すため、下の hearingOptions は実際には未使用（残置）。
+    // 将来 dev/hearing に戻す余地として残すだけで、ミニゲームの出題には反映されない。
     title: '揺らぐスプリントゴール',
     narrative:
       '{{スプリント}}の途中、結城さんが割り込んできた。「経営から直で言われまして……荷主に実績を見せる{{ダッシュボード}}を今期に、と。断れなくて。このスプリントに入れられませんか」。{{スプリントゴール}}が揺らぐ。',
@@ -1659,6 +1671,10 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       sm: '急ぐな。一律で削れという話ほど、現場の事実から外れている。誰が本当に困るのか、見てくる。',
       dev: '一律3割って、品目を見ずに削る話ですよね。どこで{{欠品}}が出るか、数字で確かめてからにしません？',
     },
+    // 行動の芯＝本社経営企画を「品目別の事実」という価値の論拠で動かす＝説得（一律で飲ませる/数字だけ作るは悪手）。
+    minigame: 'persuade',
+    // 注: persuade は汎用の論拠デッキ(PERSUADE_DECK)を出すため、下の hearingOptions は実際には未使用（残置）。
+    // 将来 dev/hearing に戻す余地として残すだけで、ミニゲームの出題には反映されない。
     title: '本社からの一律通達',
     narrative:
       '本社経営企画から「全倉庫、在庫を一律3割削減」の通達が降りてきた。現場は{{欠品}}を恐れてざわつく。赤城部長は「本社の言う通りにしておけ」と言う。',

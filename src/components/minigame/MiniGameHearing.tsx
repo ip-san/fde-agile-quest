@@ -73,7 +73,10 @@ export function MiniGameHearing({ seed, theme, hearingOptions, onResolve }: Prop
   return (
     <div className="space-y-3">
       <p className="text-sm text-[var(--text-body)]">
-        {hearingPromptFor(theme)} <span className="text-[var(--text-sub)]">深掘りになる質問を2つ選ぶ</span>
+        {hearingPromptFor(theme)}{' '}
+        <span className="text-[var(--text-sub)]">
+          {theme === 'persuade' ? '効く論拠を2つ選ぶ' : '深掘りになる質問を2つ選ぶ'}
+        </span>
       </p>
       <ul className="space-y-2">
         {options.map((o, i) => {
