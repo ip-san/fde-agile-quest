@@ -97,7 +97,8 @@ export function KanbanView({
   const fpts = forecastPoints({ sprintForecast: core.sprintForecast })
   const over = fpts > capacity
   // 途中で引き込める候補も"上位優先"に揃える＝canAddToForecast（上位を全部入れてからでないと下位は引けない）。
-  // プランニングの選択と同じ規律にすることで、途中追加でも飛ばし入れを許さない（engine 側のガードと UI を一致させる）。
+  // 上位優先では「次に引ける1件」だけが該当する（canAddToForecast は先頭の適格1件のみ true）。
+  // 毎行 canAddToForecast を呼ぶと O(n²) なので、PlanningView の nextAddableId と同じく find で1件だけ求める。
   const pullable = useMemo(() => {
     const coreForPull = {
       sprintForecast: core.sprintForecast,
@@ -105,7 +106,8 @@ export function KanbanView({
       unrefinedPbis,
       backlogOrder,
     }
-    return backlogOrder.filter((id) => canAddToForecast(coreForPull, id))
+    const next = backlogOrder.find((id) => canAddToForecast(coreForPull, id))
+    return next ? [next] : []
   }, [backlogOrder, core.sprintForecast, core.backlogDone, unrefinedPbis])
 
   if (core.sprintForecast.length === 0) {
@@ -331,7 +333,7 @@ export function KanbanView({
                           }}
                           className="flex-1 rounded-lg bg-slate-700 px-2 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-slate-600 active:scale-95"
                         >
-                          <RichText text="浅い：AIに任せて速く通す（{{完成の定義}}妥協・負債）" interactive={false} />
+                          <RichText text="浅い：広く速く通す（{{完成の定義}}は妥協・負債は残る）" interactive={false} />
                         </button>
                         <button
                           type="button"
@@ -341,7 +343,7 @@ export function KanbanView({
                           }}
                           className="flex-1 rounded-lg bg-emerald-600 px-2 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-emerald-500 active:scale-95"
                         >
-                          <RichText text="深い：人が確かめる（{{完成の定義}}達成・品質）" interactive={false} />
+                          <RichText text="深い：一点を深く固める（{{完成の定義}}達成・品質）" interactive={false} />
                         </button>
                       </div>
                     ) : (
@@ -383,7 +385,7 @@ export function KanbanView({
               >
                 {undoneSet.has(id) ? (
                   <span
-                    title="AIに任せて速く通した（浅い）＝完成の定義(DoD)を妥協した Ship。後で負債の取り立てが来る。"
+                    title="広く速く通した（浅い）＝完成の定義(DoD)を妥協した Ship。量で前に進むが、後で負債の取り立てが来る。"
                     className="shrink-0 self-center rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-300"
                   >
                     ⚠ 浅い
