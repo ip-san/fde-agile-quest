@@ -176,8 +176,11 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
           </span>
         </div>
         <p className="mb-2.5 px-1 text-[11px] text-[var(--text-sub)]">
-          本社{displayName('lumen')}のチームが、各自の観点（価値／プロセス／技術）で気づきを共有する。
-          <span className="text-[var(--text-body)]">今日どこへ向かうかを決めるのは、開発者であるあなた自身だ</span>
+          本社{displayName('lumen')}
+          のチームが、各自の観点（価値／プロセス／技術）で気づきを共有する。PO・SMは観点を添えるだけ——
+          <span className="text-[var(--text-body)]">
+            朝会の主役は開発者。今日どこへ向かうかを決めるのは、あなた自身だ
+          </span>
           。どれを採る？（動けるのは1箇所。選ばなかった方は見送りになる）
         </p>
 
