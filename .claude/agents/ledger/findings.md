@@ -50,3 +50,22 @@
 - [open] (🟡) code-reviewer / MiniGameHearing.tsx — 上限 aria-live は3秒残る。VoiceOver/NVDA は空化を無音で行うため、2s 程度への短縮余地（任意・微調整）。（round1 / 2026-06-20 / Issue #5）
 - [open] (🟡) code-reviewer / MiniGameHearing.tsx — disabled の確定ボタンに shake が当たる組み合わせ（reduced-motion で緩和済み・許容範囲）。shake 対象を別要素にする案は任意。（round1 / 2026-06-20 / Issue #5）
 - 監修サマリ: code-reviewer（設計＋a11y）round2 で dry（🔴ゼロ・対応すべき🟡ゼロ）。a11y は ux-engineer 実機自己点検＋e2e axe でも担保。
+
+### 2026-06-22 / 総監督直接GO / loop/all-agents-review-20260622（全エージェント総出レビュー R5＋仕様バグ監査）
+
+専門家5＋監修3を現状main全体に並列適用→makerが修正→再考証をdryまで反復。総監督指示「仕様バグ（後でゲームが成立しなくなる矛盾含む）は絶対に直す」を受け、ゲーム整合性の敵対的監査を追加実施。
+
+- [resolved] (🔴相当) code-reviewer / minigame/MiniGameDev.tsx:57 — `window.setTimeout(onResolve)` がアンマウント未クリア（420ms以内のアンマウントで unmounted 後 onResolve 発火の latent バグ）。→ timerRef 化＋useEffect cleanup で clearTimeout。さらに onResolveRef で stale closure も塞ぎ Roulette の escapeRef パターンに統一。（round1-3 / 2026-06-22）
+- [resolved] (🔴/仕様バグ) engine監査 / events-sprint3.ts:702-733 s3-review-topdown — 単発レビューの強制イベントが2択とも trust− で、trust=1到達時に回避不能の強制失敗（兄弟3イベントは安全選択あり＝不変条件違反）。総監督承認の上、choice b を `{insight:1,trust:-1}`→`{insight:1}` にし逃げ道を復活、resultTextを整合書換。story🟢/learning🟢（観点1-2強化）。（2026-06-22）
+- [resolved] (🟡) 複数 / cast.ts — canonical「カルゴ物流」表記とSTORY.md表示名「翠流物流」の乖離→読み替え注記を追記。（round1）
+- [resolved] (🟡) agile / events-sprint1.ts:773 s1-review・:807 s1-retro・events-sprint3.ts:731 s3-review-topdown・:855 s3-retro-trust — forecast/commitment語法の混線・レビュー/レトロ役割境界・DoD未達の完成扱い明示。fortcast語法をキャンペーン全体で統一。（round1-3）
+- [resolved] (🟡) story / events-sprint3.ts:673 s3-daily-craft — 久遠同席前提のhearingを自己内省/田淵向けに再ターゲット（場面二重化解消）。（round1）
+- [resolved] (🟡) learning / events-sprint3.ts:531/564/595 boundary/lastman/drive — 「責任引受＝無条件に得」の支配選択化を、メーター値不変のままb resultTextに機会コスト一文をadditive追記し緩和。（round1）
+- [resolved] (🟡) ai-dx / glossary.ts:162 RAG・logistics / locations.ts:40 serverroom — 説明補強（ハルシネーション抑制の狙い／出荷停止の主語を基幹WMSへ）。（round1）
+- [resolved] (🟡) code-reviewer / Roulette/Travel/MiniGameDev — prefers-reduced-motion スナップショット重複→ usePrefersReducedMotion フックに共通化。MiniGameDevPuzzle のフォーカスを confirmRef+useEffect 方式へ統一・data-initial-focus 表記統一・full二重フォーカスをhasFocusedRefで1回化。（round1-3）
+- [open] (🟡) engine監査 / events-sprint3.ts S3デイリー群 — requiresFlag回収イベントがS3デイリー5枠に対し過密で、1周回で解放された回収の一部が死蔵しうる（進行は止まらない＝体験ムラ）。「1周回で確実に拾える上限」の設計課題。次イテレーション候補。
+- [open] (🟡) engine監査 / chapter-01.ts FINALE/exposed系 — 第1章では finalEndingFor が常に finalePending:false で到達不能なドーマント（コメントで「次章へ繰延」明示済み・意図的）。第2章実装時に活性化。
+- [open] (🟡) learning / events-sprint3.ts:726 s3-review-topdown b — 逃げ道復活の必然的帰結でbがメーター上の支配選択（aは二重罰）。「過ちの精算ビート」局面では許容範囲・resultTextの抑制表現で過剰報酬の誤学習は回避済み（learning-designer判定：致命傷なし・再修正不要）。
+- [open] (🟡) learning / s2-daily-debt — 技術的負債を借りる選択に取り立て連鎖が無く「借りた者勝ち」誤読余地。setsFlag/新イベント接続=mechanics改変につきスコープ外。
+- [open] (🟡/設計) code-reviewer / BacklogPanel.tsx 1307行・state machine union化、Board.tsx命名/IIFE、Travel.tsx renderRoom/Pinコンポーネント化 — リファクタ規模大・設計判断。別イテレーション。
+- 監査サマリ: 専門家fde🟢logistics🟢robotics🟢ai-dx🟢agile🟢／監修story🟢learning🟢code🟢。**ゲーム整合性: ソフトロック/クラッシュ/到達不能/結末不定の🔴ゼロ**（エンディングは`match:()=>true`＋`?? endings[last]`で二重網羅・フラグ配線はthreads.test/term-coverage/game.testで構造担保・discoversPbi手動検証OK）。全ゲート緑（vitest313/build/size160.47kB<164/CSS9.15<10/e2e3-3 axe/lighthouse）。round3＋仕様バグ修正再考証で dry。

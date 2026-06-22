@@ -159,7 +159,7 @@ export const GLOSSARY: Record<string, Term> = {
     key: 'RAG',
     label: 'RAG',
     reading: 'ラグ',
-    desc: 'Retrieval-Augmented Generation（検索拡張生成）。外部知識を検索してAIの回答に使う仕組み。RAGの前に、まず知識そのものを整理することが効く。',
+    desc: 'Retrieval-Augmented Generation（検索拡張生成）。手元の正しい資料を検索してAIに渡し、その根拠に基づいて答えさせる仕組み。デタラメな作り話（ハルシネーション）を抑え、「どこから引いたか」を示せるのが狙い。だがRAGの前に、まず知識そのものを整理することが効く。',
   },
   エージェント: {
     key: 'エージェント',

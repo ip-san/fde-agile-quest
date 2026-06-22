@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { displayName } from '../data/chapters/chapter-01/names'
 import { AVAILABLE_IMAGES, imageUrl } from '../data/images'
 import { LOCATION_ORDER, LOCATIONS, QUIET_BY_LOCATION, type StandupVoice, standupFor } from '../data/locations'
+import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
 import type { GameEvent, LocationId } from '../types'
 import { RichText } from './RichText'
 
@@ -45,9 +46,7 @@ const MAP_PIN_COORDS: Record<string, { x: number; y: number }> = {
 export function Travel({ candidates, peekLocation, onTravel }: Props) {
   const voices = standupFor(candidates)
   const liveLocations = new Set(voices.map((v) => v.location))
-  const [reduceMotion] = useState(
-    () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-  )
+  const reduceMotion = usePrefersReducedMotion()
 
   // マップは"地理"として読ませる。ゾーンは2つ：
   //  ・物理の建物（見取り図に描く部屋）＝歩いて回る

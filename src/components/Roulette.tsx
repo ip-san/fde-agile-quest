@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { SEGMENT_COLORS, SEGMENT_LABELS } from '../data/chapters/chapter-01'
 import { sfxSpin, sfxStop } from '../engine/sfx'
+import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
 import type { Segment } from '../types'
 
 const SEGMENTS: Segment[] = ['genba', 'kokyaku', 'team', 'trouble', 'chance']
@@ -47,9 +48,7 @@ export function Roulette({ disabled, onResult }: Props) {
   // スクリーンリーダー向けの結果アナウンス
   const [announce, setAnnounce] = useState('')
   // 前庭障害対策: prefers-reduced-motion なら回転アニメを省く
-  const [reduceMotion] = useState(
-    () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-  )
+  const reduceMotion = usePrefersReducedMotion()
   const pendingSegment = useRef<Segment | null>(null)
   const pendingPick = useRef(0)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)

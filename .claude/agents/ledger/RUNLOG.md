@@ -18,6 +18,15 @@
 
 <!-- ここに指揮者が新しい順で追記する。 -->
 
+## 2026-06-22 13:46 — 全エージェント総出レビュー（R5）＋仕様バグ監査 [ブランチ: loop/all-agents-review-20260622]
+- 一手: 総監督の直接GO「全エージェント総出でレビューし指摘が無くなるまで反復」＋追加指示「仕様バグ（後でゲームが成立しなくなる矛盾含む）は絶対に直す」。Issue駆動でなく現状main全体が対象。
+- 実装: narrative-designer（events-sprint1/3.ts, cast.ts, glossary.ts, locations.ts のadditive磨き＋仕様バグ修正）／ux-engineer（minigame/MiniGameDev.tsx, MiniGameDevPuzzle.tsx, Roulette.tsx, Travel.tsx, hooks/usePrefersReducedMotion.ts新規）。
+- レビュー: Round1で専門家5（fde/agile/ai-dx/logistics/robotics）＋監修3（story/learning/code）を並列考証＝物語側🔴ゼロ・code🔴3(うち1誤検知・2は非バグだが安全側で対処)。Round2でcode🔴1(stale closure)＋agile🟡1(語法横展開漏れ)→修正。Round3でcode🔴0/🟡0・全監修🟢。
+- 仕様バグ監査: フラグ配線到達性(threads.test)・ID健全性(seedId/precepts/discoversPbi手動)・エンディング網羅(match catch-all＋fallback)を確認後、story-reviewer＋general-purposeで「ゲーム成立性」を敵対的監査。ソフトロック/クラッシュ/到達不能/結末不定の🔴ゼロ。唯一 s3-review-topdown が強制ビートで2択とも trust−（trust=1で回避不能失敗）→総監督承認の上 choice b を逃げ道化（`{insight:1,trust:-1}`→`{insight:1}`）。story🟢/learning🟢で再確認。
+- ゲート: 指揮者＋quality-gatekeeperで全緑（typecheck0/biome/vitest313/circular/knip/type-coverage99.72%/cpd0.93%/build/size JS160.47kB<164kB・CSS9.15kB<10kB/e2e3-3 axe/lighthouse）。
+- 状態: **feature ブランチに未コミット**（総監督の明示指示があるまでcommit/push/PRしない）。
+- 残課題: open🟡（S3回収イベント過密/FINALEドーマント/s3-review-topdown b支配選択=許容/s2-daily-debt取り立て連鎖/BacklogPanel分割ほか設計判断）。findings.md 参照。
+
 ## 2026-06-20 15:15 — legacy-bridge 発見導線の対称化 [Issue #4 / ブランチ: loop/legacy-bridge-seed-20260620]
 - 一手: Issue 駆動の初回。総監督が Approved(GO) にした Issue #4 を FIFO で着手（showrunner は探索せず Issue 本文を指示書化）。物語レーン・低リスク・正本未改変。
 - 実装: narrative-designer。events-sprint1.ts（s1-daily-legacy choice b に seedId='legacy-bridge' 追加＋resultText 改稿）/ seeds.ts（TODO 解消）/ docs/EVENT_INDEX.md（gen:index 再生成）。
