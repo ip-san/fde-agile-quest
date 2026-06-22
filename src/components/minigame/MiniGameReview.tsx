@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { type DiffLine, dealReview, type ReviewRound, scoreReview } from '../../data/minigames'
+import { type DiffLine, dealReview, type ReviewFlag, type ReviewRound, scoreReview } from '../../data/minigames'
 import type { ExecTier } from '../../types'
 import { SelectableCheckItem } from './SelectableCheckItem'
 import { useGlyphSelection } from './useGlyphSelection'
@@ -7,6 +7,29 @@ import { useGlyphSelection } from './useGlyphSelection'
 interface Props {
   seed: number
   onResolve: (tier: ExecTier) => void
+}
+
+interface RevealedRowProps {
+  option: ReviewFlag
+  picked: boolean
+}
+
+/** 答え合わせフェーズの1行。選択フェーズとは完全に別の表示ロジックを持つため分離する。 */
+function RevealedRow({ option, picked }: RevealedRowProps) {
+  const mark = option.issue ? (picked ? '✓ 的確' : '! 見逃し') : picked ? '✗ 空振り' : '— 不要'
+  const cellStyle = option.issue
+    ? picked
+      ? 'border-emerald-400/60 bg-emerald-500/10 text-[var(--text)]'
+      : 'border-amber-400/60 bg-amber-500/10 text-[var(--text)]'
+    : picked
+      ? 'border-rose-400/50 bg-rose-500/10 text-[var(--text-body)]'
+      : 'border-[var(--panel)] bg-[var(--panel)]/20 text-[var(--text-disabled)]'
+  return (
+    <li className={`rounded-xl border px-4 py-2.5 text-sm ${cellStyle}`}>
+      <span className="mr-2 text-[11px] font-bold">{mark}</span>
+      {option.text}
+    </li>
+  )
 }
 
 /** レビュー・ミニゲーム：AI が書いた差分を点検し、人が拾うべき指摘を選ぶ（AI時代の人間レビュー）。
@@ -61,20 +84,7 @@ export function MiniGameReview({ seed, onResolve }: Props) {
         {round.options.map((o, i) => {
           const on = picked.includes(i)
           if (revealed) {
-            const mark = o.issue ? (on ? '✓ 的確' : '! 見逃し') : on ? '✗ 空振り' : '— 不要'
-            const cellStyle = o.issue
-              ? on
-                ? 'border-emerald-400/60 bg-emerald-500/10 text-[var(--text)]'
-                : 'border-amber-400/60 bg-amber-500/10 text-[var(--text)]'
-              : on
-                ? 'border-rose-400/50 bg-rose-500/10 text-[var(--text-body)]'
-                : 'border-[var(--panel)] bg-[var(--panel)]/20 text-[var(--text-disabled)]'
-            return (
-              <li key={o.text} className={`rounded-xl border px-4 py-2.5 text-sm ${cellStyle}`}>
-                <span className="mr-2 text-[11px] font-bold">{mark}</span>
-                {o.text}
-              </li>
-            )
+            return <RevealedRow key={o.text} option={o} picked={on} />
           }
           return (
             <li key={o.text}>

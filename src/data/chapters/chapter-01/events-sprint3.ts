@@ -394,7 +394,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         effects: { insight: 1, culture: 1 },
         repo: { coverage: 5, debt: -1 },
         resultText:
-          '{{レガシー}}を笑わず、設計条件として向き合った。遅れて始めた更新が、本番を支える土台になり始めた。',
+          '先に橋を架けておけば、こんな軋みはなかった。痛んでからツケを払い終えた今、ようやく{{レガシー}}が設計条件に見えてくる。',
         seedId: 'legacy-bridge',
       },
     ],

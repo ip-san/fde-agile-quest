@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useReducer, useState } from 'react'
 import { CEREMONY_LABELS, CEREMONY_SHORT, EVENTS, PRODUCT_GOAL, SPRINTS } from '../data/chapters/chapter-01'
 import { hearingThemeFor } from '../data/minigames'
 import { PRECEPTS } from '../data/precepts'
@@ -100,7 +100,9 @@ export function Board() {
   // 「遊び方」リファレンスの開閉。
   const [howToOpen, setHowToOpen] = useState(false)
   // 都度教示の再評価トリガ（既読は localStorage が真実源。閉じたら再レンダーして次の有無を評価）。
-  const [, bumpCoach] = useState(0)
+  // coachVersion はカウンタ値として useMemo の依存に入れ、dismiss 後の再評価を確実にトリガする。
+  // useReducer の dispatch でインクリメントすることで「再評価のトリガ専用」の意図を名前で示す。
+  const [coachVersion, forceCoachReeval] = useReducer((v: number) => v + 1, 0)
 
   const sprint = SPRINTS[Math.min(sprintIndex, SPRINTS.length - 1)]
   const ceremony: Ceremony = sprint.beats[Math.min(beatIndex, sprint.beats.length - 1)]
@@ -145,16 +147,18 @@ export function Board() {
     [meters, rs.coverage, rs.debtScore, rs.deliveredItems]
   )
 
-  // 都度教示：プロローグ後、その場面で“未読”のコーチマークを1つ出す（intro を最優先、次に現セレモニー）。
+  // 都度教示：プロローグ後、その場面で”未読”のコーチマークを1つ出す（intro を最優先、次に現セレモニー）。
   // イベント/移動/結果/他モーダル中は出さない。localStorage が真実源で、coachVersion は閉じた後の再評価用。
-  // localStorage が真実源なので毎レンダー算出（コスト極小）。dismiss 時の bumpCoach 再レンダーで自然に更新。
-  // 出すコーチマークの“キー”だけを決める（本文は遅延の Coachmark 側が引く＝初期バンドルを軽く）。
-  const pendingCoachKey = (() => {
+  // useMemo で依存を明示し、localStorage.getItem の呼び出しを関係ない state 更新時に省く。
+  // 出すコーチマークの”キー”だけを決める（本文は遅延の Coachmark 側が引く＝初期バンドルを軽く）。
+  const pendingCoachKey = useMemo(() => {
+    // coachVersion は forceCoachReeval() で更新→ localStorage の再評価を強制するトリガ（値は捨てる）
+    void coachVersion
     if (prologueOpen || howToOpen || bookOpen || repoOpen || backlogOpen) return null
     if (status !== 'playing' || result || currentEvent) return null
     if (!coachSeen('intro')) return 'intro'
     return COACHMARK_KEYS.includes(ceremony) && !coachSeen(ceremony) ? ceremony : null
-  })()
+  }, [prologueOpen, howToOpen, bookOpen, repoOpen, backlogOpen, status, result, currentEvent, ceremony, coachVersion])
 
   // 初回の“実行ミニゲーム”だけ、判断→実行の関係を1度説明してから本体を出す（選択直後の「？」を解消）。
   const minigameCoachKey =
@@ -547,7 +551,7 @@ export function Board() {
             coachKey={activeCoachKey}
             onClose={() => {
               markCoachSeen(activeCoachKey)
-              bumpCoach((v) => v + 1)
+              forceCoachReeval()
             }}
           />
         </Suspense>
