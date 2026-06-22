@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { type DiffLine, dealReview, type ReviewRound, scoreReview } from '../../data/minigames'
-import { sfxTick } from '../../engine/sfx'
 import type { ExecTier } from '../../types'
+import { SelectableCheckItem } from './SelectableCheckItem'
+import { useGlyphSelection } from './useGlyphSelection'
 
 interface Props {
   seed: number
@@ -15,10 +16,7 @@ export function MiniGameReview({ seed, onResolve }: Props) {
   const [picked, setPicked] = useState<number[]>([])
   const [tier, setTier] = useState<ExecTier | null>(null) // null＝選択中、確定後は答え合わせ表示
 
-  // 各インデックスが「一度でも触られたか」を追跡するref（初回ロード時の全OFF unpop を防ぐ）
-  const touchedRef = useRef<Set<number>>(new Set())
-  // 「直前の選択状態」を追跡して OFF になった項目だけ unpop を当てる
-  const [unpopKey, setUnpopKey] = useState<Record<number, number>>({})
+  const { touchedRef, unpopKey, registerToggle } = useGlyphSelection()
 
   const revealed = tier !== null
   const n = picked.length
@@ -32,13 +30,7 @@ export function MiniGameReview({ seed, onResolve }: Props) {
   const toggle = (i: number) => {
     // 上限なし：0件(LGTM)含む任意件数を選べる
     const has = picked.includes(i)
-    sfxTick(!has)
-    // タッチ済みとして記録
-    touchedRef.current.add(i)
-    if (has) {
-      // ON → OFF: unpop を当てるためにキーを更新
-      setUnpopKey((prev) => ({ ...prev, [i]: (prev[i] ?? 0) + 1 }))
-    }
+    registerToggle(i, has)
     setPicked((p) => (has ? p.filter((x) => x !== i) : [...p, i]))
   }
   const submit = () => setTier(scoreReview(picked.map((i) => round.options[i])))
@@ -84,32 +76,18 @@ export function MiniGameReview({ seed, onResolve }: Props) {
               </li>
             )
           }
-          const wasTouched = touchedRef.current.has(i)
-          // unpop は「触れたことがある AND 現在OFF」の場合だけ当てる。キーで再マウントを制御。
-          const glyphKey = on ? `on-${i}` : wasTouched ? `off-${i}-${unpopKey[i] ?? 0}` : `init-${i}`
-          const glyphClass = on
-            ? 'check-pop text-[var(--link)]'
-            : wasTouched
-              ? 'check-unpop text-[var(--text-sub)]'
-              : 'text-[var(--text-sub)]'
           return (
             <li key={o.text}>
-              <button
-                type="button"
-                aria-pressed={on}
-                onClick={() => toggle(i)}
-                data-initial-focus={i === 0 ? true : undefined}
-                className={`block w-full rounded-xl border px-4 py-3 text-left text-sm transition active:scale-[0.98] ${
-                  on
-                    ? 'border-[var(--link)] bg-[var(--accent)]/20 text-[var(--text)] ring-1 ring-[var(--link)]/60'
-                    : 'border-[var(--border)] bg-[var(--panel)]/40 text-[var(--text-body)] hover:border-amber-500/50 hover:bg-[var(--panel)]'
-                }`}
+              <SelectableCheckItem
+                itemKey={`r-${i}`}
+                on={on}
+                wasTouched={touchedRef.current.has(i)}
+                unpopSeq={unpopKey[i] ?? 0}
+                onToggle={() => toggle(i)}
+                initialFocus={i === 0}
               >
-                <span key={glyphKey} className={`mr-1.5 text-base ${glyphClass}`} aria-hidden="true">
-                  {on ? '☑' : '☐'}
-                </span>
                 {o.text}
-              </button>
+              </SelectableCheckItem>
             </li>
           )
         })}

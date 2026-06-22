@@ -8,9 +8,10 @@ import {
   scoreHearing,
   shuffle,
 } from '../../data/minigames'
-import { sfxTick } from '../../engine/sfx'
 import type { ExecTier } from '../../types'
 import { RichText } from '../RichText'
+import { SelectableCheckItem } from './SelectableCheckItem'
+import { useGlyphSelection } from './useGlyphSelection'
 
 interface Props {
   seed: number
@@ -39,10 +40,7 @@ export function MiniGameHearing({ seed, theme, hearingOptions, onResolve }: Prop
   const [picked, setPicked] = useState<number[]>([])
   const ready = picked.length === 2
 
-  // 各インデックスが「一度でも触られたか」を追跡するref（初回ロード時の全OFF unpop を防ぐ）
-  const touchedRef = useRef<Set<number>>(new Set())
-  // 「直前の選択状態」を追跡して OFF になった項目だけ unpop を当てる
-  const [unpopKey, setUnpopKey] = useState<Record<number, number>>({})
+  const { touchedRef, unpopKey, registerToggle } = useGlyphSelection()
 
   // 上限到達後の3つ目タップ演出トリガ（権威ガードには触れない）
   const [limitHit, setLimitHit] = useState(false)
@@ -65,13 +63,7 @@ export function MiniGameHearing({ seed, theme, hearingOptions, onResolve }: Prop
       limitTimerRef.current = setTimeout(() => setLimitHit(false), 3000)
       return // 早期: 確実な上限到達時は音も鳴らさない
     }
-    sfxTick(!has)
-    // タッチ済みとして記録
-    touchedRef.current.add(i)
-    if (has) {
-      // ON → OFF: unpop を当てるためにキーを更新
-      setUnpopKey((prev) => ({ ...prev, [i]: (prev[i] ?? 0) + 1 }))
-    }
+    registerToggle(i, has)
     setPicked((p) => {
       if (!has && p.length >= 2) return p // 二重ガード: 連打でも上限を超えない
       return has ? p.filter((x) => x !== i) : [...p, i]
@@ -86,33 +78,19 @@ export function MiniGameHearing({ seed, theme, hearingOptions, onResolve }: Prop
       <ul className="space-y-2">
         {options.map((o, i) => {
           const on = picked.includes(i)
-          const wasTouched = touchedRef.current.has(i)
-          // unpop は「触れたことがある AND 現在OFF」の場合だけ当てる。キーで再マウントを制御。
-          const glyphKey = on ? `on-${i}` : wasTouched ? `off-${i}-${unpopKey[i] ?? 0}` : `init-${i}`
-          const glyphClass = on
-            ? 'check-pop text-[var(--link)]'
-            : wasTouched
-              ? 'check-unpop text-[var(--text-sub)]'
-              : 'text-[var(--text-sub)]'
           return (
             <li key={o.text}>
-              <button
-                type="button"
-                aria-pressed={on}
-                onClick={() => toggle(i)}
-                data-initial-focus={i === 0 ? true : undefined}
-                className={`block w-full rounded-xl border px-4 py-3 text-left text-sm transition active:scale-[0.98] ${
-                  on
-                    ? 'border-[var(--link)] bg-[var(--accent)]/20 text-[var(--text)] ring-1 ring-[var(--link)]/60'
-                    : 'border-[var(--border)] bg-[var(--panel)]/40 text-[var(--text-body)] hover:border-amber-500/50 hover:bg-[var(--panel)]'
-                }`}
+              <SelectableCheckItem
+                itemKey={`h-${i}`}
+                on={on}
+                wasTouched={touchedRef.current.has(i)}
+                unpopSeq={unpopKey[i] ?? 0}
+                onToggle={() => toggle(i)}
+                initialFocus={i === 0}
               >
-                <span key={glyphKey} className={`mr-1.5 text-base ${glyphClass}`} aria-hidden="true">
-                  {on ? '☑' : '☐'}
-                </span>
                 {/* {{用語}} を含むので RichText で展開（ボタン内なので interactive=false で入れ子ボタンを避ける） */}
                 <RichText text={o.text} interactive={false} />
-              </button>
+              </SelectableCheckItem>
             </li>
           )
         })}
