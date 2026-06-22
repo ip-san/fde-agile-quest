@@ -287,6 +287,8 @@ export const EVENT_PRECEPTS: Record<string, number[]> = {
   's3-daily-night-shift-miss': [6, 67],
   // ③ DoD妥協Shipの取り立て：速さは礼儀・品質は責任（DoDを飛ばした人の判断が主軸）／雑でも出して計画的に返す。
   's2-daily-undone-debt': [97, 13],
+  // 縦糸 borrowedDebt の取り立て：意図的に借りた負債を握った通り早く返す。速さは礼儀・品質は責任／完璧な正解を待つな。
+  's2-daily-debt-collection': [97, 13],
   // ② 結城(発注側)を後回しにしたツケ：発注者の不安を先回り／顧客の味方であれ、迎合するな（非対称に重いtrust摩擦）。
   's3-daily-joushi-deprioritized': [79, 81],
   // ② 田淵(現場)を後回しにしたツケ：現場に行け・答えは資料の外／手戻りより学びの浅さを恐れろ（insight機会損失）。

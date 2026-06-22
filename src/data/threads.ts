@@ -132,6 +132,15 @@ export const THREADS: Record<GameFlag, Thread> = {
     note: '浅いレビューのまま DoD を妥協して Ship（reviewItem quick 完了で立つ）→負債スコア＋ s2-daily-undone-debt（DoD を一つ飛ばして Done にした判断の取り立てが現場で表に出る）で回収',
     teaser: 'DoD を妥協して通したものが、取り立てを待っている。',
   },
+  borrowedDebt: {
+    // s2-daily-debt の choice a（締切のために意図的に負債を借りる）の setsFlag で立つ。
+    // “借りた者勝ち”にしないため、同じS2終盤の s2-daily-debt-collection で取り立てが来る（event）。
+    // さらに choice a 自身が repo.debt+2 を積むので、負債スコアでも実際にツケが残る（score）。
+    setVia: ['choice'],
+    payoffVia: ['event', 'score'],
+    note: '締切のため意図的に負債を借りる（s2-daily-debt a＝結城さんに「後で必ず返す」と握った約束つきの借入）→負債スコア＋ s2-daily-debt-collection（同S2終盤に早くも軋む取り立て。約束履行で回収＝守れば信頼据え置き／反故で破ると重い）で回収。借りた者勝ちにしない。shippedUndoneの“黙ったDoD妥協”とは別軸＝約束したか否か',
+    teaser: '「後で必ず返す」と握った約束の、期日が近づいている。',
+  },
   deprioritizedJoushi: {
     // 機構②: スプリント精算(resolveSprintBacklog)で立つ＝データ外経路なので 'kanban'。
     // s3-daily-joushi-deprioritized（発注者＝結城の不安・面子＝trust摩擦）で回収。

@@ -171,6 +171,7 @@ const VALID_FLAGS = {
   groundedGoal: true,
   soloHero: true,
   shippedUndone: true,
+  borrowedDebt: true,
   deprioritizedJoushi: true,
   deprioritizedGenba: true,
 } satisfies Record<GameFlag, true>
