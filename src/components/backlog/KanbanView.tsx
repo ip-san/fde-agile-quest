@@ -327,27 +327,36 @@ export function KanbanView({
                       />
                     </div>
                     {depthFor === id ? (
-                      <div className="flex gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPending({ id, depth: 'quick' })
-                            setDepthFor(null)
-                          }}
-                          className="flex-1 rounded-lg bg-slate-700 px-2 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-slate-600 active:scale-95"
-                        >
-                          <RichText text="浅い：広く速く通す（{{完成の定義}}は妥協・負債は残る）" interactive={false} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPending({ id, depth: 'thorough' })
-                            setDepthFor(null)
-                          }}
-                          className="flex-1 rounded-lg bg-emerald-600 px-2 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-emerald-500 active:scale-95"
-                        >
-                          <RichText text="深い：一点を深く固める（{{完成の定義}}達成・品質）" interactive={false} />
-                        </button>
+                      <div className="flex flex-col gap-1.5">
+                        <p className="text-[10px] leading-tight text-slate-400">
+                          このあとのレビューの<span className="font-semibold text-emerald-300">出来</span>
+                          で進みが変わる—— 会心なら多く（1.5倍）、空振りだと半分。丁寧に確かめるほど前に進む。
+                        </p>
+                        <div className="flex gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPending({ id, depth: 'quick' })
+                              setDepthFor(null)
+                            }}
+                            className="flex-1 rounded-lg bg-slate-700 px-2 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-slate-600 active:scale-95"
+                          >
+                            <RichText
+                              text="浅い：広く速く通す（{{完成の定義}}は妥協・負債は残る）"
+                              interactive={false}
+                            />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPending({ id, depth: 'thorough' })
+                              setDepthFor(null)
+                            }}
+                            className="flex-1 rounded-lg bg-emerald-600 px-2 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-emerald-500 active:scale-95"
+                          >
+                            <RichText text="深い：一点を深く固める（{{完成の定義}}達成・品質）" interactive={false} />
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <button

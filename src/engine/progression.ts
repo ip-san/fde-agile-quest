@@ -480,7 +480,17 @@ export function spinCore(core: ProgressCore, segment: Segment, pickRandom: numbe
     const pinned = avail.filter((e) => e.pinned)
     const mustForcePinned = pinned.length > 0 && remainingDailies <= pinned.length
     // beatIndex を rotate に渡し、回収（requiresFlag）場所を日替わりで巡回させる（死蔵の解消）。
-    const cands = mustForcePinned ? [pinned[0]] : drawCandidates(avail, segment, pickRandom, core.beatIndex)
+    const drawn = mustForcePinned ? [pinned[0]] : drawCandidates(avail, segment, pickRandom, core.beatIndex)
+    // 回収イベント（過去の選択の帰結が来る日）が筆頭の時、その日の半分ほどを「今日はこれ一点」の
+    // focused day に絞る＝避けられない清算の日。R7 の朝会の緩急（論点が1つに絞られた静かな朝）を、
+    // 偶発でなく"意味のある日"に意図的に発火させる（毎朝3択の儀式化を崩す）。残り半分は通常どおり3択。
+    const focusedRecovery =
+      !mustForcePinned &&
+      drawn.length > 1 &&
+      !!drawn[0]?.requiresFlag &&
+      !drawn[0]?.pinned &&
+      (pickRandom * 31) % 1 < 0.5
+    const cands = focusedRecovery ? [drawn[0]] : drawn
     if (cands.length === 0) return advanceCore(core)
     return {
       ...core,
