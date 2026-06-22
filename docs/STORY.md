@@ -382,7 +382,7 @@ FDEの務めは現場を直すだけではない。**現場でしか掴めない
   用意せよ」。だが現場は基本のIT化すらまだ。a=“AIらしい”画面を急ごしらえで取り繕う(warn, insight−)／
   b=「実証の前にまず基本のIT化が要る」と正直に上げる(insight+/culture+)。**a/b 両方が `showcasePressure` を立て**、
   視察→報告の連鎖が確実に続く（圧力は選択に関わらず存在する）。
-- **見学 `s1-physical-ai-showcase`（倉庫・chance・sprint:1・pinned・requiresFlag無し／a/b/c いずれでも `showcasePressure` を立てる保証役。id は画像/precepts 資産安定のため s2- 始まりのまま据置）**: 親会社が試作機を**持ち込んで**
+- **見学 `s1-physical-ai-showcase`（倉庫・chance・sprint:1・pinned・requiresFlag無し／a/b/c いずれでも `showcasePressure` を立てる保証役。id/画像/precepts キーは gameplay の sprint:1 に揃えて s1- に統一済み）**: 親会社が試作機を**持ち込んで**
   グループ向けにお披露目している場へ主人公が足を運び、**フィジカルAIの実物を初めて目の当たりにする**回
   （概念→目に見えるモノ）。実物は「誤りのないデータ・整った棚と動線・走る線」が前提でだけ動く＝**土台の
   IT化が先**という芯。a=タイミングを逃さず上に同調(warn, trust+/insight−。乗ること自体は是・**順番**を誤る形に
@@ -396,7 +396,7 @@ FDEの務めは現場を直すだけではない。**現場でしか掴めない
   > **見せる側 vs 見る側の2視点（スプリントを跨いだ対）**: 見学 `s1-physical-ai-showcase`（S1・pinnedで必ず
   > 提示。実物を先に“見る”）で実機を早く見せ、視察 `s2-daily-showcase-visit`（S2・要showcasePressure。視察団に
   > “見せる”当日）で“見せる側”を問う——スプリントを跨いだ対の構図。見学が showcasePressure を立てるので視察は確実に
-  > 続く。id は s2- 据え置きだが gameplay 上は S1（前倒し）である点に注意。
+  > 続く。id/画像/precepts キーは s1- に統一済み（gameplay の sprint:1＝前倒しに揃えた）。
 - **報告 `s3-daily-showcase-report`（会議室・要showcasePressure）**: グループへの実証報告。a=「実証は順調」と
   見栄えの数字で盛る(warn, insight−／「盛った数字はいつか誰かが帳尻を合わせる」＝§6.5不正の温床へ薄く接続)／
   b=「実証はまだ。だが現場は確かに動き始めた」と本物の進捗を正直に報告(insight+/culture+)。

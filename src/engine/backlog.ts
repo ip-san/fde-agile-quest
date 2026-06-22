@@ -388,11 +388,15 @@ export function resolveSprintBacklog(core: ProgressCore): { core: ProgressCore; 
 
   // culture ナッジは「実際にカンバンに手を付けた（engaged）」場合だけ働かせる。
   //   engaged＝今スプリントに Done したか、着手中(In Progress)を抱えている。
-  //   ・engaged で全部完遂（持ち越し無し）→ +1（WIP を守って終わらせた）
-  //   ・engaged だが未完を持ち越し → −1
-  //   ・未着手のまま（予測しただけ/そもそも触っていない）→ 0（“使わなかった”を罰しない）
+  //   ・engaged かつ仕掛り無し（全て終わらせた）→ +1（WIP を守って終わらせた）
+  //   ・engaged かつ仕掛り有り（着手済みを終わらせきれず持ち越し）→ −1
+  //   ・未着手のまま（予測しただけ/そもそも触っていない）→ 0（”使わなかった”を罰しない）
+  //   ＊判定は carryIds（予測ベース）ではなく inProgress（着手済みの残り）を使う。
+  //     予測を多めに積んで未着手の下位項目が残っても”持ち越しペナルティ”にしない
+  //     （Scrum Guide 2020：未完了PBIをバックログへ戻すのは正常運用。
+  //      commitment はスプリントゴールであって全部終える約束ではない）。
   const engaged = doneThisSprint.length > 0 || core.inProgress.length > 0
-  const cultureDelta = engaged ? (carryIds.length === 0 ? 1 : -1) : 0
+  const cultureDelta = engaged ? (core.inProgress.length === 0 ? 1 : -1) : 0
   const culture = Math.max(0, Math.min(10, core.meters.culture + cultureDelta))
   const meters = cultureDelta ? { ...core.meters, culture } : core.meters
   const appliedCultureDelta = meters.culture - core.meters.culture
