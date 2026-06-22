@@ -680,9 +680,9 @@ const REVIEW_CASES: ReviewCase[] = [
     ],
     aiNote: '日次の出荷件数を出しました。素直な集計です。',
     options: [
-      { text: 'WHERE で日付を1日に絞っているのに重いのでは——いや、絞り込みも GROUP BY も適切で問題ない', issue: false },
-      { text: 'COUNT(*) は行数を二重に数えそう——いや、1出荷1行なので件数として正しい', issue: false },
-      { text: 'GROUP BY を入れる必要があるのか——1日に絞っていても件数の見出しに日付が残り、害は無い', issue: false },
+      { text: 'WHERE で日付を絞らず全件スキャンしている。テーブルが育つと毎回重くなる', issue: false },
+      { text: 'COUNT(*) は NULL 行や結合の重複まで数え、件数が二重計上で水増しされる', issue: false },
+      { text: '1日に絞っているのに GROUP BY ship_date が余計で、無駄なソートが入る', issue: false },
       { text: '日付をクエリに直書きせず変数にしたい（好み）', issue: false },
       { text: '別名は cnt より count_value が読みやすい（ささい）', issue: false },
     ],
@@ -702,11 +702,11 @@ const REVIEW_CASES: ReviewCase[] = [
     aiNote: '前日のリマインドを入れました。当日や過ぎた分には鳴りません。',
     options: [
       {
-        text: '=== 1 でなく <= 1 にすべきでは——いや、それだと当日(0)も鳴る。前日だけなら === 1 が正しい',
+        text: '=== 1 でなく <= 1 にすべき。これでは前々日以前に気づいても通知が一度も飛ばない',
         issue: false,
       },
-      { text: '過ぎた出荷（負の値）を弾いていないのでは——いや、=== 1 に一致しないので鳴らず、問題ない', issue: false },
-      { text: '時刻まで見ないと前日判定がずれるのでは——日付の差で見ており、前日リマインドには十分', issue: false },
+      { text: '過ぎた出荷（負の値）を弾くガードが無く、遅延分にまでリマインドが鳴る', issue: false },
+      { text: '時刻を無視しているせいで前日判定が1日ずれ、当日になってから通知が出る', issue: false },
       { text: '関数名 remind より notify に揃えたい（好み）', issue: false },
       { text: 'daysLeft は const より分かりやすい名前にしたい（ささい）', issue: false },
     ],
@@ -726,12 +726,12 @@ const REVIEW_CASES: ReviewCase[] = [
     aiNote: '充足率を整数%で出しました。注文ゼロの日も落ちません。',
     options: [
       {
-        text: 'ordered が0だと0で割って落ちるのでは——いや、先にゼロを判定して横棒を返している。割らない',
+        text: 'ordered が0だと0で割ってエラーで落ちる。ゼロ除算のガードが要る',
         issue: false,
       },
-      { text: '四捨五入で本当の割合とズレるのでは——荷主向けの概況表示なら整数%で十分で、害は無い', issue: false },
+      { text: '四捨五入のせいで合計が100%に揃わず、荷主向けの数字が信用を失う', issue: false },
       {
-        text: 'shipped が ordered を超えたら100%超えになるのでは——超過出荷は別の異常で、この表示の責務ではない',
+        text: 'shipped が ordered を超えると100%超えの値がそのまま表示され、画面が壊れる',
         issue: false,
       },
       { text: '横棒は "—" より "N/A" が分かりやすい（好み）', issue: false },
