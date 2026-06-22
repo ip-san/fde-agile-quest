@@ -26,6 +26,7 @@ import {
   proceedCore,
   repoStats,
   restoreCore,
+  rotateStart,
   STREAK_BONUS_CAP,
   spinCore,
   toPersisted,
@@ -432,6 +433,54 @@ describe('drawCandidates / spinCore — 朝会の“競合する候補”', () =
       const cands = drawCandidates(avail, 'genba', seed)
       expect(cands.some((c) => c.requiresFlag === 'wrongKpi')).toBe(true)
     }
+  })
+
+  // rotate を渡さない（=0 固定）と、回収場所が4つ以上 or 同一場所に複数あると先頭が固定され
+  // 一部の回収が5日間一度も候補化されない＝“死蔵”。rotate=beatIndex の日替わりで死蔵が消えることを、
+  // 「固定(rotate=0)5日では和集合が全回収に届かない」↔「日替わりでは全回収に届く」で対比検証する。
+  const unionOverDays = (avail: GameEvent[], rotates: number[]): Set<string> => {
+    const shown = new Set<string>()
+    for (const r of rotates) for (const c of drawCandidates(avail, 'genba', 0.3, r)) if (c.requiresFlag) shown.add(c.id)
+    return shown
+  }
+
+  it('回収場所が4つ以上：固定順では死蔵し、日替わり(rotate=beatIndex)で全回収が候補化される', () => {
+    // このフラグ組み合わせは warehouse/serverroom/devroom/client に回収を1件ずつ解放する（互いに別場所）。
+    // ＝「場所数≧4 で 1場所1代表×最大3 の頭打ち」を突く構成。下の前提アサーションが破れたら構成が変わった合図。
+    const flags = new Set<GameFlag>(['wrongKpi', 'missedUpgrade', 'aiOverreliance', 'showcasePressure'])
+    const avail = availableEvents(EVENTS, 3, 'daily', new Set<string>(), flags)
+    const recoveries = avail.filter((e) => e.requiresFlag)
+    expect(new Set(recoveries.map(locationOf)).size, '前提: 各回収が別場所であること').toBe(recoveries.length)
+    expect(recoveries.length).toBeGreaterThanOrEqual(4)
+    // 固定 rotate(=0) を5日繰り返すと、常に同じ先頭3つしか出ず一部が一度も候補化されない（旧来の死蔵を再現）
+    expect(unionOverDays(avail, [0, 0, 0, 0, 0]).size).toBeLessThan(recoveries.length)
+    // 日替わり(rotate=beatIndex 1..5＝S3のデイリー枠)なら、全回収が必ず一度は候補に出る（死蔵ゼロ）
+    const shown = unionOverDays(avail, [1, 2, 3, 4, 5])
+    for (const r of recoveries) expect(shown.has(r.id), `${r.id} が5日間で一度も候補化されない（死蔵）`).toBe(true)
+  })
+
+  it('rotateStart は負値・小数・len=0 を安全に正規化する（巡回開始インデックスの契約）', () => {
+    expect(rotateStart(0, 3)).toBe(0)
+    expect(rotateStart(1, 3)).toBe(1)
+    expect(rotateStart(3, 3)).toBe(0) // 周回
+    expect(rotateStart(4, 3)).toBe(1)
+    expect(rotateStart(-1, 3)).toBe(2) // 負値も 0..len-1 に正規化
+    expect(rotateStart(2.9, 3)).toBe(2) // 小数は切り捨て
+    expect(rotateStart(5, 0)).toBe(0) // len=0 は常に0（空配列アクセスを避ける）
+    expect(rotateStart(5, 1)).toBe(0)
+  })
+
+  it('同一場所に回収が複数：固定順では場所内2件目以降が死蔵し、日替わりで全回収が候補化される', () => {
+    // warehouse に rework(wrongKpi)/night-shift-miss(missedNightShift)/genba-deprioritized(deprioritizedGenba) が同時成立
+    const flags = new Set<GameFlag>(['wrongKpi', 'missedNightShift', 'deprioritizedGenba'])
+    const avail = availableEvents(EVENTS, 3, 'daily', new Set<string>(), flags)
+    const recoveries = avail.filter((e) => e.requiresFlag)
+    expect(recoveries.filter((e) => locationOf(e) === 'warehouse').length).toBeGreaterThanOrEqual(2) // 同一場所に2件以上
+    // 固定 rotate(=0) では warehouse の代表が常に1件＝同じ場所の2件目以降は死蔵
+    expect(unionOverDays(avail, [0, 0, 0, 0, 0]).size).toBeLessThan(recoveries.length)
+    // 日替わりなら場所内代表が回り、全回収が候補化される
+    const shown = unionOverDays(avail, [1, 2, 3, 4, 5])
+    for (const r of recoveries) expect(shown.has(r.id), `${r.id} が同一場所内で死蔵`).toBe(true)
   })
 })
 
