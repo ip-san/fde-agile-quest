@@ -302,15 +302,25 @@ export function advanceCore(core: ProgressCore, result: ResultView | null = null
   let sprintIndex = core.sprintIndex
   let beatIndex = core.beatIndex + 1
 
-  if (beatIndex >= SPRINTS[sprintIndex].beats.length) {
+  const crossedSprintBoundary = beatIndex >= SPRINTS[sprintIndex].beats.length
+  if (crossedSprintBoundary) {
     sprintIndex += 1
     beatIndex = 0
   }
+
+  // スプリント境界を越えた（retro→次スプリントの planning へ）場合、
+  // レトロ改善（capacity）が retroImprovements に積まれた状態で新スプリントへ入るため、
+  // reviewCapacity を reviewCapacityFor(retroImprovements) に即時同期する。
+  // これで wip レバー（wipLimitFor を毎回ライブ導出）と同じく「次スプリントから即時」に効く。
+  // ※ review ビートの resolveSprintBacklog も同値でリセットするが、それはそのスプリントの
+  //   retroImprovements（retro 前）を使うため capacity レバー適用が1スプリント遅れる問題があった。
+  const reviewCapacity = crossedSprintBoundary ? reviewCapacityFor(core.retroImprovements) : core.reviewCapacity
 
   const base = {
     ...core,
     sprintIndex,
     beatIndex,
+    reviewCapacity,
     currentEvent: null,
     unexpected: false,
     result,
