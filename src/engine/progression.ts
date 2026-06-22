@@ -31,6 +31,7 @@ import type {
   Status,
 } from '../types'
 import {
+  acceptRequestedPbi,
   backlogItem,
   deliveredPbiIds,
   isKnownPbi,
@@ -649,6 +650,19 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
     }
   }
 
+  // 受け入れ：イベントでステークホルダーが持ち込んだ要望（PBI）を迎え入れる。
+  // toSprint＝今スプリントの予測へ割り込みで足す（スコープ変更を受けた＝ゴールが圧迫される）。
+  // false＝次のためにプロダクトバックログへ積む（断れずに今やるのではなく形に残す）。
+  let addedPbi: { id: string; title: string; toSprint: boolean } | undefined
+  if (choice.addsPbi) {
+    const toSprint = choice.addsPbi.toSprint ?? false
+    const acc = acceptRequestedPbi(base, choice.addsPbi.id, toSprint)
+    if (acc.added) {
+      base = acc.core
+      addedPbi = { id: acc.added.id, title: acc.added.title, toSprint }
+    }
+  }
+
   const result: ResultView = {
     eventId: event.id,
     choiceId: choice.id,
@@ -672,6 +686,7 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
     debtDelta: debtRaw || undefined,
     backlogReview,
     discoveredPbi, // ヒアリングで掘り当てた発見可PBI（あれば）。プロダクトバックログに新規追加された
+    addedPbi, // イベントで受けた要望PBI（あれば）。toSprint＝今スプリントへ割り込み／false＝次のため積む
     seedId: choice.seedId, // 「次の機能の種」（発見の新旧判定は store が foundSeeds と突き合わせて埋める）
   }
 
@@ -784,6 +799,8 @@ function restoreBacklog(
   const retroImprovements = (Array.isArray(p.retroImprovements) ? p.retroImprovements : []).filter(
     (x): x is RetroLever => x === 'capacity' || x === 'wip'
   )
+  // 末尾補完のシードは“初期から積む” PRODUCT_BACKLOG のみ。DISCOVERABLE_BACKLOG / EVENT_BACKLOG は
+  // savedOrder（セーブに現れている＝既に発見/受け入れ済み）経由でのみ復元し、未発見/未受け入れは正規に落とす。
   const seedOrder = PRODUCT_BACKLOG.map((q) => q.id)
   const savedOrder = (Array.isArray(p.backlogOrder) ? p.backlogOrder : []).filter(
     (id): id is string => typeof id === 'string' && isKnownPbi(id)

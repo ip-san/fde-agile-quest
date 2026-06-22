@@ -123,6 +123,11 @@ export interface Choice {
   /** この選択（主にヒアリング）で“掘り当てる”発見可PBIのID（DISCOVERABLE_BACKLOG）。
    *  現場の声がプロダクトバックログの新項目になる＝発見をバックログへ還元する。ヒアリングの出来が poor だと掘り当てられない。 */
   discoversPbi?: string
+  /** この選択で“受ける”新しい要望（イベント発のPBI＝EVENT_BACKLOG の id）。
+   *  ステークホルダーが持ち込んだ要望をプロダクトバックログに迎え入れる（revealPbi 同様、暫定見積り＝要リファインメント）。
+   *  toSprint:true なら、さらに“今スプリント”の予測へ割り込みで足す（スコープ変更を受けた＝ゴールが圧迫される）。
+   *  ＝「断れずスプリントに入れる」vs「次のバックログに積んで形に残す」を同じ要望で対比できる。 */
+  addsPbi?: { id: string; toSprint?: boolean }
   /** 生成AIに頼る選択が消費するトークン量（消費型リソース）。残量が足りないと選べない＝AIショートカット封印 */
   tokenCost?: number
   /** リポジトリの健全度への影響（開発の質）。coverage=テストカバレッジ増減(%)、debt=技術的負債増減。
@@ -223,6 +228,10 @@ export interface BacklogItem {
   /** 初期は伏せられた“発見可”PBI。プロダクトバックログには最初は出ず、ヒアリングで掘り当てると現れる
    *  （DISCOVERABLE_BACKLOG に置く。通常の PRODUCT_BACKLOG とは別管理）。 */
   discoverable?: boolean
+  /** イベントでステークホルダーが持ち込んだ要望由来の項目（任意・UIバッジの出し分け用）。
+   *  現場ヒアリングで掘り当てる項目は discoverable で表すので、こちらは 'event' のみ。
+   *  未指定＝初期から積まれている通常の PBI、または discoverable な発見可 PBI。 */
+  origin?: 'event'
   /** 発見可PBIの“信頼ゲート”（任意）。この信頼(trust)に達していないと、良いヒアリングでも掘り当てられない。
    *  ＝深い本音は現場の信頼を貯めて初めて出る（一発で真実が湧く美化を避ける）。未指定＝ゲート無し。
    *  掘り損ねた重要PBIは、後段で強制イベントとして高コストに顕在化させる（narrative 側で配線）。 */
@@ -340,4 +349,7 @@ export interface ResultView {
   backlogReview?: BacklogReview
   /** この選択（ヒアリング）で新たにプロダクトバックログに掘り当てた発見可PBI（表示用）。 */
   discoveredPbi?: { id: string; title: string }
+  /** この選択で“受けた”イベント発の要望PBI（表示用）。toSprint＝今スプリントへ割り込みで足した／
+   *  false＝次のためにプロダクトバックログへ積んだ。ResultModal で出し分ける。 */
+  addedPbi?: { id: string; title: string; toSprint: boolean }
 }

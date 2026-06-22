@@ -12,6 +12,7 @@ import type {
 } from '../../types'
 import {
   DISCOVERABLE_BACKLOG as DISCOVERABLE_BACKLOG_RAW,
+  EVENT_BACKLOG as EVENT_BACKLOG_RAW,
   PRODUCT_BACKLOG as PRODUCT_BACKLOG_RAW,
 } from './chapter-01/backlog'
 import { SPRINT1_EVENTS } from './chapter-01/events-sprint1'
@@ -121,6 +122,8 @@ export const EVENTS: GameEvent[] = localizeDeep([...SPRINT1_EVENTS, ...SPRINT2_E
 export const PRODUCT_BACKLOG: BacklogItem[] = localizeDeep(PRODUCT_BACKLOG_RAW)
 /** 発見可バックログ（初期は伏せ、ヒアリングで掘り当てると PRODUCT_BACKLOG に加わる候補）。 */
 export const DISCOVERABLE_BACKLOG: BacklogItem[] = localizeDeep(DISCOVERABLE_BACKLOG_RAW)
+/** イベント発バックログ（初期は伏せ、イベントの選択 Choice.addsPbi で受け入れて現れる要望）。 */
+export const EVENT_BACKLOG: BacklogItem[] = localizeDeep(EVENT_BACKLOG_RAW)
 
 export const ENDINGS: Ending[] = [
   {

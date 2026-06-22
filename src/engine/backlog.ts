@@ -4,13 +4,16 @@
 // ProgressCore は型のみ import（progression.ts との実行時循環を避ける）。
 // 現在ビートの判定は SPRINTS を chapter-01 から直接読む。
 // ───────────────────────────────────────────────────────────
-import { DISCOVERABLE_BACKLOG, PRODUCT_BACKLOG, SPRINTS } from '../data/chapters/chapter-01'
+import { DISCOVERABLE_BACKLOG, EVENT_BACKLOG, PRODUCT_BACKLOG, SPRINTS } from '../data/chapters/chapter-01'
 import type { BacklogItem, BacklogReview, ExecTier, GameFlag, ReviewDepth } from '../types'
 import { coverageDrag } from './game'
 import type { ProgressCore } from './progression'
 
-// 既知 PBI＝初期の PRODUCT_BACKLOG ＋ 発見可の DISCOVERABLE_BACKLOG（後者は掘り当てて backlogOrder に入るまで“可視”にならない）。
-const PBI_BY_ID = new Map<string, BacklogItem>([...PRODUCT_BACKLOG, ...DISCOVERABLE_BACKLOG].map((p) => [p.id, p]))
+// 既知 PBI＝初期の PRODUCT_BACKLOG ＋ 発見可の DISCOVERABLE_BACKLOG ＋ イベント発の EVENT_BACKLOG
+// （後ろ2つは掘り当て／要望受け入れで backlogOrder に入るまで“可視”にならない）。
+const PBI_BY_ID = new Map<string, BacklogItem>(
+  [...PRODUCT_BACKLOG, ...DISCOVERABLE_BACKLOG, ...EVENT_BACKLOG].map((p) => [p.id, p])
+)
 
 // ── カンバン／レビューのバランス定数（暫定・調整可）──
 /** 同時着手の上限（In Progress 列の WIP 制限。仕掛りを学ぶ）。レトロ改善で下げられる（下限1）。 */
@@ -147,6 +150,43 @@ export function isKnownPbi(id: string): boolean {
 /** 発見可（初期は伏せ）の PBI か。 */
 export function isDiscoverablePbi(id: string): boolean {
   return PBI_BY_ID.get(id)?.discoverable === true
+}
+
+/** イベントでステークホルダーが持ち込んだ要望由来の PBI か（UIバッジの出し分け用）。 */
+export function isEventPbi(id: string): boolean {
+  return PBI_BY_ID.get(id)?.origin === 'event'
+}
+
+/** イベント発の“新しい要望”をプロダクトバックログへ受け入れる。
+ *  ・既知かつ未掲載のときだけ追加する（既出/未知なら no-op で added:null）。
+ *  ・toSprint=false：プロダクトバックログ末尾に積む（暫定見積り＝要リファインメント）。
+ *    ＝「断れずに今やる」のではなく「次のために形に残す」——後のプランニングで並べ替え・Ready 化して扱う。
+ *  ・toSprint=true：割り込みを“受けた”＝今スプリントの予測へ即足す。即着手できるよう Ready 扱い
+ *    （unrefined にしない）。上位優先の規律を意図的に飛ばす＝ステークホルダーが名指しした割り込みの表現。
+ *    ゴール圧迫の代償は容量超過→キャリーオーバーで顕在化する（精算ロジックがそのまま罰する）。 */
+export function acceptRequestedPbi(
+  core: ProgressCore,
+  id: string,
+  toSprint: boolean
+): { core: ProgressCore; added: BacklogItem | null } {
+  if (!toSprint) {
+    // 次のために形に残す＝発見可PBIの掘り当てと同じ「末尾に積み、暫定見積り（要リファインメント）」。
+    // revealPbi に委譲して二重実装を避ける（追加条件＝既知かつ未掲載、も revealPbi と共通）。
+    const rev = revealPbi(core, id)
+    return { core: rev.core, added: rev.revealed }
+  }
+  const item = PBI_BY_ID.get(id)
+  // 割り込み：backlogOrder にも sprintForecast にも未掲載のときだけ受ける（二重追加防止）。
+  if (!item || core.backlogOrder.includes(id) || core.sprintForecast.includes(id)) return { core, added: null }
+  return {
+    core: {
+      ...core,
+      backlogOrder: [...core.backlogOrder, id], // 全体像にも現れる（プロダクトバックログ参照で見える）
+      sprintForecast: [...core.sprintForecast, id], // 今スプリントへ割り込み（スコープ変更を受けた）
+      // unrefinedPbis には足さない＝割り込みは“合意済み”として即 Ready（着手・レビュー可能）
+    },
+    added: item,
+  }
 }
 
 /** 発見可 PBI を“掘り当てて”プロダクトバックログ（backlogOrder）の末尾に加える。

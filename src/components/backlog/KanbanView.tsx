@@ -13,6 +13,7 @@ import {
   forecastPoints,
   GEN_TOKEN_COST,
   isDiscoverablePbi,
+  isEventPbi,
   isSbi,
   parentPbiOf,
   REVIEW_CAPACITY_PER_DAY,
@@ -467,7 +468,8 @@ export function KanbanView({
  *  発見可PBI（ヒアリングで掘り当てた項目）には「🔎 現場で発見」バッジを付ける。 */
 function ProductBacklogReadOnly({ backlogOrder, doneSet }: { backlogOrder: string[]; doneSet: Set<string> }) {
   const [open, setOpen] = useState(false)
-  const hasDisc = backlogOrder.some(isDiscoverablePbi)
+  // 発見可（現場で掘り当て）またはイベント要望が混じっていれば、畳んだ状態でも「新規あり」を示す。
+  const hasNew = backlogOrder.some((id) => isDiscoverablePbi(id) || isEventPbi(id))
   return (
     <section className="rounded-xl border border-slate-700 bg-slate-900/40">
       <button
@@ -479,9 +481,9 @@ function ProductBacklogReadOnly({ backlogOrder, doneSet }: { backlogOrder: strin
         <span className="text-xs font-bold text-slate-300">
           <RichText text="{{プロダクトバックログ}}" />
           <span className="ml-1 font-normal text-slate-400">全体を参照（読取専用）</span>
-          {hasDisc && (
+          {hasNew && (
             <span className="ml-2 rounded bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-rose-300">
-              発見あり
+              新規あり
             </span>
           )}
         </span>
@@ -495,7 +497,9 @@ function ProductBacklogReadOnly({ backlogOrder, doneSet }: { backlogOrder: strin
             const item = backlogItem(id)
             if (!item) return null
             const done = doneSet.has(id)
+            // 発見可（現場で掘り当て）とイベント要望は別系統（EVENT_BACKLOG は discoverable を持たない）＝排他。
             const disc = isDiscoverablePbi(id)
+            const evt = isEventPbi(id)
             return (
               <li
                 key={id}
@@ -513,6 +517,14 @@ function ProductBacklogReadOnly({ backlogOrder, doneSet }: { backlogOrder: strin
                     {disc && !done && (
                       <span className="rounded bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-rose-300">
                         現場で発見
+                      </span>
+                    )}
+                    {evt && !done && (
+                      <span
+                        title="イベントでステークホルダーが持ち込んだ要望。スプリントに割り込ませるか、次のために積むかは交渉次第。"
+                        className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300"
+                      >
+                        イベント要望
                       </span>
                     )}
                   </div>
