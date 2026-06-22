@@ -120,7 +120,8 @@ export function Board() {
   // 「To Do が残っている」= sprintForecast に未 done の id がある
   // 「まだ着手していない」= inProgress が空
   // 「打つ手がある」= aiTokens >= GEN_TOKEN_COST（着手できるトークンがある）または inProgress に着手済みがある
-  const hasTodo = sprintForecast.some((id) => !backlogDone.includes(id))
+  const doneSet = useMemo(() => new Set(backlogDone), [backlogDone])
+  const hasTodo = sprintForecast.some((id) => !doneSet.has(id))
   const canStart = aiTokens >= GEN_TOKEN_COST
   const showDevReminder = ceremony === 'daily' && hasTodo && inProgress.length === 0 && canStart
 

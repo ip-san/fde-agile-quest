@@ -79,7 +79,7 @@ export function MiniGameHearing({ seed, theme, hearingOptions, onResolve }: Prop
         {options.map((o, i) => {
           const on = picked.includes(i)
           return (
-            <li key={o.text}>
+            <li key={`${i}-${o.text}`}>
               <SelectableCheckItem
                 itemKey={`h-${i}`}
                 on={on}

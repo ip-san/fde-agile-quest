@@ -623,6 +623,33 @@ const REVIEW_CASES: ReviewCase[] = [
     ],
     takeaway: '戻し入れは“二重計上”と“状態遷移”で狂う。在庫が増えること（動く）と、正しく一度だけ戻ることは別。',
   },
+  // 15. 荷主向けダッシュボード実装（イベント発PBI）→ AIが描画ライブラリの import を提案。
+  //     実在しないパッケージ名を幻覚（スロップスクワッティング＝サプライチェーン攻撃の的）。
+  {
+    pbi: 'pbi-evt-exec-feature',
+    task: '荷主向け{{ダッシュボード}}に折れ線グラフを足して。使うnpmパッケージも提案して',
+    diff: [
+      { tag: 'add', text: 'import { LineChart } from "stockpilot-charts-pro"  // ← AIのおすすめ' },
+      { tag: 'add', text: '$ npm install stockpilot-charts-pro                 // 提案どおり即インストール' },
+      { tag: 'ctx', text: '// 社内で実績のある描画ライブラリは別にある（chart系の定番）。' },
+    ],
+    aiNote: '人気の描画ライブラリ stockpilot-charts-pro を入れました。定番なので安全です。',
+    options: [
+      {
+        text: 'stockpilot-charts-pro は実在しない。AIが“それらしい”名前を{{ハルシネーション}}で創作している（実物を検索すると出てこない）',
+        issue: true,
+      },
+      {
+        text: '実在しない名前は攻撃者が先回りで悪性パッケージとして公開しうる（{{スロップスクワッティング}}）。提供元を確かめず npm install で即導入するのは危険',
+        issue: true,
+      },
+      { text: 'AIが「定番なので安全」と言うのだから、そのまま入れて問題ないはず', issue: false },
+      { text: 'import は default より名前付きで揃えたい（好み）', issue: false },
+      { text: '変数名は LineChart より Graph が短くて好み（ささい）', issue: false },
+    ],
+    takeaway:
+      'AIはパッケージ名すら創作する。実在・提供元・ダウンロード実績を人が確かめてから入れる——AIの「定番だ」は、攻撃の入口になりうる。',
+  },
 ]
 
 /** レビューの1ラウンド：AI差分＋点検すべき選択肢（提示順はシードでシャッフル）。 */

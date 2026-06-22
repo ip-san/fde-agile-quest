@@ -3,6 +3,7 @@
  *  ここだけ export し、BacklogPanel 側の外部公開 API は変えない。
  */
 
+import { useMemo } from 'react'
 import { SPRINTS } from '../../data/chapters/chapter-01'
 import { backlogItem, deliveredPbiIds, isLegacyPbi, LEGACY_PBI_IDS } from '../../engine/backlog'
 import { RichText } from '../RichText'
@@ -107,7 +108,8 @@ export function StakeholderBalance({ forecastIds }: { forecastIds: string[] }) {
 /** 「太く残す」PBI のサマリ（計画画面に表示）。何件 Ship できたかを一覧する。 */
 export function LegacySummary({ backlogDone }: { backlogDone: readonly string[] }) {
   // 納品判定は PBI 単位（分割した PBI は全作業項目完了で納品）＝エンジンの legacyShippedCount と同じ基準。
-  const doneSet = new Set(deliveredPbiIds(backlogDone))
+  // deliveredPbiIds は全 PBI を走査するので backlogDone が変わった時だけ再計算（毎レンダー走らせない）。
+  const doneSet = useMemo(() => new Set(deliveredPbiIds(backlogDone)), [backlogDone])
   const shippedCount = LEGACY_PBI_IDS.filter((id) => doneSet.has(id)).length
   const total = LEGACY_PBI_IDS.length
   return (
