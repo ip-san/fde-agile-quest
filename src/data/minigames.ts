@@ -647,11 +647,27 @@ export function reviewCasePbiIds(): string[] {
   return REVIEW_CASES.map((c) => c.pbi)
 }
 
-/** レビューの1ラウンドを選ぶ。pbiId があればそのタスク内容に一致する作問を優先（無ければ seed で巡回）。
- *  選択肢はシャッフルして提示（毎回同じ並びを避ける）。 */
-export function dealReview(seed: number, pbiId?: string): ReviewRound {
-  const matched = pbiId ? REVIEW_CASE_BY_PBI.get(pbiId) : undefined
-  const c = matched ?? REVIEW_CASES[((seed % REVIEW_CASES.length) + REVIEW_CASES.length) % REVIEW_CASES.length]
+/** レビューの1ラウンドを選ぶ。
+ *  - 通常（variety=false）：pbiId があればそのタスク内容に一致する作問を出す（初回レビュー＝題材一致）。
+ *  - variety=true：同じ項目を再レビュー／同じ親PBIの別の作業項目(SBI)をレビューする2回目以降。
+ *    題材一致の作問を“避けて” seed で別の作問に巡回させ、連続レビューで同じミニゲームが続かないようにする
+ *    （＝何度も見ると別の種類の問題が出てくる、という体験。AIコードレビューの実感に沿う）。
+ *  選択肢はいずれもシャッフルして提示（毎回同じ並びを避ける）。 */
+export function dealReview(seed: number, pbiId?: string, variety = false): ReviewRound {
+  const n = REVIEW_CASES.length
+  const matchedIdx = pbiId ? REVIEW_CASES.findIndex((c) => c.pbi === pbiId) : -1
+  const mod = (x: number, m: number) => ((x % m) + m) % m
+  let idx: number
+  if (!variety && matchedIdx >= 0) {
+    idx = matchedIdx // 初回＝題材一致を出す
+  } else if (matchedIdx >= 0 && n > 1) {
+    // 2回目以降＝題材一致を除いた残りから seed で1つ選ぶ（必ず初回と別の作問になる）
+    const r = mod(seed, n - 1)
+    idx = r >= matchedIdx ? r + 1 : r
+  } else {
+    idx = mod(seed, n) // 題材一致が無い項目（イベント発PBI等）は全作問から巡回
+  }
+  const c = REVIEW_CASES[idx]
   const options = shuffle(c.options, seed + 5)
   return { task: c.task, diff: c.diff, aiNote: c.aiNote, options, takeaway: c.takeaway }
 }

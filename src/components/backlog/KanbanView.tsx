@@ -441,23 +441,35 @@ export function KanbanView({
       <ProductBacklogReadOnly backlogOrder={backlogOrder} doneSet={doneSet} />
 
       {/* レビュー・ミニゲーム（深さ確定後） */}
-      {pending && (
-        <MiniGame
-          kind="review"
-          // シードは作業項目(SBI)単位で個別に＝同じ親PBIの #1/#2 でも別の出題になる。
-          // ただしレビュー教材の選定は親PBI基準（教材は PBI に紐づく）なので pbiId は親へ射影。
-          seed={seedFor(pending.id)}
-          pbiId={parentPbiOf(pending.id)}
-          onDone={(tier) => {
-            reviewItem(pending.id, pending.depth, tier)
-            setPending(null)
-          }}
-          onSkip={() => {
-            reviewItem(pending.id, pending.depth, 'good')
-            setPending(null)
-          }}
-        />
-      )}
+      {pending &&
+        (() => {
+          // 連続レビューで同じミニゲームが続かないようにする。
+          // ・初回レビュー（まだ進捗0）かつ親PBIの先頭作業項目 → 題材一致の作問（タスクに合った出題）。
+          // ・再レビュー（進捗>0）や、同じ親PBIの2件目以降の作業項目(SBI) → 題材一致を避けて別の作問へ。
+          const hash = pending.id.indexOf('#')
+          const sbiOffset = hash >= 0 ? Math.max(0, (Number(pending.id.slice(hash + 1)) || 1) - 1) : 0
+          const prog = reviewProgress[pending.id] ?? 0
+          const variety = prog > 0 || sbiOffset > 0
+          // シードは「項目 × これまでの進捗 × 作業項目位置」で変える＝再レビューごとに別の作問・別の並びになる。
+          const seed = seedFor(`${pending.id}:${Math.round(prog * 100)}:${sbiOffset}`)
+          return (
+            <MiniGame
+              kind="review"
+              seed={seed}
+              // レビュー教材の選定は親PBI基準（教材は PBI に紐づく）なので pbiId は親へ射影。
+              pbiId={parentPbiOf(pending.id)}
+              reviewVariety={variety}
+              onDone={(tier) => {
+                reviewItem(pending.id, pending.depth, tier)
+                setPending(null)
+              }}
+              onSkip={() => {
+                reviewItem(pending.id, pending.depth, 'good')
+                setPending(null)
+              }}
+            />
+          )
+        })()}
     </>
   )
 }
