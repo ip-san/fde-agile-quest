@@ -41,17 +41,12 @@ type KanbanCore = Pick<
 
 export interface KanbanProps {
   isWork: boolean
-  sprintForecast: string[]
   /** 見えているプロダクトバックログ全体（read-only 参照用） */
   backlogOrder: string[]
   doneSet: Set<string>
   /** うち「DoD を妥協して（浅い quick レビューで）Ship した」PBI id。Done バッジの出し分けに使う。 */
   undoneSet: Set<string>
-  inProgSet: Set<string>
-  inProgress: string[]
   reviewProgress: Record<string, number>
-  reviewCapacity: number
-  aiTokens: number
   /** 未リファインメント（暫定見積り）の PBI id。途中引き込みは Ready のみ対象にするため除外に使う。 */
   unrefinedPbis: string[]
   startItem: (id: string) => void
@@ -65,15 +60,10 @@ export interface KanbanProps {
 
 export function KanbanView({
   isWork,
-  sprintForecast,
   backlogOrder,
   doneSet,
   undoneSet,
-  inProgSet,
-  inProgress,
   reviewProgress,
-  reviewCapacity,
-  aiTokens,
   unrefinedPbis,
   startItem,
   reviewItem,
@@ -84,8 +74,10 @@ export function KanbanView({
   const [depthFor, setDepthFor] = useState<string | null>(null)
   const [pending, setPending] = useState<{ id: string; depth: ReviewDepth } | null>(null)
 
-  const todo = sprintForecast.filter((id) => !doneSet.has(id) && !inProgSet.has(id))
-  const done = sprintForecast.filter((id) => doneSet.has(id))
+  // core.inProgress は配列なので Set に変換して O(1) 検索を実現する（BacklogPanel からの二重管理を解消）
+  const inProgSet = useMemo(() => new Set(core.inProgress), [core.inProgress])
+  const todo = core.sprintForecast.filter((id) => !doneSet.has(id) && !inProgSet.has(id))
+  const done = core.sprintForecast.filter((id) => doneSet.has(id))
   // レトロ改善（機構：Retro 昇格）を反映した上限。capacity 投資で容量↑／wip 改善で仕掛り上限↓。
   const maxReview = reviewCapacityFor(core.retroImprovements)
   const wipMax = wipLimitFor(core.retroImprovements)
@@ -93,16 +85,21 @@ export function KanbanView({
   // 容量の目安＝人のレビュー容量。予測がこれを超えると、終わらない分は持ち越しになる（補助実践の目安・ガイドの規定ではない）。
   // maxReview と同一値（どちらも人のレビュー容量）。派生にして二重算出・将来の乖離を防ぐ。
   const capacity = maxReview
-  const fpts = forecastPoints({ sprintForecast })
+  const fpts = forecastPoints({ sprintForecast: core.sprintForecast })
   const over = fpts > capacity
   // 途中で引き込める候補も"上位優先"に揃える＝canAddToForecast（上位を全部入れてからでないと下位は引けない）。
   // プランニングの選択と同じ規律にすることで、途中追加でも飛ばし入れを許さない（engine 側のガードと UI を一致させる）。
   const pullable = useMemo(() => {
-    const coreForPull = { sprintForecast, backlogDone: core.backlogDone, unrefinedPbis, backlogOrder }
+    const coreForPull = {
+      sprintForecast: core.sprintForecast,
+      backlogDone: core.backlogDone,
+      unrefinedPbis,
+      backlogOrder,
+    }
     return backlogOrder.filter((id) => canAddToForecast(coreForPull, id))
-  }, [backlogOrder, sprintForecast, core.backlogDone, unrefinedPbis])
+  }, [backlogOrder, core.sprintForecast, core.backlogDone, unrefinedPbis])
 
-  if (sprintForecast.length === 0) {
+  if (core.sprintForecast.length === 0) {
     return (
       <p className="rounded-xl bg-slate-800/40 px-3 py-4 text-center text-sm text-slate-400">
         このスプリントの予測（To Do）がありません。プランニングで{<RichText text="{{スプリント予測}}" />}
@@ -143,11 +140,11 @@ export function KanbanView({
           <div className="h-2 w-14 overflow-hidden rounded-full bg-slate-700">
             <div
               className="h-full rounded-full bg-emerald-400"
-              style={{ width: `${(Math.max(0, reviewCapacity) / maxReview) * 100}%` }}
+              style={{ width: `${(Math.max(0, core.reviewCapacity) / maxReview) * 100}%` }}
             />
           </div>
           <span className="tabular-nums text-slate-300">
-            {reviewCapacity}/{maxReview}
+            {core.reviewCapacity}/{maxReview}
             {maxReview > REVIEW_CAPACITY && <span className="ml-0.5 text-emerald-400">🔧</span>}
           </span>
         </div>
@@ -157,7 +154,7 @@ export function KanbanView({
             <RichText text="{{仕掛り}}" />
           </span>
           <span className="tabular-nums font-bold text-slate-200">
-            {inProgress.length}/{wipMax}
+            {core.inProgress.length}/{wipMax}
             {wipMax < WIP_LIMIT && <span className="ml-0.5 text-emerald-400">🔧</span>}
           </span>
         </div>
@@ -216,14 +213,14 @@ export function KanbanView({
             <div className="flex items-center justify-between text-xs">
               <span className="text-slate-300">レビュー容量</span>
               <span className="tabular-nums text-slate-300">
-                {reviewCapacity} / {maxReview}
+                {core.reviewCapacity} / {maxReview}
                 {maxReview > REVIEW_CAPACITY && <span className="ml-1 text-emerald-400">🔧</span>}
               </span>
             </div>
             <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-700">
               <div
                 className="h-full rounded-full bg-emerald-400"
-                style={{ width: `${(Math.max(0, reviewCapacity) / maxReview) * 100}%` }}
+                style={{ width: `${(Math.max(0, core.reviewCapacity) / maxReview) * 100}%` }}
               />
             </div>
           </div>
@@ -232,7 +229,7 @@ export function KanbanView({
               <RichText text="{{仕掛り}}" />
             </div>
             <div className="tabular-nums text-sm text-slate-200">
-              {inProgress.length}/{wipMax}
+              {core.inProgress.length}/{wipMax}
               {wipMax < WIP_LIMIT && <span className="ml-1 text-emerald-400">🔧</span>}
             </div>
           </div>
@@ -265,7 +262,7 @@ export function KanbanView({
                   type="button"
                   onClick={() => startItem(id)}
                   disabled={!startable}
-                  title={!startable && aiTokens < GEN_TOKEN_COST ? 'AIトークンが足りません' : undefined}
+                  title={!startable && core.aiTokens < GEN_TOKEN_COST ? 'AIトークンが足りません' : undefined}
                   className="shrink-0 self-center rounded-lg bg-sky-600 px-2.5 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-sky-500 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
                 >
                   着手（AI生成）
@@ -281,9 +278,9 @@ export function KanbanView({
           title="In Progress（着手中）"
           tone="text-amber-200"
           headerBg="bg-amber-500/10"
-          count={inProgress.length}
+          count={core.inProgress.length}
         >
-          {inProgress.map((id) => {
+          {core.inProgress.map((id) => {
             const item = backlogItem(id)
             if (!item) return null
             const prog = Math.min(item.estimate, reviewProgress[id] ?? 0)
@@ -331,7 +328,7 @@ export function KanbanView({
                         onClick={() => setDepthFor(id)}
                         disabled={!reviewable}
                         title={
-                          !reviewable && reviewCapacity <= 0 ? 'レビュー容量切れ（次スプリントで回復）' : undefined
+                          !reviewable && core.reviewCapacity <= 0 ? 'レビュー容量切れ（次スプリントで回復）' : undefined
                         }
                         className="self-start rounded-lg bg-emerald-700 px-2.5 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-emerald-600 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
                       >
@@ -343,7 +340,7 @@ export function KanbanView({
               />
             )
           })}
-          {inProgress.length === 0 && <Empty />}
+          {core.inProgress.length === 0 && <Empty />}
         </Column>
 
         {/* Done */}

@@ -45,7 +45,6 @@ export function BacklogPanel({ onClose }: Props) {
   const isWork = ceremony === 'daily'
 
   const doneSet = useMemo(() => new Set(backlogDone), [backlogDone])
-  const inProgSet = useMemo(() => new Set(inProgress), [inProgress])
   const undoneSet = useMemo(() => new Set(shippedUndoneIds), [shippedUndoneIds])
 
   return (
@@ -90,15 +89,10 @@ export function BacklogPanel({ onClose }: Props) {
           ) : (
             <KanbanView
               isWork={isWork}
-              sprintForecast={sprintForecast}
               backlogOrder={backlogOrder}
               doneSet={doneSet}
               undoneSet={undoneSet}
-              inProgSet={inProgSet}
-              inProgress={inProgress}
               reviewProgress={reviewProgress}
-              reviewCapacity={reviewCapacity}
-              aiTokens={aiTokens}
               unrefinedPbis={unrefinedPbis}
               startItem={startItem}
               reviewItem={reviewItem}
