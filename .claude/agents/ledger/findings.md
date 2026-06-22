@@ -29,7 +29,8 @@
    - [open] (記録) **D-1（自分の選択の帰結を review/retro へ確実提示）は engine 制約で不可**＝s2-retro が必須で全員 topDown/genbaTrust を立て、s3-review/retro 単発ビートが常にそのバリアント(avail[0])に占有されるため、deprioritized/soloHero を移すと到達不能になる。到達不能を作らないため見送り。残る死蔵（枠5<同時解放6+）は変動＝味として A 許容（agile-expert 推奨どおり）。根治には engine 改修（drawの回収複数提示等）が必要＝別途要判断。
 4. ~~(学習・要承認) s2-daily-debt の取り立て連鎖~~ → **[resolved] loop/debt-collection**（総監督承認のもと新フラグ `borrowedDebt`＝types/threads/store登録、s2-daily-debt choice a に setsFlag＋repo debt+2、新イベント s2-daily-debt-collection を**S2に配置＝#3を悪化させず**、undone-debt とは「約束履行」軸で機構差別化（b: trust据え置き）。story🟢/learning🟢/全ゲート緑）。2026-06-22
    - [open] (🟡低) learning/story — 取り立てイベントの surface は requiresFlag共通の確率依存（#3 と同根）／先送りの「利息逓増（複利感）」は任意の磨き込み余地。いずれも誤学習はせず・致命でない。
-5. **(UX/a11y・要実機) ミニゲームの SR/音まわり** — グリフ再マウントの VoiceOver/NVDA 通知（実機確認）／MiniGameHearing の上限 aria-live 3s→2s／sfx.ts AudioContext suspended（mobile Safari）初回 tick 無音。
+5. ~~(UX/a11y・要実機) ミニゲームの SR/音まわり~~ → **[resolved/精査] コード変更不要（ux-engineer a11y精査）**: ①グリフ再マウントは `aria-hidden` で SR 通知対象外・状態は `aria-pressed` が伝え既に安全（CSS-only化は iOS<17.4 切捨てのため不採用）／②aria-live 3秒は27字の可読性に必要で短縮せず／③sfx.ts は既に user-gesture 起点で `ctx.resume()`・WebAudio仕様で past-time スケジュールは resume 後に発火＝手当て済み。2026-06-22
+   - [open] (要実機・申し送り) 最終確認は実機のみ: (a) iOS Safari でヒアリング初回タップの tick が鳴るか（初回無音なら resume 完了前スケジュールを再検討）／(b) VoiceOver で選択ON/OFF時に二重読み上げが無いか（期待: aria-pressed の切替のみ）。
 6. ~~(物語) s3-daily-stuck-base choice b のリカバリ感~~ → **[resolved] loop/carryover-6-7**（s3側resultTextを先回り↔痛んでから追いついた の非対称に、2文へ圧縮）。2026-06-22
 7. ~~(設計・小) Board.tsx bumpCoach→useReducer/useMemo化、Travel.tsx renderRoom/renderMapPin→Room/MapPinコンポーネント化、MiniGameReview revealed分離~~ → **[resolved] loop/carryover-6-7**（振る舞い不変・型統一・dead key除去）。2026-06-22
 8. **(設計・小／#2分割中に確認＝既存) PlanningView の editState draft は useState初期値のみで backlogOrder 外部変更時の再同期パスが無い（モーダル再マウント前提で実害低）。KanbanView の `retroImprovements` が独立prop＋coreフィールドの二重ルート（現状同一ソースで無害だが将来乖離リスク）。** いずれも分割前 main から既存・分割で新規導入ではない。
