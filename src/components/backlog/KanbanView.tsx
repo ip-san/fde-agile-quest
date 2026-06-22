@@ -465,6 +465,8 @@ export function KanbanView({
           const seed = seedFor(`${pending.id}:${Math.round(prog * 100)}:${sbiOffset}`)
           return (
             <MiniGame
+              // seed が変われば作問を作り直す＝再レビューで確実に別インスタンスにする（lazy init の取り違え防止）。
+              key={seed}
               kind="review"
               seed={seed}
               // レビュー教材の選定は親PBI基準（教材は PBI に紐づく）なので pbiId は親へ射影。

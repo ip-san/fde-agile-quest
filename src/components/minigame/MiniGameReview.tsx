@@ -91,10 +91,10 @@ export function MiniGameReview({ seed, pbiId, variety, onResolve }: Props) {
         {round.options.map((o, i) => {
           const on = picked.includes(i)
           if (revealed) {
-            return <RevealedRow key={o.text} option={o} picked={on} />
+            return <RevealedRow key={`${i}-${o.text}`} option={o} picked={on} />
           }
           return (
-            <li key={o.text}>
+            <li key={`${i}-${o.text}`}>
               <SelectableCheckItem
                 itemKey={`r-${i}`}
                 on={on}

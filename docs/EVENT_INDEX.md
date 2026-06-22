@@ -132,7 +132,7 @@
 
 - **親会社からの「実証デモ」要求** `s1-daily-showcase-order`（顧客） 心得:73,52
     - ⚠ とりあえず“AIらしい”画面を急ごしらえして、体裁だけ整える `{ trust: 1, insight: -1 }` →showcasePressure
-    - 「実証の前に、まず基本のIT化と自動化が要る」と現実を正直に上げる `{ insight: 1, culture: 1 }` →showcasePressure
+    - 「実証の前に、まず基本のIT化と自動化が要る」と現実を正直に上げる `{ insight: 1, culture: 1, trust: -1 }` →showcasePressure
 
 - **試作ロボットのお披露目** `s1-physical-ai-showcase`（チャンス） 心得:1,19
     - ⚠ 親会社が本気で張る技術だ。「これ、早くうちにも」とタイミングを逃さず上に同調する `{ trust: 1, insight: -1 }` →showcasePressure
@@ -451,7 +451,7 @@
     - ⚠ 案件が終われば一区切り。特に振り返らず次へ `{ insight: -1 }`
     - 自分の道具（専門性・型）を磨き、次の現場へデプロイする準備をする `{ insight: 1, culture: 1 }`
 
-- **モデル更新、突然のバカ** `s3-daily-ai-regression`（トラブル _[要 aiOverreliance]_） 心得:47,49
+- **ある朝、AIが昨日を忘れた** `s3-daily-ai-regression`（トラブル _[要 aiOverreliance]_） 心得:47,49
     - ⚠ とりあえずプロンプトを盛って、その場の出力を取り繕う `{ trust: -1, insight: -1 }`
     - 一旦AIを“下書き”に格下げし、人の検証と{{完成の定義}}を作り直す `{ insight: 1, culture: 1 }`
     - 安定版に切り戻し、AIには“検証”を大量生成させて素早く立て直す `{ trust: 1, insight: 1 }`
