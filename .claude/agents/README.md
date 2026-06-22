@@ -31,11 +31,14 @@
 | 制作 | `narrative-designer`（物語のプロ・最終決定者） | **maker** | 物語ファイル write |
 | 制作 | `ux-engineer` | **maker** | components write |
 | 専門家 | `ai-dx-expert` / `fde-expert` / `agile-expert` / `logistics-expert` / `robotics-expert` | 顧問 | read-only（+Web） |
-| 監修 | `story-reviewer` / `learning-designer` / `code-reviewer` | checker | read-only |
+| 監修 | `story-reviewer` / `learning-designer` / `code-reviewer` / `playtest-critic` | checker | read-only |
 | 品質ゲート | `quality-gatekeeper` | checker+修正 | code write（自動マージ不可） |
 
 考証の軸を分ける: **専門家＝ドメインの正確さ** / **story-reviewer＝物語の筋** /
-**learning-designer＝教育価値** / **code-reviewer＝設計・可読性** / **quality-gatekeeper＝機械ゲート**。
+**learning-designer＝教育価値** / **code-reviewer＝設計・可読性** / **playtest-critic＝面白さ・飽きにくさ
+（飽きっぽい消費者の代弁）** / **quality-gatekeeper＝機械ゲート**。
+正確さ・整合・学びを守る監修が増えるほど「正しいが退屈」へ傾きやすい——`playtest-critic` はその対抗軸として、
+消費者目線で“遊んで楽しいか・飽きないか”だけを辛口で突き、全員に次の一工夫を迫る。
 
 **モデル配分（夜間バッチのコスト最適化）**: 創造性・微妙な判断が要る役は opus
 （`narrative-designer` / `story-reviewer` / `learning-designer` / `showrunner` / 専門家5名＝考証の正確さは
