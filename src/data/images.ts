@@ -23,11 +23,16 @@ export const AVAILABLE_IMAGES = new Set<string>([
   's2-daily-ghost-stock__b__r', // 空の棚番をデータと照合する手元（不正暴露の入口・結果）
   's2-retro__b__r', // FDEと田淵さんが並んで手順書を書く（genbaTrust選択の結果・信頼の入口）
   's1-plan-goal__b__r', // 倉庫で田淵さんの手書き台帳を一緒に指でなぞり現場の流れを聞き取る（なぜ画面が使われないかを突き止める・前向きな現場）
+  's2-daily-keiri-odd__b__r', // 経理・間宮とFDEが紙の書面の同じ数字に同時に指を置く（違和感の共有＝粉飾アークの入口／状況画像はPC画面で別絵）
+  's3-daily-circular__b__r', // 机に並べた複数社の伝票を指で輪をなぞる手元（循環取引の輪郭＝核心／状況画像はPC画面の循環図で別絵）
+  's3-daily-soumu-paper__b__r', // 書庫で守屋が棚奥のファイルを出しFDEが符合を控える（紙の決定的証拠／状況画像は総務部オフィスで別絵）
+  's3-daily-keiri-closing__b__r', // 夜の経理部でスタンド灯の下、間宮とFDEが連結決算と現場実数を突き合わせノートに控える（会計sideの詰め）
   // エンディング／フィナーレの情景画像 public/img/ending-{Epilogue.id}.jpg（endingImage() が取得）
   'ending-finale', // 輪ゴムで束ねた伝票＋USBを手に「循環取引 証拠資料」のファイルを前に決断の直前（フィナーレ画面）
   'ending-hero', // 一人の机に同僚が群がり頼られるFDE・本人がいないと回らない（属人化＝頼れる英雄/単一障害点）
   'ending-trueFde', // 夕陽のドックへ背を向け去るFDE・現場はハンディ端末を自力で使いこなす（仕組みが根付いた最良の結末）
   'ending-fail-trust', // 誰もいない会議室で閉じたノートPCの前に一人天を仰ぐFDE（信頼が崩れ案件終了・最悪の結末）
+  'ending-finale-expose', // 「機密・証拠資料」の封筒を抱え取締役会室の扉前を進むFDE（不正を告発する暴露エンド）
   // 状況（問題）の個別画像 public/img/{eventId}.jpg
   's2-daily-ghost-stock', // 空の棚＝在るはずの機材が無い（不正暴露の入口）
   's2-daily-showcase-visit', // スーツの視察団と手書き台帳の田淵さん・期待と現実のギャップ
