@@ -18,6 +18,19 @@
 
 <!-- ここに指揮者が新しい順で追記する。 -->
 
+## 2026-06-24 — #92+#94 実装→PR #111/#112 [ブランチ: loop/sprint3-c-choice-20260624b / loop/s2-retro-cliffhanger-20260624]
+
+- A: 0→2/3（PR #111/#112 作成後）→ blocked=false
+- Blocked 解除: PR #96 マージ確認後、#92/#94/#97〜#103/#105〜#107 を全件 Backlog に戻す
+- B: #92（Sprint3 c択）→ C実装 / 完了後B再実行 → #94（s2-retro cliffhanger）→ C実装
+- C-1 (#92): s3-daily-ai-agent/drive/burn に c択追加（3択: 段階移譲/ファシリテーション/部分リハ）
+  - story-reviewer 🔴2件（trust-1摩擦根拠なし）→ effects から trust-1 を削除（機会コスト表現に統一）
+  - check 全緑（395テスト）/ size 122.28 kB → PR #111 / #92 inReview
+- C-2 (#94): s2-retro b/c 末尾に cliffhanger 1文追加（「言いかけて止まった」s1の一段先）
+  - check 全緑（395テスト）→ PR #112 / #94 inReview
+- E: アイドル終了（2件実装・PR 2本、count=2/3）
+- 次ティック: PR #111/#112 マージ後 → #97/#98/#99/... を next-auto が拾う
+
 ## 2026-06-24 04:10 — Issue #95+#93 バンドル予算回復＋取り逃し注記解消 [ブランチ: loop/no-caveat-catharsis-20260624]
 
 - 一手: #92/#93/#94 が全て「main が 164.154 kB で 154B 超過」でブロック → #95（動的 import）を実装してヘッドルームを回復し、#93 も同梱
