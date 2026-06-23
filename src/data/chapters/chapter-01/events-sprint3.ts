@@ -1047,7 +1047,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         label: '数字が良くなるなら、と{{3PL}}全面移管を後押しする',
         effects: { trust: 1, culture: -1 },
         resultText:
-          '提案は経営に受けた（コスト削減で信頼+）。だが現場の改善文化は根こそぎ外注され、せっかくの知が霧散した。',
+          '提案は経営に受けた（コスト削減で信頼+）。だが現場の改善文化は根こそぎ外注され、せっかく溜めた現場の知が散り散りに失われた。',
         warn: true,
       },
       {
@@ -1260,7 +1260,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: '良い数字だけをきれいに並べ、成功として締める',
         effects: { insight: -1 },
-        resultText: '数字は拍手を呼んだ。だが「なぜ下がったか」を飲み込んだぶん、誰も次に再現できない。',
+        resultText: '数字は拍手を呼んだ。だが「なぜ下がったか」を語らず伏せたぶん、誰も次に再現できない。',
         warn: true,
       },
       {
@@ -1297,7 +1297,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: '経営の手前、原因者を特定して報告し、収拾を図る',
         effects: { culture: -1 },
-        resultText: '犯人は見つかった。代わりに、次から誰も失敗を口にしなくなる。小さな火種が、水面下へ潜った。',
+        resultText: '犯人は見つかった。代わりに、次から誰も失敗を口にしなくなる。火種は、見えない所でくすぶり続ける。',
         warn: true,
       },
       {
@@ -1568,7 +1568,8 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         id: 'a',
         label: '波風を立てず、書類はそっと元の棚に戻す',
         effects: { trust: 1, insight: -1 },
-        resultText: '面倒を避け、見なかったことにした（角が立たず信頼+）。だが——真実から目を逸らした手応えだけが残る。',
+        resultText:
+          '面倒を避け、見なかったことにした（角が立たず信頼+）。だが——見て見ぬふりをした、という後ろめたさが残る。',
         warn: true,
       },
       {
