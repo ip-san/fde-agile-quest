@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { ACTION_LABELS, SEGMENT_COLORS, SEGMENT_LABELS } from '../data/chapters/chapter-01'
 import { imageUrl, resultImage } from '../data/images'
 import { METER_META } from '../data/meters'
@@ -121,7 +121,7 @@ function BacklogReviewBlock({ review }: { review: BacklogReview }) {
       {vg !== undefined && (
         <div
           className={`flex items-center justify-between rounded-lg px-3 py-2 ${
-            vg > 0 ? 'bg-[var(--accent)]/10 ring-1 ring-[var(--accent)]/30' : 'bg-[var(--panel)]/60'
+            vg > 0 ? 'bg-[var(--accent)]/10 ring-1 ring-[var(--accent)]/40' : 'bg-[var(--panel)]/60'
           }`}
         >
           <span className="text-xs font-semibold text-amber-100">このスプリントで伸ばした顧客価値</span>
@@ -201,6 +201,64 @@ function TradeoffNote({ effects }: { effects: Effects }) {
   )
 }
 
+/** 心得ブロック（precept主役ケースと通常ケースで表示内容を切り替える）。
+ *  precept主役：上部ヘッドラインで新規全文を表示済みなので、ここは全IDをチップのみに集約。
+ *  その他：新規全文カード＋既出IDチップ。 */
+function PreceptsBlock({
+  precepts,
+  newPreceptIds,
+  headlineKind,
+}: {
+  precepts: number[]
+  newPreceptIds: number[]
+  headlineKind: HeadlineKind
+}) {
+  const newIds = precepts.filter((id) => newPreceptIds.includes(id))
+  const seenIds = precepts.filter((id) => !newPreceptIds.includes(id))
+  // precept が主役ブロック表示済みのとき新規全文は省略し既出チップのみ
+  const showNewFull = headlineKind !== 'precept' && newIds.length > 0
+  // precept 主役時: 全precepts をチップ表示（新規も含む）／それ以外: seenIds のみ
+  const chipIds = headlineKind === 'precept' ? precepts : seenIds
+
+  return (
+    <div className="space-y-2 border-t border-[var(--panel)] pt-3">
+      {showNewFull && (
+        <div className="space-y-1.5">
+          <span className="text-[11px] font-semibold text-amber-300">心得を獲得</span>
+          {newIds.map((id) => {
+            const p = PRECEPT_BY_ID[id]
+            if (!p) return null
+            return (
+              <div
+                key={id}
+                className="flex items-start gap-2 rounded-lg bg-[var(--accent)]/10 px-2.5 py-1.5 text-sm ring-1 ring-[var(--accent)]/40"
+              >
+                <span className="mt-0.5 shrink-0 tabular-nums text-[11px] text-amber-300/80">#{id}</span>
+                <span className="text-[var(--text)]">{p.text}</span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+      {/* 既出チップ（precept主役時の新規IDも含め小さく集約） */}
+      {chipIds.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[11px] text-[var(--text-sub)]">この場面の心得</span>
+          {chipIds.map((id) => (
+            <span
+              key={id}
+              title={PRECEPT_BY_ID[id]?.text}
+              className="rounded bg-[var(--panel)]/60 px-1.5 py-0.5 text-[11px] tabular-nums text-[var(--text-sub)]"
+            >
+              #{id}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 /** 次の機能の種の発見＝自社SaaS「StockPilot」への還元（FDEの本懐）。 */
 function SeedReveal({ seedId, seedNew }: { seedId?: string; seedNew?: boolean }) {
   const seed = seedId ? SEED_BY_ID[seedId] : undefined
@@ -214,6 +272,34 @@ function SeedReveal({ seedId, seedNew }: { seedId?: string; seedNew?: boolean })
       <p className="text-[11px] text-[var(--text-sub)]">現場から：{seed.from}</p>
     </div>
   )
+}
+
+// ─── Headline（主役）選定 ────────────────────────────────────────────────
+
+/** 主役ブロックの種別。5段階の優先度で一意に決まる。 */
+export type HeadlineKind = 'danger' | 'greatExit' | 'precept' | 'valueGain' | 'normal'
+
+/**
+ * 毎ターンの「主役」を1つだけ選ぶ純関数（優先度順）。
+ * 新しい state/計算/乱数は使わず、既存フラグの派生値のみで決定する。
+ * sfxKind の danger>precept 優先度と整合している（greatExit は sfx に無いが flash に対応）。
+ *
+ * 優先度:
+ * 1) 致命圏 — dangerMeters.length>0 / onBrink
+ * 2) 会心の山場出口 — execTier==='great' && tierResultText
+ * 3) 心得の新規獲得 — newPreceptIds.length>0
+ * 4) 顧客価値の伸び — backlogReview?.valueGain>0
+ * 5) それ以外（通常: メーター差分が主役）
+ */
+export function pickHeadline(
+  result: Pick<ResultView, 'execTier' | 'tierResultText' | 'newPreceptIds' | 'backlogReview'>,
+  dangerMeters: (keyof Meters)[]
+): HeadlineKind {
+  if (dangerMeters.length > 0) return 'danger'
+  if (result.execTier === 'great' && result.tierResultText) return 'greatExit'
+  if (result.newPreceptIds.length > 0) return 'precept'
+  if ((result.backlogReview?.valueGain ?? 0) > 0) return 'valueGain'
+  return 'normal'
 }
 
 interface Props {
@@ -252,19 +338,28 @@ export function ResultModal({ result, meters, onContinue }: Props) {
   const kind = revealKindFor(result.effects, result.warn)
   const gotPrecept = result.newPreceptIds.length > 0
   const gotSeed = !!result.seedNew
+  // 致命圏ならフラッシュも警告色（rose）で上書きする。
+  // great + tierResultText がある場合（山場の出口）は amber で格上げする（危険圏には勝てない）。
+  const greatExit = result.execTier === 'great' && !!result.tierResultText
+  const flashColor = dangerMeters.length > 0 ? '#fb7185' : greatExit ? '#fbbf24' : FLASH_COLOR[kind]
   // sfx 選択ロジックを effect 外で確定させ、union 型の値を deps に入れる。
   // これにより effect 内の参照が常に最新値となり biome-ignore が不要になる。
+  // 優先度（headlineKind と整合）: danger > greatExit(sfxReveal) > precept > kind
+  // greatExit のとき kind をそのまま使う＝音は変動量に従う（warn か magnitude>=3 で impact、小変動は good 等）。
+  // 視覚(amber)とは独立し、聴覚は revealKindFor の振れ幅で決まる（常に impact とは限らない）。
+  // gotSeed も precept と同順（発見もご褒美音）。
   const sfxKind: 'danger' | 'precept' | RevealKind =
-    dangerMeters.length > 0 ? 'danger' : gotPrecept || gotSeed ? 'precept' : kind
+    dangerMeters.length > 0 ? 'danger' : greatExit ? kind : gotPrecept || gotSeed ? 'precept' : kind
   useEffect(() => {
     if (sfxKind === 'danger') sfxDanger()
     else if (sfxKind === 'precept') sfxPrecept()
     else sfxReveal(sfxKind)
   }, [sfxKind])
-  // 致命圏ならフラッシュも警告色（rose）で上書きする。
-  // great + tierResultText がある場合（山場の出口）は amber で格上げする（危険圏には勝てない）。
-  const greatExit = result.execTier === 'great' && !!result.tierResultText
-  const flashColor = dangerMeters.length > 0 ? '#fb7185' : greatExit ? '#fbbf24' : FLASH_COLOR[kind]
+
+  // 主役選定（純関数で決定）
+  const headlineKind = pickHeadline(result, dangerMeters)
+  // 副次情報パネルの開閉（details/summary の代替: aria-expanded + aria-controls で同等の a11y）
+  const [detailsOpen, setDetailsOpen] = useState(false)
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:px-safe sm:pt-safe sm:pb-safe">
@@ -307,8 +402,87 @@ export function ResultModal({ result, meters, onContinue }: Props) {
           />
         )}
 
-        <div className="space-y-4 px-5 py-4">
-          {/* 選んだ判断 */}
+        <div className="space-y-3 px-5 py-4">
+          {/* ═══ 主役ブロック（HeadlineKind ごとに1つだけ前面に大きく） ═══
+              優先度: danger > greatExit > precept > valueGain > normal
+              normal のみメーター差分がそのまま主役になる（専用ブロックなし） */}
+
+          {/* 1) 致命圏警告 ── 最優先。0 で案件終了する緊張感を前面に。
+              ダイアログ開封と同時に存在する静的内容なので role="status"(polite)。
+              assertive な alert はタイトル読み上げと競合するため使わない（WCAG 4.1.3）。 */}
+          {headlineKind === 'danger' && dangerMeters.length > 0 && (
+            <div
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              className={`rounded-xl border px-4 py-3 ${
+                onBrink
+                  ? 'border-rose-500/50 bg-rose-500/15 motion-safe:animate-pulse'
+                  : 'border-amber-500/50 bg-amber-500/10'
+              }`}
+            >
+              <p className={`text-base font-bold ${onBrink ? 'text-rose-200' : 'text-amber-200'}`}>
+                <span aria-hidden="true">⚠</span> {onBrink ? '危険水域——あと一歩で案件終了' : '危険水域'}
+              </p>
+              <p className="mt-1 text-sm text-[var(--text-body)]">
+                {dangerMeters.map((k, i) => (
+                  <span key={k}>
+                    {i > 0 && '／'}
+                    {METER_FULL_LABEL[k]} <span className="font-bold tabular-nums">残り{meters[k]}</span>
+                  </span>
+                ))}
+                。
+                {onBrink
+                  ? '0 になると案件は終了する。差し引きプラスでも、削りすぎは命取り。'
+                  : 'このまま削ると危ない。'}
+              </p>
+            </div>
+          )}
+
+          {/* 2) 会心の山場出口 ── great + tierResultText を主役に前面表示。 */}
+          {headlineKind === 'greatExit' && result.tierResultText && (
+            <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 ring-1 ring-amber-500/40">
+              <p className="mb-1 text-[11px] font-semibold text-amber-300">
+                <span aria-hidden="true">◎</span> 会心の手応え
+              </p>
+              <p className="text-base font-bold leading-relaxed text-amber-200">
+                <RichText text={result.tierResultText} />
+              </p>
+            </div>
+          )}
+
+          {/* 3) 心得の新規獲得 ── 新たに獲得した心得を前面に大きく表示。 */}
+          {headlineKind === 'precept' && result.newPreceptIds.length > 0 && (
+            <div className="space-y-2 rounded-xl border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-4 py-3 ring-1 ring-[var(--accent)]/40">
+              <p className="text-[11px] font-semibold text-amber-300">心得を獲得</p>
+              {result.precepts
+                .filter((id) => result.newPreceptIds.includes(id))
+                .map((id) => {
+                  const p = PRECEPT_BY_ID[id]
+                  if (!p) return null
+                  return (
+                    <div key={id} className="flex items-start gap-2">
+                      <span className="mt-0.5 shrink-0 tabular-nums text-[11px] text-amber-300/80">#{id}</span>
+                      <span className="text-base font-bold leading-relaxed text-[var(--text)]">{p.text}</span>
+                    </div>
+                  )
+                })}
+            </div>
+          )}
+
+          {/* 4) 顧客価値の伸び ── バックログレビューの valueGain を主役に。 */}
+          {headlineKind === 'valueGain' && (result.backlogReview?.valueGain ?? 0) > 0 && (
+            <div className="flex items-center justify-between rounded-xl border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-4 py-3 ring-1 ring-[var(--accent)]/40">
+              <p className="text-sm font-semibold text-amber-100">このスプリントで伸ばした顧客価値</p>
+              <span className="text-2xl font-bold tabular-nums text-amber-300">
+                ▲ +{result.backlogReview?.valueGain}
+              </span>
+            </div>
+          )}
+
+          {/* 5) normal ── 専用主役なし。下のメーター差分が自然に主役になる。 */}
+
+          {/* ─── 選んだ判断 ─── */}
           <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)]/40 px-4 py-2.5">
             <p className="text-[11px] font-semibold text-[var(--text-sub)]">あなたの判断</p>
             <p className="text-sm font-medium text-[var(--text)]">
@@ -329,51 +503,20 @@ export function ResultModal({ result, meters, onContinue }: Props) {
             </p>
           </div>
 
-          {/* tier 依存の「跳ね返りの一文」（opt-in。tierResult を持つ選択のみ）。
-              great＝踏ん張った手応えを amber で、poor＝詰めが甘かった重さを slate で。
+          {/* tier 依存の「跳ね返りの一文」（greatExit 以外のケース）。
+              greatExit は主役ブロックで表示済みなので重複しない。
+              poor＝詰めが甘かった重さを slate で。
               追加情報なので role 付与は不要（見出し構造は破らない）。interactive=false 固定。 */}
-          {result.tierResultText && (
+          {result.tierResultText && headlineKind !== 'greatExit' && (
             <p
               className={`rounded-lg px-3 py-2.5 text-sm leading-relaxed ${
-                result.execTier === 'great'
-                  ? 'bg-amber-500/10 text-amber-200 ring-1 ring-amber-500/30'
-                  : result.execTier === 'poor'
-                    ? 'bg-slate-500/15 text-slate-300'
-                    : 'bg-[var(--panel)]/40 text-[var(--text-body)]'
+                result.execTier === 'poor'
+                  ? 'bg-slate-500/15 text-slate-300'
+                  : 'bg-[var(--panel)]/40 text-[var(--text-body)]'
               }`}
             >
               <RichText text={result.tierResultText} />
             </p>
-          )}
-
-          {/* 致命圏に踏み込んだ瞬間の警告（追い詰められる緊張）。0 で案件終了。
-              ダイアログ開封と同時に存在する静的内容なので role="status"(polite)。
-              assertive な alert はタイトル読み上げと競合するため使わない（WCAG 4.1.3）。 */}
-          {dangerMeters.length > 0 && (
-            <div
-              role="status"
-              className={`rounded-xl border px-4 py-2.5 ${
-                onBrink
-                  ? 'border-rose-500/50 bg-rose-500/15 motion-safe:animate-pulse'
-                  : 'border-amber-500/50 bg-amber-500/10'
-              }`}
-            >
-              <p className={`text-sm font-bold ${onBrink ? 'text-rose-200' : 'text-amber-200'}`}>
-                <span aria-hidden="true">⚠</span> {onBrink ? '危険水域——あと一歩で案件終了' : '危険水域'}
-              </p>
-              <p className="mt-0.5 text-xs text-[var(--text-body)]">
-                {dangerMeters.map((k, i) => (
-                  <span key={k}>
-                    {i > 0 && '／'}
-                    {METER_FULL_LABEL[k]} <span className="font-bold tabular-nums">残り{meters[k]}</span>
-                  </span>
-                ))}
-                。
-                {onBrink
-                  ? '0 になると案件は終了する。差し引きプラスでも、削りすぎは命取り。'
-                  : 'このまま削ると危ない。'}
-              </p>
-            </div>
           )}
 
           {/* 実行ミニゲームの出来 */}
@@ -398,122 +541,122 @@ export function ResultModal({ result, meters, onContinue }: Props) {
             </div>
           ) : null}
 
-          {/* 次の機能の種：現場で掴んだプロダクトの種を発見＝自社SaaSへ還元できる（FDEの本懐）。 */}
-          <SeedReveal seedId={result.seedId} seedNew={result.seedNew} />
-
-          {/* ヒアリングで掘り当てた発見可PBI：プロダクトバックログに新たな項目が加わった。 */}
-          {result.discoveredPbi && (
-            <div className="space-y-1 rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-2.5">
-              <p className="text-[11px] font-semibold text-rose-300">現場の声から、新しいバックログ項目が見つかった</p>
-              <p className="text-sm font-medium text-[var(--text)]">『{result.discoveredPbi.title}』</p>
-              <p className="text-[11px] text-[var(--text-sub)]">
-                プロダクトバックログに追加。次のプランニングで優先順位を検討しましょう。
-              </p>
-            </div>
+          {/* 心得ブロック（precept が主役の場合は新規獲得済みなので既出チップのみ。
+              その他のケースでは新規＋既出チップ両方を通常サイズで表示）。 */}
+          {result.precepts.length > 0 && (
+            <PreceptsBlock
+              precepts={result.precepts}
+              newPreceptIds={result.newPreceptIds}
+              headlineKind={headlineKind}
+            />
           )}
 
-          {/* イベントで受けた要望PBI：今スプリントへ割り込み（toSprint）か、次のために積んだか で出し分ける。 */}
-          {result.addedPbi && (
-            <div
-              className={`space-y-1 rounded-xl border px-4 py-2.5 ${
-                result.addedPbi.toSprint ? 'border-amber-500/50 bg-amber-500/10' : 'border-sky-500/40 bg-sky-500/10'
-              }`}
-            >
-              <p
-                className={`text-[11px] font-semibold ${result.addedPbi.toSprint ? 'text-amber-300' : 'text-sky-300'}`}
+          {/* ─── 副次情報（折りたたみ）────────────────────────────────────
+              seed / discoveredPbi / addedPbi / tokenSpent / coverage・debt / backlogReview
+              いずれも「あれば展開」の追加情報。aria-expanded+aria-controls でキーボード・SR 対応。
+              フォーカス順=DOM順=視覚順を一致させるため、主コンテンツの後に配置。 */}
+          {(result.seedId ||
+            result.discoveredPbi ||
+            result.addedPbi ||
+            result.tokenSpent ||
+            result.coverageDelta ||
+            result.debtDelta ||
+            result.backlogReview) && (
+            <div className="rounded-xl border border-[var(--border)]">
+              <button
+                type="button"
+                aria-expanded={detailsOpen}
+                aria-controls="result-details"
+                onClick={() => setDetailsOpen((v) => !v)}
+                className="flex w-full cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-[11px] font-semibold text-[var(--text-sub)] hover:text-[var(--text-body)]"
               >
-                {result.addedPbi.toSprint
-                  ? '⚠ 割り込みを受けた：今スプリントに要望を差し込んだ'
-                  : '要望をプロダクトバックログに積んだ'}
-              </p>
-              <p className="text-sm font-medium text-[var(--text)]">『{result.addedPbi.title}』</p>
-              <p className="text-[11px] text-[var(--text-sub)]">
-                {result.addedPbi.toSprint
-                  ? '今スプリントの予測が増えた。1日のレビュー容量を超えれば、その分は終わらず持ち越しに——スプリントゴールを危うくしうる。PO と再交渉し、ゴールを守れる範囲か見極めを。'
-                  : '次のプランニングで Ready 化し、優先順位を検討しましょう。今の焦点は守られた。'}
-              </p>
+                <span aria-hidden="true">{detailsOpen ? '▼' : '▶'}</span>
+                詳細を見る
+              </button>
+              <div
+                id="result-details"
+                hidden={!detailsOpen}
+                className="space-y-3 border-t border-[var(--border)] px-4 pb-3 pt-3"
+              >
+                {/* 次の機能の種：現場で掴んだプロダクトの種を発見＝自社SaaSへ還元できる（FDEの本懐）。 */}
+                <SeedReveal seedId={result.seedId} seedNew={result.seedNew} />
+
+                {/* ヒアリングで掘り当てた発見可PBI：プロダクトバックログに新たな項目が加わった。 */}
+                {result.discoveredPbi && (
+                  <div className="space-y-1 rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-2.5">
+                    <p className="text-[11px] font-semibold text-rose-300">
+                      現場の声から、新しいバックログ項目が見つかった
+                    </p>
+                    <p className="text-sm font-medium text-[var(--text)]">『{result.discoveredPbi.title}』</p>
+                    <p className="text-[11px] text-[var(--text-sub)]">
+                      プロダクトバックログに追加。次のプランニングで優先順位を検討しましょう。
+                    </p>
+                  </div>
+                )}
+
+                {/* イベントで受けた要望PBI：今スプリントへ割り込み（toSprint）か、次のために積んだか で出し分ける。 */}
+                {result.addedPbi && (
+                  <div
+                    className={`space-y-1 rounded-xl border px-4 py-2.5 ${
+                      result.addedPbi.toSprint
+                        ? 'border-amber-500/50 bg-amber-500/10'
+                        : 'border-sky-500/40 bg-sky-500/10'
+                    }`}
+                  >
+                    <p
+                      className={`text-[11px] font-semibold ${result.addedPbi.toSprint ? 'text-amber-300' : 'text-sky-300'}`}
+                    >
+                      {result.addedPbi.toSprint
+                        ? '⚠ 割り込みを受けた：今スプリントに要望を差し込んだ'
+                        : '要望をプロダクトバックログに積んだ'}
+                    </p>
+                    <p className="text-sm font-medium text-[var(--text)]">『{result.addedPbi.title}』</p>
+                    <p className="text-[11px] text-[var(--text-sub)]">
+                      {result.addedPbi.toSprint
+                        ? '今スプリントの予測が増えた。1日のレビュー容量を超えれば、その分は終わらず持ち越しに——スプリントゴールを危うくしうる。PO と再交渉し、ゴールを守れる範囲か見極めを。'
+                        : '次のプランニングで Ready 化し、優先順位を検討しましょう。今の焦点は守られた。'}
+                    </p>
+                  </div>
+                )}
+
+                {/* 生成AIトークンの消費（AIに頼った選択のみ） */}
+                {result.tokenSpent ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold text-[var(--text-sub)]">AIトークン</span>
+                    <span className="rounded-lg bg-cyan-500/15 px-2.5 py-1 text-sm font-bold tabular-nums text-cyan-300">
+                      ▼ −{result.tokenSpent}
+                    </span>
+                  </div>
+                ) : null}
+
+                {/* リポジトリ：コード（カバレッジ）／技術的負債の増減 */}
+                {result.coverageDelta || result.debtDelta ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[11px] font-semibold text-[var(--text-sub)]">リポジトリ</span>
+                    {result.coverageDelta ? (
+                      <span
+                        className={`rounded-lg px-2.5 py-1 text-sm font-bold tabular-nums ${result.coverageDelta > 0 ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'}`}
+                      >
+                        コード {result.coverageDelta > 0 ? '▲ +' : '▼ '}
+                        {result.coverageDelta}%
+                      </span>
+                    ) : null}
+                    {result.debtDelta ? (
+                      <span
+                        className={`rounded-lg px-2.5 py-1 text-sm font-bold tabular-nums ${result.debtDelta > 0 ? 'bg-rose-500/15 text-rose-300' : 'bg-emerald-500/15 text-emerald-300'}`}
+                      >
+                        ▲ 負債 {result.debtDelta > 0 ? '+' : ''}
+                        {result.debtDelta}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {/* スプリントレビュー：スプリントバックログの精算（done/キャリーオーバー/ベロシティ） */}
+                {result.backlogReview && <BacklogReviewBlock review={result.backlogReview} />}
+              </div>
             </div>
           )}
-
-          {/* 生成AIトークンの消費（AIに頼った選択のみ） */}
-          {result.tokenSpent ? (
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold text-[var(--text-sub)]">AIトークン</span>
-              <span className="rounded-lg bg-cyan-500/15 px-2.5 py-1 text-sm font-bold tabular-nums text-cyan-300">
-                ▼ −{result.tokenSpent}
-              </span>
-            </div>
-          ) : null}
-
-          {/* リポジトリ：コード（カバレッジ）／技術的負債の増減 */}
-          {result.coverageDelta || result.debtDelta ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-semibold text-[var(--text-sub)]">リポジトリ</span>
-              {result.coverageDelta ? (
-                <span
-                  className={`rounded-lg px-2.5 py-1 text-sm font-bold tabular-nums ${result.coverageDelta > 0 ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'}`}
-                >
-                  コード {result.coverageDelta > 0 ? '▲ +' : '▼ '}
-                  {result.coverageDelta}%
-                </span>
-              ) : null}
-              {result.debtDelta ? (
-                <span
-                  className={`rounded-lg px-2.5 py-1 text-sm font-bold tabular-nums ${result.debtDelta > 0 ? 'bg-rose-500/15 text-rose-300' : 'bg-emerald-500/15 text-emerald-300'}`}
-                >
-                  ▲ 負債 {result.debtDelta > 0 ? '+' : ''}
-                  {result.debtDelta}
-                </span>
-              ) : null}
-            </div>
-          ) : null}
-
-          {/* スプリントレビュー：スプリントバックログの精算（done/キャリーオーバー/ベロシティ） */}
-          {result.backlogReview && <BacklogReviewBlock review={result.backlogReview} />}
-
-          {/* この場面のFDE心得（手帳に集まる）。新規だけ全文で"獲得"を演出し、
-              既出は手帳に集約済みなので小さなチップに畳む（説教の二重化を避ける）。 */}
-          {result.precepts.length > 0 &&
-            (() => {
-              const newIds = result.precepts.filter((id) => result.newPreceptIds.includes(id))
-              const seenIds = result.precepts.filter((id) => !result.newPreceptIds.includes(id))
-              return (
-                <div className="space-y-2 border-t border-[var(--panel)] pt-3">
-                  {newIds.length > 0 && (
-                    <div className="space-y-1.5">
-                      <span className="text-[11px] font-semibold text-amber-300">心得を獲得</span>
-                      {newIds.map((id) => {
-                        const p = PRECEPT_BY_ID[id]
-                        if (!p) return null
-                        return (
-                          <div
-                            key={id}
-                            className="flex items-start gap-2 rounded-lg bg-[var(--accent)]/10 px-2.5 py-1.5 text-sm ring-1 ring-[var(--accent)]/30"
-                          >
-                            <span className="mt-0.5 shrink-0 tabular-nums text-[11px] text-amber-300/80">#{id}</span>
-                            <span className="text-[var(--text)]">{p.text}</span>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
-                  {seenIds.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-[11px] text-[var(--text-sub)]">この場面の心得</span>
-                      {seenIds.map((id) => (
-                        <span
-                          key={id}
-                          title={PRECEPT_BY_ID[id]?.text}
-                          className="rounded bg-[var(--panel)]/60 px-1.5 py-0.5 text-[11px] tabular-nums text-[var(--text-sub)]"
-                        >
-                          #{id}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )
-            })()}
 
           {/* 主CTAはスクロール内容の最下部に sticky 固定し、常に親指の届く位置に置く（HIG） */}
           <div className="sticky bottom-0 -mx-5 -mb-4 border-t border-[var(--border)] bg-[var(--card)]/95 px-5 py-3 pb-safe backdrop-blur">
