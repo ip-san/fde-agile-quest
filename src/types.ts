@@ -79,6 +79,10 @@ export type MiniGameKind = 'dev' | 'hearing' | 'review' | 'persuade' | 'drill'
  *  既定はイベントの segment から導出（hearingThemeFor）。問いプール・見出しは minigames.ts。 */
 export type HearingTheme = 'genba' | 'kokyaku' | 'chance' | 'team' | 'chousa' | 'inin' | 'persuade'
 
+/** 説得(persuade)ミニゲームの文脈別デッキの種別。未指定は汎用 PERSUADE_DECK（相手非依存・PO説得など）。
+ *  'demo'＝スプリントレビューのお披露目（誠実に価値を示す論拠が効き、spin は効かない）。デッキは minigames.ts。 */
+export type PersuadeContext = 'demo'
+
 /** ミニゲームの出来。倍率＝選択の主正メーターを great:+1 / good:±0 / poor:-1 する */
 export type ExecTier = 'great' | 'good' | 'poor'
 
@@ -187,6 +191,9 @@ export interface GameEvent {
   /** ヒアリングの問いのテーマ（相手・場面）を明示する（任意）。未指定なら segment から既定（hearingThemeFor）。
    *  主に trouble セグメントをヒアリングにする時に使う：調査=genba／対人=team を意図どおり出すため。 */
   hearingTheme?: HearingTheme
+  /** 説得(persuade)ミニゲームの文脈別デッキ（任意）。未指定なら汎用 PERSUADE_DECK（PO 説得など）。
+   *  'demo'＝スプリントレビューのお披露目：誠実に価値を示す論拠が効き、spin（誇張・印象操作）は効かない。 */
+  persuadeContext?: PersuadeContext
   /** このイベントが起きる場所。未指定なら segment から既定（locations.ts の LOCATION_BY_SEGMENT） */
   location?: LocationId
   /** リモート朝会の役割別ヒント（任意）。未指定の役割は場所テンプレから自動生成。
