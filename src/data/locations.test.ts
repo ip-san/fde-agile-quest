@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import type { GameEvent, LocationId, Segment } from '../types'
-import { EVENTS } from './chapters/chapter-01'
+import { loadLateEvents } from './chapters/chapter-01'
 import {
   LOCATION_BY_SEGMENT,
   LOCATION_ORDER,
@@ -23,6 +23,11 @@ const synth = (over: Partial<GameEvent> = {}): GameEvent => ({
   narrative: 'N',
   choices: [],
   ...over,
+})
+
+let EVENTS: GameEvent[] = []
+beforeAll(async () => {
+  EVENTS = await loadLateEvents()
 })
 
 describe('ロケーション定義の健全性', () => {
@@ -100,7 +105,7 @@ describe('standupFor（朝会＝競合する主張）', () => {
     expect(bad, bad.join('\n')).toEqual([])
   })
 
-  it('題の“途中”に「」を含む題がテンプレに落ちても、外側「」と入れ子にせず内部を『』へ自然化する', () => {
+  it('題の"途中"に「」を含む題がテンプレに落ちても、外側「」と入れ子にせず内部を『』へ自然化する', () => {
     // 上書き(advocacy/hints)の無い合成イベント＝テンプレ経路。内部「」が外側「」と入れ子になる退行を防ぐ。
     const v = standupFor([
       synth({ id: 'z', segment: 'kokyaku', location: 'client', title: '親会社からの「実証デモ」要求' }),
@@ -110,7 +115,7 @@ describe('standupFor（朝会＝競合する主張）', () => {
     expect(v[0].line).toContain('『実証デモ』')
   })
 
-  it('人事/総務/経理/不正の題材は“価値/障害/コード”の語彙で称揚・矮小化しない（中立バンク）', () => {
+  it('人事/総務/経理/不正の題材は"価値/障害/コード"の語彙で称揚・矮小化しない（中立バンク）', () => {
     // 実イベントのうち sensitive（人事/総務/経理 ロケーション or 不正フラグ）を単独候補で朝会化し、
     // 不適切な持ち上げ・タスク化の語が出ないことを保証する（禁止語は実装と同じ単一の真実源）
     const sensitive = EVENTS.filter((e) => {

@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
+import type { GameEvent } from '../../types'
 import { GLOSSARY } from '../glossary'
 import { SEED_BY_ID, SEEDS } from '../seeds'
-import { EVENTS, SPRINTS } from './chapter-01'
+import { loadLateEvents, SPRINTS } from './chapter-01'
 
 // ───────────────────────────────────────────────────────────
 // 用語カバレッジ監査
@@ -10,7 +11,7 @@ import { EVENTS, SPRINTS } from './chapter-01'
 // ゲーム課題に必要な特徴へ向ける「注意（attention）」によって駆動される
 // （Cutting & Iacovides, ACM PACMHCI 2022, 査読／確度: 高）。
 // 本作の中核機構は「選択 → 結果（メーター増減）の開示」。学習させたい用語を
-// この“結果の説明”に埋め込むほど、プレイヤーの注意が用語に向き定着が高まる。
+// この"結果の説明"に埋め込むほど、プレイヤーの注意が用語に向き定着が高まる。
 //
 // よってこのテストは:
 //  (1) 正本性: 本文中の {{key}} がすべて GLOSSARY に存在する（タイポ／未定義の検知）
@@ -30,9 +31,9 @@ function termsIn(text: string | undefined): string[] {
 }
 
 /** 全イベント・全フィールドの {{key}} を (場所ラベル, key) で列挙する */
-function allTermUses(): { where: string; key: string }[] {
+function allTermUses(events: GameEvent[]): { where: string; key: string }[] {
   const uses: { where: string; key: string }[] = []
-  for (const e of EVENTS) {
+  for (const e of events) {
     for (const k of termsIn(e.narrative)) uses.push({ where: `${e.id}.narrative`, key: k })
     for (const c of e.choices) {
       for (const k of termsIn(c.label)) uses.push({ where: `${e.id}/${c.id}.label`, key: k })
@@ -50,9 +51,14 @@ function allTermUses(): { where: string; key: string }[] {
   return uses
 }
 
+let EVENTS: GameEvent[] = []
+beforeAll(async () => {
+  EVENTS = await loadLateEvents()
+})
+
 describe('用語カバレッジ — 正本性', () => {
   it('本文で使われる {{用語}} はすべて GLOSSARY に定義されている（タイポ・未定義の検知）', () => {
-    const unknown = allTermUses().filter((u) => !GLOSSARY[u.key])
+    const unknown = allTermUses(EVENTS).filter((u) => !GLOSSARY[u.key])
     expect(unknown, `未定義の用語キー: ${unknown.map((u) => `${u.key}@${u.where}`).join(', ')}`).toEqual([])
   })
 
@@ -65,9 +71,8 @@ describe('用語カバレッジ — 正本性', () => {
 })
 
 describe('推理（見抜く）データの整合性', () => {
-  const withDeduction = EVENTS.filter((e) => e.deduction)
-
   it('各推理はちょうど1つの本音（truth）を持つ', () => {
+    const withDeduction = EVENTS.filter((e) => e.deduction)
     const bad = withDeduction
       .map((e) => ({ id: e.id, truths: e.deduction?.options.filter((o) => o.truth).length ?? 0 }))
       .filter((x) => x.truths !== 1)
@@ -75,6 +80,7 @@ describe('推理（見抜く）データの整合性', () => {
   })
 
   it('各推理は2つ以上の候補を持ち、本音以外には外し時の miss がある', () => {
+    const withDeduction = EVENTS.filter((e) => e.deduction)
     const bad: string[] = []
     for (const e of withDeduction) {
       const opts = e.deduction?.options ?? []
@@ -87,6 +93,7 @@ describe('推理（見抜く）データの整合性', () => {
   })
 
   it('候補IDは推理内で一意', () => {
+    const withDeduction = EVENTS.filter((e) => e.deduction)
     const bad: string[] = []
     for (const e of withDeduction) {
       const ids = (e.deduction?.options ?? []).map((o) => o.id)
@@ -97,14 +104,14 @@ describe('推理（見抜く）データの整合性', () => {
 })
 
 describe('機能の種（seeds）の整合性', () => {
-  const choices = EVENTS.flatMap((e) => e.choices)
-
   it('choice.seedId はすべて SEEDS に定義されている', () => {
+    const choices = EVENTS.flatMap((e) => e.choices)
     const unknown = choices.filter((c) => c.seedId && !SEED_BY_ID[c.seedId]).map((c) => c.seedId)
     expect(unknown, `未定義の seedId: ${unknown.join(', ')}`).toEqual([])
   })
 
   it('すべての種は、いずれかの選択肢から発見できる（孤立した種が無い）', () => {
+    const choices = EVENTS.flatMap((e) => e.choices)
     const referenced = new Set(choices.map((c) => c.seedId).filter(Boolean))
     const orphan = SEEDS.filter((s) => !referenced.has(s.id)).map((s) => s.id)
     expect(orphan, `どの選択からも発見できない種: ${orphan.join(', ')}`).toEqual([])
@@ -112,9 +119,8 @@ describe('機能の種（seeds）の整合性', () => {
 })
 
 describe('縦糸の入口（pinned）の整合性', () => {
-  const pinned = EVENTS.filter((e) => e.pinned)
-
   it('pinned はデイリーイベント（最後のデイリーで強制提示する仕組みのため）', () => {
+    const pinned = EVENTS.filter((e) => e.pinned)
     const bad = pinned.filter((e) => e.ceremony !== 'daily').map((e) => e.id)
     expect(bad, `daily 以外の pinned: ${bad.join(', ')}`).toEqual([])
   })
@@ -122,6 +128,7 @@ describe('縦糸の入口（pinned）の整合性', () => {
   it('1スプリントの pinned 数 ≤ そのスプリントのデイリー数（末尾から1日1件ずつ全部強制できる）', () => {
     // spinCore は「未遭遇 pinned ≤ 残りデイリー数」になった時点で末尾デイリーから1件ずつ強制する。
     // 総数がデイリー数を超えなければ、全 pinned を必ず通せる（取りこぼさない）。
+    const pinned = EVENTS.filter((e) => e.pinned)
     const dailyCountOf = (sprintNo: number) =>
       SPRINTS.find((s) => s.n === sprintNo)?.beats.filter((b) => b === 'daily').length ?? 0
     const bySprint = new Map<number, number>()
@@ -132,12 +139,13 @@ describe('縦糸の入口（pinned）の整合性', () => {
     expect(over, `pinned がデイリー数を超えるスプリント: ${over.join(', ')}`).toEqual([])
   })
 
-  it('requiresFlag 付き pinned は、そのフラグを確実に立てる“保証役”の pinned が先行する', () => {
+  it('requiresFlag 付き pinned は、そのフラグを確実に立てる"保証役"の pinned が先行する', () => {
     // pinned は原則「無条件に出る入口」。ただし requiresFlag 付きでも、そのフラグを全選択で立てる
     // 無条件 pinned（保証役）が同一以前のスプリントにあれば、フラグは必ず立つので入口として成立する。
     // 例: 現状の pinned はいずれも無条件（requiresFlag 無し）。s1-daily-showcase-order と
     //     s1-physical-ai-showcase（S1 へ前倒したお披露目）は全選択で showcasePressure を立てる
-    //     “保証役”を兼ね、S2 視察・S3 報告（showcasePressure ゲート）への縦糸を確実に繋ぐ。
+    //     "保証役"を兼ね、S2 視察・S3 報告（showcasePressure ゲート）への縦糸を確実に繋ぐ。
+    const pinned = EVENTS.filter((e) => e.pinned)
     const guarantees = (flag: string) =>
       pinned.some((g) => !g.requiresFlag && g.choices.length > 0 && g.choices.every((c) => c.setsFlag === flag))
     const bad = pinned
@@ -149,7 +157,7 @@ describe('縦糸の入口（pinned）の整合性', () => {
 
 describe('悪手（warn）の常設 — ラチェット', () => {
   // サクラ大戦の「言ってはいけない一手」に倣い、デイリーの判断にはほぼ必ず
-  // “誘惑的だがFDE原則を裏切る悪手”（warn）を1つ置く。warn 無しは意図的な例外のみ許可リストで認める。
+  // "誘惑的だがFDE原則を裏切る悪手"（warn）を1つ置く。warn 無しは意図的な例外のみ許可リストで認める。
   // 例外＝『意図的な技術的負債』のように悪手とは言えない正当な判断（件数だけでなくIDで縛り、別イベントの後退を捕捉）。
   const WARN_EXEMPT = new Set(['s2-daily-debt'])
 
