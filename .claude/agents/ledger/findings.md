@@ -206,3 +206,31 @@ playtest-triage 発見（入口が長く3日目から前置きの作業化）→
 - code-reviewer R1🔴1（直行ボタンの candidates[0] コールバック内 narrowing 不成立＝型負債）＋🟡2（locationOf二重評価・SRラベル）→ R2: soloEvent/soloDest をブロック外で1回抽出しガード/onClick/ラベルを統一（型narrowing確定・二重評価解消）＋aria-label付与。
 - ゲート: check:all(type-cov success)/build/size(JS162.16/CSS9.97kB・CSS中立)/e2e(axe3pass)/lighthouse 全緑・381 tests。
 - [open] (🟡・次イテレーション) 朝会タイルに「前日の選択の余韻＝今日だけの引っかかり」をビジュアルで出す案は新規props配線＋新規CSSを要するため分離（CSS予算回避）。ルーレット「2周目以降スキップ可」も状態保持が絡むため効果測定後に別スライス。
+
+## playtest-triage 2026-06-23（D ティック / キュー枯渇後）
+
+playtest-critic 通しプレイ（Sprint1〜3、直近 #73/#74/#75 反映済み状態）。
+
+### 起票済み
+- 🔴 issued: #79 — Sprint2 デイリーの同型2択「b 連打作業化」（3〜4日目 s2-daily-return/anxiety 付近が離脱点）
+- 🔴 issued: #80 — Sprint3 デイリー移譲テーマ一本調子（s3-daily-handover2 付近が最露骨・終盤ほど崩しが消える）
+- 🟡 issued: #81 — スプリント境界（レトロ後）に「次が気になる」クリフハンガーなし（初見の離脱ボーナスポイント）
+
+### 未起票（上限外・次回以降の優先候補）
+- 🟡 triage: 未起票（上限外） — ResultModal normal ケース過多で中盤ご褒美感が薄まる（心得枯渇後 → greatStreak 演出の強化が緩和策）
+- 🟡 triage: 未起票（上限外） — 朝会パネルのナビ作業化（Sprint2 5日目以降、3役セリフを読まずマップ直行）
+- 🟡 triage: 未起票（上限外） — 据え置き b 選択肢の空振り感（メーター数字が1つも動かず手応えゼロ・例: s3-daily-scale/s1-daily-scope）
+
+### 強み（記録のみ）
+- 🟢 Sprint1 #73 適用後の3択・罠択の密度は「飽きさせない」の核心として機能
+- 🟢 deduction 付きイベントは「外しても納得」な構造で没入感が高い——Sprint3 終盤に枯渇しているため追加余地あり
+- 🟢 fraudCase 縦糸アーク（ghost-stock→循環取引）はフラグが引けた周回で確実に「続きが気になる」を生む
+
+## Issue #79 Sprint2デイリーの「b連打作業化」解消（2026-06-23 / 完全自走ループ4件目）
+playtest-triage 発見（Sprint2の3〜4日目で「どうせbが正解」とプレイヤーが学習しb連打になる）→ narrative-designer が2イベントに型崩し導入。Sprint1 #73 の手口（罠化・第3択）をSprint2に横展開。
+- s2-daily-anxiety: c「最も火種になりうる一人に先に話を通す」(insight+1/culture-1)追加。トリアージ型正解候補でb(全員均等)との単一最適解なしを確保。
+- s2-daily-return: a を「記述式ヒアリングシートを全員に送る」正論型罠(trust+1/insight-1 warn)に差し替え。c「各画面に開かれた回数を記録する仕掛け」(insight+1/trust-1)新設。深さ(b)vs広さ(c)の機会コスト対比。
+- R1: fde🔴0🟡2(記録のみ)/ story🔴0🟡2(比喩混在・抽象距離表現)/ learning🔴0🟡2(ラベル曖昧2件)
+- R2修正: 比喩統一(火モチーフ統一)・具体描写化・ラベル明瞭化。R2 dry。
+- 全11ゲート緑(395tests/JS163kB/CSS9.98kB/lighthouse/e2e-axe)。PR #82。
+- [open] Sprint3デイリーの移譲テーマ一本調子(#80)・スプリント境界の引き弱さ(#81)は未着手。

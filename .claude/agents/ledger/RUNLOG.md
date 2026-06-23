@@ -18,6 +18,27 @@
 
 <!-- ここに指揮者が新しい順で追記する。 -->
 
+## 2026-06-23 22:06 — Issue #79 Sprint2デイリー型崩し [ブランチ: loop/sprint2-choice-variety-20260623]
+- 一手: Sprint2の3〜4日目でb連打作業化する離脱点(s2-daily-return/anxiety)に罠択・第3択を横展開
+- 実装: s2-daily-anxiety 第3択c追加(insight+1/culture-1・トリアージ型) / s2-daily-return a差し替え(記述式アンケート罠)＋c追加(利用計測・insight+1/trust-1)
+- 監修: R1 fde/story/learning 各🟡2件(比喩・ラベル) → R2 全解消 dry
+- ゲート: 全11緑(395tests/JS163kB/CSS9.98kB) → PR #82
+- ボード: #79 → In review
+
+## 2026-06-23 21:31 — playtest-triage（発見フェーズ / D ティック）
+
+- 背圧: 未マージ PR=0 / キュー空 → 発見フェーズ実行
+- playtest-critic 通しプレイ結果: Sprint2/3 の素2択同型反復が 🔴×2、スプリント境界の引き弱さが 🟡×1
+- 起票:
+  - #79 [loop] Sprint2 デイリーの同型2択が「b 連打作業」化する（🔴・Backlog）
+  - #80 [loop] Sprint3 デイリーが「移譲テーマ一本調子」で終盤が作業化する（🔴・Backlog）
+  - #81 [loop] スプリント境界（レトロ後）に次回への引きがなく離脱しやすい（🟡・Backlog）
+- 未起票（上限外）:
+  - 🟡 ResultModal normal ケース過多で中盤ご褒美感が薄まる（心得枯渇後の空白）—— triage: 未起票（上限外）
+  - 🟡 朝会パネルのナビ作業化（Sprint2 5日目以降）—— triage: 未起票（上限外）
+  - 🟡 据え置きb選択肢の空振り感（メーター0変化で手応えなし）—— triage: 未起票（上限外）
+- 次: GO を出すならボードで #79/#80/#81 を `Approved` へ
+
 ## 2026-06-22 13:46 — 全エージェント総出レビュー（R5）＋仕様バグ監査 [ブランチ: loop/all-agents-review-20260622]
 - 一手: 総監督の直接GO「全エージェント総出でレビューし指摘が無くなるまで反復」＋追加指示「仕様バグ（後でゲームが成立しなくなる矛盾含む）は絶対に直す」。Issue駆動でなく現状main全体が対象。
 - 実装: narrative-designer（events-sprint1/3.ts, cast.ts, glossary.ts, locations.ts のadditive磨き＋仕様バグ修正）／ux-engineer（minigame/MiniGameDev.tsx, MiniGameDevPuzzle.tsx, Roulette.tsx, Travel.tsx, hooks/usePrefersReducedMotion.ts新規）。
