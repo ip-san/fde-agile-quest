@@ -234,3 +234,15 @@ playtest-triage 発見（Sprint2の3〜4日目で「どうせbが正解」とプ
 - R2修正: 比喩統一(火モチーフ統一)・具体描写化・ラベル明瞭化。R2 dry。
 - 全11ゲート緑(395tests/JS163kB/CSS9.98kB/lighthouse/e2e-axe)。PR #82。
 - [open] Sprint3デイリーの移譲テーマ一本調子(#80)・スプリント境界の引き弱さ(#81)は未着手。
+
+## Issue #80 Sprint3デイリー移譲テーマ一本調子の解消（2026-06-23 / 完全自走ループ5件目）
+playtest-triage 発見（Sprint3中盤でb連打作業化）→ narrative-designer が s3-daily-onboard・s3-daily-handover2 の b resultText に移譲の短期コストを追記し、締めを各イベント固有の学びに差別化。
+
+- onboard b: 「今日だけの痛み」→「誰かのミスを責めずに一緒に直せる現場なら、人に任せていける」（心理的安全）
+- handover2 b: 「一時の痛み」→「手順書を誰かが直し続けるかぎり、固まった属人化はほどけていく」（継続保守）、「一件やり直し」→「{{WMS}}のマスタ登録を一本やり直し」（橋本エンジニア文脈に整合）
+- lastman b は変更なし（後継育成の締めが上限モデル）
+
+R1: fde🔴0🟡1・logistics🔴0🟡2・story🔴0🟡1・learning🔴1🟡1（「今日だけ」3件収斂で固有学び喪失）
+R2修正: 全4件解消（構文差別化・橋本エンジニア文脈修正）。R2 dry。
+
+- [open] (🟡・scope外・次回Issue候補) learning: s3-daily-handover2 b が culture+1/insight+1 の両軸プラスで a（culture-1 warn）に対して実質支配的。本文に痛みを書いたがメーターに反映されない。effects 変更はエンディング収支に波及するため別 Issue で検討。
