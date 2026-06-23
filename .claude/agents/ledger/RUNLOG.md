@@ -18,7 +18,28 @@
 
 <!-- ここに指揮者が新しい順で追記する。 -->
 
-## 2026-06-23 22:06 — Issue #79 Sprint2デイリー型崩し [ブランチ: loop/sprint2-choice-variety-20260623]
+## 2026-06-24 04:10 — Issue #95+#93 バンドル予算回復＋取り逃し注記解消 [ブランチ: loop/no-caveat-catharsis-20260624]
+
+- 一手: #92/#93/#94 が全て「main が 164.154 kB で 154B 超過」でブロック → #95（動的 import）を実装してヘッドルームを回復し、#93 も同梱
+- 実装: ux-engineer。Sprint2/3 events を loadLateEvents() で遅延ロード化（chapter-01.ts / progression.ts / App.tsx / Board.tsx / テスト5件）。JS brotli 164.17 kB → **122.38 kB**（41.62 kB 回復）
+- あわせて #93（達成感潰れ）: s3-review-trust b（genbaTrust）・s3-retro b の末尾「取り逃す」注記を削除し達成感で完結。R1 story-reviewer 🔴0 / learning-designer 🟢x2
+- ゲート: check:all 全緑（395tests/circular/knip/type-coverage/cpd）/ build OK / JS 122.38kB ✓ / CSS 9.98kB ✓
+- 状態: PR #96 作成（人間マージ待ち）/ #92/#94 は Blocked のまま（#96 マージ後に再着手可能）
+- 残課題: #92（Sprint3 c択）と #94（視察cliffhanger）は #96 マージ後に unblock される
+
+## 2026-06-24 03:15 — Issue #92 Sprint3 c択追加 → バンドル予算壁でエスカレーション [ブランチ: loop/sprint3-c-choice-20260624]
+
+- 一手: s3-daily-onboard / s3-daily-dissent / s3-daily-burn に c択（第3の選択・文脈次第で正解が割れる）を追加
+- 実装: narrative-designer。events-sprint3.ts に 3件追加（+1738B raw）
+- R1 レビュー: story-reviewer 🔴なし / fde-expert 🔴なし / 🟡2件（dissent effects 修正・burn resultText 主語修正）→ 自動修正で解消
+- ゲート: typecheck/lint/test 全緑 / size **164.48 kB → +484B 超過（limit: 164 kB）**
+- 根本原因: main が ≈ 164.000 kB（ヘッドルーム 0B）。コンテンツ追加が累積し予算枯渇
+  - 1件のみ / 最短 resultText にしても +105B → 超過。回避不能
+- エスカレーション: Issue #95「バンドル予算枯渇」を Backlog に起票。Issue #92 にブロッカーコメント追加
+- 状態: PR 作成せず。ブランチに実装保存（R1通過・ゲート前止まり）。#95 解決後に続行
+- 残課題: #95 の解決策（動的 import / size-limit 引き上げ人間承認 / trim pass）が必要
+
+## 2026-06-24 02:40 — playtest-triage（発見フェーズ / D ティック） — Issue #79 Sprint2デイリー型崩し [ブランチ: loop/sprint2-choice-variety-20260623]
 - 一手: Sprint2の3〜4日目でb連打作業化する離脱点(s2-daily-return/anxiety)に罠択・第3択を横展開
 - 実装: s2-daily-anxiety 第3択c追加(insight+1/culture-1・トリアージ型) / s2-daily-return a差し替え(記述式アンケート罠)＋c追加(利用計測・insight+1/trust-1)
 - 監修: R1 fde/story/learning 各🟡2件(比喩・ラベル) → R2 全解消 dry
