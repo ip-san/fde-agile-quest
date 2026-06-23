@@ -18,6 +18,13 @@
 
 <!-- ここに指揮者が新しい順で追記する。 -->
 
+## 2026-06-23 22:06 — Issue #79 Sprint2デイリー型崩し [ブランチ: loop/sprint2-choice-variety-20260623]
+- 一手: Sprint2の3〜4日目でb連打作業化する離脱点(s2-daily-return/anxiety)に罠択・第3択を横展開
+- 実装: s2-daily-anxiety 第3択c追加(insight+1/culture-1・トリアージ型) / s2-daily-return a差し替え(記述式アンケート罠)＋c追加(利用計測・insight+1/trust-1)
+- 監修: R1 fde/story/learning 各🟡2件(比喩・ラベル) → R2 全解消 dry
+- ゲート: 全11緑(395tests/JS163kB/CSS9.98kB) → PR #82
+- ボード: #79 → In review
+
 ## 2026-06-23 21:31 — playtest-triage（発見フェーズ / D ティック）
 
 - 背圧: 未マージ PR=0 / キュー空 → 発見フェーズ実行
