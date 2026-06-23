@@ -200,3 +200,9 @@ playtest-triage 発見（毎ターンの手応えが情報過多で鈍る）→ 
 - ゲート: check:all(type-cov success)/build/size(JS162.27/CSS10.00kB)/e2e(axe3pass)/lighthouse 全緑・395 tests。
 - [open] (🟡・polish) 開閉トグルが focus:ring（focus-visible: でなく）でマウスクリックでもリングが出る軽微なUX後退。a11y違反ではない（キーボードfocus可視・round5手前の収束優先で残置）。CSS予算に余裕ができたら focus-visible: へ。
 - [open] (🟡・要注意) CSS バンドルが 10.00kB ＝予算上限ピッタリでマージンゼロ。次に CSS を足す変更は即超過するため、近いうちに既存 CSS のリファクタで余裕を作るか size 予算の妥当性を再検討（別 Issue 候補）。
+## Issue #75 デイリー入口（ルーレット→朝会→マップ）の摩擦を減らしテンポを上げる（2026-06-23 / 完全自走ループ3件目）
+playtest-triage 発見（入口が長く3日目から前置きの作業化）→ ux-engineer が CSS 中立でテンポ調整。§4.1 構造保持・engine 不変。
+- 実装: Roulette SPIN_MS 3600→2200ms＋transition文字列を SPIN_MS 由来に単一真実源化（旧ハードコード 3.6s の不整合排除）／"静かな朝"（単一候補日）にマップ2タップを省く直行ボタン（既存className流用・既存 onTravel API・マップは残置）／朝会可変文 INTRO_MULTI/SINGLE/RECKONING にバリアント追加（既存 seed 選択に乗る）。
+- code-reviewer R1🔴1（直行ボタンの candidates[0] コールバック内 narrowing 不成立＝型負債）＋🟡2（locationOf二重評価・SRラベル）→ R2: soloEvent/soloDest をブロック外で1回抽出しガード/onClick/ラベルを統一（型narrowing確定・二重評価解消）＋aria-label付与。
+- ゲート: check:all(type-cov success)/build/size(JS162.16/CSS9.97kB・CSS中立)/e2e(axe3pass)/lighthouse 全緑・381 tests。
+- [open] (🟡・次イテレーション) 朝会タイルに「前日の選択の余韻＝今日だけの引っかかり」をビジュアルで出す案は新規props配線＋新規CSSを要するため分離（CSS予算回避）。ルーレット「2周目以降スキップ可」も状態保持が絡むため効果測定後に別スライス。

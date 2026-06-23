@@ -40,7 +40,7 @@ interface Props {
   onResult: (segment: Segment, pickRandom: number) => void
 }
 
-const SPIN_MS = 3600
+const SPIN_MS = 2200
 
 export function Roulette({ disabled, onResult }: Props) {
   const [rotation, setRotation] = useState(0)
@@ -148,7 +148,8 @@ export function Roulette({ disabled, onResult }: Props) {
           className="absolute inset-0 h-full w-full"
           style={{
             transform: `rotate(${rotation}deg)`,
-            transition: spinning && !reduceMotion ? 'transform 3.6s cubic-bezier(0.17, 0.67, 0.12, 0.99)' : 'none',
+            transition:
+              spinning && !reduceMotion ? `transform ${SPIN_MS / 1000}s cubic-bezier(0.17, 0.67, 0.12, 0.99)` : 'none',
           }}
           onTransitionEnd={handleTransitionEnd}
           aria-hidden="true"
