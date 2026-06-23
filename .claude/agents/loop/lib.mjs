@@ -91,6 +91,50 @@ export function approvedTasks(project, cfg) {
     .sort((a, b) => a.number - b.number)
 }
 
+// Issue 番号 → その Issue の GraphQL ノード ID を取る（ボードへの追加に必要）。
+export function getIssueNodeId(cfg, issueNumber) {
+  const query = `
+    query($owner:String!, $repo:String!, $number:Int!){
+      repository(owner:$owner, name:$repo){ issue(number:$number){ id } }
+    }`
+  const data = gql(query, { owner: cfg.owner, repo: cfg.repo, number: issueNumber })
+  const id = data.repository?.issue?.id
+  if (!id) throw new Error(`Issue #${issueNumber} が見つかりません（owner/repo を確認）。`)
+  return id
+}
+
+// Issue 番号 → そのカードをボードに追加し、stage 列へ置く（既に載っていれば列だけ設定）。
+// 新規起票した Issue は gh issue create だけではボードに載らないため、起票直後にこれで Backlog へ。
+export function addCard(cfg, issueNumber, stageName = cfg.stages.backlog) {
+  const project = fetchBoard(cfg)
+  const option = project.field.options.find((o) => o.name === stageName)
+  if (!option) {
+    const names = project.field.options.map((o) => o.name).join(', ')
+    throw new Error(`列 "${stageName}" が Stage に存在しません。存在する列: ${names}`)
+  }
+  let itemId = project.items.nodes.find((n) => n.content?.number === issueNumber)?.id
+  if (!itemId) {
+    const contentId = getIssueNodeId(cfg, issueNumber)
+    const add = gql(
+      `mutation($project:ID!, $content:ID!){
+        addProjectV2ItemById(input:{ projectId:$project, contentId:$content }){ item { id } }
+      }`,
+      { project: project.id, content: contentId }
+    )
+    itemId = add.addProjectV2ItemById.item.id
+  }
+  gql(
+    `mutation($project:ID!, $item:ID!, $field:ID!, $option:String!){
+      updateProjectV2ItemFieldValue(input:{
+        projectId:$project, itemId:$item, fieldId:$field,
+        value:{ singleSelectOptionId:$option }
+      }){ projectV2Item { id } }
+    }`,
+    { project: project.id, item: itemId, field: project.field.id, option: option.id }
+  )
+  return { number: issueNumber, stage: stageName }
+}
+
 // Issue 番号 → そのカードを stage 列へ移動する。
 export function moveCard(cfg, issueNumber, stageName) {
   const project = fetchBoard(cfg)

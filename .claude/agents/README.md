@@ -53,9 +53,13 @@
 - **skill＝手順書（how-to）**: 今のスレッドにインライン展開して実行する。**ユーザーが単発で
   「〜して」と頼むとき**はこちら（例: 「物語レビューして」→ `story-review` skill、「品質ゲート直して」
   → `quality-fix` skill、「コードレビューして」→ home の `code-review` skill、「プレイテストして直して」
-  → `playtest-gate` skill）。`playtest-gate` は **playtest-critic 起点で「試す→maker が対応→全員レビュー→
-  品質ゲート」を1サイクル束ねる薄いラッパ**で、ゲート本体は `loop-runbook.md` ステップ3〜5を再利用する
-  （`loop` を回すほどでない単発の「プレイして直して」用。重複は作らない）。
+  → `playtest-gate` skill、「プレイテストして起票」→ `playtest-triage` skill）。
+  **playtest 系2つの棲み分け**:
+  - `playtest-gate` = **試す→maker が対応→全員レビュー→品質ゲート**を1サイクル束ね、feature ブランチで PR まで出す
+    *doer*（ゲート本体は `loop-runbook.md` ステップ3〜5を再利用）。`loop` を回すほどでない単発の「直して」用。
+  - `playtest-triage` = **試す→飽き点を loop-task 形式の Backlog Issue として起票**する *発見役*。直さない・PR も作らない。
+    起票先は必ず `Backlog`（GO=`Approved` は人間の専権）。空ボードを埋める入口。起票直後の board 追加は
+    `node .claude/agents/loop/add-card.mjs <#>`（既定 Backlog）。
 - **agent＝役者（who）**: 独立コンテキスト窓＋制限ツール＋憲章/learnings を持ち、**loop / `showrunner`
   が委任して並列・隔離実行**させるための器。agent は手順を対応する skill に委ねる
   （`story-reviewer`→`story-review` / `quality-gatekeeper`→`quality-fix` /
