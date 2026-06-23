@@ -9,8 +9,7 @@ import {
   shuffle,
 } from '../../data/minigames'
 import type { ExecTier } from '../../types'
-import { RichText } from '../RichText'
-import { SelectableCheckItem } from './SelectableCheckItem'
+import { SelectableOptionList } from './SelectableCheckItem'
 import { useGlyphSelection } from './useGlyphSelection'
 
 interface Props {
@@ -78,26 +77,14 @@ export function MiniGameHearing({ seed, theme, hearingOptions, onResolve }: Prop
           {theme === 'persuade' ? '効く論拠を2つ選ぶ' : '深掘りになる質問を2つ選ぶ'}
         </span>
       </p>
-      <ul className="space-y-2">
-        {options.map((o, i) => {
-          const on = picked.includes(i)
-          return (
-            <li key={`${i}-${o.text}`}>
-              <SelectableCheckItem
-                itemKey={`h-${i}`}
-                on={on}
-                wasTouched={touchedRef.current.has(i)}
-                unpopSeq={unpopKey[i] ?? 0}
-                onToggle={() => toggle(i)}
-                initialFocus={i === 0}
-              >
-                {/* {{用語}} を含むので RichText で展開（ボタン内なので interactive=false で入れ子ボタンを避ける） */}
-                <RichText text={o.text} interactive={false} />
-              </SelectableCheckItem>
-            </li>
-          )
-        })}
-      </ul>
+      <SelectableOptionList
+        items={options}
+        picked={picked}
+        glyphPrefix="h-"
+        touchedSet={touchedRef.current}
+        unpopKey={unpopKey}
+        onToggle={toggle}
+      />
 
       {/* 上限到達の aria-live アナウンス（上限超過タップ時のみ表示） */}
       <p role="status" aria-live="polite" aria-atomic="true" className="text-xs text-amber-400 min-h-[1.25rem]">
