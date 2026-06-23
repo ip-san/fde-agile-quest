@@ -523,6 +523,7 @@ export function Board() {
             seed={seedFor(`${currentEvent.id}:${generation}`)}
             theme={currentEvent.hearingTheme ?? hearingThemeFor(currentEvent.segment)}
             hearingOptions={currentEvent.hearingOptions}
+            persuadeContext={currentEvent.persuadeContext}
             onDone={(tier) => {
               choose(pendingChoice, tier, deductionBonus)
               setPendingChoice(null)

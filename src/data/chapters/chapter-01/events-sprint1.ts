@@ -775,6 +775,14 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     sprint: 1,
     ceremony: 'review',
     segment: 'kokyaku',
+    // 行動の芯＝ステークホルダーへのお披露目。動く成果物が無くても、現場理解という一次情報の進展を
+    // “価値”として誠実に示し、フィードバックを引き出して場を巻き込む＝説得(persuade)。スプリントレビューは
+    // インクリメントを検査し次を適応する場であって spin の舞台ではない（demo 文脈デッキ＝誇張・印象操作は効かない）。
+    minigame: 'persuade',
+    persuadeContext: 'demo',
+    // 注: persuade は demo 文脈の論拠デッキ(DEMO_PERSUADE_DECK)を出すため、下の hearingOptions は実際には未使用（残置）。
+    // choices の id/label/effects/フラグは不変＝「モックで取り繕う/正直に出す」の判断構造は温存し、
+    // persuade の出来(tier)が選んだ判断の主正メーターを倍率調整する既存機構に乗せる。
     title: 'スプリントレビュー：まだ“機能”はない',
     narrative:
       '{{スプリントレビュー}}。頭に「やる」と予測した{{スプリントバックログ}}を開き、{{完成の定義}}まで届いた{{インクリメント}}と、届かなかった分を一つずつ突き合わせる。今回の{{スプリントゴール}}は、現場を知ること、そのものだった。時間はそこに溶けた。{{ステークホルダー}}に見せられる、動く成果物は無い。検査の場に、何を出す？',
@@ -792,6 +800,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         effects: { trust: 1, insight: -1 },
         resultText:
           'それらしいモックに、結城さんは安心した（見栄えで信頼+）。だが{{レビュー}}は、動く成果物を検査する場だ。取り繕えば、誤解だけが先送りされる。',
+        warn: true,
       },
       {
         id: 'b',
