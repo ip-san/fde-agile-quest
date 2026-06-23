@@ -3,7 +3,7 @@
  *  KanbanView・ProductBacklogReadOnly・Column・Card・Empty をここに集約。
  */
 
-import { useMemo, useState } from 'react'
+import { useCallback, useId, useMemo, useRef, useState } from 'react'
 import {
   backlogItem,
   canAddToForecast,
@@ -83,6 +83,11 @@ export function KanbanView({
   // レビューの2段：深さ選択 → ミニゲーム → 確定
   const [depthFor, setDepthFor] = useState<string | null>(null)
   const [pending, setPending] = useState<{ id: string; depth: ReviewDepth } | null>(null)
+  // タブ: 'kanban' | 'backlog'
+  const [activeTab, setActiveTab] = useState<'kanban' | 'backlog'>('kanban')
+  const tabsId = useId()
+  const tabKanbanRef = useRef<HTMLButtonElement>(null)
+  const tabBacklogRef = useRef<HTMLButtonElement>(null)
 
   // core.inProgress は配列なので Set に変換して O(1) 検索を実現する（BacklogPanel からの二重管理を解消）
   const inProgSet = useMemo(() => new Set(core.inProgress), [core.inProgress])
@@ -113,6 +118,24 @@ export function KanbanView({
     return next ? [next] : []
   }, [backlogOrder, core.sprintForecast, core.backlogDone, unrefinedPbis])
 
+  // プロダクトバックログタブの件数バッジ（未完了数）
+  const pblPendingCount = backlogOrder.filter((id) => !doneSet.has(id)).length
+  // 途中引き込み可能数（現在は最大1件の上位優先）
+  const pullableCount = pullable.length
+  // プロダクトバックログに「新規あり」フラグ
+  const pblHasNew = backlogOrder.some((id) => isDiscoverablePbi(id) || isEventPbi(id))
+
+  // タブのキーボード操作（Arrow Left/Right）
+  const handleTabKeyDown = useCallback((e: React.KeyboardEvent, current: 'kanban' | 'backlog') => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      e.preventDefault()
+      const next = current === 'kanban' ? 'backlog' : 'kanban'
+      setActiveTab(next)
+      if (next === 'kanban') tabKanbanRef.current?.focus()
+      else tabBacklogRef.current?.focus()
+    }
+  }, [])
+
   if (core.sprintForecast.length === 0) {
     return (
       <p className="rounded-xl bg-slate-800/40 px-3 py-4 text-center text-sm text-slate-400">
@@ -122,346 +145,464 @@ export function KanbanView({
     )
   }
 
+  const tabKanbanId = `${tabsId}-tab-kanban`
+  const tabBacklogId = `${tabsId}-tab-backlog`
+  const panelKanbanId = `${tabsId}-panel-kanban`
+  const panelBacklogId = `${tabsId}-panel-backlog`
+
   return (
     <>
-      {/* ── 広い画面（lg+）：メーター類をコンパクトなツールバーに圧縮し、ボードをファーストビューへ ── */}
-      <div className="hidden lg:flex lg:items-center lg:gap-3 lg:rounded-xl lg:border lg:border-slate-700/60 lg:bg-slate-800/30 lg:px-3 lg:py-2">
-        {/* 説明 */}
-        <p className="min-w-0 flex-1 text-[11px] leading-relaxed text-slate-400">
-          <RichText text="着手＝AI生成。AIにどこまでレビューさせ、人がどれぐらい確かめるか——{{制約理論}}どおり1日のレビュー容量がボトルネック。" />
-        </p>
-        {/* 予測量バー（スプリント全体の容量に対する積み具合。隣の「1日のレビュー」とはスコープが違う） */}
-        <div className="flex shrink-0 items-center gap-2">
+      {/* ── タブ切替：カンバン ⇆ プロダクトバックログ ──
+          両タブを最初から見せることで「下に全体バックログあり」が伝わる。
+          件数バッジ・引き込み可能バッジで情報密度を補う。 */}
+      <div
+        role="tablist"
+        aria-label="表示切替"
+        className="flex gap-0 rounded-xl border border-slate-700/60 bg-slate-800/50 p-0.5"
+      >
+        {/* カンバンタブ */}
+        <button
+          ref={tabKanbanRef}
+          id={tabKanbanId}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'kanban'}
+          aria-controls={panelKanbanId}
+          tabIndex={activeTab === 'kanban' ? 0 : -1}
+          onClick={() => setActiveTab('kanban')}
+          onKeyDown={(e) => handleTabKeyDown(e, 'kanban')}
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition-all min-h-[44px] ${
+            activeTab === 'kanban' ? 'bg-slate-700 text-slate-100 shadow-sm' : 'text-slate-400 hover:text-slate-300'
+          }`}
+        >
+          カンバン
+          {/* スプリント予測の件数バッジ */}
           <span
-            className="text-[11px] font-semibold text-sky-300"
-            title="スプリント全体の予測量／スプリント全体のレビュー容量"
+            className={`rounded-full px-1.5 py-0.5 text-[10px] tabular-nums ${
+              activeTab === 'kanban' ? 'bg-slate-600 text-slate-300' : 'bg-slate-700 text-slate-500'
+            }`}
+            aria-label={`${core.sprintForecast.length}件`}
           >
-            予測<span className="font-normal text-sky-400/70">(全体)</span>
+            {core.sprintForecast.length}
           </span>
-          <div className="h-2 w-20 overflow-hidden rounded-full bg-slate-700">
-            <div
-              className={`h-full rounded-full transition-all ${over ? 'bg-amber-500' : 'bg-sky-400'}`}
-              style={{ width: `${Math.min(100, capacity ? (fpts / capacity) * 100 : 0)}%` }}
-            />
-          </div>
-          <span className={`tabular-nums text-[11px] font-bold ${over ? 'text-amber-300' : 'text-sky-200'}`}>
-            {fpts}/{capacity}pt
-            {over && (
-              <span className="ml-1 text-amber-300" aria-label="超過">
-                !
-              </span>
-            )}
+        </button>
+        {/* プロダクトバックログタブ */}
+        <button
+          ref={tabBacklogRef}
+          id={tabBacklogId}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'backlog'}
+          aria-controls={panelBacklogId}
+          tabIndex={activeTab === 'backlog' ? 0 : -1}
+          onClick={() => setActiveTab('backlog')}
+          onKeyDown={(e) => handleTabKeyDown(e, 'backlog')}
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition-all min-h-[44px] ${
+            activeTab === 'backlog' ? 'bg-slate-700 text-slate-100 shadow-sm' : 'text-slate-400 hover:text-slate-300'
+          }`}
+        >
+          <span className="truncate">プロダクトバックログ</span>
+          {/* 未完了件数バッジ */}
+          <span
+            className={`rounded-full px-1.5 py-0.5 text-[10px] tabular-nums ${
+              activeTab === 'backlog' ? 'bg-slate-600 text-slate-300' : 'bg-slate-700 text-slate-500'
+            }`}
+            aria-label={`未完了${pblPendingCount}件`}
+          >
+            {pblPendingCount}
           </span>
-        </div>
-        {/* レビュー容量 */}
-        <div className="flex shrink-0 items-center gap-1.5 text-[11px]">
-          <span className="text-slate-400">1日のレビュー</span>
-          <div className="h-2 w-14 overflow-hidden rounded-full bg-slate-700">
-            <div
-              className="h-full rounded-full bg-emerald-400"
-              style={{ width: `${(Math.max(0, core.reviewCapacity) / maxReview) * 100}%` }}
-            />
-          </div>
-          <span className="tabular-nums text-slate-300">
-            {core.reviewCapacity}/{maxReview}
-            {maxReview > REVIEW_CAPACITY_PER_DAY && <span className="ml-0.5 text-emerald-400">🔧</span>}
-          </span>
-        </div>
-        {/* WIP */}
-        <div className="flex shrink-0 items-center gap-1 text-[11px]">
-          <span className="text-slate-400">
-            <RichText text="{{仕掛り}}" />
-          </span>
-          <span className="tabular-nums font-bold text-slate-200">
-            {core.inProgress.length}/{wipMax}
-            {wipMax < WIP_LIMIT && <span className="ml-0.5 text-emerald-400">🔧</span>}
-          </span>
-        </div>
-        {/* 業務外メッセージ */}
-        {!isWork && (
-          <span className="shrink-0 rounded bg-slate-700 px-2 py-0.5 text-[10px] text-slate-400">
-            デイリーのみ操作可
-          </span>
-        )}
+          {/* 引き込み可能バッジ（ここから引き込める！の示唆） */}
+          {isWork && pullableCount > 0 && (
+            <span
+              className="rounded-full bg-emerald-500/30 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300"
+              aria-label="引き込み可能あり"
+            >
+              ＋引き込み可
+            </span>
+          )}
+          {/* 新規PBIバッジ */}
+          {pblHasNew && activeTab !== 'backlog' && (
+            <span
+              className="rounded-full bg-rose-500/30 px-1.5 py-0.5 text-[10px] font-semibold text-rose-300"
+              aria-label="新規PBIあり"
+            >
+              新規
+            </span>
+          )}
+        </button>
       </div>
 
-      {/* ── 狭い画面（lg未満）：従来の縦積みメーター表示 ── */}
-      <div className="lg:hidden">
-        <p className="text-xs leading-relaxed text-slate-400">
-          <RichText text="開発そのものは AI が担う（着手＝生成）。AIにどこまで任せ、人がどれぐらい確かめるか——この配分が勝負。In Progress は{{仕掛り}}上限で詰まり、{{制約理論}}どおり1日のレビュー容量がボトルネックになる。" />
-        </p>
-
-        {/* 予測量 vs 容量（予測の超過（オーバー）の可視化）。超過分は終わらず持ち越しになる。 */}
-        <section
-          className={`mt-3 rounded-xl border p-3 ${over ? 'border-amber-500/40 bg-amber-500/5' : 'border-sky-500/30 bg-sky-500/5'}`}
-        >
-          <div className="mb-1.5 flex items-center justify-between">
-            <h3 className="px-0.5 text-xs font-bold text-sky-300">
-              <RichText text="{{スプリントバックログ}}" />
-              <span className="ml-1 font-normal text-sky-400/70">予測量</span>
-            </h3>
-            <span className={`text-xs font-bold tabular-nums ${over ? 'text-amber-300' : 'text-sky-200'}`}>
-              {fpts} / {capacity} pt
+      {/* ── カンバンパネル ── */}
+      <div
+        id={panelKanbanId}
+        role="tabpanel"
+        aria-labelledby={tabKanbanId}
+        hidden={activeTab !== 'kanban'}
+        className="space-y-3"
+      >
+        {/* ── 広い画面（lg+）：メーター類をコンパクトなツールバーに圧縮し、ボードをファーストビューへ ── */}
+        <div className="hidden lg:flex lg:items-center lg:gap-3 lg:rounded-xl lg:border lg:border-slate-700/60 lg:bg-slate-800/30 lg:px-3 lg:py-2">
+          {/* 説明 */}
+          <p className="min-w-0 flex-1 text-[11px] leading-relaxed text-slate-400">
+            <RichText text="着手＝AI生成。AIにどこまでレビューさせ、人がどれぐらい確かめるか——{{制約理論}}どおり1日のレビュー容量がボトルネック。" />
+          </p>
+          {/* 予測量バー（スプリント全体の容量に対する積み具合。隣の「1日のレビュー」とはスコープが違う） */}
+          <div className="flex shrink-0 items-center gap-2">
+            <span
+              className="text-[11px] font-semibold text-sky-300"
+              title="スプリント全体の予測量／スプリント全体のレビュー容量"
+            >
+              予測<span className="font-normal text-sky-400/70">(全体)</span>
+            </span>
+            <div className="h-2 w-20 overflow-hidden rounded-full bg-slate-700">
+              <div
+                className={`h-full rounded-full transition-all ${over ? 'bg-amber-500' : 'bg-sky-400'}`}
+                style={{ width: `${Math.min(100, capacity ? (fpts / capacity) * 100 : 0)}%` }}
+              />
+            </div>
+            <span className={`tabular-nums text-[11px] font-bold ${over ? 'text-amber-300' : 'text-sky-200'}`}>
+              {fpts}/{capacity}pt
+              {over && (
+                <span className="ml-1 text-amber-300" aria-label="超過">
+                  !
+                </span>
+              )}
             </span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-slate-700">
-            <div
-              className={`h-full rounded-full transition-all ${over ? 'bg-amber-500' : 'bg-sky-400'}`}
-              style={{ width: `${Math.min(100, capacity ? (fpts / capacity) * 100 : 0)}%` }}
-            />
-          </div>
-          {over ? (
-            <p role="note" className="mt-1.5 text-[11px] leading-relaxed text-amber-300">
-              スプリント全体のレビュー容量（{capacity}pt＝1日{maxReview}pt×{days}日）を超えて積んでいます。これは
-              "悪手"ではなく<span className="font-semibold">賭け</span>
-              ——多く積んでゴールに挑むのも一手。ただし日々のレビューは1日{maxReview}ptに絞られ、終わらなかった分は
-              スプリント末に{<RichText text="{{キャリーオーバー}}" />}（次へ持ち越し）。commitment
-              はスプリントゴールであって全部終える約束ではない。
-            </p>
-          ) : (
-            <p className="mt-1.5 text-[11px] leading-relaxed text-slate-400">
-              スプリント全体のレビュー容量（{capacity}pt＝1日{maxReview}pt×{days}日）。日々は1日
-              {maxReview}pt に絞られ、余裕があれば下で追加を引き込めます。毎デイリー回復・使い切りです。
-            </p>
-          )}
-        </section>
-
-        {/* レビュー容量＋WIP メーター */}
-        <div className="mt-3 flex gap-2">
-          <div className="flex-1 rounded-xl bg-slate-800/40 px-3 py-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-300">1日のレビュー容量</span>
-              <span className="tabular-nums text-slate-300">
-                {core.reviewCapacity} / {maxReview}
-                {maxReview > REVIEW_CAPACITY_PER_DAY && <span className="ml-1 text-emerald-400">🔧</span>}
-              </span>
-            </div>
-            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-700">
+          {/* レビュー容量 */}
+          <div className="flex shrink-0 items-center gap-1.5 text-[11px]">
+            <span className="text-slate-400">1日のレビュー</span>
+            <div className="h-2 w-14 overflow-hidden rounded-full bg-slate-700">
               <div
                 className="h-full rounded-full bg-emerald-400"
                 style={{ width: `${(Math.max(0, core.reviewCapacity) / maxReview) * 100}%` }}
               />
             </div>
-            {core.reviewCapacity <= 0 && (
-              <p className="mt-1 text-[10px] leading-tight text-emerald-400/80">
-                明日のデイリーで回復します（使い切り・繰り越しなし）
-              </p>
-            )}
+            <span className="tabular-nums text-slate-300">
+              {core.reviewCapacity}/{maxReview}
+              {maxReview > REVIEW_CAPACITY_PER_DAY && <span className="ml-0.5 text-emerald-400">🔧</span>}
+            </span>
           </div>
-          <div className="rounded-xl bg-slate-800/40 px-3 py-2 text-center">
-            <div className="text-xs text-slate-300">
+          {/* WIP */}
+          <div className="flex shrink-0 items-center gap-1 text-[11px]">
+            <span className="text-slate-400">
               <RichText text="{{仕掛り}}" />
-            </div>
-            <div className="tabular-nums text-sm text-slate-200">
+            </span>
+            <span className="tabular-nums font-bold text-slate-200">
               {core.inProgress.length}/{wipMax}
-              {wipMax < WIP_LIMIT && <span className="ml-1 text-emerald-400">🔧</span>}
-            </div>
+              {wipMax < WIP_LIMIT && <span className="ml-0.5 text-emerald-400">🔧</span>}
+            </span>
           </div>
+          {/* 業務外メッセージ */}
+          {!isWork && (
+            <span className="shrink-0 rounded bg-slate-700 px-2 py-0.5 text-[10px] text-slate-400">
+              デイリーのみ操作可
+            </span>
+          )}
         </div>
 
-        {!isWork && (
-          <p className="mt-3 rounded-lg bg-slate-800/40 px-3 py-1.5 text-xs text-slate-400">
-            着手・レビューはデイリー（業務中）に行えます。
+        {/* ── 狭い画面（lg未満）：従来の縦積みメーター表示 ── */}
+        <div className="lg:hidden">
+          <p className="text-xs leading-relaxed text-slate-400">
+            <RichText text="開発そのものは AI が担う（着手＝生成）。AIにどこまで任せ、人がどれぐらい確かめるか——この配分が勝負。In Progress は{{仕掛り}}上限で詰まり、{{制約理論}}どおり1日のレビュー容量がボトルネックになる。" />
           </p>
-        )}
-      </div>
 
-      {/* カンバン3列：広い画面(lg〜)では横並びにして"ボード感"を出す。狭い画面は縦積み。
-          列は上端揃え(items-start)で、各列が中身の高さに収まる（空列が無駄に伸びない）。 */}
-      <div className="grid gap-3 lg:grid-cols-3 lg:items-start">
-        {/* To Do */}
-        <Column title="To Do" tone="text-slate-300" headerBg="bg-slate-700/40" count={todo.length}>
-          {todo.map((id) => {
-            const parent = backlogItem(parentPbiOf(id))
-            if (!parent) return null
-            const startable = canStart(core, id)
-            return (
-              <Card
-                key={id}
-                title={titleOf(id)}
-                estimate={estimateOf(id)}
-                parentLabel={isSbi(id) ? parent.title : undefined}
-                badges={<PbiBadges id={parentPbiOf(id)} stakeholder={parent.stakeholder} />}
-              >
-                <button
-                  type="button"
-                  onClick={() => startItem(id)}
-                  disabled={!startable}
-                  title={!startable && core.aiTokens < GEN_TOKEN_COST ? 'AIトークンが足りません' : undefined}
-                  className="shrink-0 self-center rounded-lg bg-sky-600 px-2.5 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-sky-500 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
-                >
-                  着手（AI生成）
-                </button>
-              </Card>
-            )
-          })}
-          {todo.length === 0 && <Empty />}
-        </Column>
-
-        {/* In Progress */}
-        <Column
-          title="In Progress（着手中）"
-          tone="text-amber-200"
-          headerBg="bg-amber-500/10"
-          count={core.inProgress.length}
-        >
-          {core.inProgress.map((id) => {
-            const parent = backlogItem(parentPbiOf(id))
-            if (!parent) return null
-            const est = estimateOf(id)
-            const prog = Math.min(est, reviewProgress[id] ?? 0)
-            const reviewable = canReview(core, id)
-            return (
-              <Card
-                key={id}
-                title={titleOf(id)}
-                estimate={est}
-                parentLabel={isSbi(id) ? parent.title : undefined}
-                badges={<PbiBadges id={parentPbiOf(id)} stakeholder={parent.stakeholder} />}
-                below={
-                  <div className="mt-2 flex flex-col gap-1.5">
-                    <div className="h-1.5 overflow-hidden rounded-full bg-slate-700">
-                      <div
-                        className="h-full rounded-full bg-amber-400"
-                        style={{ width: `${est ? (prog / est) * 100 : 0}%` }}
-                      />
-                    </div>
-                    {depthFor === id ? (
-                      <div className="flex flex-col gap-1.5">
-                        <p className="text-[10px] leading-tight text-slate-400">
-                          このあとのレビューの<span className="font-semibold text-emerald-300">出来</span>
-                          で進みが変わる—— 会心なら多く（1.5倍）、空振りだと半分。丁寧に確かめるほど前に進む。
-                        </p>
-                        <div className="flex gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setPending({ id, depth: 'quick' })
-                              setDepthFor(null)
-                            }}
-                            className="flex-1 rounded-lg bg-slate-700 px-2 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-slate-600 active:scale-95"
-                          >
-                            <RichText
-                              text="浅い：広く速く通す（{{完成の定義}}は妥協・負債は残る）"
-                              interactive={false}
-                            />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setPending({ id, depth: 'thorough' })
-                              setDepthFor(null)
-                            }}
-                            className="flex-1 rounded-lg bg-emerald-600 px-2 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-emerald-500 active:scale-95"
-                          >
-                            <RichText text="深い：一点を深く固める（{{完成の定義}}達成・品質）" interactive={false} />
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setDepthFor(id)}
-                        disabled={!reviewable}
-                        title={
-                          !reviewable && core.reviewCapacity <= 0
-                            ? '今日のレビュー容量切れ（明日のデイリーで回復）'
-                            : undefined
-                        }
-                        className="self-start rounded-lg bg-emerald-700 px-2.5 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-emerald-600 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
-                      >
-                        レビューする
-                      </button>
-                    )}
-                  </div>
-                }
+          {/* 予測量 vs 容量（予測の超過（オーバー）の可視化）。超過分は終わらず持ち越しになる。 */}
+          <section
+            className={`mt-3 rounded-xl border p-3 ${over ? 'border-amber-500/40 bg-amber-500/5' : 'border-sky-500/30 bg-sky-500/5'}`}
+          >
+            <div className="mb-1.5 flex items-center justify-between">
+              <h3 className="px-0.5 text-xs font-bold text-sky-300">
+                <RichText text="{{スプリントバックログ}}" />
+                <span className="ml-1 font-normal text-sky-400/70">予測量</span>
+              </h3>
+              <span className={`text-xs font-bold tabular-nums ${over ? 'text-amber-300' : 'text-sky-200'}`}>
+                {fpts} / {capacity} pt
+              </span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-slate-700">
+              <div
+                className={`h-full rounded-full transition-all ${over ? 'bg-amber-500' : 'bg-sky-400'}`}
+                style={{ width: `${Math.min(100, capacity ? (fpts / capacity) * 100 : 0)}%` }}
               />
-            )
-          })}
-          {core.inProgress.length === 0 && <Empty />}
-        </Column>
+            </div>
+            {over ? (
+              <p role="note" className="mt-1.5 text-[11px] leading-relaxed text-amber-300">
+                スプリント全体のレビュー容量（{capacity}pt＝1日{maxReview}pt×{days}日）を超えて積んでいます。これは
+                "悪手"ではなく<span className="font-semibold">賭け</span>
+                ——多く積んでゴールに挑むのも一手。ただし日々のレビューは1日{maxReview}ptに絞られ、終わらなかった分は
+                スプリント末に{<RichText text="{{キャリーオーバー}}" />}（次へ持ち越し）。commitment
+                はスプリントゴールであって全部終える約束ではない。
+              </p>
+            ) : (
+              <p className="mt-1.5 text-[11px] leading-relaxed text-slate-400">
+                スプリント全体のレビュー容量（{capacity}pt＝1日{maxReview}pt×{days}日）。日々は1日
+                {maxReview}pt
+                に絞られ、余裕があれば「プロダクトバックログ」タブから追加を引き込めます。毎デイリー回復・使い切りです。
+              </p>
+            )}
+          </section>
 
-        {/* Done */}
-        <Column title="Done（完了）" tone="text-emerald-300" headerBg="bg-emerald-500/10" count={done.length}>
-          {done.map((id) => {
-            const parent = backlogItem(parentPbiOf(id))
-            if (!parent) return null
-            return (
-              <Card
-                key={id}
-                title={titleOf(id)}
-                estimate={estimateOf(id)}
-                dimmed
-                parentLabel={isSbi(id) ? parent.title : undefined}
-                badges={<PbiBadges id={parentPbiOf(id)} stakeholder={parent.stakeholder} />}
-              >
-                {undoneSet.has(id) ? (
-                  <span
-                    title="広く速く通した（浅い）＝完成の定義(DoD)を妥協した Ship。量で前に進むが、後で負債の取り立てが来る。"
-                    className="shrink-0 self-center rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-300"
-                  >
-                    ⚠ 浅い
-                  </span>
-                ) : (
-                  <span className="shrink-0 self-center rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">
-                    ✓ DoD
-                  </span>
-                )}
-              </Card>
-            )
-          })}
-          {done.length === 0 && <Empty />}
-        </Column>
-      </div>
+          {/* レビュー容量＋WIP メーター */}
+          <div className="mt-3 flex gap-2">
+            <div className="flex-1 rounded-xl bg-slate-800/40 px-3 py-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-300">1日のレビュー容量</span>
+                <span className="tabular-nums text-slate-300">
+                  {core.reviewCapacity} / {maxReview}
+                  {maxReview > REVIEW_CAPACITY_PER_DAY && <span className="ml-1 text-emerald-400">🔧</span>}
+                </span>
+              </div>
+              <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-700">
+                <div
+                  className="h-full rounded-full bg-emerald-400"
+                  style={{ width: `${(Math.max(0, core.reviewCapacity) / maxReview) * 100}%` }}
+                />
+              </div>
+              {core.reviewCapacity <= 0 && (
+                <p className="mt-1 text-[10px] leading-tight text-emerald-400/80">
+                  明日のデイリーで回復します（使い切り・繰り越しなし）
+                </p>
+              )}
+            </div>
+            <div className="rounded-xl bg-slate-800/40 px-3 py-2 text-center">
+              <div className="text-xs text-slate-300">
+                <RichText text="{{仕掛り}}" />
+              </div>
+              <div className="tabular-nums text-sm text-slate-200">
+                {core.inProgress.length}/{wipMax}
+                {wipMax < WIP_LIMIT && <span className="ml-1 text-emerald-400">🔧</span>}
+              </div>
+            </div>
+          </div>
 
-      {/* スプリント途中の追加引き込み（スコープ再交渉）。早く終わって容量に余裕が出たら Ready 項目を足せる。 */}
-      {isWork && pullable.length > 0 && (
-        <section className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3">
-          <h3 className="mb-1 px-0.5 text-xs font-bold text-emerald-300">
-            スプリントに追加（
-            {/* 見出し内だがボタンの入れ子ではないので interactive（用語チップ）にして解説を出す */}
-            <RichText text="{{スコープ再交渉}}" />）
-          </h3>
-          <p className="mb-2 text-[11px] leading-relaxed text-slate-400">
-            予測より早く片づき、容量に余裕が出たら Ready な項目を追加で引き込めます。
-            <RichText text="{{スプリントバックログ}}" />
-            は学びに応じてスプリント中も更新され続ける——ただし PO と再交渉し、
-            <RichText text="{{スプリントゴール}}" />
-            を危うくしない範囲で。
-          </p>
-          <ul className="space-y-1.5">
-            {pullable.map((id) => {
-              const item = backlogItem(id)
-              if (!item) return null
+          {!isWork && (
+            <p className="mt-3 rounded-lg bg-slate-800/40 px-3 py-1.5 text-xs text-slate-400">
+              着手・レビューはデイリー（業務中）に行えます。
+            </p>
+          )}
+        </div>
+
+        {/* カンバン3列：広い画面(lg〜)では横並びにして"ボード感"を出す。狭い画面は縦積み。
+            列は上端揃え(items-start)で、各列が中身の高さに収まる（空列が無駄に伸びない）。 */}
+        <div className="grid gap-3 lg:grid-cols-3 lg:items-start">
+          {/* To Do */}
+          <Column title="To Do" tone="text-slate-300" headerBg="bg-slate-700/40" count={todo.length}>
+            {todo.map((id) => {
+              const parent = backlogItem(parentPbiOf(id))
+              if (!parent) return null
+              const startable = canStart(core, id)
               return (
-                <li
+                <Card
                   key={id}
-                  className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/40 px-2.5 py-1.5"
+                  title={titleOf(id)}
+                  estimate={estimateOf(id)}
+                  parentLabel={isSbi(id) ? parent.title : undefined}
+                  badges={<PbiBadges id={parentPbiOf(id)} stakeholder={parent.stakeholder} />}
                 >
-                  <span className="rounded bg-slate-700 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-slate-300">
-                    {item.estimate}pt
-                  </span>
-                  <PbiBadges id={id} stakeholder={item.stakeholder} />
-                  <span className="min-w-0 flex-1 truncate text-sm text-slate-100">
-                    <RichText text={item.title} interactive={false} />
-                  </span>
                   <button
                     type="button"
-                    aria-label={`${item.title} をスプリントに引き込む`}
-                    onClick={() => pullIntoSprint(id)}
-                    className="shrink-0 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-emerald-500 active:scale-95"
+                    onClick={() => startItem(id)}
+                    disabled={!startable}
+                    title={!startable && core.aiTokens < GEN_TOKEN_COST ? 'AIトークンが足りません' : undefined}
+                    className="shrink-0 self-center rounded-lg bg-sky-600 px-2.5 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-sky-500 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
                   >
-                    ＋ 引き込む
+                    着手（AI生成）
                   </button>
-                </li>
+                </Card>
               )
             })}
-          </ul>
-        </section>
-      )}
+            {todo.length === 0 && <Empty />}
+          </Column>
 
-      {/* プロダクトバックログ全体の参照（read-only）。スプリント中でも全体像を把握できる。 */}
-      <ProductBacklogReadOnly backlogOrder={backlogOrder} doneSet={doneSet} />
+          {/* In Progress */}
+          <Column
+            title="In Progress（着手中）"
+            tone="text-amber-200"
+            headerBg="bg-amber-500/10"
+            count={core.inProgress.length}
+          >
+            {core.inProgress.map((id) => {
+              const parent = backlogItem(parentPbiOf(id))
+              if (!parent) return null
+              const est = estimateOf(id)
+              const prog = Math.min(est, reviewProgress[id] ?? 0)
+              const reviewable = canReview(core, id)
+              return (
+                <Card
+                  key={id}
+                  title={titleOf(id)}
+                  estimate={est}
+                  parentLabel={isSbi(id) ? parent.title : undefined}
+                  badges={<PbiBadges id={parentPbiOf(id)} stakeholder={parent.stakeholder} />}
+                  below={
+                    <div className="mt-2 flex flex-col gap-1.5">
+                      <div className="h-1.5 overflow-hidden rounded-full bg-slate-700">
+                        <div
+                          className="h-full rounded-full bg-amber-400"
+                          style={{ width: `${est ? (prog / est) * 100 : 0}%` }}
+                        />
+                      </div>
+                      {depthFor === id ? (
+                        <div className="flex flex-col gap-1.5">
+                          <p className="text-[10px] leading-tight text-slate-400">
+                            このあとのレビューの<span className="font-semibold text-emerald-300">出来</span>
+                            で進みが変わる—— 会心なら多く（1.5倍）、空振りだと半分。丁寧に確かめるほど前に進む。
+                          </p>
+                          <div className="flex gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPending({ id, depth: 'quick' })
+                                setDepthFor(null)
+                              }}
+                              className="flex-1 rounded-lg bg-slate-700 px-2 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-slate-600 active:scale-95"
+                            >
+                              <RichText
+                                text="浅い：広く速く通す（{{完成の定義}}は妥協・負債は残る）"
+                                interactive={false}
+                              />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPending({ id, depth: 'thorough' })
+                                setDepthFor(null)
+                              }}
+                              className="flex-1 rounded-lg bg-emerald-600 px-2 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-emerald-500 active:scale-95"
+                            >
+                              <RichText text="深い：一点を深く固める（{{完成の定義}}達成・品質）" interactive={false} />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setDepthFor(id)}
+                          disabled={!reviewable}
+                          title={
+                            !reviewable && core.reviewCapacity <= 0
+                              ? '今日のレビュー容量切れ（明日のデイリーで回復）'
+                              : undefined
+                          }
+                          className="self-start rounded-lg bg-emerald-700 px-2.5 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-emerald-600 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
+                        >
+                          レビューする
+                        </button>
+                      )}
+                    </div>
+                  }
+                />
+              )
+            })}
+            {core.inProgress.length === 0 && <Empty />}
+          </Column>
+
+          {/* Done */}
+          <Column title="Done（完了）" tone="text-emerald-300" headerBg="bg-emerald-500/10" count={done.length}>
+            {done.map((id) => {
+              const parent = backlogItem(parentPbiOf(id))
+              if (!parent) return null
+              return (
+                <Card
+                  key={id}
+                  title={titleOf(id)}
+                  estimate={estimateOf(id)}
+                  dimmed
+                  parentLabel={isSbi(id) ? parent.title : undefined}
+                  badges={<PbiBadges id={parentPbiOf(id)} stakeholder={parent.stakeholder} />}
+                >
+                  {undoneSet.has(id) ? (
+                    <span
+                      title="広く速く通した（浅い）＝完成の定義(DoD)を妥協した Ship。量で前に進むが、後で負債の取り立てが来る。"
+                      className="shrink-0 self-center rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-300"
+                    >
+                      ⚠ 浅い
+                    </span>
+                  ) : (
+                    <span className="shrink-0 self-center rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">
+                      ✓ DoD
+                    </span>
+                  )}
+                </Card>
+              )
+            })}
+            {done.length === 0 && <Empty />}
+          </Column>
+        </div>
+      </div>
+
+      {/* ── プロダクトバックログパネル ──
+          スプリント外のバックログ全体・途中引き込みがここから。
+          発見性の核心：タブに件数バッジ＋「＋引き込み可」が常時見えるので存在に気づく。 */}
+      <div
+        id={panelBacklogId}
+        role="tabpanel"
+        aria-labelledby={tabBacklogId}
+        hidden={activeTab !== 'backlog'}
+        className="space-y-3"
+      >
+        {/* セクション説明 */}
+        <p className="text-xs leading-relaxed text-slate-400">
+          <RichText text="このスプリントの{{スプリントバックログ}}（To Do）に含まれていない全体の積み残し。全体像の把握と、スプリント途中の引き込み（{{スコープ再交渉}}）はここから。" />
+        </p>
+
+        {/* スプリント途中の追加引き込み（スコープ再交渉）。早く終わって容量に余裕が出たら Ready 項目を足せる。
+            プロダクトバックログタブ内の最上部に置き、「ここから引き込める」導線を明確にする。 */}
+        {isWork && pullable.length > 0 && (
+          <section className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-3">
+            <h3 className="mb-1 flex items-center gap-1.5 px-0.5 text-xs font-bold text-emerald-300">
+              <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] text-emerald-200">引き込み可能</span>
+              スプリントに追加（
+              <RichText text="{{スコープ再交渉}}" />）
+            </h3>
+            <p className="mb-2 text-[11px] leading-relaxed text-slate-400">
+              予測より早く片づき、容量に余裕が出たら Ready な項目を追加で引き込めます。
+              <RichText text="{{スプリントバックログ}}" />
+              は学びに応じてスプリント中も更新され続ける——ただし PO と再交渉し、
+              <RichText text="{{スプリントゴール}}" />
+              を危うくしない範囲で。
+            </p>
+            <ul className="space-y-1.5">
+              {pullable.map((id) => {
+                const item = backlogItem(id)
+                if (!item) return null
+                return (
+                  <li
+                    key={id}
+                    className="flex items-center gap-2 rounded-lg border border-emerald-600/30 bg-emerald-900/20 px-2.5 py-1.5"
+                  >
+                    <span className="rounded bg-slate-700 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-slate-300">
+                      {item.estimate}pt
+                    </span>
+                    <PbiBadges id={id} stakeholder={item.stakeholder} />
+                    <span className="min-w-0 flex-1 truncate text-sm text-slate-100">
+                      <RichText text={item.title} interactive={false} />
+                    </span>
+                    <button
+                      type="button"
+                      aria-label={`${item.title} をスプリントに引き込む`}
+                      onClick={() => pullIntoSprint(id)}
+                      className="shrink-0 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-emerald-500 active:scale-95"
+                    >
+                      ＋ 引き込む
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </section>
+        )}
+        {/* デイリー以外は引き込み操作不可の案内 */}
+        {!isWork && (
+          <p className="rounded-lg bg-slate-800/40 px-3 py-1.5 text-xs text-slate-400">
+            引き込みはデイリー（業務中）に行えます。
+          </p>
+        )}
+
+        {/* プロダクトバックログ全体リスト（read-only）。スプリント中でも全体像を把握できる。 */}
+        <ProductBacklogList backlogOrder={backlogOrder} doneSet={doneSet} />
+      </div>
 
       {/* レビュー・ミニゲーム（深さ確定後） */}
       {pending &&
@@ -500,78 +641,79 @@ export function KanbanView({
   )
 }
 
-// ───────────────────────── ProductBacklogReadOnly ─────────────────────────
+// ───────────────────────── ProductBacklogList ─────────────────────────
 
-/** スプリント中にプロダクトバックログ全体を read-only で参照するセクション（折りたたみ式）。
- *  発見可PBI（ヒアリングで掘り当てた項目）には「🔎 現場で発見」バッジを付ける。 */
-function ProductBacklogReadOnly({ backlogOrder, doneSet }: { backlogOrder: string[]; doneSet: Set<string> }) {
-  const [open, setOpen] = useState(false)
-  // 発見可（現場で掘り当て）またはイベント要望が混じっていれば、畳んだ状態でも「新規あり」を示す。
-  const hasNew = backlogOrder.some((id) => isDiscoverablePbi(id) || isEventPbi(id))
-  return (
-    <section className="rounded-xl border border-slate-700 bg-slate-900/40">
-      <button
-        type="button"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-        className="flex min-h-[44px] w-full items-center justify-between gap-2 px-3 py-2 transition hover:bg-slate-800 active:scale-95 rounded-xl"
+/** プロダクトバックログ全体リスト（タブ内常時展開・read-only）。
+ *  発見可PBI（ヒアリングで掘り当てた項目）には「現場で発見」バッジを付ける。
+ *  タブ切替で表示されるため、折りたたみなしで全件を最初から見せる。 */
+function ProductBacklogList({ backlogOrder, doneSet }: { backlogOrder: string[]; doneSet: Set<string> }) {
+  const pendingIds = backlogOrder.filter((id) => !doneSet.has(id))
+  const doneIds = backlogOrder.filter((id) => doneSet.has(id))
+
+  const renderItem = (id: string) => {
+    const item = backlogItem(id)
+    if (!item) return null
+    const done = doneSet.has(id)
+    // 発見可（現場で掘り当て）とイベント要望は別系統（EVENT_BACKLOG は discoverable を持たない）＝排他。
+    const disc = isDiscoverablePbi(id)
+    const evt = isEventPbi(id)
+    return (
+      <li
+        key={id}
+        className={`flex items-start gap-2 rounded-lg border px-2.5 py-1.5 ${done ? 'border-slate-800 bg-slate-800/20 opacity-60' : 'border-slate-700 bg-slate-800/40'}`}
       >
-        <span className="text-xs font-bold text-slate-300">
-          <RichText text="{{プロダクトバックログ}}" />
-          <span className="ml-1 font-normal text-slate-400">全体を参照（読取専用）</span>
-          {hasNew && (
-            <span className="ml-2 rounded bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-rose-300">
-              新規あり
-            </span>
-          )}
+        <span className="shrink-0 rounded bg-slate-700 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-slate-300">
+          {item.estimate}pt
         </span>
-        <span className="text-xs text-slate-500" aria-hidden="true">
-          {open ? '▲' : '▼'}
-        </span>
-      </button>
-      {open && (
-        <ul className="space-y-1.5 border-t border-slate-800 px-3 py-2">
-          {backlogOrder.map((id) => {
-            const item = backlogItem(id)
-            if (!item) return null
-            const done = doneSet.has(id)
-            // 発見可（現場で掘り当て）とイベント要望は別系統（EVENT_BACKLOG は discoverable を持たない）＝排他。
-            const disc = isDiscoverablePbi(id)
-            const evt = isEventPbi(id)
-            return (
-              <li
-                key={id}
-                className={`flex items-start gap-2 rounded-lg border px-2.5 py-1.5 ${done ? 'border-slate-800 bg-slate-800/20 opacity-70' : 'border-slate-700 bg-slate-800/40'}`}
+        <div className="min-w-0 flex-1">
+          <span className={`text-sm ${done ? 'text-slate-400 line-through' : 'text-slate-100'}`}>
+            <RichText text={item.title} />
+          </span>
+          <div className="mt-0.5 flex flex-wrap gap-1">
+            <PbiBadges id={id} stakeholder={item.stakeholder} />
+            {disc && !done && (
+              <span className="rounded bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-rose-300">
+                現場で発見
+              </span>
+            )}
+            {evt && !done && (
+              <span
+                title="イベントでステークホルダーが持ち込んだ要望。スプリントに割り込ませるか、次のために積むかは交渉次第。"
+                className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300"
               >
-                <span className="shrink-0 rounded bg-slate-700 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-slate-300">
-                  {item.estimate}pt
-                </span>
-                <div className="min-w-0 flex-1">
-                  <span className={`text-sm ${done ? 'text-slate-400 line-through' : 'text-slate-100'}`}>
-                    <RichText text={item.title} />
-                  </span>
-                  <div className="mt-0.5 flex flex-wrap gap-1">
-                    <PbiBadges id={id} stakeholder={item.stakeholder} />
-                    {disc && !done && (
-                      <span className="rounded bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-rose-300">
-                        現場で発見
-                      </span>
-                    )}
-                    {evt && !done && (
-                      <span
-                        title="イベントでステークホルダーが持ち込んだ要望。スプリントに割り込ませるか、次のために積むかは交渉次第。"
-                        className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300"
-                      >
-                        イベント要望
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </li>
-            )
-          })}
-          {backlogOrder.length === 0 && <li className="px-1 py-1 text-xs text-slate-400">— なし —</li>}
-        </ul>
+                イベント要望
+              </span>
+            )}
+          </div>
+        </div>
+        {done && (
+          <span className="shrink-0 self-start rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300">
+            完了
+          </span>
+        )}
+      </li>
+    )
+  }
+
+  if (backlogOrder.length === 0) {
+    return <p className="px-1 py-2 text-xs text-slate-400">— バックログなし —</p>
+  }
+
+  return (
+    <section className="rounded-xl border border-slate-700/60 bg-slate-800/20">
+      <h3 className="border-b border-slate-700/60 px-3 py-2 text-xs font-bold text-slate-300">
+        <RichText text="{{プロダクトバックログ}}" />
+        <span className="ml-1 font-normal text-slate-400">全体（読取専用）</span>
+        <span className="ml-2 rounded bg-slate-700 px-1.5 py-0.5 text-[10px] tabular-nums text-slate-400">
+          {pendingIds.length}件残
+        </span>
+      </h3>
+      <ul className="space-y-1.5 px-3 py-2">{pendingIds.map(renderItem)}</ul>
+      {doneIds.length > 0 && (
+        <>
+          <div className="mx-3 border-t border-slate-700/60" />
+          <ul className="space-y-1.5 px-3 py-2">{doneIds.map(renderItem)}</ul>
+        </>
       )}
     </section>
   )
