@@ -775,6 +775,14 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     sprint: 1,
     ceremony: 'review',
     segment: 'kokyaku',
+    // 行動の芯＝ステークホルダーへのお披露目。動く成果物が無くても、現場理解という一次情報の進展を
+    // “価値”として誠実に示し、フィードバックを引き出して場を巻き込む＝説得(persuade)。スプリントレビューは
+    // インクリメントを検査し次を適応する場であって spin の舞台ではない（demo 文脈デッキ＝誇張・印象操作は効かない）。
+    minigame: 'persuade',
+    persuadeContext: 'demo',
+    // 注: persuade は demo 文脈の論拠デッキ(DEMO_PERSUADE_DECK)を出すため、下の hearingOptions は実際には未使用（残置）。
+    // choices の id/label/effects/フラグは不変＝「モックで取り繕う/正直に出す」の判断構造は温存し、
+    // persuade の出来(tier)が選んだ判断の主正メーターを倍率調整する既存機構に乗せる。
     title: 'スプリントレビュー：まだ“機能”はない',
     narrative:
       '{{スプリントレビュー}}。頭に「やる」と予測した{{スプリントバックログ}}を開き、{{完成の定義}}まで届いた{{インクリメント}}と、届かなかった分を一つずつ突き合わせる。今回の{{スプリントゴール}}は、現場を知ること、そのものだった。時間はそこに溶けた。{{ステークホルダー}}に見せられる、動く成果物は無い。検査の場に、何を出す？',
@@ -792,6 +800,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
         effects: { trust: 1, insight: -1 },
         resultText:
           'それらしいモックに、結城さんは安心した（見栄えで信頼+）。だが{{レビュー}}は、動く成果物を検査する場だ。取り繕えば、誤解だけが先送りされる。',
+        warn: true,
       },
       {
         id: 'b',
@@ -948,6 +957,9 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     sprint: 1,
     ceremony: 'daily',
     segment: 'team',
+    // 聞き取りが芯の回（読み上げ会に沈んだ本音の詰まりを、返答を捌いて引き出す）＝深掘りラリーに昇格。
+    // segment:'team' なので team テーマの drill（チームの本音を引き出す）が当たる。
+    minigame: 'drill',
     title: '報告会になったデイリー',
     narrative:
       '{{デイリースクラム}}が、いつのまにか「昨日やったこと、今日やること」の読み上げ会になっていた。困りごとは、誰も出さない。{{タイムボックス}}だけが過ぎる。上に見せる進捗表は、不気味なほど綺麗だ。',
@@ -1118,6 +1130,10 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     sprint: 1,
     ceremony: 'daily',
     segment: 'chance',
+    // 聞き取りが芯の回（“二度手間で紙に書き写す”例外の理由を、返答を捌いて掘る）＝深掘りラリーに昇格。
+    // 中身は現場での聞き取り（genba）なので、drill のテーマを genba に明示して現場主義の深掘りプールに当てる。
+    minigame: 'drill',
+    hearingTheme: 'genba',
     title: '「どうせ紙に書き写すんだ」',
     advocacy: {
       po: '「どうせ紙に書き写すんだ」——その諦めの裏に答えがある。倉庫で、なぜそうなるのか掴んでくれ。',
@@ -1155,6 +1171,9 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     sprint: 1,
     ceremony: 'daily',
     segment: 'genba',
+    // 聞き取りが芯の回（隠された“勘”を、返答を捌いて掘り出す）＝深掘りラリーに昇格。
+    // pinned で必ず通るので、S1 序盤に genba の drill が確実に一度出る（掴みの多様化）。
+    minigame: 'drill',
     // 縦糸の入口：主軸（ノウハウ隠し×自動化）の提示。全プレイヤーに必ず触れさせる。
     pinned: true,
     title: '「これは、見て覚えるもん」',

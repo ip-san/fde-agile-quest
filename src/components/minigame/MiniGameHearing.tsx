@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
+  DEMO_HEADING_CTA,
+  DEMO_HEADING_PROMPT,
   dealHearing,
   type HearingOption,
   type HearingTheme,
@@ -8,9 +10,8 @@ import {
   scoreHearing,
   shuffle,
 } from '../../data/minigames'
-import type { ExecTier } from '../../types'
-import { RichText } from '../RichText'
-import { SelectableCheckItem } from './SelectableCheckItem'
+import type { ExecTier, PersuadeContext } from '../../types'
+import { SelectableOptionList } from './SelectableCheckItem'
 import { useGlyphSelection } from './useGlyphSelection'
 
 interface Props {
@@ -18,13 +19,16 @@ interface Props {
   theme?: HearingTheme
   /** イベント固有の問い（指定時は良問2以上＋悪問1以上を満たす場合に優先使用） */
   hearingOptions?: HearingOption[]
+  /** 説得(persuade)の文脈。'demo' のときリード文・CTA を山場専用に差し替える。 */
+  persuadeContext?: PersuadeContext
   onResolve: (tier: ExecTier) => void
 }
 
 /** ヒアリング・ミニゲーム：5つの問いから「深掘りになる質問」を2つ選ぶ（現場主義）。
  *  hearingOptions がある場合はイベント固有の問いを（良問2+悪問1以上を満たすとき）シードでシャッフルして使用。
- *  条件を満たさなければ従来の dealHearing(seed, theme) にフォールバック。 */
-export function MiniGameHearing({ seed, theme, hearingOptions, onResolve }: Props) {
+ *  条件を満たさなければ従来の dealHearing(seed, theme) にフォールバック。
+ *  persuadeContext='demo' のときはリード文・CTA をスプリントレビューのお披露目専用に差し替える。 */
+export function MiniGameHearing({ seed, theme, hearingOptions, persuadeContext, onResolve }: Props) {
   const [options] = useState<HearingOption[]>(() => {
     // イベント固有の問いが十分（良問2以上かつ悪問1以上）なら優先使用
     if (
@@ -70,34 +74,32 @@ export function MiniGameHearing({ seed, theme, hearingOptions, onResolve }: Prop
     })
   }
 
+  const isDemo = persuadeContext === 'demo'
+  const promptText = isDemo ? DEMO_HEADING_PROMPT : hearingPromptFor(theme)
+  const ctaText = isDemo ? DEMO_HEADING_CTA : hearingCtaFor(theme)
+
   return (
     <div className="space-y-3">
       <p className="text-sm text-[var(--text-body)]">
-        {hearingPromptFor(theme)}{' '}
-        <span className="text-[var(--text-sub)]">
-          {theme === 'persuade' ? '効く論拠を2つ選ぶ' : '深掘りになる質問を2つ選ぶ'}
-        </span>
+        {isDemo ? (
+          promptText
+        ) : (
+          <>
+            {hearingPromptFor(theme)}{' '}
+            <span className="text-[var(--text-sub)]">
+              {theme === 'persuade' ? '効く論拠を2つ選ぶ' : '深掘りになる質問を2つ選ぶ'}
+            </span>
+          </>
+        )}
       </p>
-      <ul className="space-y-2">
-        {options.map((o, i) => {
-          const on = picked.includes(i)
-          return (
-            <li key={`${i}-${o.text}`}>
-              <SelectableCheckItem
-                itemKey={`h-${i}`}
-                on={on}
-                wasTouched={touchedRef.current.has(i)}
-                unpopSeq={unpopKey[i] ?? 0}
-                onToggle={() => toggle(i)}
-                initialFocus={i === 0}
-              >
-                {/* {{用語}} を含むので RichText で展開（ボタン内なので interactive=false で入れ子ボタンを避ける） */}
-                <RichText text={o.text} interactive={false} />
-              </SelectableCheckItem>
-            </li>
-          )
-        })}
-      </ul>
+      <SelectableOptionList
+        items={options}
+        picked={picked}
+        glyphPrefix="h-"
+        touchedSet={touchedRef.current}
+        unpopKey={unpopKey}
+        onToggle={toggle}
+      />
 
       {/* 上限到達の aria-live アナウンス（上限超過タップ時のみ表示） */}
       <p role="status" aria-live="polite" aria-atomic="true" className="text-xs text-amber-400 min-h-[1.25rem]">
@@ -110,7 +112,7 @@ export function MiniGameHearing({ seed, theme, hearingOptions, onResolve }: Prop
         onClick={() => onResolve(scoreHearing(picked.map((i) => options[i])))}
         className={`min-h-[44px] w-full rounded-xl bg-[var(--accent)] py-3 font-bold text-[var(--bg)] transition hover:bg-[var(--accent-hover)] active:scale-95 disabled:cursor-not-allowed disabled:bg-[var(--border-strong)] disabled:text-[var(--text-disabled)] ${limitHit ? 'shake' : ''}`}
       >
-        {ready ? hearingCtaFor(theme) : `あと ${2 - picked.length} つ選ぶ`}
+        {ready ? ctaText : `あと ${2 - picked.length} つ選ぶ`}
       </button>
     </div>
   )
