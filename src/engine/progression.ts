@@ -673,6 +673,10 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
     }
   }
 
+  // tierResult（opt-in）: 選択の出来(tier)に応じた「跳ね返りの一文」を解決する。
+  // choice.tierResult が未指定、または当該 tier のキーが無ければ undefined（後方互換）。
+  const tierResultText = choice.tierResult?.[tier] || undefined
+
   const result: ResultView = {
     eventId: event.id,
     choiceId: choice.id,
@@ -692,12 +696,13 @@ export function chooseCore(core: ProgressCore, choice: Choice, tier: ExecTier = 
     tokenSpent: tokenSpent || undefined,
     coverageDelta: covDelta || undefined,
     skillCoverageBonus: skillCov || undefined, // 会心実行が腕前としてコード品質に上乗せした分（表示用）
-    greatStreak: tier === 'great' ? nextGreatStreak : undefined, // 会心の連鎖数（2以上で“波”演出。great時のみ）
+    greatStreak: tier === 'great' ? nextGreatStreak : undefined, // 会心の連鎖数（2以上で”波”演出。great時のみ）
     debtDelta: debtRaw || undefined,
     backlogReview,
     discoveredPbi, // ヒアリングで掘り当てた発見可PBI（あれば）。プロダクトバックログに新規追加された
     addedPbi, // イベントで受けた要望PBI（あれば）。toSprint＝今スプリントへ割り込み／false＝次のため積む
     seedId: choice.seedId, // 「次の機能の種」（発見の新旧判定は store が foundSeeds と突き合わせて埋める）
+    tierResultText, // tier 依存の「跳ね返りの一文」（choice.tierResult が有る時のみ）
   }
 
   // ★0ルール: どれか1つでもゲージが0になったら、その場で失敗エピローグ（バックログのナッジ込みのメーターで判定）

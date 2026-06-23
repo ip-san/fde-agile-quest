@@ -110,6 +110,10 @@ export interface Choice {
   effects: Effects
   /** 選択後に表示される結果テキスト。{{用語}} 可 */
   resultText: string
+  /** ミニゲームの出来(tier)に応じた「跳ね返りの一文」（opt-in・任意）。
+   *  great/poor（必要なら good も）のときに、基本 resultText に加えて表示する追加のフィードバック。
+   *  指定しない tier・選択自体に未指定の場合は従来どおり（後方互換）。{{用語}} 可 */
+  tierResult?: Partial<Record<ExecTier, string>>
   /** この選択で立つフラグ（例: 'wrongKpi'）。後スプリントの手戻りイベントを誘発 */
   setsFlag?: GameFlag
   /** プランニングの選択肢のみ：この狙いを選ぶと、その周回のスプリントゴール表示になる */
@@ -349,6 +353,9 @@ export interface ResultView {
   /** 会心(great)を連続した回数（great時のみ。2以上で“実装の波”を演出）。 */
   greatStreak?: number
   debtDelta?: number
+  /** tierResult が解決された「跳ね返りの一文」（opt-in。tier に対応する tierResult がある時のみ）。
+   *  great/poor のとき resultText の後に強調テキストとして表示する。無ければ省略（後方互換）。 */
+  tierResultText?: string
   /** このイベントが体現するFDE心得のID（手帳に集まる） */
   precepts: number[]
   /** このうち、今回はじめて出会った心得のID（「NEW」表示用）。store が埋める */

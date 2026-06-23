@@ -261,8 +261,10 @@ export function ResultModal({ result, meters, onContinue }: Props) {
     else if (sfxKind === 'precept') sfxPrecept()
     else sfxReveal(sfxKind)
   }, [sfxKind])
-  // 致命圏ならフラッシュも警告色（rose）で上書きする
-  const flashColor = dangerMeters.length > 0 ? '#fb7185' : FLASH_COLOR[kind]
+  // 致命圏ならフラッシュも警告色（rose）で上書きする。
+  // great + tierResultText がある場合（山場の出口）は amber で格上げする（危険圏には勝てない）。
+  const greatExit = result.execTier === 'great' && !!result.tierResultText
+  const flashColor = dangerMeters.length > 0 ? '#fb7185' : greatExit ? '#fbbf24' : FLASH_COLOR[kind]
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:px-safe sm:pt-safe sm:pb-safe">
@@ -326,6 +328,23 @@ export function ResultModal({ result, meters, onContinue }: Props) {
               <RichText text={result.resultText} />
             </p>
           </div>
+
+          {/* tier 依存の「跳ね返りの一文」（opt-in。tierResult を持つ選択のみ）。
+              great＝踏ん張った手応えを amber で、poor＝詰めが甘かった重さを slate で。
+              追加情報なので role 付与は不要（見出し構造は破らない）。interactive=false 固定。 */}
+          {result.tierResultText && (
+            <p
+              className={`rounded-lg px-3 py-2.5 text-sm leading-relaxed ${
+                result.execTier === 'great'
+                  ? 'bg-amber-500/10 text-amber-200 ring-1 ring-amber-500/30'
+                  : result.execTier === 'poor'
+                    ? 'bg-slate-500/15 text-slate-300'
+                    : 'bg-[var(--panel)]/40 text-[var(--text-body)]'
+              }`}
+            >
+              <RichText text={result.tierResultText} />
+            </p>
+          )}
 
           {/* 致命圏に踏み込んだ瞬間の警告（追い詰められる緊張）。0 で案件終了。
               ダイアログ開封と同時に存在する静的内容なので role="status"(polite)。

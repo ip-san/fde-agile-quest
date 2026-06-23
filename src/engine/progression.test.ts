@@ -1038,3 +1038,66 @@ describe('spinCore — 縦糸の入口(pinned)の強制提示', () => {
     expect(next.dailyCandidates.length).toBeGreaterThan(1)
   })
 })
+
+describe('chooseCore — tierResult（tier 依存の跳ね返り文）', () => {
+  const baseEvent = synthEvent({ id: 'tr-test', sprint: 1, ceremony: 'daily', segment: 'genba' })
+
+  it('choice.tierResult がある時、great なら great キーの文が tierResultText に入る', () => {
+    const c = choice(
+      { trust: 1 },
+      {
+        tierResult: {
+          great: '踏ん張った',
+          poor: '詰めが甘かった',
+        },
+      }
+    )
+    const next = chooseCore(eventCore({ currentEvent: baseEvent }), c, 'great')
+    expect(next.result?.tierResultText).toBe('踏ん張った')
+  })
+
+  it('choice.tierResult がある時、poor なら poor キーの文が tierResultText に入る', () => {
+    const c = choice(
+      { trust: 1 },
+      {
+        tierResult: {
+          great: '踏ん張った',
+          poor: '詰めが甘かった',
+        },
+      }
+    )
+    const next = chooseCore(eventCore({ currentEvent: baseEvent }), c, 'poor')
+    expect(next.result?.tierResultText).toBe('詰めが甘かった')
+  })
+
+  it('good の時に good キーが無ければ tierResultText は undefined（後方互換）', () => {
+    const c = choice(
+      { trust: 1 },
+      {
+        tierResult: {
+          great: '踏ん張った',
+          poor: '詰めが甘かった',
+        },
+      }
+    )
+    const next = chooseCore(eventCore({ currentEvent: baseEvent }), c, 'good')
+    expect(next.result?.tierResultText).toBeUndefined()
+  })
+
+  it('choice.tierResult 自体が無ければ tierResultText は undefined（後方互換・既存 choice に影響しない）', () => {
+    const c = choice({ trust: 1 })
+    const next = chooseCore(eventCore({ currentEvent: baseEvent }), c, 'great')
+    expect(next.result?.tierResultText).toBeUndefined()
+  })
+
+  it('good キーを明示すれば good の時も跳ね返り文が出る', () => {
+    const c = choice(
+      { trust: 1 },
+      {
+        tierResult: { good: '標準的にやり切った' },
+      }
+    )
+    const next = chooseCore(eventCore({ currentEvent: baseEvent }), c, 'good')
+    expect(next.result?.tierResultText).toBe('標準的にやり切った')
+  })
+})
