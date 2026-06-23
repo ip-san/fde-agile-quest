@@ -1,7 +1,14 @@
 import { useState } from 'react'
 import { displayName } from '../data/chapters/chapter-01/names'
 import { AVAILABLE_IMAGES, imageUrl } from '../data/images'
-import { LOCATION_ORDER, LOCATIONS, QUIET_BY_LOCATION, type StandupVoice, standupFor } from '../data/locations'
+import {
+  LOCATION_ORDER,
+  LOCATIONS,
+  locationOf,
+  QUIET_BY_LOCATION,
+  type StandupVoice,
+  standupFor,
+} from '../data/locations'
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
 import { seedFor } from '../lib/seed'
 import type { GameEvent, LocationId } from '../types'
@@ -23,6 +30,8 @@ const INTRO_MULTI: readonly string[] = [
   '今朝は意見が割れた。どの声も、観点を添えるだけ——',
   '見立てがバラけている。どの声も、観点を添えるだけ——',
   '優先順位で声が分かれた。どの声も、観点を添えるだけ——',
+  '三者の声が、それぞれ別の方向を向いている。どの声も、観点を添えるだけ——',
+  '何を優先すべきか、まだ答えは出ていない。どの声も、観点を添えるだけ——',
 ] as const
 
 /** 候補が1件（論点が1つに絞られた日）の導入文パターン。
@@ -32,6 +41,8 @@ const INTRO_SINGLE: readonly string[] = [
   '今日は論点が1つに絞られた静かな朝だ。どの声も、観点を添えるだけ——',
   '今朝は争点が1つ。どの声も、観点を添えるだけ——',
   '今日の議題は一本に絞られている。どの声も、観点を添えるだけ——',
+  '今日は動ける場所が1つだ。選ぶまでもない、向かうだけ——',
+  '朝会は静かだった。行き先は、はっきりしている——',
 ] as const
 
 /** 候補が1件で、その1件が「回収（過去の選択の帰結＝requiresFlag）」のときの導入文。
@@ -40,6 +51,7 @@ const INTRO_RECKONING: readonly string[] = [
   '先送りにした一件が、今日まっすぐ戻ってきた。逃げ場はない——',
   'あの時の判断のツケが、いま満期で取り立てに来た——',
   '積み残したものが、今朝とうとう表面化した。今日はこれと向き合う——',
+  '先延ばしは利子が付く。その請求書が、今日届いた——',
 ] as const
 
 /** 朝会の論点バッジ。実状態（候補数・清算か）に忠実なラベルのみ。フレーバーの捏造はしない。 */
@@ -197,6 +209,9 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
   // ── 朝会の導入文・論点数バッジ ──────────────────────────
   const atmoSeed = atmosphereSeedFrom(candidates)
   const isSingleCandidate = candidates.length === 1
+  // 直行ボタン用：narrowing を外側で1回だけ確定し、コールバック内の型負債と二重評価を防ぐ
+  const soloEvent = isSingleCandidate ? candidates[0] : undefined
+  const soloDest = soloEvent ? locationOf(soloEvent) : undefined
   // 清算の日＝候補1件で、その1件が回収（過去の選択の帰結＝requiresFlag・非pinned）。spinCore の focused day。
   // ただ available が枯れて1件になった"静かな朝"とは別物として演出する（緊張 vs 弛緩を取り違えない）。
   const isReckoning = isSingleCandidate && !!candidates[0]?.requiresFlag && !candidates[0]?.pinned
@@ -303,6 +318,20 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
           </div>
         </div>
       </section>
+
+      {/* 単一候補日の直行ボタン：マップ2タップを省き1タップで向かえる。マップは残す（§4.1 構造保持）。
+          フォーカス順序：朝会 → 直行 → マップ */}
+      {isSingleCandidate && soloEvent && soloDest && (
+        <button
+          type="button"
+          onClick={() => onTravel(soloDest)}
+          aria-label={`${LOCATIONS[soloDest].short}（今日の唯一の論点）へ直行`}
+          className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg bg-amber-500 px-3 py-2 text-sm font-bold text-[var(--bg)] transition hover:bg-[var(--accent)] active:scale-95"
+        >
+          <span aria-hidden="true">▶</span> {LOCATIONS[soloDest].short}へ向かう
+          <span className="text-[10px] font-normal text-[var(--bg)]">（1タップで直行）</span>
+        </button>
+      )}
 
       {/* 行き先を外した時の小景 */}
       {peekLocation && (
