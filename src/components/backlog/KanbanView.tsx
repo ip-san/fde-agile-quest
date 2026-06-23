@@ -3,7 +3,7 @@
  *  KanbanView・ProductBacklogReadOnly・Column・Card・Empty をここに集約。
  */
 
-import { useCallback, useId, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import {
   backlogItem,
   canAddToForecast,
@@ -89,6 +89,11 @@ export function KanbanView({
   const [pending, setPending] = useState<{ id: string; depth: ReviewDepth } | null>(null)
   // タブ: 'kanban' | 'backlog'
   const [activeTab, setActiveTab] = useState<'kanban' | 'backlog'>('kanban')
+  // 引き込み確定演出：トースト（+○pt）と To Do ハイライト対象
+  const [pullToast, setPullToast] = useState<{ pts: number; key: number } | null>(null)
+  const [justPulledId, setJustPulledId] = useState<string | null>(null)
+  const pullToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pullHighlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const tabsId = useId()
   const tabKanbanRef = useRef<HTMLButtonElement>(null)
   const tabBacklogRef = useRef<HTMLButtonElement>(null)
@@ -139,6 +144,34 @@ export function KanbanView({
       else tabBacklogRef.current?.focus()
     }
   }, [])
+
+  // タイマークリーンアップ（アンマウント時）
+  useEffect(() => {
+    return () => {
+      if (pullToastTimerRef.current) clearTimeout(pullToastTimerRef.current)
+      if (pullHighlightTimerRef.current) clearTimeout(pullHighlightTimerRef.current)
+    }
+  }, [])
+
+  // 引き込みボタンのラッパー：演出を起動してから実際のアクションを呼ぶ
+  const handlePullIntoSprint = useCallback(
+    (id: string) => {
+      const pts = estimateOf(id)
+      // トーストを出す（既存タイマーを先にクリア）
+      if (pullToastTimerRef.current) clearTimeout(pullToastTimerRef.current)
+      setPullToast({ pts, key: Date.now() })
+      pullToastTimerRef.current = setTimeout(() => setPullToast(null), 1800)
+      // ハイライト対象を記録（To Do 列で光らせる）
+      if (pullHighlightTimerRef.current) clearTimeout(pullHighlightTimerRef.current)
+      setJustPulledId(id)
+      pullHighlightTimerRef.current = setTimeout(() => setJustPulledId(null), 1400)
+      // 実機構を呼ぶ
+      pullIntoSprint(id)
+      // 引き込み確定後はカンバンに自動切替（トースト＋予測バー＋To Do着地が同一視界に揃う）
+      setActiveTab('kanban')
+    },
+    [pullIntoSprint]
+  )
 
   if (core.sprintForecast.length === 0) {
     return (
@@ -260,7 +293,7 @@ export function KanbanView({
             </span>
             <div className="h-2 w-20 overflow-hidden rounded-full bg-slate-700">
               <div
-                className={`h-full rounded-full transition-all ${over ? 'bg-amber-500' : 'bg-sky-400'}`}
+                className={`h-full rounded-full transition-[width] duration-500 ease-out ${over ? 'bg-amber-500' : 'bg-sky-400'}`}
                 style={{ width: `${Math.min(100, capacity ? (fpts / capacity) * 100 : 0)}%` }}
               />
             </div>
@@ -326,7 +359,7 @@ export function KanbanView({
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-slate-700">
               <div
-                className={`h-full rounded-full transition-all ${over ? 'bg-amber-500' : 'bg-sky-400'}`}
+                className={`h-full rounded-full transition-[width] duration-500 ease-out ${over ? 'bg-amber-500' : 'bg-sky-400'}`}
                 style={{ width: `${Math.min(100, capacity ? (fpts / capacity) * 100 : 0)}%` }}
               />
             </div>
@@ -396,6 +429,8 @@ export function KanbanView({
               const parent = backlogItem(parentPbiOf(id))
               if (!parent) return null
               const startable = canStart(core, id)
+              // 引き込み直後のカードは emerald ハイライト（1.4 秒間）
+              const isJustPulled = id === justPulledId
               return (
                 <Card
                   key={id}
@@ -403,6 +438,7 @@ export function KanbanView({
                   estimate={estimateOf(id)}
                   parentLabel={isSbi(id) ? parent.title : undefined}
                   badges={<PbiBadges id={parentPbiOf(id)} stakeholder={parent.stakeholder} />}
+                  highlight={isJustPulled}
                 >
                   <button
                     type="button"
@@ -536,6 +572,26 @@ export function KanbanView({
         </div>
       </div>
 
+      {/* +○pt トースト — タブパネル外の共有位置に置くことで、引き込み後のカンバン自動切替後も
+          activeTab に関わらず表示される。pull-toast-up キーフレームを既存のまま流用（新規CSS追加なし）。
+          aria-hidden で視覚装飾のみ扱い。スクリーンリーダー向け読み上げは直下の aria-live 側。
+          position: relative の親を持たない KanbanView 直下に置き、tablist の直後に固定レイアウトで表示。 */}
+      {pullToast && (
+        <div aria-hidden="true" className="relative h-0">
+          <span
+            key={pullToast.key}
+            className="pull-toast pointer-events-none absolute left-1/2 top-2 z-10 whitespace-nowrap rounded-full bg-emerald-500 px-3 py-1 text-[12px] font-bold text-white shadow-lg"
+          >
+            +{pullToast.pts}pt 積んだ！
+          </span>
+        </div>
+      )}
+
+      {/* スクリーンリーダー向け：引き込み確定の読み上げ（aria-live=polite） */}
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {pullToast ? `${pullToast.pts}ポイントをスプリントに積みました` : ''}
+      </div>
+
       {/* ── プロダクトバックログパネル ──
           スプリント外のバックログ全体・途中引き込みがここから。
           発見性の核心：タブに件数バッジ＋「＋引き込み可」が常時見えるので存在に気づく。 */}
@@ -582,7 +638,7 @@ export function KanbanView({
                     <button
                       type="button"
                       aria-label={`${item.title} をスプリントに引き込む`}
-                      onClick={() => pullIntoSprint(id)}
+                      onClick={() => handlePullIntoSprint(id)}
                       className="shrink-0 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-emerald-500 active:scale-95"
                     >
                       ＋ 引き込む
@@ -763,6 +819,7 @@ function Card({
   children,
   below,
   badges,
+  highlight,
 }: {
   title: string
   estimate: number
@@ -775,9 +832,13 @@ function Card({
   below?: React.ReactNode
   /** pt バッジの右に並ぶ小バッジ（ステークホルダー・レガシー等）。 */
   badges?: React.ReactNode
+  /** 引き込み直後の着地ハイライト（emerald リング＋フェード）。 */
+  highlight?: boolean
 }) {
   return (
-    <div className={`rounded-lg border border-slate-700 bg-slate-800/40 px-3 py-2 ${dimmed ? 'opacity-70' : ''}`}>
+    <div
+      className={`rounded-lg border bg-slate-800/40 px-3 py-2 ${dimmed ? 'opacity-70' : ''} ${highlight ? 'pull-land border-emerald-500/70' : 'border-slate-700'}`}
+    >
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
           {parentLabel && (

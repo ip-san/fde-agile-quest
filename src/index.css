@@ -236,6 +236,27 @@ body {
   animation: reaction-slide 0.28s ease-out both, reaction-mid 0.5s ease-out both;
 }
 
+/* 引き込み確定トースト（+○pt）が上に浮かんで消える。emerald の高揚と色を合わせる。 */
+@keyframes pull-toast-up {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(0); }
+  15%  { opacity: 1; transform: translateX(-50%) translateY(-6px); }
+  70%  { opacity: 1; transform: translateX(-50%) translateY(-8px); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-14px); }
+}
+.pull-toast {
+  animation: pull-toast-up 1.6s ease-out forwards;
+}
+
+/* 引き込んだカードの着地ハイライト（emerald ボーダーがフェードアウト）。 */
+@keyframes pull-land-fade {
+  0%   { box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.55); }
+  60%  { box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.25); }
+  100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+}
+.pull-land {
+  animation: pull-land-fade 1.3s ease-out forwards;
+}
+
 /* モーション過敏設定では閃光・回転などの動きを無効化する（アクセシビリティ）。 */
 @media (prefers-reduced-motion: reduce) {
   .decisive-flash {
@@ -269,5 +290,13 @@ body {
     opacity: 1;
     transform: none;
     filter: none;
+  }
+  .pull-toast {
+    animation: none;
+    opacity: 0;
+  }
+  .pull-land {
+    animation: none;
+    box-shadow: none;
   }
 }
