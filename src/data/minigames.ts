@@ -1,4 +1,4 @@
-import type { ExecTier, HearingOption, HearingTheme } from '../types'
+import type { ExecTier, HearingOption, HearingTheme, PersuadeContext } from '../types'
 
 export { hearingThemeFor } from '../lib/hearingTheme'
 
@@ -258,6 +258,34 @@ export function hearingCtaFor(theme?: HearingTheme): string {
   return theme ? HEARING_CTA[theme] : HEARING_CTA.genba
 }
 
+// ───────────────────────────────────────────────────────────
+// 説得(persuade)の文脈別見出し。汎用は HEARING_TITLE.persuade のまま温存し、
+// 'demo'（スプリントレビューのお披露目）だけ専用文言に差し替える。
+// ───────────────────────────────────────────────────────────
+
+/** demo（お披露目）専用の見出しタイトル。
+ *  「動く成果物が無い」という事実を前提に、一次情報の進展を価値として差し出す場の緊張感を出す。 */
+const DEMO_HEADING = {
+  tag: 'お披露目：{{スプリントレビュー}}',
+  title: '動く物はまだ無い。何を価値として差し出す？',
+  prompt: '検査の場に立つ。誇張でなく、掴んだ事実を価値として示す論拠を2つ',
+  cta: 'この2枚で、場に立つ',
+  /** モーダルヘッダーに添える副文。山場の格を示す一行（既存カラートークンで着色）。 */
+  sub: 'ステークホルダーが見ている',
+} as const
+
+/** demo 文脈の見出しタグ（RichText 経由で {{スプリントレビュー}} をグロッサリー展開して表示する）。 */
+export const DEMO_HEADING_TAG = DEMO_HEADING.tag
+/** demo 文脈の aria-label 用タグ（プレーンテキスト。スクリーンリーダーに {{}} を渡さない）。 */
+export const DEMO_HEADING_TAG_PLAIN = 'お披露目：スプリントレビュー'
+export const DEMO_HEADING_TITLE = DEMO_HEADING.title
+/** demo 文脈のリード文。MiniGameHearing.tsx から呼ぶ。 */
+export const DEMO_HEADING_PROMPT = DEMO_HEADING.prompt
+/** demo 文脈の CTA。MiniGameHearing.tsx から呼ぶ。 */
+export const DEMO_HEADING_CTA = DEMO_HEADING.cta
+/** demo 文脈のヘッダー副文（「ステークホルダーが見ている」一幕）。MiniGame.tsx から呼ぶ。 */
+export const DEMO_HEADING_SUB = DEMO_HEADING.sub
+
 /** 説得（交渉）ミニゲームの論拠デッキ。相手非依存の汎用＝誰を説得する場面（経営／情シス／協力会社／本社／
  *  チーム…）でも、プランニングの PO 説得でも成立する。MiniGameHearing に hearingOptions として渡す。
  *  良手＝相手の利害に沿う価値・事実と再現性・双方が得する組み方・優先順位の根拠／悪手＝迎合・権威で押す・
@@ -266,6 +294,52 @@ export const PERSUADE_DECK: HearingOption[] = [
   ...THEME_GOOD.persuade.map((text) => ({ text, good: true })),
   ...THEME_BAD.persuade.map((text) => ({ text, good: false })),
 ]
+
+// ───────────────────────────────────────────────────────────
+// 説得の「文脈別デッキ」。汎用 PERSUADE_DECK は温存し、特定場面だけ専用の論拠セットを足す
+// （drill/review の文脈別と同じ作法）。最初の文脈は 'demo'＝スプリントレビューのお披露目。
+//
+// 【agile 考証の肝】スプリントレビューは“インクリメントを検査し、ステークホルダーと次を適応する場”。
+// 取り繕い・売り込み(spin)の舞台ではない。だから demo で「効く」論拠は——動く成果物がまだ無くても、
+// 正直に「現場理解＝一次情報が進んだ」事実を価値として示し、フィードバックを引き出して場を巻き込む方向。
+// 「効かない／逆効果」は——誇張・印象操作・できていない事をできた風に見せる spin。
+// FDE心得（成果物でなく業務の変化を納品／顧客KPIをデバッグ指標に）とも一貫させる。
+// ───────────────────────────────────────────────────────────
+const DEMO_GOOD = [
+  // 一次情報の進展を価値として示す（誤出荷の真因に近づいた事実）
+  'モックの代わりに、掴んだ事実をお見せします——画面が3ヶ月開かれず、誤出荷の真因は別にありました',
+  // 暗黙知を引き出した＝次の手の起点になる事実
+  'ベテランの“勘”を言葉にできました。これが、次に誰でも使える手順の土台になります',
+  // 次に何を確かめれば顧客KPIに効くか、の道筋を示す
+  '次は「夜勤明けの引き継ぎ」を確かめます。そこが誤出荷率に一番効く、と現場の数字が指しています',
+  // フィードバックを引き出して場を巻き込む（検査と適応の場にする）
+  'この見立て、現場の肌感とずれていませんか。皆さんの違和感こそ、次に直す順番を決めます',
+]
+const DEMO_BAD = [
+  // 誇張：できた風に見せる
+  'ひとまず予測機能のモックを動かして、進んでいる雰囲気だけ作りましょう',
+  // 印象操作：都合の悪い事実を伏せる
+  '画面が使われていない件は伏せて、見栄えのする画面だけお見せします',
+  // できていない事をできた事のように言う
+  '細かい数字はこれからですが、「ほぼ完成」と言い切ってこの場をしのぎます',
+  // グレーの罠＝「整えすぎ」：一見誠実な“まとめ”だが、検査の場を痩せさせる。綺麗な結論だけ先に出し、
+  // 現場の生データ（使われていない事実・暗黙知の生の声）は伏せる。誇張spinとは別種——整って見えるが、
+  // フィードバックと適応の余地を奪い、検査の透明性を細らせる。「正しそうに見えて実は場を損なう」を読ませる。
+  '綺麗にまとめた結論だけ先にお出しして、現場の生の声や使われていない事実は、話が散らからないよう伏せておきます',
+]
+
+/** demo 文脈の説得デッキ＝スプリントレビューのお披露目。誠実に価値を示す論拠が「効く」、
+ *  spin（誇張・印象操作・できた風）が「効かない」。汎用 PERSUADE_DECK と同じく良手/悪手の混合。 */
+export const DEMO_PERSUADE_DECK: HearingOption[] = [
+  ...DEMO_GOOD.map((text) => ({ text, good: true })),
+  ...DEMO_BAD.map((text) => ({ text, good: false })),
+]
+
+/** 説得の文脈別デッキを返す。汎用は温存し、'demo'（お披露目）だけ専用デッキに差し替える。
+ *  未指定（PO 説得など従来の6デイリー）は汎用 PERSUADE_DECK のまま＝既存挙動・採点を壊さない。 */
+export function persuadeDeckFor(context?: PersuadeContext): HearingOption[] {
+  return context === 'demo' ? DEMO_PERSUADE_DECK : PERSUADE_DECK
+}
 
 /** ヒアリングの採点：選んだ2問のうち良問の数で great/good/poor。 */
 export function scoreHearing(picked: HearingOption[]): ExecTier {
