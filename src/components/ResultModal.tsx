@@ -121,7 +121,7 @@ function BacklogReviewBlock({ review }: { review: BacklogReview }) {
       {vg !== undefined && (
         <div
           className={`flex items-center justify-between rounded-lg px-3 py-2 ${
-            vg > 0 ? 'bg-[var(--accent)]/10 ring-1 ring-[var(--accent)]/30' : 'bg-[var(--panel)]/60'
+            vg > 0 ? 'bg-[var(--accent)]/10 ring-1 ring-[var(--accent)]/40' : 'bg-[var(--panel)]/60'
           }`}
         >
           <span className="text-xs font-semibold text-amber-100">このスプリントで伸ばした顧客価値</span>
@@ -231,7 +231,7 @@ function PreceptsBlock({
             return (
               <div
                 key={id}
-                className="flex items-start gap-2 rounded-lg bg-[var(--accent)]/10 px-2.5 py-1.5 text-sm ring-1 ring-[var(--accent)]/30"
+                className="flex items-start gap-2 rounded-lg bg-[var(--accent)]/10 px-2.5 py-1.5 text-sm ring-1 ring-[var(--accent)]/40"
               >
                 <span className="mt-0.5 shrink-0 tabular-nums text-[11px] text-amber-300/80">#{id}</span>
                 <span className="text-[var(--text)]">{p.text}</span>
@@ -453,7 +453,7 @@ export function ResultModal({ result, meters, onContinue }: Props) {
 
           {/* 3) 心得の新規獲得 ── 新たに獲得した心得を前面に大きく表示。 */}
           {headlineKind === 'precept' && result.newPreceptIds.length > 0 && (
-            <div className="space-y-2 rounded-xl border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-4 py-3 ring-1 ring-[var(--accent)]/30">
+            <div className="space-y-2 rounded-xl border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-4 py-3 ring-1 ring-[var(--accent)]/40">
               <p className="text-[11px] font-semibold text-amber-300">心得を獲得</p>
               {result.precepts
                 .filter((id) => result.newPreceptIds.includes(id))
@@ -472,7 +472,7 @@ export function ResultModal({ result, meters, onContinue }: Props) {
 
           {/* 4) 顧客価値の伸び ── バックログレビューの valueGain を主役に。 */}
           {headlineKind === 'valueGain' && (result.backlogReview?.valueGain ?? 0) > 0 && (
-            <div className="flex items-center justify-between rounded-xl border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-4 py-3 ring-1 ring-[var(--accent)]/30">
+            <div className="flex items-center justify-between rounded-xl border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-4 py-3 ring-1 ring-[var(--accent)]/40">
               <p className="text-sm font-semibold text-amber-100">このスプリントで伸ばした顧客価値</p>
               <span className="text-2xl font-bold tabular-nums text-amber-300">
                 ▲ +{result.backlogReview?.valueGain}
@@ -568,7 +568,7 @@ export function ResultModal({ result, meters, onContinue }: Props) {
                 aria-expanded={detailsOpen}
                 aria-controls="result-details"
                 onClick={() => setDetailsOpen((v) => !v)}
-                className="flex w-full cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-[11px] font-semibold text-[var(--text-sub)] hover:text-[var(--text-body)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                className="flex w-full cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-[11px] font-semibold text-[var(--text-sub)] hover:text-[var(--text-body)]"
               >
                 <span aria-hidden="true">{detailsOpen ? '▼' : '▶'}</span>
                 詳細を見る
