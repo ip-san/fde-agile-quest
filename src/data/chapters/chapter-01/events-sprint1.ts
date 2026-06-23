@@ -948,6 +948,9 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     sprint: 1,
     ceremony: 'daily',
     segment: 'team',
+    // 聞き取りが芯の回（読み上げ会に沈んだ本音の詰まりを、返答を捌いて引き出す）＝深掘りラリーに昇格。
+    // segment:'team' なので team テーマの drill（チームの本音を引き出す）が当たる。
+    minigame: 'drill',
     title: '報告会になったデイリー',
     narrative:
       '{{デイリースクラム}}が、いつのまにか「昨日やったこと、今日やること」の読み上げ会になっていた。困りごとは、誰も出さない。{{タイムボックス}}だけが過ぎる。上に見せる進捗表は、不気味なほど綺麗だ。',
@@ -1118,6 +1121,10 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     sprint: 1,
     ceremony: 'daily',
     segment: 'chance',
+    // 聞き取りが芯の回（“二度手間で紙に書き写す”例外の理由を、返答を捌いて掘る）＝深掘りラリーに昇格。
+    // 中身は現場での聞き取り（genba）なので、drill のテーマを genba に明示して現場主義の深掘りプールに当てる。
+    minigame: 'drill',
+    hearingTheme: 'genba',
     title: '「どうせ紙に書き写すんだ」',
     advocacy: {
       po: '「どうせ紙に書き写すんだ」——その諦めの裏に答えがある。倉庫で、なぜそうなるのか掴んでくれ。',
@@ -1155,6 +1162,9 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     sprint: 1,
     ceremony: 'daily',
     segment: 'genba',
+    // 聞き取りが芯の回（隠された“勘”を、返答を捌いて掘り出す）＝深掘りラリーに昇格。
+    // pinned で必ず通るので、S1 序盤に genba の drill が確実に一度出る（掴みの多様化）。
+    minigame: 'drill',
     // 縦糸の入口：主軸（ノウハウ隠し×自動化）の提示。全プレイヤーに必ず触れさせる。
     pinned: true,
     title: '「これは、見て覚えるもん」',
