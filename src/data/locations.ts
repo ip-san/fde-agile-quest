@@ -265,6 +265,39 @@ const DEV_FIELD_LINES: Line[] = [
   (t, l) => `勘ですけど「${t}」、運用が画面と別物で回ってるかも。${l}で実物、見てきてほしいです。`,
   (t, l) => `「${t}」、最後はコードに返ってきます。${l}で要件だけ固めましょう。あとは僕が。`,
 ]
+
+// ── Sprint2/3 向けテンプレ（Issue #85）。Sprint2 中盤以降、Sprint1 と同じ6本が回り続けて朝会が
+//    “ナビ作業”化し、セリフが読まれなくなる問題への対応。スプリントゴールの局面が進むほど語り口を
+//    更新する: Sprint2「仮説を形にする」＝視察プレッシャー・数字で測る・MVPで試す・締切の足音／
+//    Sprint3「文化を残す」＝橋渡し・次の人へ・持続性・引き継ぎ。S2/S3 共通の6本で、回数で擦り切れた
+//    Sprint1 テンプレと“別の顔”を出す（人格・態度の対立構造は維持: PO=結果に賭ける／SM=問いを置く）。
+// 鷹野（PO）＝結果にこだわる経営者。視察・数字・最小の形・手放す勇気。
+const PO_LINES_S2S3: Line[] = [
+  (t, l) => `視察が来月に迫っている。「${t}」、${l}で“見せられるもの”が出るか確かめてくれ。`,
+  (t, l) => `数字が欲しい。「${t}」、${l}で一つでいいから“証拠”を掴んできて。`,
+  (t, l) => `少ない時間で最大の結果だ。「${t}」、${l}で「誰かが喜ぶ最小の形」を見つけてくれ。`,
+  (t, l) => `積み上げで勝負じゃない。「${t}」、${l}で“手放す勇気”を試してこい。`,
+  (t, l) => `もう仮説の話は要らん。「${t}」、${l}で事実を一個、拾ってきて。`,
+  (t, l) => `後ろは向かなくていい。「${t}」だ——${l}で、今日の突破口だけを掴んでくれ。`,
+]
+// 久遠（SM）＝問いを置く師。引き継ぎ・チームに見える形・正しい問い・遠ざかっている人。
+const SM_LINES_S2S3: Line[] = [
+  (t, l) => `「${t}」……次に引き継ぐとしたら、何を残す。${l}で考えてこい。`,
+  (t, l) => `一人で抱えるな。「${t}」、${l}でチームに見える形にしてこい。`,
+  (t, l) => `正しい問いを立てるのが今日の仕事だ。「${t}」、${l}で問いを見つけてこい。`,
+  (t, l) => `「${t}」、いちばん遠ざかっているのは誰だ。${l}で、その人の言葉を聞いてこい。`,
+  (t, l) => `変わることを恐れていないか。「${t}」、${l}で“変えていい理由”を探してこい。`,
+  (t, l) => `「${t}」……何が次の人を助けるか。${l}でそれだけを掴んでこい。`,
+]
+// 瀬川（dev・現地）＝実物を当てる・引き継いで困らないか。MVP を出して反応で直す構え。
+const DEV_FIELD_LINES_S2S3: Line[] = [
+  (t, l) => `「${t}」、実際に触ってみてどうでした？${l}で出た反応、教えてもらえると直せます。`,
+  (t, l) => `「${t}」、仮説が正しいか、${l}で一回でいいので実物を当ててきてほしいです。`,
+  (t, l) => `「${t}」、一番困ってる操作を一個だけ教えてもらえたら。${l}で聞いてきてください。`,
+  (t, l) => `「${t}」、動くものを出したら絶対フィードバックが変わります。${l}で見せてきて。`,
+  (t, l) => `僕が直せる根拠をください。「${t}」、${l}で“今日の不具合”を一個だけ拾ってきて。`,
+  (t, l) => `「${t}」、誰かが引き継いだとき困らないかが心配で。${l}で実際に確かめてきてほしいです。`,
+]
 // 人事・総務・経理・不正など、価値/障害/コードで語ると称揚・矮小化になる題材。役割の人格は保ちつつ中立に。
 const SENSITIVE_LINES: Record<DailyRole, Line[]> = {
   po: [
@@ -290,11 +323,16 @@ function advocacyLine(role: DailyRole, event: GameEvent, locShort: string, seed:
   const t = cleanTitle(event.title)
   const pick = (bank: Line[]) => bank[Math.floor(frac(seed) * bank.length) % bank.length](t, locShort)
   if (isSensitiveEvent(event)) return pick(SENSITIVE_LINES[role])
+  // Sprint2 以降は局面に合わせた別テンプレへ切り替える（同じ6本のローテで朝会が擦り切れる問題=#85）。
+  // devroom（コードに直接触れる）は専用テンプレを維持し、現地 dev のみ S2/S3 版に差し替える。
+  const s2s3 = event.sprint >= 2
   if (role === 'dev') {
     const loc = locationOf(event)
-    return pick(loc === 'devroom' ? DEV_REPO_LINES : DEV_FIELD_LINES)
+    if (loc === 'devroom') return pick(DEV_REPO_LINES)
+    return pick(s2s3 ? DEV_FIELD_LINES_S2S3 : DEV_FIELD_LINES)
   }
-  return pick(role === 'po' ? PO_LINES : SM_LINES)
+  if (role === 'po') return pick(s2s3 ? PO_LINES_S2S3 : PO_LINES)
+  return pick(s2s3 ? SM_LINES_S2S3 : SM_LINES)
 }
 
 /** イベントidから決定的なseed（バリアント選択用） */
