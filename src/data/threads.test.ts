@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest'
-import type { GameFlag } from '../types'
-import { DISCOVERABLE_BACKLOG, EVENT_BACKLOG, EVENTS, PRODUCT_BACKLOG, SPRINTS } from './chapters/chapter-01'
+import { beforeAll, describe, expect, it } from 'vitest'
+import type { GameEvent, GameFlag } from '../types'
+import { DISCOVERABLE_BACKLOG, EVENT_BACKLOG, loadLateEvents, PRODUCT_BACKLOG, SPRINTS } from './chapters/chapter-01'
 import { openThreads, THREADS } from './threads'
 
 // 伏線レジストリ（threads.ts）の宣言と、章データ（setsFlag/missedFlag/requiresFlag）の整合を検証する。
@@ -8,20 +8,28 @@ import { openThreads, THREADS } from './threads'
 
 const flags = Object.keys(THREADS) as GameFlag[]
 
+let EVENTS: GameEvent[] = []
 // データから実際の仕掛け／回収経路を収集
-const choiceSet = new Set<GameFlag>() // setsFlag で立つ
-const missedSet = new Set<GameFlag>() // missedFlag（見送り）で立つ
-const eventPayoff = new Set<GameFlag>() // requiresFlag で回収（イベント出現）
-for (const e of EVENTS) {
-  if (e.missedFlag) missedSet.add(e.missedFlag)
-  if (e.requiresFlag) eventPayoff.add(e.requiresFlag)
-  for (const c of e.choices) if (c.setsFlag) choiceSet.add(c.setsFlag)
-}
-// PBI の missedFlag（発見の信頼ゲート未達/poor で engine が立てる“掘り損ね”）も missed 経路として収集する。
-// ＝EVENTS だけ走査していると DISCOVERABLE_BACKLOG 由来の missedFlag を取りこぼし、宣言ドリフトを見逃すため。
-for (const p of [...PRODUCT_BACKLOG, ...DISCOVERABLE_BACKLOG]) {
-  if (p.missedFlag) missedSet.add(p.missedFlag)
-}
+let choiceSet = new Set<GameFlag>() // setsFlag で立つ
+let missedSet = new Set<GameFlag>() // missedFlag（見送り）で立つ
+let eventPayoff = new Set<GameFlag>() // requiresFlag で回収（イベント出現）
+
+beforeAll(async () => {
+  EVENTS = await loadLateEvents()
+  choiceSet = new Set<GameFlag>()
+  missedSet = new Set<GameFlag>()
+  eventPayoff = new Set<GameFlag>()
+  for (const e of EVENTS) {
+    if (e.missedFlag) missedSet.add(e.missedFlag)
+    if (e.requiresFlag) eventPayoff.add(e.requiresFlag)
+    for (const c of e.choices) if (c.setsFlag) choiceSet.add(c.setsFlag)
+  }
+  // PBI の missedFlag（発見の信頼ゲート未達/poor で engine が立てる"掘り損ね"）も missed 経路として収集する。
+  // ＝EVENTS だけ走査していると DISCOVERABLE_BACKLOG 由来の missedFlag を取りこぼし、宣言ドリフトを見逃すため。
+  for (const p of [...PRODUCT_BACKLOG, ...DISCOVERABLE_BACKLOG]) {
+    if (p.missedFlag) missedSet.add(p.missedFlag)
+  }
+})
 
 describe('伏線レジストリ（threads）の整合性', () => {
   it('全スレッドが仕掛け(setVia)と回収(payoffVia)を1つ以上持つ（孤立なし）', () => {
@@ -49,7 +57,7 @@ describe('伏線レジストリ（threads）の整合性', () => {
     expect(drift, `event payoff 宣言とデータの不一致: ${drift.join(', ')}`).toEqual([])
   })
 
-  // finale/kanban は resolveFinale／カンバンの reviewItem で立つ“データ外の経路”（threads.ts 参照）。
+  // finale/kanban は resolveFinale／カンバンの reviewItem で立つ"データ外の経路"（threads.ts 参照）。
   // event データに setsFlag/missedFlag として現れないため、これらを仕掛けに持つ伏線は宙づり判定から除く。
   const hasDataExternalSetter = (f: GameFlag) => THREADS[f].setVia.some((v) => v === 'finale' || v === 'kanban')
 
@@ -70,10 +78,10 @@ describe('伏線レジストリ（threads）の整合性', () => {
   // Phase 2（回収保証・作問レベル）: requiresFlag イベントは「フラグが立った後」しか出ない。
   // スプリント番号だけでなく beat 順まで見て、各回収イベントが「最も早く立つ仕掛け」より後の
   // 同種 beat 枠に出られるかを検証する（同一スプリント内で回収が仕掛けより前にある作問ミスも弾く）。
-  // ord = sprint*1000 + beatIndex。仕掛けは最速で“その種の最初の beat”で立つと仮定（最適手＝到達可能性の上限）。
+  // ord = sprint*1000 + beatIndex。仕掛けは最速で"その種の最初の beat"で立つと仮定（最適手＝到達可能性の上限）。
   it('イベントで回収する伏線は、最も早い仕掛けより後の beat 枠に回収イベントが出られる（構造的到達可能）', () => {
     const beatsOf = (sprint: number) => SPRINTS.find((s) => s.n === sprint)?.beats ?? []
-    const fireOrd = (e: (typeof EVENTS)[number]) => {
+    const fireOrd = (e: GameEvent) => {
       const idx = beatsOf(e.sprint).indexOf(e.ceremony)
       return e.sprint * 1000 + (idx < 0 ? 999 : idx)
     }
@@ -134,11 +142,9 @@ describe('PBI 分割定義（split）の整合性', () => {
 })
 
 describe('イベント発PBI（addsPbi / EVENT_BACKLOG）の整合性', () => {
-  // 全イベント選択肢の addsPbi を収集
-  const addsRefs = EVENTS.flatMap((e) => e.choices.flatMap((c) => (c.addsPbi ? [c.addsPbi.id] : [])))
-  const eventIds = new Set(EVENT_BACKLOG.map((p) => p.id))
-
   it('Choice.addsPbi が参照する id はすべて EVENT_BACKLOG に存在する（タイポ・未定義の検知）', () => {
+    const addsRefs = EVENTS.flatMap((e) => e.choices.flatMap((c) => (c.addsPbi ? [c.addsPbi.id] : [])))
+    const eventIds = new Set(EVENT_BACKLOG.map((p) => p.id))
     const unknown = [...new Set(addsRefs)].filter((id) => !eventIds.has(id))
     expect(unknown, `EVENT_BACKLOG に無い addsPbi 参照: ${unknown.join(', ')}`).toEqual([])
   })
@@ -155,6 +161,7 @@ describe('イベント発PBI（addsPbi / EVENT_BACKLOG）の整合性', () => {
   })
 
   it('各 EVENT_BACKLOG 項目は、少なくとも1つのイベント選択から受け入れ可能（孤立要望なし）', () => {
+    const addsRefs = EVENTS.flatMap((e) => e.choices.flatMap((c) => (c.addsPbi ? [c.addsPbi.id] : [])))
     const referenced = new Set(addsRefs)
     const orphan = EVENT_BACKLOG.filter((p) => !referenced.has(p.id)).map((p) => p.id)
     expect(orphan, `どの選択からも受け入れられない要望: ${orphan.join(', ')}`).toEqual([])

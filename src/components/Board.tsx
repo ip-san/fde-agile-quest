@@ -1,16 +1,16 @@
 import { lazy, Suspense, useMemo, useReducer, useState } from 'react'
-import { CEREMONY_LABELS, CEREMONY_SHORT, EVENTS, PRODUCT_GOAL, SPRINTS } from '../data/chapters/chapter-01'
+import { CEREMONY_LABELS, CEREMONY_SHORT, PRODUCT_GOAL, SPRINTS } from '../data/chapters/chapter-01'
 import { PRECEPTS } from '../data/precepts'
 import { openThreads } from '../data/threads'
 import { GEN_TOKEN_COST } from '../engine/backlog'
 import { miniGameKindFor } from '../engine/game'
-import { customerValueBreakdown, isRouletteCeremony, repoStats } from '../engine/progression'
+import { customerValueBreakdown, getEventPool, isRouletteCeremony, repoStats } from '../engine/progression'
 import { isMuted, toggleMuted } from '../engine/sfx'
 import { hearingThemeFor } from '../lib/hearingTheme'
 import { readBool, writeBool } from '../lib/persist'
 import { seedFor } from '../lib/seed'
 import { useEngagement } from '../store/engagementStore'
-import type { Ceremony, Choice } from '../types'
+import type { Ceremony, Choice, GameEvent } from '../types'
 
 // バックログ操作パネル・遊び方・都度教示は"開いた時だけ"要るモーダル＝コード分割で初期バンドルから外す。
 // MiniGame（hearingミニゲーム系 + review系データ含む）も選択後にのみ表示されるため lazy 化して初期バンドルを軽量化。
@@ -309,8 +309,8 @@ export function Board() {
           {status === 'travel' ? (
             <Travel
               candidates={dailyCandidates
-                .map((id) => EVENTS.find((e) => e.id === id))
-                .filter((e): e is (typeof EVENTS)[number] => !!e)}
+                .map((id) => getEventPool().find((e) => e.id === id))
+                .filter((e): e is GameEvent => !!e)}
               peekLocation={peekLocation}
               onTravel={arrive}
             />
@@ -388,7 +388,9 @@ export function Board() {
 
         {/* 未回収の伏線（フラグが立ったが回収イベント未解決のもの）。回収先はぼかして緊張だけ可視化。 */}
         {(() => {
-          const open = openThreads(flags, (f) => EVENTS.some((e) => e.requiresFlag === f && resolvedIds.has(e.id)))
+          const open = openThreads(flags, (f) =>
+            getEventPool().some((e) => e.requiresFlag === f && resolvedIds.has(e.id))
+          )
           if (open.length === 0) return null
           return (
             <section className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-3">

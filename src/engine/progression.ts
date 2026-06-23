@@ -4,7 +4,6 @@
 // ───────────────────────────────────────────────────────────
 import {
   ENDINGS,
-  EVENTS,
   FAILURE_EPILOGUES,
   FINALE_EPILOGUES,
   PRODUCT_BACKLOG,
@@ -30,6 +29,7 @@ import type {
   Segment,
   Status,
 } from '../types'
+
 import {
   acceptRequestedPbi,
   backlogItem,
@@ -51,6 +51,22 @@ import {
   miniGameKindFor,
   resolveChoice,
 } from './game'
+
+// ── イベントプール（動的ロードで注入する。初期は空。setEventPool で注入される）──
+let _eventPool: GameEvent[] = []
+
+/** イベントプールを外から注入する。
+ *  アプリ起動時（App.tsx）でスプリント2/3の動的チャンクロード後に呼ぶ。
+ *  テストでは beforeAll / beforeEach で loadLateEvents() の結果を注入する。 */
+export function setEventPool(events: GameEvent[]): void {
+  _eventPool = events
+}
+
+/** 現在のイベントプールを返す（UI 層での参照用）。
+ *  setEventPool() が呼ばれるまでは空配列。アプリ起動後は全スプリントのイベントが入る。 */
+export function getEventPool(): GameEvent[] {
+  return _eventPool
+}
 
 /** 進行の中核状態（永続化対象＋導出フィールド）。UIアクション関数は含まない */
 export interface ProgressCore {
@@ -252,7 +268,7 @@ export function repoStats(
   deliveredItems: number
 } {
   let mergedPrs = 0
-  for (const ev of EVENTS) {
+  for (const ev of _eventPool) {
     if (!core.resolvedIds.has(ev.id)) continue
     // 技術イベント＝team/trouble、または devroom ロケーション（ただし“チャンス”は開発PRに数えない）
     const tech =
@@ -362,7 +378,7 @@ export function proceedCore(core: ProgressCore): ProgressCore {
   const ceremony = ceremonyAt(core.sprintIndex, core.beatIndex)
   if (!ceremony) return core
   const sprintNo = SPRINTS[core.sprintIndex].n
-  const avail = availableEvents(EVENTS, sprintNo, ceremony, core.resolvedIds, core.flags)
+  const avail = availableEvents(_eventPool, sprintNo, ceremony, core.resolvedIds, core.flags)
   const event = avail[0] ?? null
   if (!event) {
     // プランニングはスプリントバックログ（予測）が空のままでは終えられない＝計画の成果物が無い。
@@ -467,7 +483,7 @@ export function spinCore(core: ProgressCore, segment: Segment, pickRandom: numbe
   const ceremony = ceremonyAt(core.sprintIndex, core.beatIndex)
   if (!ceremony) return core
   const sprintNo = SPRINTS[core.sprintIndex].n
-  const avail = availableEvents(EVENTS, sprintNo, ceremony, core.resolvedIds, core.flags)
+  const avail = availableEvents(_eventPool, sprintNo, ceremony, core.resolvedIds, core.flags)
 
   if (ceremony === 'daily') {
     // 縦糸の入口(pinned)を見逃したまま終わらせない：未遭遇の pinned が「残りデイリー数」以上に
@@ -525,7 +541,7 @@ export function spinCore(core: ProgressCore, segment: Segment, pickRandom: numbe
  *  候補でない場所＝「今日は静か」（peekLocation を立てるだけ）。 */
 export function arriveCore(core: ProgressCore, location: LocationId): ProgressCore {
   if (core.status !== 'travel') return core
-  const cands = core.dailyCandidates.map((id) => EVENTS.find((e) => e.id === id)).filter((e): e is GameEvent => !!e)
+  const cands = core.dailyCandidates.map((id) => _eventPool.find((e) => e.id === id)).filter((e): e is GameEvent => !!e)
   const chosen = cands.find((e) => locationOf(e) === location)
   if (!chosen) return { ...core, peekLocation: location } // 今日は静か（候補でない場所）
 
