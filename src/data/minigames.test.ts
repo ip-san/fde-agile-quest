@@ -263,6 +263,14 @@ describe('dealReview', () => {
     const same = [1, 2, 3, 4, 5].every((s) => JSON.stringify(dealReview(s)) === JSON.stringify(dealReview(0)))
     expect(same).toBe(false)
   })
+  it('方向性ズレの主役作問は surprise 対象外＝初回はどの seed でも必ず題材一致で出る', () => {
+    // pbi-floor-observe の題材一致は (D)「細部健全だが要件外し＝差し戻し級」＝方向性ズレの掴み。
+    // surprise(mod(seed,3)===0) でも別作問に振らさず、初回は常に direction を芯に持つ作問が出る。
+    for (const s of [0, 1, 2, 3, 6, 9]) {
+      const r = dealReview(s, 'pbi-floor-observe')
+      expect(r.options.some((o) => o.issue && o.kind === 'direction')).toBe(true)
+    }
+  })
 })
 
 describe('scoreReview', () => {
@@ -284,5 +292,44 @@ describe('scoreReview', () => {
     expect(scoreReview([], 0)).toBe('great') // 健全なので LGTM が正解
     expect(scoreReview([noise], 0)).toBe('good') // 念のための空振り1＝good（軽い捏造）
     expect(scoreReview([noise, noise], 0)).toBe('poor') // 無いのに2つ捏造＝poor（オオカミ少年）
+  })
+})
+
+describe('scoreReview 重み付け（方向性ズレを細部より重く）', () => {
+  const dir = { text: 'direction-issue', issue: true, kind: 'direction' as const }
+  const det = { text: 'detail-issue', issue: true, kind: 'detail' as const }
+  const noise = { text: 'noise', issue: false }
+  // options（全選択肢）は重み付け判定に使う
+  const optionsWith = [dir, det, noise, noise, noise]
+  const optionsDetailOnly = [det, det, noise, noise, noise]
+
+  it('方向性も細部も拾えば great（全部拾い・空振り0）', () => {
+    expect(scoreReview([dir, det], 2, optionsWith)).toBe('great')
+  })
+  it('方向性を見逃すと great にならない（細部だけ全部拾っても最良で good）', () => {
+    // dir を見逃して det だけ拾う → great でなく good
+    expect(scoreReview([det], 2, optionsWith)).toBe('good')
+  })
+  it('方向性を拾って細部を見逃しても good（細部の取りこぼしは重みが低い）', () => {
+    // dir だけ拾い、det は見逃す → good（poor にはならない）
+    expect(scoreReview([dir], 2, optionsWith)).toBe('good')
+  })
+  it('方向性指摘が無い作問（detail のみ）では従来どおり great になれる', () => {
+    expect(scoreReview([det, det], 2, optionsDetailOnly)).toBe('great')
+  })
+  it('方向性指摘が無い作問でも空振り過多は poor', () => {
+    expect(scoreReview([det, noise, noise], 2, optionsDetailOnly)).toBe('poor')
+  })
+  it('options なし（後方互換）では方向性重み付けは無効＝従来ロジック通り', () => {
+    // options を渡さなければ方向性見逃しでも great になれる（後方互換）
+    expect(scoreReview([dir, det])).toBe('great')
+  })
+  it('細部を選んだこと自体は減点しない（方向性も拾えば great）', () => {
+    // det（細部）も dir（方向性）も拾う → great（細部を見たことは罰しない）
+    expect(scoreReview([dir, det], 2, optionsWith)).toBe('great')
+  })
+  it('方向性を見逃し空振りも多ければ poor', () => {
+    // dir を見逃し + noise を2つ選ぶ → poor（空振り2以上）
+    expect(scoreReview([noise, noise], 2, optionsWith)).toBe('poor')
   })
 })
