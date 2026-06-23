@@ -145,6 +145,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'genba',
+    minigame: 'drill',
     title: '定着の確認',
     narrative: '新しいやり方は、本当に現場に根付いたのか。画面の数字は知らない。確かめるなら、足で。',
     hearingOptions: [

@@ -471,8 +471,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     sprint: 2,
     ceremony: 'daily',
     segment: 'trouble',
-    minigame: 'hearing',
-    hearingTheme: 'genba',
+    minigame: 'drill',
     title: '矛盾だらけの例外ルール',
     narrative: '現場の運用は、例外だらけだ。「火曜だけ手順が違う」「この客は別ルート」。聞くほど矛盾が増えていく。',
     hearingOptions: [
@@ -1708,6 +1707,9 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     sprint: 2,
     ceremony: 'daily',
     segment: 'genba',
+    minigame: 'drill',
+    // 数字の裏を取る調査テーマ＝drill で chousa セットを引かせる（縦糸の文脈噛み合わせ）
+    hearingTheme: 'chousa',
     location: 'warehouse',
     // 縦糸の入口：不正暴露アークの起点。見逃すとアーク全体が始まらないため必ず遭遇させる。
     pinned: true,

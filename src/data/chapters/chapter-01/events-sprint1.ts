@@ -49,6 +49,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     sprint: 1,
     ceremony: 'daily',
     segment: 'genba',
+    minigame: 'drill',
     missedFlag: 'missedHearing',
     title: '倉庫の片隅',
     narrative:
