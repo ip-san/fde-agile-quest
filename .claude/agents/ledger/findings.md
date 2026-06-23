@@ -184,3 +184,12 @@
 - R12 再レビュー：ai-dx「クリーン」、story「クリーン」（STORY.md同期で解消）、全11ゲート緑（test348/build/size158.13kB/lighthouse/e2e/axe）。logistics/robotics は R11「クリーン」。
 - [open] (🟡・defer) code: canAddToForecast の per-call Set再構築（N×M・backlog~20で実害軽微・署名変更要）。ai-dx: トークン経済の単位（着手80 vs 丸投げ500=実コストか贅沢税か）の文言明示。learning(R11出力欠落)・great消化伸び文言・レビュー作問への顧客KPI軸は継続。
 - [note] 画像パイプラインの未コミット差分（scripts/import-image.mjs / src/data/images.ts / public/img/*.jpg）はレビュー作業と無関係につき本コミットに含めず別管理。
+
+## Issue #73 ヒアリング/選択の金型単調さを崩す（2026-06-23 / 完全自走ループ初実装）
+playtest-triage 発見（飽きの震源）→ narrative-designer が Sprint1 の4デイリーに4類型の型崩しを導入（engine/正本不変・既存機構 restraint/deduction/3択を活用）。
+- 実装: s1-daily-excel=3択化（状況依存・単一正解なし）／s1-daily-rough=ヒアリング悪問を「品質責任・礼儀・手戻り削減」のもっともらしい正論=罠に書換／s1-daily-cando=restraint(持ち帰り)追加／s1-daily-incident=hearing無し即断回として温存・narrative微修正。
+- R1: story🟡＋learning🟡が**収束指摘**＝excel-c(restraint)がノーコスト最適手（effects insight+1のみ）で§3「単一最適解なし」担保が弱い／excel-b結果文の引用符表記揺れ。
+- R2修正: excel-c に `trust:-1`（機会コスト＝即答待ちの相手に進捗を見せられず即時信頼を取り逃す・理由を結果文に明記）を付与しcando-cと「言葉とメーター一致」に統一／引用符を鉤括弧に統一。R2再レビューで story🟢/learning🟢（trust軸が a:culture−/b:trust+/c:trust− の3方向に割れトレードオフ強化）。dry。
+- ゲート: check:all/build/size(JS161.96kB)/e2e(3 pass)/lighthouse 全緑。381 unit tests。
+- [open] (🟡・次イテレーション) learning: s1-daily-rough の decision 側が a/b 同型2択のまま（ヒアリングのみ型崩し・第3の道=礼儀と検証の折衷の検討余地）／s1-daily-incident b「記録しながら復旧」に時間コスト（出荷に間に合わないリスク）未提示で「記録は常に正解」へ半歩寄り（incidentは元2択・#73スコープ外）。
+- [open] (🟡・次イテレーション) playtest発見の横展開: Sprint2/3 の同型イベント群（~90件）への型崩し展開／progression.ts でのセグメント別「出し分け」は今回スコープ外。
