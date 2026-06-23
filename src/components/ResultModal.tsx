@@ -44,7 +44,13 @@ function EffectDeltas({ effects }: { effects: Effects }) {
   )
 }
 
-const KIND_LABEL = { dev: '開発', hearing: 'ヒアリング', review: 'レビュー', persuade: '交渉' } as const
+const KIND_LABEL = {
+  dev: '開発',
+  hearing: 'ヒアリング',
+  review: 'レビュー',
+  persuade: '交渉',
+  drill: '深掘り',
+} as const
 
 /** 選択後ミニゲームの出来バッジ。great=主正+1上乗せ / good=標準 / poor=伸びしろ取り逃し */
 function ExecBadge({ result }: { result: ResultView }) {

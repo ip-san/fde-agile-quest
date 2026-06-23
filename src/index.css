@@ -152,6 +152,90 @@ body {
   animation: shake 0.3s ease-in-out both;
 }
 
+/* 深掘りラリー：相手の返答が下から滑り込む（問いを選んだ瞬間に即表示）。 */
+@keyframes response-slide {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.response-slide {
+  animation: response-slide 0.22s ease-out both;
+}
+
+/* 深掘りラリー：良問ヒット時の境界フラッシュ（口を割った）。 */
+@keyframes drill-open {
+  0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+  30% { box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.45); }
+  100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+}
+.drill-open {
+  animation: drill-open 0.55s ease-out both;
+}
+
+/* 深掘りラリー：悪問ヒット時の強めグレーアウト（沈黙・閉じた・しくじった）。
+ * 良問 drill-open（amber glow）との対比を効かせる：
+ *   良問→暖色glow（口を開いた）、悪問→灰色desaturate+収縮（閉じた・逃げた）。 */
+@keyframes drill-close-strong {
+  0%   { box-shadow: 0 0 0 0 rgba(100, 116, 139, 0);    filter: none; }
+  20%  { box-shadow: 0 0 0 6px rgba(100, 116, 139, 0.55); filter: grayscale(0.6) brightness(0.88); }
+  60%  { box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.25); filter: grayscale(0.3) brightness(0.94); }
+  100% { box-shadow: 0 0 0 0 rgba(100, 116, 139, 0);    filter: none; }
+}
+.drill-close-strong {
+  animation: drill-close-strong 0.55s ease-out both;
+}
+
+/* 深掘りラリー：最終リアクションが下から滑り込む（切り返し後の一拍）。 */
+@keyframes reaction-slide {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.reaction-slide {
+  animation: reaction-slide 0.28s ease-out both;
+}
+
+/* 深掘りラリー reaction フェーズの tier 別フラッシュ演出。
+ * great（核心が開く）＝drill-open 相当の amber glow。
+ * poor（墓穴・完全に閉じる）＝drill-close-strong 相当の gray desaturate。
+ * good（中間・半歩動く）＝控えめな amber パルス（確定音と合わせて「少し動いた」手応え）。
+ * いずれも reaction-slide の直後に重ねて当たるため duration はやや長め（0.65s）。 */
+@keyframes reaction-open {
+  0%   { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);    }
+  25%  { box-shadow: 0 0 0 6px rgba(251, 191, 36, 0.5); }
+  100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);    }
+}
+.reaction-open {
+  animation: reaction-slide 0.28s ease-out both, reaction-open 0.65s ease-out both;
+}
+@keyframes reaction-tomb {
+  0%   { box-shadow: 0 0 0 0 rgba(100, 116, 139, 0);    filter: none; }
+  20%  { box-shadow: 0 0 0 8px rgba(100, 116, 139, 0.6); filter: grayscale(0.7) brightness(0.85); }
+  65%  { box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.2); filter: grayscale(0.3) brightness(0.93); }
+  100% { box-shadow: 0 0 0 0 rgba(100, 116, 139, 0);    filter: none; }
+}
+.reaction-tomb {
+  animation: reaction-slide 0.28s ease-out both, reaction-tomb 0.65s ease-out both;
+}
+@keyframes reaction-mid {
+  0%   { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0);    }
+  30%  { box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.3); }
+  100% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0);    }
+}
+.reaction-mid {
+  animation: reaction-slide 0.28s ease-out both, reaction-mid 0.5s ease-out both;
+}
+
 /* モーション過敏設定では閃光・回転などの動きを無効化する（アクセシビリティ）。 */
 @media (prefers-reduced-motion: reduce) {
   .decisive-flash {
@@ -166,5 +250,24 @@ body {
   }
   .shake {
     animation: none;
+  }
+  .response-slide {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .drill-open,
+  .drill-close-strong {
+    animation: none;
+    filter: none;
+  }
+  .reaction-slide,
+  .reaction-open,
+  .reaction-mid,
+  .reaction-tomb {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
   }
 }

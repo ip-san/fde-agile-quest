@@ -71,8 +71,9 @@ export type Ceremony = 'planning' | 'daily' | 'review' | 'retro'
 export type Segment = 'genba' | 'kokyaku' | 'team' | 'trouble' | 'chance'
 
 /** 選択後の「実行」ミニゲームの種類（開発＝タイミング型／ヒアリング＝選択型／レビュー＝AI差分の点検／
- *  説得＝PO への並べ替え提案を“価値の論拠”で通す選択型）。 */
-export type MiniGameKind = 'dev' | 'hearing' | 'review' | 'persuade'
+ *  説得＝PO への並べ替え提案を”価値の論拠”で通す選択型／
+ *  深掘りラリー＝①問いを選ぶ→②相手の返答→③切り返しを選ぶ、の2段）。 */
+export type MiniGameKind = 'dev' | 'hearing' | 'review' | 'persuade' | 'drill'
 
 /** ヒアリング／説得の問い・論拠を「相手・場面」で変えるテーマ（現場/依頼主/機会/チーム…／PO説得=persuade）。
  *  既定はイベントの segment から導出（hearingThemeFor）。問いプール・見出しは minigames.ts。 */

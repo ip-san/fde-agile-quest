@@ -2,6 +2,7 @@ import { type HearingOption, type HearingTheme, hearingTitleFor, PERSUADE_DECK }
 import { useFocusTrap } from '../../hooks/useFocusTrap'
 import type { ExecTier, MiniGameKind } from '../../types'
 import { MiniGameDev } from './MiniGameDev'
+import { MiniGameDrill } from './MiniGameDrill'
 import { MiniGameHearing } from './MiniGameHearing'
 import { MiniGameReview } from './MiniGameReview'
 
@@ -20,9 +21,10 @@ interface Props {
   onSkip: () => void
 }
 
-const HEADING: Record<'dev' | 'review', { tag: string; title: string }> = {
+const HEADING: Record<'dev' | 'review' | 'drill', { tag: string; title: string }> = {
   dev: { tag: '実行：開発', title: '手を動かす' },
   review: { tag: '実行：レビュー', title: 'AIの差分を点検する' },
+  drill: { tag: '実行：深掘りラリー', title: '返ってきた言葉を捌く' },
 }
 
 function buildHeading(kind: MiniGameKind, theme?: HearingTheme): { tag: string; title: string } {
@@ -71,6 +73,9 @@ export function MiniGame({ kind, seed, pbiId, reviewVariety, theme, hearingOptio
           ) : kind === 'persuade' ? (
             // PO 説得＝ヒアリングの選択機構を流用し、価値の論拠デッキ(PERSUADE_DECK)を出す
             <MiniGameHearing seed={seed} theme="persuade" hearingOptions={PERSUADE_DECK} onResolve={onDone} />
+          ) : kind === 'drill' ? (
+            // 深掘りラリー＝①問い→②返答（即時）→③切り返しの2段。theme でセット選択
+            <MiniGameDrill seed={seed} theme={theme} onResolve={onDone} />
           ) : (
             <MiniGameHearing seed={seed} theme={theme} hearingOptions={hearingOptions} onResolve={onDone} />
           )}
