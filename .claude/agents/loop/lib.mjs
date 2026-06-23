@@ -91,6 +91,34 @@ export function approvedTasks(project, cfg) {
     .sort((a, b) => a.number - b.number)
 }
 
+// 完全自走（GO 廃止）版のキュー: open な Issue のうち、blocked / inReview / done 以外を
+// issue 番号の昇順（FIFO）で返す。Approved ゲートを使わず「積まれた順に着手」する。
+export function actionableTasks(project, cfg) {
+  const excluded = new Set([cfg.stages.blocked, cfg.stages.inReview, cfg.stages.done])
+  return project.items.nodes
+    .filter((n) => n.content && n.content.number != null)
+    .filter((n) => n.content.state === 'OPEN')
+    .filter((n) => !excluded.has(n.fieldValueByName?.name || ''))
+    .map((n) => ({
+      itemId: n.id,
+      number: n.content.number,
+      title: n.content.title,
+      url: n.content.url,
+      stage: n.fieldValueByName?.name || '',
+      body: n.content.body || '',
+    }))
+    .sort((a, b) => a.number - b.number)
+}
+
+// 背圧の計測: inReview 列にある open Issue（＝マージ待ち PR）の数を返す。
+// 完全自走では「人間の GO」の代わりに、この数が上限に達したら実装を止める（出口の背圧）。
+export function inReviewCount(project, cfg) {
+  return project.items.nodes
+    .filter((n) => n.content && n.content.number != null)
+    .filter((n) => n.content.state === 'OPEN')
+    .filter((n) => (n.fieldValueByName?.name || '') === cfg.stages.inReview).length
+}
+
 // Issue 番号 → その Issue の GraphQL ノード ID を取る（ボードへの追加に必要）。
 export function getIssueNodeId(cfg, issueNumber) {
   const query = `

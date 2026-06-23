@@ -11,5 +11,9 @@
     "inReview": "In review",
     "blocked": "Blocked",
     "done": "Done"
+  },
+  "limits": {
+    "openPrBackpressure": 3,
+    "discoverPerTick": 3
   }
 }

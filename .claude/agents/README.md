@@ -97,6 +97,18 @@
   `Blocked` にコメントして次へ進み、無人でも1件で全体を止めない。
 - **品質ゲートは指揮者が直接 Bash で回す**（gatekeeper 委任時にワークツリーが reset される事故を避ける。
   委任する場合は委任後に `git status` で差分保持を必ず検証）。詳細は `loop-autonomous.md`。
+
+### 完全自走（自己給餌・背圧式 / GO 廃止版）
+人間が Issue を書かず、**playtest が仕事を自分で発見してボードに積み、エンジンが実装して PR まで出す**自己給餌ループ:
+```
+/loop @.claude/agents/loop-autonomous-playtest.md
+```
+- **GO ゲートを外す代わりに出口の背圧**: 未マージ PR（`In review`）が上限 M（config `limits.openPrBackpressure`、既定3）に
+  達したら新規実装を止める＝人間のマージ速度がそのままスループット上限。寝ている間に PR が溢れない。
+- 1ティック: ①背圧(`backpressure.mjs`) → ②キュー(`next-auto.mjs`＝GO 不要・open loop issue を FIFO) →
+  ③あれば `loop-runbook.md` を1回 → ④空なら**発見フェーズ**で `playtest-triage`（N 件・重複除外・検収で閉じる）。
+- 暴走防止三層: **出口の背圧**＋**発見のレート制限/重複除外**＋**正本・破壊は自動 Blocked**。**マージは常に人間**（capability deny）。
+- 手綱を握り直したいときは GO 版 `loop-autonomous.md` に戻すだけ。詳細は `loop-autonomous-playtest.md`。
 - 朝は ボードの `In review`（レビュー待ち PR）と `Blocked`（判断待ち）を見る。
 
 ## loop runbook（1イテレーション）
