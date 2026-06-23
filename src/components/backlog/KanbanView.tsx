@@ -63,6 +63,9 @@ export interface KanbanProps {
   /** スプリント途中で Ready な PBI を予測に引き込む（スコープ再交渉） */
   pullIntoSprint: (id: string) => void
   core: KanbanCore
+  /** このスプリントのゴール文（プレイヤーが決定済みなら選択ゴール、未決ならデフォルトゴール）。
+   *  引き込み動機コピーの「ゴールに資するか」軸として表示する。 */
+  sprintGoal?: string
 }
 
 // ───────────────────────── KanbanView ─────────────────────────
@@ -79,6 +82,7 @@ export function KanbanView({
   reviewItem,
   pullIntoSprint,
   core,
+  sprintGoal,
 }: KanbanProps) {
   // レビューの2段：深さ選択 → ミニゲーム → 確定
   const [depthFor, setDepthFor] = useState<string | null>(null)
@@ -542,9 +546,9 @@ export function KanbanView({
         hidden={activeTab !== 'backlog'}
         className="space-y-3"
       >
-        {/* セクション説明 */}
+        {/* セクション説明：簡潔なラベルに留め、詳細は動機コピーに集約 */}
         <p className="text-xs leading-relaxed text-slate-400">
-          <RichText text="このスプリントの{{スプリントバックログ}}（To Do）に含まれていない全体の積み残し。全体像の把握と、スプリント途中の引き込み（{{スコープ再交渉}}）はここから。" />
+          <RichText text="{{プロダクトバックログ}}（参照・引き込み）" />
         </p>
 
         {/* スプリント途中の追加引き込み（スコープ再交渉）。早く終わって容量に余裕が出たら Ready 項目を足せる。
@@ -556,13 +560,9 @@ export function KanbanView({
               スプリントに追加（
               <RichText text="{{スコープ再交渉}}" />）
             </h3>
-            <p className="mb-2 text-[11px] leading-relaxed text-slate-400">
-              予測より早く片づき、容量に余裕が出たら Ready な項目を追加で引き込めます。
-              <RichText text="{{スプリントバックログ}}" />
-              は学びに応じてスプリント中も更新され続ける——ただし PO と再交渉し、
-              <RichText text="{{スプリントゴール}}" />
-              を危うくしない範囲で。
-            </p>
+            {/* 動機コピー：容量状態で出し分ける（over=再交渉の覚悟 / 余裕あり=機会とコスト）。
+                balanced な描写＝スコープクリープを肯定せず、機会コストと判断軸を honest に出す。 */}
+            <PullInMotivation over={over} fpts={fpts} capacity={capacity} sprintGoal={sprintGoal} />
             <ul className="space-y-1.5">
               {pullable.map((id) => {
                 const item = backlogItem(id)
@@ -811,5 +811,109 @@ function Card({
 function Empty() {
   return (
     <p className="flex flex-1 items-center justify-center px-1 py-4 text-xs text-slate-500 lg:min-h-[80px]">— なし —</p>
+  )
+}
+
+// ───────────────────────── PullInMotivation ─────────────────────────
+
+/** 引き込み候補カードの「動機の一言」。容量状態（over / 余裕あり）で出し分け。
+ *  - 余裕あり（大）：まだ十分入る・攻めどきのニュアンス。PO再交渉・ゴール不変の注記を一行で。
+ *  - 余裕あり（小）：機会と機会コストを honest に提示。
+ *  - 超過：安易な追加を戒める（何かを持ち越す覚悟＝スコープ再交渉）。
+ *  - スプリントゴール参照：渡された文字列があれば具体名、なければ glossary 語 {{スプリントゴール}} で表示。
+ *  - agile考証の要点（PO再交渉・ゴール不変）はこのコピー内に一度だけ置く。
+ *  balanced な描写＝スコープクリープを肯定せず、機会コストと判断軸を honestly に出す。 */
+function PullInMotivation({
+  over,
+  fpts,
+  capacity,
+  sprintGoal,
+}: {
+  over: boolean
+  fpts: number
+  capacity: number
+  sprintGoal?: string
+}) {
+  const slack = capacity - fpts // 余裕 pt（マイナスなら超過）
+  // 余裕が容量の30%超＝まだ十分入る「攻めどき」、以下は「余裕はあるが慎重に」
+  const isGenerous = !over && slack > capacity * 0.3
+
+  if (over) {
+    // 容量超過：追加は再交渉の覚悟を問う
+    return (
+      <p
+        role="note"
+        aria-label="引き込みに関する判断軸（容量超過）"
+        className="mb-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1.5 text-[11px] leading-relaxed text-amber-200"
+      >
+        予測はすでに容量いっぱい（{fpts}/{capacity}pt）。引き込むなら、何かを持ち越しと引き換えにする覚悟が要る——それが
+        <RichText text="{{スコープ再交渉}}" interactive={false} />
+        だ。
+        {sprintGoal ? (
+          <>
+            {' '}
+            <span className="font-semibold text-amber-100">「{sprintGoal}」</span>
+            に直結するか。そうでなければ、今じゃない。
+          </>
+        ) : (
+          <>
+            {' '}
+            <RichText text="{{スプリントゴール}}" interactive={false} />
+            に直結するか。そうでなければ、今じゃない。
+          </>
+        )}{' '}
+        追加は PO と再交渉し、ゴールを危うくしない範囲で。
+      </p>
+    )
+  }
+
+  if (isGenerous) {
+    // 余裕が大きい：まだ十分入る、攻めどきのニュアンス
+    return (
+      <p
+        role="note"
+        aria-label="引き込みに関する判断軸（容量に余裕あり・攻めどき）"
+        className="mb-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1.5 text-[11px] leading-relaxed text-emerald-200"
+      >
+        まだ{slack}pt 入る——攻めどきだ。
+        {sprintGoal ? (
+          <>
+            {' '}
+            <span className="font-semibold text-emerald-100">「{sprintGoal}」</span>
+            に資するなら今が入れどき。このスプリントで成果を一つ前に出せる。
+          </>
+        ) : (
+          <>
+            {' '}
+            <RichText text="{{スプリントゴール}}" interactive={false} />
+            に資するなら今が入れどき。このスプリントで成果を一つ前に出せる。
+          </>
+        )}{' '}
+        見送れば次スプリント以降の順番待ちに戻る。PO と合意の上で、ゴールを守りながら入れよう。
+      </p>
+    )
+  }
+
+  // 余裕あり（小）：機会と機会コストを提示
+  return (
+    <p
+      role="note"
+      aria-label="引き込みに関する判断軸（容量に余裕あり）"
+      className="mb-2 rounded-lg border border-sky-500/30 bg-sky-500/10 px-2.5 py-1.5 text-[11px] leading-relaxed text-sky-200"
+    >
+      余裕は{slack}pt と少ない。入れるなら一つに絞って——
+      {sprintGoal ? (
+        <>
+          <span className="font-semibold text-sky-100">「{sprintGoal}」</span>
+          に直結する一手かどうか、よく見極めたい。
+        </>
+      ) : (
+        <>
+          <RichText text="{{スプリントゴール}}" interactive={false} />
+          に直結する一手かどうか、よく見極めたい。
+        </>
+      )}{' '}
+      迷うなら見送って次スプリントへ回すのも一手。PO と再交渉し、ゴールを危うくしない範囲で。
+    </p>
   )
 }

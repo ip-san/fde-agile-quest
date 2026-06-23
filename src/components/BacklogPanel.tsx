@@ -101,6 +101,7 @@ export function BacklogPanel({ onClose }: Props) {
               startItem={startItem}
               reviewItem={reviewItem}
               pullIntoSprint={pullIntoSprint}
+              sprintGoal={sprintGoals[sprintIndex] || SPRINTS[sprintIndex]?.goal}
               core={{
                 sprintIndex,
                 beatIndex,
