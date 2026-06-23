@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { type DiffLine, dealReview, type ReviewFlag, type ReviewRound, scoreReview } from '../../data/minigames'
 import type { ExecTier } from '../../types'
 import { RichText } from '../RichText'
-import { SelectableCheckItem } from './SelectableCheckItem'
+import { SelectableOptionList } from './SelectableCheckItem'
 import { useGlyphSelection } from './useGlyphSelection'
 
 interface Props {
@@ -131,29 +131,23 @@ export function MiniGameReview({ seed, pbiId, variety, onResolve }: Props) {
         <span className="font-semibold text-sky-400">🤖 AI：</span> <RichText text={round.aiNote} interactive={false} />
       </p>
 
-      {/* 点検項目 */}
-      <ul className="space-y-2">
-        {round.options.map((o, i) => {
-          const on = picked.includes(i)
-          if (revealed) {
-            return <RevealedRow key={`${i}-${o.text}`} option={o} picked={on} />
-          }
-          return (
-            <li key={`${i}-${o.text}`}>
-              <SelectableCheckItem
-                itemKey={`r-${i}`}
-                on={on}
-                wasTouched={touchedRef.current.has(i)}
-                unpopSeq={unpopKey[i] ?? 0}
-                onToggle={() => toggle(i)}
-                initialFocus={i === 0}
-              >
-                <RichText text={o.text} interactive={false} />
-              </SelectableCheckItem>
-            </li>
-          )
-        })}
-      </ul>
+      {/* 点検項目：選択フェーズ（SelectableOptionList）と答え合わせフェーズ（RevealedRow）で切り替え */}
+      {revealed ? (
+        <ul className="space-y-2">
+          {round.options.map((o, i) => (
+            <RevealedRow key={`${i}-${o.text}`} option={o} picked={picked.includes(i)} />
+          ))}
+        </ul>
+      ) : (
+        <SelectableOptionList
+          items={round.options}
+          picked={picked}
+          glyphPrefix="r-"
+          touchedSet={touchedRef.current}
+          unpopKey={unpopKey}
+          onToggle={toggle}
+        />
+      )}
 
       {revealed ? (
         <>
