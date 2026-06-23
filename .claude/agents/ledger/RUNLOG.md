@@ -64,3 +64,24 @@
 - ゲート: quality-gatekeeper 全緑（typecheck0 / biome / vitest236 / build / size brotli JS133.72kB<135kB / e2e3-3 axe含む / lighthouse CI）。新規失敗ゼロ。
 - 状態: **PR #3 作成（コミット待ち＝人間マージ）** https://github.com/ip-san/fde-agile-quest/pull/3 。main 直 land・force-push・自動マージはしていない。
 - 残課題: findings.md の open🟡4件（key再マウントのSR通知/check-pop OFF側演出/Hearing3つ目無反応/AudioContext初回tick無音）＋提案3件（legacy-bridgeシード非対称/Board.tsx try-catch重複/選択UIのSelectableItem抽出）。
+
+## 2026-06-24 01:27 — Issue #81 Sprint1 レトロへのクリフハンガー追加 [ブランチ: loop/sprint1-cliffhanger-20260624]
+- 一手: Sprint1レトロ後の離脱ポイント（「お疲れさま、次へ」で淡々と終わる）に視察・買収の予告を追記
+- 実装: s1-retro b/c resultText 末尾に2文追記（レバー差保持 + showcasePressure 基盤の引き）。エンジン・コンポーネント変更なし。
+- レビュー: R1 story🔴1（showcase choice b 限定台詞の無条件引用）→ atmospheric 含みに修正。R2 story🟢・learning🟢、dry
+- ゲート: 全5緑（vitest 369pass/type-coverage 99.77%/JS 163.33kB/CSS 9.98kB/e2e axe全通過）→ PR #84
+- ボード: #81 → In review
+
+## 2026-06-24 01:45 — playtest-triage（発見フェーズ / D ティック）
+
+- 背圧: 未マージ PR=1（#84）/ キュー空 → 発見フェーズ実行
+- playtest-critic 通しプレイ結果: 朝会ナビ作業化が 🔴、Sprint3決断3連・据え置きb空振りが 🟡
+- 検収: #79🟢・#80🟡（残存3連あり）・#81🟡（方向正しいが弱い）
+- 起票:
+  - #85 [loop] 朝会パネルが「ナビ作業化」しセリフが読まれなくなる（🔴・Backlog）
+  - #86 [loop] Sprint3後半の「決める」系イベント3連が同型で離脱を招く（🟡・Backlog）
+  - #87 [loop] 据え置きb選択肢の「変化ゼロ」が手応えなく空振りに感じられる（🟡・Backlog）
+- 未起票（上限外）:
+  - 🟡 #81弱さ（a無引き・末尾埋もれ）→ PR#84 へのコメントで追記推奨
+  - 🟡 ResultModal normal 過多（心得枯渇後演出単調減衰）
+- 次: GO を出すならボードで #85/#86/#87 を `Approved` へ
