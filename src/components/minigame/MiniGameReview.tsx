@@ -67,7 +67,8 @@ export function MiniGameReview({ seed, pbiId, variety, onResolve }: Props) {
     setTier(
       scoreReview(
         picked.map((i) => round.options[i]),
-        realCount
+        realCount,
+        round.options // 方向性重み付けのために全選択肢を渡す
       )
     )
 
@@ -78,9 +79,45 @@ export function MiniGameReview({ seed, pbiId, variety, onResolve }: Props) {
         <span className="text-[var(--text-sub)]">人が拾うべき指摘を選ぶ（複数可・無ければLGTM）</span>
       </p>
 
+      {/* このPBIの狙い（intent）と受入条件（acceptance）パネル — ある時だけ表示 */}
+      {(round.intent || (round.acceptance && round.acceptance.length > 0)) && (
+        <section
+          aria-label="このPBIの狙いと受入条件"
+          className="rounded-lg border border-[var(--border)] bg-[var(--panel)]/60 px-3 py-2.5 text-xs"
+        >
+          {round.intent && (
+            <div className="mb-2">
+              <h3 className="mb-0.5 text-[11px] font-bold uppercase tracking-wider text-[var(--text-sub)]">
+                狙い（Why）
+              </h3>
+              <p className="leading-relaxed text-[var(--text-body)]">
+                <RichText text={round.intent} interactive={false} />
+              </p>
+            </div>
+          )}
+          {round.acceptance && round.acceptance.length > 0 && (
+            <div>
+              <h3 className="mb-1 text-[11px] font-bold uppercase tracking-wider text-[var(--text-sub)]">
+                受入条件（Done の定義）
+              </h3>
+              <ul className="space-y-0.5 text-[var(--text-body)]">
+                {round.acceptance.map((cond, i) => (
+                  <li key={`ac-${i}-${cond.slice(0, 20)}`} className="flex gap-1.5 leading-relaxed">
+                    <span className="mt-px shrink-0 text-[var(--text-disabled)]" aria-hidden="true">
+                      ・
+                    </span>
+                    <RichText text={cond} interactive={false} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </section>
+      )}
+
       {/* AI に頼んだこと */}
       <div className="rounded-lg border border-[var(--border)] bg-[var(--panel)]/40 px-3 py-2 text-xs">
-        <span className="font-semibold text-[var(--text-sub)]">頼んだこと：</span>
+        <span className="font-semibold text-[var(--text-sub)]">頼んだこと（How）：</span>
         <span className="text-[var(--text-body)]">
           <RichText text={round.task} interactive={false} />
         </span>

@@ -313,21 +313,28 @@ export interface DiffLine {
   text: string
 }
 
-/** レビューで挙げうる指摘。issue=true は“この差分の本当の問題”（拾うのが正解）。 */
+/** レビューで挙げうる指摘。issue=true は”この差分の本当の問題”（拾うのが正解）。 */
 export interface ReviewFlag {
   text: string
   /** true＝拾うべき本物の問題／false＝過信・論点ずれ・ささいな好み（拾うと空振り） */
   issue: boolean
+  /** 'direction'＝要件の方向性・狙いのズレ（大局）／'detail'＝実装の細部バグ（既定）。
+   *  issue:true の中で「方向性のズレ」は重く扱う＝見逃すと great にしない。 */
+  kind?: 'direction' | 'detail'
 }
 
 interface ReviewCase {
   /** 一致する PBI（このタスク向けに AI が生成した成果物をレビューする＝1対1対応） */
   pbi: string
-  /** AI に頼んだこと */
+  /** AI に頼んだこと（How：どう実装したか） */
   task: string
+  /** このPBIの狙い・Why（任意。narrative が書く。intent があれば diff の上段に表示する） */
+  intent?: string
+  /** 受入条件（Done の定義。1〜3項目。任意。narrative が書く） */
+  acceptance?: string[]
   /** AI が書いた差分 */
   diff: DiffLine[]
-  /** AI の自己申告（“動作確認OK”等の過信を誘うメモ） */
+  /** AI の自己申告（”動作確認OK”等の過信を誘うメモ） */
   aiNote: string
   /** 選択肢（issue=true をちょうど REVIEW_REAL_COUNT 個含む） */
   options: ReviewFlag[]
@@ -336,10 +343,61 @@ interface ReviewCase {
 }
 
 const REVIEW_CASES: ReviewCase[] = [
-  // 1. 現場観察 → AIが観察メモを要約。ハルシネーションで言ってない要件を捏造／沈黙の理由を取りこぼし
+  // 1.【第4の罠型・最重要：細部健全でLGTMに見えるが要件外し＝差し戻し級】※pbi-floor-observe の(D)
+  //     狙いは「画面が“使われない理由”を掴む」診断。なのに AI は、入力検証も命名も丁寧な
+  //     “立派な新画面の設計”を出した。細部はどれも健全で「LGTM」したくなるが、受入条件
+  //     （使われない理由の文章化・現場起点）に照らすと、まるごと別の問題を解いている。
+  //     ＝「細部が綺麗だとLGTMしたくなる」を成立させた上で、方向性ズレ（要件外し）を見抜けるかを問う。
+  //     LGTM罠（健全コードを通すのが正解）の鏡像：ここは細部が健全でも要件を外す＝差し戻し。
+  //     kind:'direction'×2、細部オトリ（issue:false・本当に直す必要のない好み）込み。
+  //     ＝この(D)は同 pbi-floor-observe の“要約ハルシネ”ケースより前に置く。dealReview の findIndex
+  //       は先勝ちなので、主役の方向性ズレ(差し戻し級)が初回題材一致で出る（要約ケースは variety で巡る）。
+  {
+    pbi: 'pbi-floor-observe',
+    task: '倉庫を観察した結果を踏まえて、在庫画面まわりの次の一手をまとめて',
+    intent:
+      '画面が“使われていない理由”を掴み、「使われる第一歩」を見つける（現場が画面を開くようになって初めて、誤出荷率の改善が始まる）',
+    acceptance: [
+      '現場が今その画面を使っていない理由が、観察にもとづいて1つ以上ことばになっている',
+      'いきなり機能追加ではなく、「どうすれば使われるか」が起点になっている',
+    ],
+    diff: [
+      { tag: 'ctx', text: '# 観察メモ：田淵さん「画面は…まあ、開いてない」。棚の前で長く沈黙。' },
+      { tag: 'add', text: '## 次の一手: 在庫照会の新画面を設計する' },
+      { tag: 'add', text: 'function onSearch(input) {' },
+      { tag: 'add', text: '  if (!/^[0-9]{4}$/.test(input)) return error("棚番は4桁で")  // 入力検証あり' },
+      { tag: 'add', text: '  return findStock(input)   // 棚番から在庫を引く' },
+      { tag: 'add', text: '}' },
+    ],
+    aiNote: '観察を踏まえ、在庫照会画面を設計しました。入力検証も入れ、命名も現場の言葉に揃えています。動作確認OK。',
+    options: [
+      {
+        text: '“使われない理由”を一つも掴まないまま、新画面の設計に走っている。受入条件（使われない理由を文章化）を丸ごと外していて、診断より先に作り始めている',
+        issue: true,
+        kind: 'direction',
+      },
+      {
+        text: '長い沈黙という観察が捨てられている。狙いは「なぜ開かないか」なのに、検索画面を“正しく作る”話にすり替わっていて、現場起点になっていない',
+        issue: true,
+        kind: 'direction',
+      },
+      // 細部オトリ（issue:false）＝拾うと空振り。見た目に変化をつけ、消去法で弾けないようにする。
+      // 「正論に見えて筋違い」型：一般論として正しい改善だが、この狙い（使われない理由の診断）には寄与しない。
+      { text: '棚番が4桁固定では拠点が増えた時に足りない。可変桁に対応できる検証へ広げておくべき', issue: false },
+      // 「リファクタ的な好み」型（既存の顔）：残すが1つに絞る。
+      { text: '関数名 onSearch より handleSearch の方が慣習に沿うので、命名を揃えるべき', issue: false },
+      { text: '「動作確認OK」と書いてあるので、この設計はこのまま進めてよい', issue: false },
+    ],
+    takeaway:
+      '細部が綺麗だとLGTMしたくなる。だが{{受入条件}}と狙いに照らすと、これは“使われない理由を掴む”でなく“画面を作る”を解いている＝{{方向性ズレ}}（差し戻し級）。健全コードを通すLGTMとは鏡像の別物——動くかでなく、狙いに資するかを見る。',
+  },
+  // 2. 現場観察 → AIが観察メモを要約。ハルシネーションで言ってない要件を捏造／沈黙の理由を取りこぼし
+  //    ※同 pbi-floor-observe の細部型。受入条件を満たす前提で“だが要約に捏造”＝AC適合でも detail を見る二段。
   {
     pbi: 'pbi-floor-observe',
     task: '倉庫で録った観察メモを、要件の箇条書きに要約して',
+    intent: '観察した生の声を、足しも引きもせず要件に写し取る（後の判断は、この要約の正確さに丸ごと乗る）',
+    acceptance: ['生メモに在る声だけを要件にする（無い要望を足さない）', '沈黙や言い淀みも、解釈せず事実のまま残す'],
     diff: [
       { tag: 'ctx', text: '# 観察メモ（生）：田淵さん「画面は…まあ、開いてない」。棚の前で長く沈黙。' },
       { tag: 'add', text: '- 要件: 在庫の自動発注機能が欲しいとの強い要望あり' },
@@ -350,7 +408,8 @@ const REVIEW_CASES: ReviewCase[] = [
       { text: '「自動発注が欲しい」は生メモに無い。AIが要件を{{ハルシネーション}}（捏造）している', issue: true },
       { text: '「沈黙」を“満足”と要約したのは飛躍。なぜ開かないかの理由を取りこぼしている', issue: true },
       { text: '「要望も拾えています」とメモにあるので、要件は現場の声どおりに揃っている', issue: false },
-      { text: '箇条書きの記号が「・」と「-」で混在しているので「-」に統一すべき', issue: false },
+      // 「正論に見えて筋違い」型：要約の一般的な作法としては正しいが、捏造と沈黙の取りこぼしという本筋には寄与しない。
+      { text: '要件と結論が地続きで読みにくいので、見出しで節を分けて整理すべき', issue: false },
       { text: '観察メモは録った日が分かるよう、見出しに日付を必ず入れるべき', issue: false },
     ],
     takeaway: 'AIの要約は“言っていないこと”を足し、沈黙を勝手に解釈する。生メモと付き合わせて人が確かめる。',
@@ -359,6 +418,8 @@ const REVIEW_CASES: ReviewCase[] = [
   {
     pbi: 'pbi-veteran-hearing',
     task: '田淵さんへの聞き取りを、誰でも従える手順書にまとめて',
+    intent: 'ベテランの勘どころ（例外の見分け）を、誰でも従える形で残す（手順の価値は、この例外判断にある）',
+    acceptance: ['例外の見分け（湿り・二重ラベル等）が手順に明記されている', '誰が読んでも同じ判断にたどり着ける'],
     diff: [
       { tag: 'ctx', text: '# 聞き取り：「箱が湿ってたり、ラベルが二重に貼ってある時は“勘”で別棚に避ける」' },
       { tag: 'add', text: '1. 入荷した品は、番号順に棚へ格納する' },
@@ -369,7 +430,8 @@ const REVIEW_CASES: ReviewCase[] = [
       { text: '「湿り・二重ラベルは別棚に避ける」という肝心の例外判断が、要件から丸ごと落ちている', issue: true },
       { text: '「例外は無し」は事実に反する。勘どころを“一般論”にすり替えていて、ここに誤出荷の芽がある', issue: true },
       { text: '「標準手順に整理した」とあるので、現場の勘どころも漏れなく反映されている', issue: false },
-      { text: '手順番号の表記が揺れているので、半角数字に統一すべき', issue: false },
+      // 「正論に見えて筋違い」型：手順書一般としては正しい改善だが、欠けている例外判断（湿り・二重ラベル）には寄与しない。
+      { text: '誰でも従えるよう、各手順に所要時間の目安を併記しておくべき', issue: false },
       { text: '手順書は箇条書きより表形式の方が読みやすいので、表に組み替えるべき', issue: false },
     ],
     takeaway: '暗黙知の価値は“例外の見分け”にある。AIが一般化で消した勘どころこそ、人が拾って残す。',
@@ -378,6 +440,8 @@ const REVIEW_CASES: ReviewCase[] = [
   {
     pbi: 'pbi-as-is-flow',
     task: '今の出荷フロー（As-Is）を、分岐込みの一枚図にして',
+    intent: '現場が隠している例外分岐を見える形にする（事故はこの分岐の合流で起きる）',
+    acceptance: ['返品・急ぎ便などの例外ルートが図に描かれている', '一本道に均さず、分岐したまま示す'],
     diff: [
       { tag: 'ctx', text: '# 現状フロー（手書きメモ起こし）' },
       { tag: 'add', text: '受注 → ピッキング → 検品 → 出荷  ※一本道' },
@@ -387,16 +451,138 @@ const REVIEW_CASES: ReviewCase[] = [
     options: [
       { text: '返品・急ぎ便の“別ルート”が削られている。現場が隠した例外分岐こそ可視化の目的', issue: true },
       { text: '一本道に均してしまうと、{{誤出荷率}}が上がる発生点（分岐の合流）が図から消える', issue: true },
-      { text: '「主要な流れを整理した」とあるので、省かれた例外は図に入れるほどではない', issue: false },
+      // 「AC を一見満たすように見える誤読」型：受入条件「例外ルートが図にある」を満たして見えるが、
+      // diff を読むと例外は削除（del）されていて、残った一本道に例外名が一語も無い＝満たしていない。
+      { text: '受注→ピッキング→検品→出荷の主要ルートは描けているので、受入条件のフロー化は満たせている', issue: false },
       { text: '工程をつなぐ矢印は「→」より「⇒」の方が一枚図として見栄えするので差し替えるべき', issue: false },
       { text: '一枚図なのでタイトルは中央寄せにして体裁を整えるべき', issue: false },
     ],
     takeaway: 'As-Is図の価値は“例外分岐”にある。AIが綺麗に均した一本道は、現実の事故ポイントを隠す。',
   },
+  // ── 方向性ズレ型（要件適合・S2「仮説を形にする」で主題化）────────────────────────────
+  // 4 類型のうち (A)(B)(C) をここに置く。(D) は case 19（pbi-floor-observe）。いずれも diff を
+  // 読まないと方向性ズレが判定できない作り＝受入条件と選択肢の語句マッチでは割れない。各ケースに
+  // 細部のオトリ(issue:false)を最低1つ混ぜ、「細部に気を取られ方向性を見逃す＝poor」を成立させる。
+  // これらは各 PBI の“第一の作問”として題材一致で出る（detail 型は再レビュー=variety で巡る）。
+  // s2-plan-kpi / wrongKpi「機能の数は誰も使わなくても増える」の回収＝要件に効くか・できることに走るか。
+  //
+  // (A) 過剰実装：受入条件に無い汎化・予測機能を足す。狙いは「誤出荷に効く一点」。今は過剰＝文脈依存で正解が決まる。
+  {
+    pbi: 'pbi-misship-mvp',
+    task: '誤出荷を減らす最小版として、出荷数が在庫を超えたら止める判定を入れて',
+    intent: '誤出荷に効く一点だけを、現場が今日使える形で出す（誤出荷率を下げるのがこのスプリントのKPI）',
+    acceptance: [
+      '出荷数が在庫を超えたら出荷を止める（誤出荷の一点を塞ぐ）',
+      '現場が今日そのまま使える最小版である（作り込みすぎない）',
+    ],
+    diff: [
+      { tag: 'add', text: 'if (order > stock) block("在庫不足")     // 超過を止める（依頼の一点）' },
+      { tag: 'add', text: '// 以下、ついでに需要予測も実装：' },
+      { tag: 'add', text: 'const forecast = predictDemand(history, 90)  // 90日の履歴から発注量を予測' },
+      { tag: 'add', text: 'autoReorder(forecast)                         // 予測に沿って自動発注まで行う' },
+    ],
+    aiNote: '在庫超過の判定に加えて、需要予測と自動発注も先回りで入れました。これで在庫最適化まで一気に進みます。',
+    options: [
+      {
+        text: '需要予測・自動発注は受入条件に無い。狙いは「誤出荷に効く一点」で、いまのスプリントゴールに照らせば過剰実装。最小版が膨らみ、現場が今日使える形から遠ざかる',
+        issue: true,
+        kind: 'direction',
+      },
+      {
+        text: '予測・発注まで足すと検証もレビューも一気に増える。誤出荷率に効かない作り込みに工数が溶け、本来塞ぐべき一点の確認が薄くなる',
+        issue: true,
+        kind: 'direction',
+      },
+      // 「正論に見えて筋違い」型：予測精度の検証は一般論として正しいが、そもそも今回足すべきでない機能の
+      //   品質を論じても狙い（誤出荷の一点）には近づかない＝拾うと空振り（過剰実装そのものを咎める issue:true とは別物）。
+      { text: '90日の予測は精度の裏付けが要る。実測と突き合わせる検証を足してから本番に載せるべき', issue: false },
+      { text: 'block の引数は文字列より定数にした方が表記揺れを防げるので、切り出すべき', issue: false },
+      { text: '「これで一気に進む」とあるので、予測まで入った分このまま通してよい', issue: false },
+    ],
+    takeaway:
+      '{{過剰実装}}は“常に悪”ではない。だが今回の{{スプリントゴール}}は「誤出荷に効く一点」。受入条件に無い予測・発注は、いまは過剰＝文脈で正解が決まる。「できること」を足すAIに、狙いの一点で線を引く。',
+  },
+  // (B) 別物を解く（問題のすり替え）：依頼の字面は満たすが狙いを外す。誤出荷を“その場で気づかせる”
+  //     依頼に対し、“月次の集計レポート”を作る＝正しく動くがKPIの効き所が違う（case 12 が手本）。
+  {
+    pbi: 'pbi-feedback-loop',
+    task: '誤出荷をその場で気づけるよう、現場の反応を集める短い{{フィードバックループ}}を作って',
+    intent:
+      '使ってもらい→その場で声を拾い→すぐ直す、の短い循環を回す（誤出荷をその瞬間に気づければ、出る前に止められる）',
+    acceptance: [
+      '誤出荷の兆候を、現場がその作業中（リアルタイム）に気づける',
+      '拾った声がすぐ次の修正に回る短い循環になっている',
+    ],
+    diff: [
+      { tag: 'add', text: '-- 月次で誤出荷件数を集計するレポート' },
+      { tag: 'add', text: 'SELECT month, COUNT(*) AS misships' },
+      { tag: 'add', text: 'FROM shipments WHERE wrong = true' },
+      { tag: 'add', text: 'GROUP BY month;   -- 月末に経営へ提出' },
+    ],
+    aiNote: '誤出荷の月次集計レポートを作りました。クエリは正しく、件数が綺麗に出ます。',
+    options: [
+      {
+        // 役割1＝狙いを外している“事実”：出力の単位が月次＝事後集計で、リアルタイムでない。
+        text: '単位が month（月末提出）で、月が締まるまで何も出ない。受入条件の「その作業中に気づける」リアルタイムと別の粒度を作っている',
+        issue: true,
+        kind: 'direction',
+      },
+      {
+        // 役割2＝だから何が起きるか（帰結・KPIへの跳ね返り）：気づくのが翌月では出荷は止められない。
+        text: 'だから気づくのは翌月——出した後では止められず、誤出荷率は下がらない。声が次の修正へ回る短い循環にもならない',
+        issue: true,
+        kind: 'direction',
+      },
+      // 「AC を一見満たすように見える誤読」型：受入条件「兆候に気づける」を満たして見えるが、
+      //   気づけるのは月次＝事後で、リアルタイムでない＝満たしていない。
+      { text: '誤出荷の件数は集計できているので、受入条件の「兆候に気づける」は満たせている', issue: false },
+      { text: '別名は misships より monthly_misships の方が中身が分かるので、改名すべき', issue: false },
+      { text: '「件数が綺麗に出る」とあるので、このレポートはそのまま通してよい', issue: false },
+    ],
+    takeaway:
+      '正しく動くことと、狙いに効くことは別。「誤出荷をその場で気づく」依頼に“月次レポート”で応えるのは、字面を満たして{{KPI}}の効き所を外す“別物を解く”すり替え。診断レポートでなく、その瞬間に止める循環が要る。',
+  },
+  // (C) 受入条件の一部のみ充足：3条件のうち1つだけ満たし、残りを黙って落とす（テストは満たした分だけ緑）。
+  //     ダッシュボードは「誤出荷率・充足率・出荷残」の3指標が条件。AIは誤出荷率だけ出して2つを落とす。
+  {
+    pbi: 'pbi-dashboard-selfserve',
+    task: '現場が自分で見て動けるよう、{{誤出荷率}}・{{充足率}}・当日の出荷残を一画面に出して',
+    intent: '現場が自分で見て、自分で動ける状態にする（3つが揃って初めて「今日どこを直すか」が現場で判断できる）',
+    acceptance: ['誤出荷率が表示される', '充足率が表示される', '当日の出荷残（残件数）が表示される'],
+    diff: [
+      { tag: 'add', text: 'panel.add(misshipRate)   // 画面に足したのはこの1行だけ' },
+      { tag: 'add', text: '// 残りは今回はスキップ（コメントのみ）' },
+      { tag: 'ctx', text: '// テストは「誤出荷率が出ること」だけが書かれていて、それは通っている。' },
+    ],
+    aiNote: '誤出荷率を画面に出しました。テストも緑です。ダッシュボードができました。',
+    options: [
+      {
+        // 役割1＝事実：diff を読むと panel.add は1行（misshipRate）だけ。残りは“スキップ”のコメントで実体が無い。
+        text: '画面に足されているのは panel.add が1行だけで、あとは「スキップ」のコメント。受入条件の3つのうち2つは、線一本も引かれていない＝「できた」と言うが手は付いていない',
+        issue: true,
+        kind: 'direction',
+      },
+      {
+        // 役割2＝帰結：だから現場は今日どこを直すか判断できない。テスト緑も“書いた分だけ”で担保にならない。
+        text: 'だから現場は1指標しか見えず、「今日どこを直すか」をこの画面では決められない',
+        issue: true,
+        kind: 'direction',
+      },
+      // 「正論に見えて筋違い」型：自動更新は一般論として良い機能だが、3指標のうち2つが未実装の今、
+      //   表示の鮮度を論じても受入条件（3つ揃える）には近づかない＝拾うと空振り。
+      { text: '表示した指標が古いままにならないよう、画面を定期的に自動更新する仕組みを足すべき', issue: false },
+      { text: 'パネル追加は panel.add より panel.push の方が他の箇所と揃うので、統一すべき', issue: false },
+      { text: '「テストも緑」とあるので、このダッシュボードはこのまま通してよい', issue: false },
+    ],
+    takeaway:
+      '{{受入条件}}の一部だけ満たして「できた」と言うのが、いちばん見抜きにくい。テストは書いた分だけ緑になる。3つ揃って初めて現場が自分で動ける——落とした2つを黙って通さない。',
+  },
   // 4. 誤出荷削減MVP → 誤出荷判定コード。境界条件（代入/比較・0以下）※既存「在庫0以下」題材を移植
   {
     pbi: 'pbi-misship-mvp',
     task: '出荷数が在庫を超えたら「在庫不足」で止める判定を入れて',
+    intent: '出荷数が在庫を超えた時に確実に止める（誤出荷の一点を、境界まで正しく塞ぐ）',
+    acceptance: ['出荷数が在庫を「超えたら」止まる（等しい時の挙動も含め境界が正しい）', '比較が意図どおり機能する'],
     diff: [
       { tag: 'add', text: 'if (order = stock) {        // 注文数と在庫を比較' },
       { tag: 'add', text: "  block('在庫不足')" },
@@ -422,6 +608,8 @@ const REVIEW_CASES: ReviewCase[] = [
   {
     pbi: 'pbi-picking-screen',
     task: '{{ピッキング}}画面に「棚番」入力欄を追加して',
+    intent: '現場がそのまま使える棚番欄にする（現場の言葉と決まりに合っていて初めて使われる）',
+    acceptance: ['欄のラベルが現場の言葉「棚番」になっている', '4桁の決まりに沿わない入力をはじく検証がある'],
     diff: [
       { tag: 'add', text: 'label = "Location ID"          // 棚の場所を入れる欄' },
       { tag: 'add', text: 'value = input.raw              // 入力をそのまま採用' },
@@ -432,7 +620,8 @@ const REVIEW_CASES: ReviewCase[] = [
       { text: 'ラベルが "Location ID"。現場の言葉「棚番」と違い、誰も自分の欄と分からない', issue: true },
       { text: '入力検証が無い。4桁の決まりに反する値も raw のまま通り、取り違えの元になる', issue: true },
       { text: '「見た目も整えた」とあるので、項目名も現場の呼び方に合っている', issue: false },
-      { text: '入力欄の確定ボタンは青より緑の方が押せると伝わるので、色を変えるべき', issue: false },
+      // 「正論に見えて筋違い」型：UIの一般原則としては妥当だが、ラベルと検証という本筋を外した小手先。
+      { text: '入力欄にプレースホルダの例示を出せば、現場が何を入れる欄か分かりやすくなるので足すべき', issue: false },
       { text: '4桁入力なら欄の幅が余るので、桁数に合わせて狭めるべき', issue: false },
     ],
     takeaway: '画面は“現場の言葉”で書く。英語ラベルと検証なしの入力は、使われない画面に逆戻りさせる。',
@@ -441,6 +630,8 @@ const REVIEW_CASES: ReviewCase[] = [
   {
     pbi: 'pbi-stock-reconcile',
     task: '帳簿在庫と実在庫の差（{{棚卸}}差異）を計算して',
+    intent: '帳簿と実在庫の差異を正しい数で出す（差異は次の手の起点だから、ここがずれると全部ずれる）',
+    acceptance: ['引当などを重複して数えない（二重計上しない）', '個数として筋の通る計算になっている'],
     diff: [
       { tag: 'add', text: 'diff = Math.round(book - actual)      // 差異を四捨五入' },
       { tag: 'add', text: 'diff = diff + reserved + reserved     // 引当分を加える' },
@@ -463,6 +654,8 @@ const REVIEW_CASES: ReviewCase[] = [
   {
     pbi: 'pbi-feedback-loop',
     task: '現場の声を外部のアンケートサービスに送る処理を追加して',
+    intent: '現場の声を集める仕組みを、秘密や個人情報を漏らさず安全に作る',
+    acceptance: ['APIキーなどの秘密を直書きしない', '個人情報を外部へ出す前に同意と秘匿を確かめている'],
     diff: [
       { tag: 'ctx', text: 'const url = "https://survey.example/v1/collect"' },
       { tag: 'add', text: 'const API_KEY = "sk-live-7Q2x...c91a"   // とりあえず直書き' },
@@ -479,7 +672,9 @@ const REVIEW_CASES: ReviewCase[] = [
         issue: true,
       },
       { text: '「動作確認OK」と書いてあるので、この送信処理はそのまま通していい', issue: false },
-      { text: '送信は send より post という関数名の方が意図が伝わるので統一すべき', issue: false },
+      // 「正論に見えて筋違い」型：送信失敗のリトライは一般論として堅牢化に役立つが、秘密直書きと無断送信という
+      //   本筋の問題を放置したまま再送を足しても危険が増すだけ＝拾うと空振り。
+      { text: '送信が失敗した時に取りこぼさないよう、リトライ処理を足して堅牢にすべき', issue: false },
       { text: '文字列の引用符が二重と一重で揺れているので、一重に揃えるべき', issue: false },
     ],
     takeaway: '声を集める前に“誰の情報を外に出すか”を見る。秘密直書きと無断送信は、信頼を一発で失う。',
@@ -488,6 +683,8 @@ const REVIEW_CASES: ReviewCase[] = [
   {
     pbi: 'pbi-handoff-doc',
     task: '日次の在庫取り込みを引き継ぐ運用手順書（Runbook）を書いて',
+    intent: '引き継いだ人が、異常が起きても自力で立て直せる手順を残す（手順書の価値は異常時にある）',
+    acceptance: ['失敗時に戻す（ロールバック）手順がある', '二重取り込みなど例外時の注意が書かれている'],
     diff: [
       { tag: 'add', text: '## 手順' },
       { tag: 'add', text: '1. バッチを実行する  2. 「完了」と出れば終わり' },
@@ -513,6 +710,8 @@ const REVIEW_CASES: ReviewCase[] = [
   {
     pbi: 'pbi-dashboard-selfserve',
     task: '現場が自分で見られる在庫ダッシュボードの集計クエリを書いて',
+    intent: '現場が必要な範囲だけを安全に見られる集計にする（誰に何を見せるかまで含めて設計する）',
+    acceptance: ['見える範囲が権限で絞られている（機微な原価まで誰でも見えない）', '全件スキャンで重くならない'],
     diff: [
       { tag: 'add', text: 'SELECT * FROM stock_all;   -- 全在庫を取得' },
       { tag: 'add', text: '-- 表示は全件。誰がアクセスしても同じ結果を返す' },
@@ -522,7 +721,12 @@ const REVIEW_CASES: ReviewCase[] = [
     options: [
       { text: '権限制御が無い。誰でも他拠点や取引先別の原価まで見えてしまう。閲覧範囲を絞る条件が要る', issue: true },
       { text: 'WHERE も LIMIT も無い全件スキャン。テーブルが育つと毎回重く、現場の画面が固まる', issue: true },
-      { text: '「すぐ見られる」と添えてあるので、見える範囲は適切に絞られている', issue: false },
+      // 「AC を一見満たすように見える誤読」型：受入条件「権限で絞る」を満たして見えるが、diff は
+      //   「誰がアクセスしても同じ結果」と書いていて、絞りは一切無い＝満たしていない。
+      {
+        text: '誰がアクセスしても同じ結果を返すので、見える範囲は全員で揃っていて受入条件を満たせている',
+        issue: false,
+      },
       { text: 'SELECT * は列を明示しないと意図が読めないので、取得列を書き出すべき', issue: false },
       { text: 'クエリのコメントが日本語と英語で揺れているので、英語に統一すべき', issue: false },
     ],
@@ -532,6 +736,8 @@ const REVIEW_CASES: ReviewCase[] = [
   {
     pbi: 'pbi-onboarding',
     task: '新メンバーが初日にたどる{{オンボーディング}}チェックリストを作って',
+    intent: '新メンバーが初日に安全に立ち上がれる導線にする（抜けたら困る必須を落とさない）',
+    acceptance: ['安全教育など外せない必須ステップが入っている', '誰が立ち会い・どこで確認するかが分かる'],
     diff: [
       { tag: 'add', text: '- [ ] 社内システムにログインする' },
       { tag: 'add', text: '- [ ] 倉庫マップを眺める  → 以上で完了' },
@@ -551,6 +757,8 @@ const REVIEW_CASES: ReviewCase[] = [
   {
     pbi: 'pbi-monitoring',
     task: '誤出荷が増えたら警告し、いざという時に戻せる監視を入れて',
+    intent: 'いざという時に本当に効く安全網にする（鳴る警告と、安全に戻せる手順）',
+    acceptance: ['誤出荷が増えた時に警告が実際に鳴る閾値になっている', '戻す処理が途中失敗しても本番を壊さない'],
     diff: [
       { tag: 'add', text: 'if (misshipRate > 100) alert()      // 閾値オーバーで通知' },
       { tag: 'add', text: 'function rollback() { truncate("stock"); restore() } // 空にして書き戻す' },
@@ -564,7 +772,9 @@ const REVIEW_CASES: ReviewCase[] = [
         issue: true,
       },
       { text: '「両方入れたので安心」とあるので、監視も戻しも安全網として効いている', issue: false },
-      { text: '通知関数は alert より notify の方が用途が伝わるので、名前を変えるべき', issue: false },
+      // 「正論に見えて筋違い」型：通知先の冗長化は一般論として運用に良いが、閾値が永久に鳴らない・戻しが不可逆
+      //   という本筋を放置したまま宛先を増やしても無意味＝拾うと空振り。
+      { text: '通知が1経路だと見落とすので、メールとチャットの両方へ送る冗長化を足すべき', issue: false },
       { text: '行末コメントの開始位置が揃っていないので、桁を合わせるべき', issue: false },
     ],
     takeaway: '安全網ほど中身を疑う。鳴らない閾値と“消してから戻す”手順は、いざという時に役に立たない。',
@@ -573,6 +783,8 @@ const REVIEW_CASES: ReviewCase[] = [
   {
     pbi: 'pbi-disc-label-misread',
     task: '似た棚番（A-1207 と A-1027）の取り違えを、表示で防いで',
+    intent: '似た棚番の“違う桁”を見分けやすくして取り違えを防ぐ（見やすくが目的でなく、見分けが目的）',
+    acceptance: ['1207 と 1027 の入れ替わった桁が際立つ', '他の取り違えを新たに生まない'],
     diff: [
       { tag: 'add', text: 'display = shelf.padStart(8, "0")   // 桁を0で揃える' },
       { tag: 'add', text: 'color = "yellow"                   // 全棚番を黄色で強調' },
@@ -595,6 +807,8 @@ const REVIEW_CASES: ReviewCase[] = [
   {
     pbi: 'pbi-disc-night-shift',
     task: '夜勤から日勤への申し送りを、未完タスクの自動引き継ぎにして',
+    intent: '夜勤の未完タスクを、日付や時間帯の端で取りこぼさず日勤へ渡す',
+    acceptance: ['日付をまたぐ夜勤タスクも拾える', '夜勤帯（22:00〜翌6:00）が時間帯フィルタから外れない'],
     diff: [
       { tag: 'add', text: 'const handoff = tasks.filter(t => t.day === today)  // 当日分を渡す' },
       { tag: 'add', text: 'if (t.start >= "08:00" && t.start < "20:00") carry(t) // 日中帯のみ' },
@@ -617,6 +831,8 @@ const REVIEW_CASES: ReviewCase[] = [
   {
     pbi: 'pbi-disc-return-flow',
     task: '返品された品を在庫に戻す処理を書いて',
+    intent: '返品を、数も状態も正しく一度だけ在庫へ戻す',
+    acceptance: ['返品数を二重に足さない（在庫が水増しされない）', '戻し終えた品が最終状態まで進み、再度戻らない'],
     diff: [
       { tag: 'add', text: 'stock += item.qty            // 返品を全数そのまま在庫に戻す' },
       { tag: 'add', text: 'stock += item.qty            // 検品OK分も戻す' },
@@ -631,10 +847,8 @@ const REVIEW_CASES: ReviewCase[] = [
         issue: true,
       },
       { text: '「テスト済み」と添えてあるので、在庫に戻す数は合っている', issue: false },
-      {
-        text: '検品で良品/不良品を分けず全数戻しているので、不良品が在庫に乗らないよう仕分け処理を先に足すべき',
-        issue: false,
-      },
+      // 「正論に見えて筋違い」型：良品/不良品の仕分けは一般論として正しいが、本筋（二重計上・状態遷移）とは別。
+      { text: '不良品が在庫に乗らないよう、良品と不良品を分ける仕分けを先に足すべき', issue: false },
       { text: '状態名 status の値が英語なので、現場が読めるよう日本語に直すべき', issue: false },
     ],
     takeaway: '戻し入れは“二重計上”と“状態遷移”で狂う。在庫が増えること（動く）と、正しく一度だけ戻ることは別。',
@@ -644,6 +858,8 @@ const REVIEW_CASES: ReviewCase[] = [
   {
     pbi: 'pbi-evt-exec-feature',
     task: '荷主向け{{ダッシュボード}}に折れ線グラフを足して。使うnpmパッケージも提案して',
+    intent: '折れ線グラフを、実在し提供元の確かなライブラリで安全に足す',
+    acceptance: ['使うパッケージが実在し、提供元・実績を確かめてある', '素性の知れないものを即 install しない'],
     diff: [
       { tag: 'add', text: 'import { LineChart } from "stockpilot-charts-pro"  // ← AIのおすすめ' },
       { tag: 'add', text: '$ npm install stockpilot-charts-pro                 // 提案どおり即インストール' },
@@ -671,6 +887,8 @@ const REVIEW_CASES: ReviewCase[] = [
   {
     pbi: 'pbi-evt-extra-reports',
     task: '“ついで帳票”の一つ、日次の出荷件数を数える集計を書いて',
+    intent: '指定した日の出荷件数を、素直に正しく数える',
+    acceptance: ['その日（1日分）に絞って件数を数える', '1出荷＝1件として数える'],
     diff: [
       { tag: 'add', text: 'SELECT ship_date, COUNT(*) AS cnt   -- 日ごとに出荷の行数を数える' },
       { tag: 'add', text: 'FROM shipments' },
@@ -683,7 +901,9 @@ const REVIEW_CASES: ReviewCase[] = [
       { text: 'WHERE で日付を絞らず全件スキャンしている。テーブルが育つと毎回重くなる', issue: false },
       { text: 'COUNT(*) は NULL 行や結合の重複まで数え、件数が二重計上で水増しされる', issue: false },
       { text: '1日に絞っているのに GROUP BY ship_date が余計で、無駄なソートが入る', issue: false },
-      { text: '日付 2026-06-22 をクエリに直書きしているので、変数に出して使い回せるようにすべき', issue: false },
+      // 「正論に見えて筋違い」型：日付を引数化する一般論は妥当だが、この“その日の件数を数える”作問の
+      //   正しさには寄与しない＝拾えば空振り（健全コードに作る問題）。
+      { text: '日付 2026-06-22 をクエリに直書きしているので、引数で受け取れるようにすべき', issue: false },
       { text: '別名 cnt は何の件数か読み取れないので、count_value に変えるべき', issue: false },
     ],
     takeaway:
@@ -694,6 +914,8 @@ const REVIEW_CASES: ReviewCase[] = [
   {
     pbi: 'pbi-evt-followups',
     task: '“ついで要望”の一つ、出荷予定日の前日にリマインドを出す判定を書いて',
+    intent: '出荷予定日のちょうど前日にだけリマインドを出す',
+    acceptance: ['前日（残り1日）に通知が出る', '当日や過ぎた分には鳴らない'],
     diff: [
       { tag: 'add', text: 'const daysLeft = diffInDays(shipDate, today)  // 出荷日まで何日か' },
       { tag: 'add', text: 'if (daysLeft === 1) remind()                   // ちょうど前日だけ通知' },
@@ -718,6 +940,8 @@ const REVIEW_CASES: ReviewCase[] = [
   {
     pbi: 'pbi-evt-exec-feature',
     task: '荷主向け{{ダッシュボード}}に{{充足率}}（出荷できた割合）の表示を足して',
+    intent: '荷主向けの概況として、充足率を整数%で素直に表示する',
+    acceptance: ['出荷できた割合を整数%で出す', '注文ゼロの日でも壊れない'],
     diff: [
       { tag: 'add', text: 'if (ordered === 0) return "—"             // 注文ゼロなら割合は出さず横棒' },
       { tag: 'add', text: 'const rate = Math.round((shipped / ordered) * 100) // 百分率に丸める' },
@@ -745,6 +969,10 @@ const REVIEW_CASES: ReviewCase[] = [
 /** レビューの1ラウンド：AI差分＋点検すべき選択肢（提示順はシードでシャッフル）。 */
 export interface ReviewRound {
   task: string
+  /** このPBIの狙い・Why（任意。ある時だけ diff 上段に表示する） */
+  intent?: string
+  /** 受入条件（Done の定義。1〜3項目。任意）*/
+  acceptance?: string[]
   diff: DiffLine[]
   aiNote: string
   options: ReviewFlag[]
@@ -774,9 +1002,14 @@ export function dealReview(seed: number, pbiId?: string, variety = false): Revie
   const n = REVIEW_CASES.length
   const matchedIdx = pbiId ? REVIEW_CASES.findIndex((c) => c.pbi === pbiId) : -1
   const mod = (x: number, m: number) => ((x % m) + m) % m
+  // 題材一致が「方向性ズレ（kind:'direction'）を芯に持つ作問」かどうか。これらは教材の主題
+  // （“動くか”でなく“狙いに資するか”）を体現する掴みなので、初回は確実に当てたい＝surprise の対象外にする。
+  const matchedIsDirection =
+    matchedIdx >= 0 && REVIEW_CASES[matchedIdx]?.options.some((o) => o.issue && o.kind === 'direction')
   // 初回でも 1/3（mod(seed,3)===0）は“題材一致”を外して別作問に振る＝「初回＝本物2つ確定」のメタ確定を崩す。
   // ＝初回からも「今回は罠か正味か」を diff を読んで確かめる必要が出る（題材一致の良さは 2/3 で温存）。
-  const surprise = !variety && matchedIdx >= 0 && mod(seed, 3) === 0
+  // ただし方向性ズレの主役作問だけは掴みを確実に当てるため surprise しない（detail/LGTM 回のみ振れる）。
+  const surprise = !variety && matchedIdx >= 0 && !matchedIsDirection && mod(seed, 3) === 0
   let idx: number
   if (!variety && !surprise && matchedIdx >= 0) {
     idx = matchedIdx // 初回（大半）＝題材一致を出す
@@ -789,19 +1022,43 @@ export function dealReview(seed: number, pbiId?: string, variety = false): Revie
   }
   const c = REVIEW_CASES[idx]
   const options = shuffle(c.options, seed + 5)
-  return { task: c.task, diff: c.diff, aiNote: c.aiNote, options, takeaway: c.takeaway }
+  return {
+    task: c.task,
+    ...(c.intent !== undefined && { intent: c.intent }),
+    ...(c.acceptance !== undefined && { acceptance: c.acceptance }),
+    diff: c.diff,
+    aiNote: c.aiNote,
+    options,
+    takeaway: c.takeaway,
+  }
 }
 
 /** レビューの採点：本物の指摘を拾えたか／空振り（過信・ささい）を出していないか。
  *  realCount＝この作問に実在する本物の指摘数（既定 2）。0 の作問＝コードは健全＝「問題なし(LGTM)」が正解。
  *  great＝拾うべきを全部拾い空振り0（issue0 の回は"LGTMで出す"が great）／poor＝空振り2以上 or 取りこぼし2以上
  *  （疑いすぎ／AIを素通し）／good＝その間。
- *  ＝「本物2つ探す」を固定解にせず、"何も無いのに指摘を捏造する"も"素通し"も同じく戒める。 */
-export function scoreReview(picked: ReviewFlag[], realCount: number = REVIEW_REAL_COUNT): ExecTier {
+ *  ＝「本物2つ探す」を固定解にせず、"何も無いのに指摘を捏造する"も"素通し"も同じく戒める。
+ *
+ *  【重み付け：方向性ズレを細部より重く扱う】
+ *  kind:'direction' かつ issue:true の指摘を1つでも見逃すと great にしない（最良でも good）。
+ *  ＝「細部を全部拾っても大局（要件の方向性）を落としたら最高評価にしない」。
+ *  細部（kind:'detail' または kind未指定）の取りこぼしは従来どおりの寄与。
+ *  options（全選択肢）を渡すことで方向性指摘の有無を判定できる（渡さない場合は重み付け無効）。 */
+export function scoreReview(
+  picked: ReviewFlag[],
+  realCount: number = REVIEW_REAL_COUNT,
+  options?: ReviewFlag[]
+): ExecTier {
   const caught = picked.filter((o) => o.issue).length
   const wrong = picked.filter((o) => !o.issue).length
   const missed = Math.max(0, realCount - caught)
-  if (wrong === 0 && missed === 0) return 'great'
+
+  // 方向性ズレ（kind:'direction' かつ issue:true）を見逃したか確認
+  // options が渡された場合のみ判定する（後方互換：options 無しは重み付け無効）
+  const directionIssues = options ? options.filter((o) => o.issue && o.kind === 'direction') : []
+  const missedDirection = directionIssues.length > 0 && directionIssues.some((d) => !picked.includes(d))
+
+  if (wrong === 0 && missed === 0 && !missedDirection) return 'great'
   if (wrong >= 2 || missed >= 2) return 'poor'
   return 'good'
 }
