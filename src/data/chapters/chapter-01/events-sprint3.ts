@@ -388,7 +388,11 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
-    minigame: 'hearing',
+    // 権限の境界とロールバック経路を“相手に問うて掘り下げる”局面＝深掘りラリー（drill・inin）。
+    // dev（汎用の手順並べ替え）だと固有の「AIへの権限委譲設計」が消えるため、theme:inin を活かす drill に。
+    // inin の drill セットが「任せる線・関所・戻し手順」を扱い、deduction（境界の設計）と手触りが噛み合う。
+    // 隣接の hearing 回（s3-daily-metrics／s3-daily-ai-partner）に別種を挟み、作業化も崩す。
+    minigame: 'drill',
     hearingTheme: 'inin',
     title: 'AIエージェントに権限を渡すか',
     narrative:
@@ -603,6 +607,11 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'team',
+    // 「誰の担当か曖昧な球」を“役割をまたいで詰まりを聞き取る”局面＝深掘りラリー（drill・team）。
+    // team の drill セットが「担当の引き渡し・言い出せない詰まり」を扱い、境界線の学びを保つ。
+    // sales〜dissent の hearing 連続帯（6件）を割る一手（lastman を挟んで drive 側ともう一段割る）。
+    minigame: 'drill',
+    hearingTheme: 'team',
     title: '宙に浮くデータ移行',
     narrative:
       'データ移行が要る。「それは情シスの仕事」「いや業者の仕事」。テーブルの上に、誰も拾わない球が転がっている。',
@@ -668,6 +677,11 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'kokyaku',
+    // 紛糾会議で“一人ずつ譲れない一点を引き出して論点を並べる”局面＝深掘りラリー（drill・kokyaku）。
+    // kokyaku の drill セットが「依頼主の期待のすり合わせ・本音の引き出し」を扱い、論点整理の学びを保つ。
+    // sales〜dissent の hearing 連続帯（6件）を boundary と二点で割り、3件以上の区間を解消する。
+    minigame: 'drill',
+    hearingTheme: 'kokyaku',
     title: '紛糾する会議',
     narrative: '関係者会議が紛糾した。誰もが様子をうかがい、誰も口火を切らない。時計の針だけが進む。',
     hearingOptions: [
@@ -1603,7 +1617,9 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
-    minigame: 'hearing',
+    // 承認フローの実態を“返ってきた言葉を捌いて掘り下げる”局面＝深掘りラリー（drill・chousa）。
+    // 不正暴露アークの調査回が hearing 一色になる帯（連結の帳尻／書類の裏取り／循環取引）を割る。
+    minigame: 'drill',
     hearingTheme: 'chousa',
     location: 'soumu',
     hints: {
@@ -1725,7 +1741,9 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
-    minigame: 'hearing',
+    // 同一シリアルの巡りを“一周たどって突き合わせる”取引データ調査＝深掘りラリー（drill・chousa）。
+    // deduction（数字のからくりを見抜く）→ drill（裏取りを掘る）で調査の手触りが噛み合う。
+    minigame: 'drill',
     hearingTheme: 'chousa',
     location: 'serverroom',
     hints: {
@@ -1891,7 +1909,11 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     segment: 'trouble',
     location: 'warehouse',
     requiresFlag: 'missedNightShift',
-    minigame: 'hearing',
+    // 田淵さんに夜勤帯の申し送り漏れを“掘り下げて聞き取る”局面＝深掘りラリー（drill・genba）。
+    // genba の drill セットが「夜勤明けの引き継ぎ・口頭頼みの取りこぼし」を扱い、固有の暗黙知の学びは
+    // 1問5択 hearing よりむしろ深く残る（問い→返答→切り返しの2段で“掘る”手触りが噛む）。
+    // 終盤の回収回（夜勤明け誤出荷／見せる数字／後回しの使い勝手）が hearing 一色になる帯も割る。
+    minigame: 'drill',
     hearingTheme: 'genba',
     hints: {
       po: '夜勤明けの誤出荷で客先がカンカンだ。倉庫に入って、引き継ぎのどこが抜けたか聞き取って。',
