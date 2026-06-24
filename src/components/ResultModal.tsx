@@ -280,6 +280,17 @@ function SeedReveal({ seedId, seedNew }: { seedId?: string; seedNew?: boolean })
 export type HeadlineKind = 'danger' | 'greatExit' | 'precept' | 'valueGain' | 'normal'
 
 /**
+ * resultText を「冒頭1文（head）」と「残り（rest）」に分割する純関数。
+ * 句点「。」で最初の文を切り出す。句点がなければ全文を head、rest は空文字。
+ * normal ケースのヘッドライン主役化に使う。
+ */
+export function splitHeadlineSentence(text: string): { head: string; rest: string } {
+  const idx = text.indexOf('。')
+  if (idx === -1) return { head: text, rest: '' }
+  return { head: text.slice(0, idx + 1), rest: text.slice(idx + 1).trimStart() }
+}
+
+/**
  * 毎ターンの「主役」を1つだけ選ぶ純関数（優先度順）。
  * 新しい state/計算/乱数は使わず、既存フラグの派生値のみで決定する。
  * sfxKind の danger>precept 優先度と整合している（greatExit は sfx に無いが flash に対応）。
@@ -480,7 +491,31 @@ export function ResultModal({ result, meters, onContinue }: Props) {
             </div>
           )}
 
-          {/* 5) normal ── 専用主役なし。下のメーター差分が自然に主役になる。 */}
+          {/* 5) normal ── resultText の冒頭1文を主役に据えてレイアウトを逆転させる。
+              メーター差分バッジは小型右寄せに縮小し、「何が起きたか」を前面に出す。
+              他の headlineKind では従来どおり「結果」ラベルつきの通常サイズ表示を維持する。 */}
+          {headlineKind === 'normal' &&
+            (() => {
+              const { head, rest } = splitHeadlineSentence(result.resultText)
+              return (
+                <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)]/30 px-4 py-3">
+                  {/* 冒頭1文：主役として大きく */}
+                  <p className="text-[17px] font-bold leading-snug text-[var(--text)] motion-safe:animate-[fadeSlideIn_0.25s_ease-out]">
+                    <RichText text={head} />
+                  </p>
+                  {/* 残り文：補足として続ける */}
+                  {rest && (
+                    <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--text-body)]">
+                      <RichText text={rest} />
+                    </p>
+                  )}
+                  {/* メーター差分バッジ：small・右寄せで常に可視 */}
+                  <div className="mt-2.5 flex items-center justify-end gap-1.5">
+                    <EffectDeltas effects={result.effects} />
+                  </div>
+                </div>
+              )
+            })()}
 
           {/* ─── 選んだ判断 ─── */}
           <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)]/40 px-4 py-2.5">
@@ -495,13 +530,16 @@ export function ResultModal({ result, meters, onContinue }: Props) {
             </p>
           </div>
 
-          {/* 何が起きたか（結果文を一度ちゃんと見せる） */}
-          <div>
-            <p className="mb-1 text-[11px] font-semibold text-[var(--text-sub)]">結果</p>
-            <p className="text-[15px] leading-relaxed text-[var(--text)]">
-              <RichText text={result.resultText} />
-            </p>
-          </div>
+          {/* 何が起きたか（normal 以外のケースで表示）。
+              normal のときは上記のヘッドラインブロックで表示済みなので重複しない。 */}
+          {headlineKind !== 'normal' && (
+            <div>
+              <p className="mb-1 text-[11px] font-semibold text-[var(--text-sub)]">結果</p>
+              <p className="text-[15px] leading-relaxed text-[var(--text)]">
+                <RichText text={result.resultText} />
+              </p>
+            </div>
+          )}
 
           {/* tier 依存の「跳ね返りの一文」（greatExit 以外のケース）。
               greatExit は主役ブロックで表示済みなので重複しない。
@@ -522,11 +560,13 @@ export function ResultModal({ result, meters, onContinue }: Props) {
           {/* 実行ミニゲームの出来 */}
           <ExecBadge result={result} />
 
-          {/* メーター増減 */}
-          <div className="flex items-center gap-2 border-t border-[var(--panel)] pt-3">
-            <span className="text-[11px] font-semibold text-[var(--text-sub)]">メーター</span>
-            <EffectDeltas effects={result.effects} />
-          </div>
+          {/* メーター増減（normal 時はヘッドラインブロック内に統合済みなのでここでは表示しない） */}
+          {headlineKind !== 'normal' && (
+            <div className="flex items-center gap-2 border-t border-[var(--panel)] pt-3">
+              <span className="text-[11px] font-semibold text-[var(--text-sub)]">メーター</span>
+              <EffectDeltas effects={result.effects} />
+            </div>
+          )}
 
           {/* トレードオフの明示（機会コストの言語化）。 */}
           <TradeoffNote effects={result.effects} />
