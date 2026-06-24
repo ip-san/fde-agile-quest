@@ -276,8 +276,8 @@ function SeedReveal({ seedId, seedNew }: { seedId?: string; seedNew?: boolean })
 
 // ─── Headline（主役）選定 ────────────────────────────────────────────────
 
-/** 主役ブロックの種別。6段階の優先度で一意に決まる。 */
-export type HeadlineKind = 'danger' | 'greatExit' | 'poorExit' | 'precept' | 'valueGain' | 'normal'
+/** 主役ブロックの種別。7段階の優先度で一意に決まる。 */
+export type HeadlineKind = 'danger' | 'greatExit' | 'poorExit' | 'precept' | 'valueGain' | 'cultureLand' | 'normal'
 
 /**
  * resultText を「冒頭1文（head）」と「残り（rest）」に分割する純関数。
@@ -301,17 +301,21 @@ export function splitHeadlineSentence(text: string): { head: string; rest: strin
  * 3) 詰め甘の山場出口 — execTier==='poor' && tierResultText
  * 4) 心得の新規獲得 — newPreceptIds.length>0
  * 5) 顧客価値の伸び — backlogReview?.valueGain>0
- * 6) それ以外（通常: メーター差分が主役）
+ * 6) 文化の着地 — effects.culture>0 && meters.culture>=6
+ * 7) それ以外（通常: メーター差分が主役）
  */
 export function pickHeadline(
-  result: Pick<ResultView, 'execTier' | 'tierResultText' | 'newPreceptIds' | 'backlogReview'>,
-  dangerMeters: (keyof Meters)[]
+  result: Pick<ResultView, 'execTier' | 'tierResultText' | 'newPreceptIds' | 'backlogReview' | 'effects'>,
+  dangerMeters: (keyof Meters)[],
+  meters: Meters
 ): HeadlineKind {
   if (dangerMeters.length > 0) return 'danger'
   if (result.execTier === 'great' && result.tierResultText) return 'greatExit'
   if (result.execTier === 'poor' && result.tierResultText) return 'poorExit'
   if (result.newPreceptIds.length > 0) return 'precept'
   if ((result.backlogReview?.valueGain ?? 0) > 0) return 'valueGain'
+  // 6) 文化の着地 — culture+ の選択 かつ cultureメーターが一定以上（定着フェーズ実感）
+  if ((result.effects.culture ?? 0) > 0 && meters.culture >= 6) return 'cultureLand'
   return 'normal'
 }
 
@@ -373,7 +377,7 @@ export function ResultModal({ result, meters, onContinue }: Props) {
   }, [sfxKind])
 
   // 主役選定（純関数で決定）
-  const headlineKind = pickHeadline(result, dangerMeters)
+  const headlineKind = pickHeadline(result, dangerMeters, meters)
   // 副次情報パネルの開閉（details/summary の代替: aria-expanded + aria-controls で同等の a11y）
   const [detailsOpen, setDetailsOpen] = useState(false)
 
@@ -429,7 +433,7 @@ export function ResultModal({ result, meters, onContinue }: Props) {
 
         <div className="space-y-3 px-5 py-4">
           {/* ═══ 主役ブロック（HeadlineKind ごとに1つだけ前面に大きく） ═══
-              優先度: danger > greatExit > poorExit > precept > valueGain > normal
+              優先度: danger > greatExit > poorExit > precept > valueGain > cultureLand > normal
               normal のみメーター差分がそのまま主役になる（専用ブロックなし） */}
 
           {/* 1) 致命圏警告 ── 最優先。0 で案件終了する緊張感を前面に。
@@ -517,7 +521,14 @@ export function ResultModal({ result, meters, onContinue }: Props) {
             </div>
           )}
 
-          {/* 5) normal ── resultText の冒頭1文を主役に据えてレイアウトを逆転させる。
+          {/* 5) 文化の着地 ── culture+ の選択かつ cultureメーターが定着域（≥6）に達した瞬間を祝う。 */}
+          {headlineKind === 'cultureLand' && (
+            <p role="status" aria-live="polite" className="text-center text-lg font-bold text-emerald-300">
+              <span aria-hidden="true">🌱</span> 文化が、根付いた
+            </p>
+          )}
+
+          {/* 6) normal ── resultText の冒頭1文を主役に据えてレイアウトを逆転させる。
               メーター差分バッジは小型右寄せに縮小し、「何が起きたか」を前面に出す。
               他の headlineKind では従来どおり「結果」ラベルつきの通常サイズ表示を維持する。 */}
           {headlineKind === 'normal' &&
