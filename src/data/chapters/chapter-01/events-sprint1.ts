@@ -369,7 +369,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     },
     hearingOptions: [
       { text: '橋本さんの残業が突出してますけど、その時間に彼は実際どんな仕事を引き受けてます？', good: true },
-      { text: '橋本さんに用事が集中するのは、誰が・どんな時に頼んでいるからですか', good: true },
+      { text: '橋本さん、今の仕事量——正直しんどいですか', good: true },
       { text: 'これはもう人を一人増やせば片付く話、ということでいいですよね？', good: false },
       {
         text: '属人化の解消には、まず橋本さんの業務手順書を作って他の人が代われる状態にするのが先ですよね？',
@@ -575,7 +575,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
     title: '頭の中の在庫フロー',
     narrative: '入庫、出庫、返品。在庫の流れは{{複雑系}}そのもので、口で説明するたびに、どこかで線がもつれる。',
     hearingOptions: [
-      { text: '返品が来たとき、現物はどこに、誰が、いつ戻すんですか', good: true },
+      { text: '返品、一回一緒に現物を追ってみませんか', good: true },
       { text: '入庫・出庫はフローが見えますけど、返品だけ流れが描けない。どう動いてます？', good: true },
       { text: '返品なんて滅多に来ないから、フローに描かなくていいですよね？', good: false },
       { text: '返品の流れなんて例外だ。フローからは外して作っていい。', good: false },
@@ -650,7 +650,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       '現場の在庫管理は、マクロだらけの巨大なExcel。シートが何枚も連なる、立派な{{レガシー}}だ。ぐちゃぐちゃに見えて、これがちゃんと回っている。',
     hearingOptions: [
       { text: 'このExcel、どんな時に手で直したり、特別な処理をしたりしてます？', good: true },
-      { text: 'このマクロを作った人は誰で、いまは誰がメンテしてるんですか', good: true },
+      { text: 'このExcel、今のままで引き継げます？', good: true },
       { text: 'Excel管理なんて限界なので、新システムに丸ごと置き換えていいですよね？', good: false },
       { text: 'マクロの中身まで読む必要はない。画面の見た目さえ真似れば足りる。', good: false },
       { text: 'こんな複雑なの、例外処理は無視してシンプルに作り直していいですよね？', good: false },
