@@ -1,9 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { displayName } from '../data/chapters/chapter-01/names'
 import { endingImage, imageUrl } from '../data/images'
 import type { ValueBreakdown } from '../engine/progression'
+import { sfxReveal } from '../engine/sfx'
+import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
 import type { Epilogue, LogEntry, Meters } from '../types'
 import { CustomerValueBar } from './CustomerValueBar'
+import { DecisiveFlash } from './DecisiveFlash'
 import { MeterHUD } from './MeterHUD'
 
 interface Props {
@@ -85,6 +88,16 @@ function FraudStanceBeat({ hint }: { hint: 'clue' | 'case' }) {
   )
 }
 
+/** S/A ランク演出のフラッシュ色（ResultModal の greatExit 相当の amber）。 */
+const RANK_FLASH_COLOR = '#fbbf24' // amber-400
+
+/** C/D ランク時に前面に出す「次回に向けての一言」。
+ *  演出を抑え、改善への動機を持って帰ってもらうことを主眼に置く。 */
+const LOW_RANK_MESSAGE: Record<'C' | 'D', string> = {
+  C: 'まだ見えていない現場がある。次は、もう一歩だけ深く踏み込んでみよう。',
+  D: '価値を届けられなかった判断の跡を、一度ゆっくり辿ってみよう。次は違う景色が見える。',
+}
+
 /** 顧客価値（北極星）の最終ランク。案件の"スコア"として結果に意味を与える。 */
 function valueRank(v: number): { grade: string; label: string; cls: string } {
   if (v >= 90)
@@ -100,7 +113,7 @@ function valueRank(v: number): { grade: string; label: string; cls: string } {
     return {
       grade: 'C',
       label: '価値は道半ば',
-      cls: 'text-[var(--text-body)] border-[var(--border-strong)]/40 bg-[var(--border-strong)]/10',
+      cls: 'text-[var(--text-body)] border-[var(--border-strong)]/70 bg-[var(--border-strong)]/10',
     }
   return { grade: 'D', label: '価値を残せなかった', cls: 'text-rose-300 border-rose-400/40 bg-rose-400/10' }
 }
@@ -183,8 +196,29 @@ export function EndingScreen({
   const teaser = fraudHint === 'none' ? null : FRAUD_TEASER[fraudHint]
   const imgKey = endingImage(ending.id)
 
+  // S/A ランクの一撃演出フェーズ。
+  // 'flash'=閃光・音のみ表示 → 600ms 後に 'reveal'=グラフ・ランクバッジ表示。
+  // prefers-reduced-motion 時・S/A 以外は最初から 'reveal'。
+  const reducedMotion = usePrefersReducedMotion()
+  const isHighRank = !failed && (rank.grade === 'S' || rank.grade === 'A')
+  const [phase, setPhase] = useState<'flash' | 'reveal'>(isHighRank && !reducedMotion ? 'flash' : 'reveal')
+
+  // S/A ランクかつモーション有効な場合のみ演出を起動する。
+  // マウント直後に sfxReveal('impact') を鳴らし、600ms 後に reveal フェーズへ。
+  // 依存配列を空にするのは意図的：コンポーネントは1回だけマウントされ、演出も1回だけ起動する。
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 初回マウント時の1回起動が意図した動作
+  useEffect(() => {
+    if (!isHighRank || reducedMotion) return
+    sfxReveal('impact')
+    const timer = setTimeout(() => setPhase('reveal'), 600)
+    return () => clearTimeout(timer)
+  }, [])
+
   return (
     <div className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center gap-6 px-safe py-10">
+      {/* S/A ランク演出：閃光（phase==='flash' の間だけ全画面表示し、音は useEffect で鳴らす） */}
+      {isHighRank && phase === 'flash' && <DecisiveFlash color={RANK_FLASH_COLOR} />}
+
       <div className="text-center">
         <p
           className={`text-xs font-semibold uppercase tracking-widest ${failed ? 'text-rose-400' : 'text-[var(--text-sub)]'}`}
@@ -247,28 +281,49 @@ export function EndingScreen({
         </div>
       )}
 
-      <div className="space-y-2">
-        <p className="mb-2 text-xs font-semibold text-[var(--text-sub)]">最終評価</p>
-        {/* 顧客価値ランク＝この案件で届けた価値の総合スコア（北極星の結実） */}
-        <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${rank.cls}`}>
-          <span className="text-3xl font-black tabular-nums">{rank.grade}</span>
-          <div className="min-w-0">
-            <p className="text-sm font-bold">顧客価値ランク：{rank.label}</p>
-            <p className="text-xs opacity-80">最終顧客価値 {customerValue} / 100</p>
-          </div>
+      {/* C/D ランク時：演出なし・「次回に向けての一言」を前面に出す。
+          メーター/グラフより先に表示して「改善への意欲」を持ち帰らせる。 */}
+      {!failed && (rank.grade === 'C' || rank.grade === 'D') && (
+        <div className="rounded-2xl border border-[var(--border-strong)]/70 bg-[var(--card)]/80 px-5 py-4">
+          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-widest text-[var(--text-sub)]">
+            次回に向けて
+          </p>
+          <p className="text-base font-bold leading-relaxed text-[var(--text-body)]">
+            {LOW_RANK_MESSAGE[rank.grade as 'C' | 'D']}
+          </p>
         </div>
-        <CustomerValueBar value={customerValue} breakdown={valueBreakdown} />
-        {/* 開始 → 各スプリント末の顧客価値の歩み（成長曲線）。案件の総括として右肩上がりを見せる。 */}
-        <ValueTrend baseline={valueBaseline} history={valueHistory} />
-        <MeterHUD meters={meters} />
-        {/* 届けたインクリメント＝スプリントバックログを Done にした成果。0 は"使わなかった機会損失"として可視化 */}
-        <div className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--card)]/60 px-4 py-2.5 text-sm">
-          <span className="text-[var(--text-body)]">届けたインクリメント</span>
-          {deliveredItems > 0 ? (
-            <span className="font-bold tabular-nums text-emerald-300">{deliveredItems} 件</span>
-          ) : (
-            <span className="text-xs text-[var(--text-sub)]">0 件 — バックログを Done にできなかった</span>
-          )}
+      )}
+
+      {/* S/A ランク演出中（phase==='flash'）はグラフ・ランクバッジを非表示にし、
+          演出後（phase==='reveal'）にフェードインして提示する（苦労の山 → データ提示の順）。 */}
+      <div
+        className={
+          phase === 'flash' ? 'invisible' : isHighRank ? 'motion-safe:animate-[fadeSlideIn_0.25s_ease-out]' : ''
+        }
+      >
+        <div className="space-y-2">
+          <p className="mb-2 text-xs font-semibold text-[var(--text-sub)]">最終評価</p>
+          {/* 顧客価値ランク＝この案件で届けた価値の総合スコア（北極星の結実） */}
+          <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${rank.cls}`}>
+            <span className="text-2xl font-bold tabular-nums">{rank.grade}</span>
+            <div className="min-w-0">
+              <p className="text-sm font-bold">顧客価値ランク：{rank.label}</p>
+              <p className="text-xs opacity-80">最終顧客価値 {customerValue} / 100</p>
+            </div>
+          </div>
+          <CustomerValueBar value={customerValue} breakdown={valueBreakdown} />
+          {/* 開始 → 各スプリント末の顧客価値の歩み（成長曲線）。案件の総括として右肩上がりを見せる。 */}
+          <ValueTrend baseline={valueBaseline} history={valueHistory} />
+          <MeterHUD meters={meters} />
+          {/* 届けたインクリメント＝スプリントバックログを Done にした成果。0 は"使わなかった機会損失"として可視化 */}
+          <div className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--card)]/60 px-4 py-2.5 text-sm">
+            <span className="text-[var(--text-body)]">届けたインクリメント</span>
+            {deliveredItems > 0 ? (
+              <span className="font-bold tabular-nums text-emerald-300">{deliveredItems} 件</span>
+            ) : (
+              <span className="text-xs text-[var(--text-sub)]">0 件 — バックログを Done にできなかった</span>
+            )}
+          </div>
         </div>
       </div>
 
