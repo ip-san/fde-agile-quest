@@ -326,9 +326,10 @@ interface Props {
   onContinue: () => void
 }
 
-/** 開示演出のフラッシュ色。閃光は"決定的瞬間"だけに絞る（impact のみ／danger は別途 rose）。
+/** 開示演出のフラッシュ色。閃光は"決定的瞬間"だけに絞る（impact/heavy のみ／danger は別途 rose）。
  *  good/bad/normal は音のみ＝結果画面の閃光過多と認知負荷を避ける。 */
 const FLASH_COLOR: Record<RevealKind, string | null> = {
+  heavy: '#f97316', // orange-500 ＝ fraud系・重大真実（impact より一段強い）
   impact: '#fbbf24', // amber-400 ＝「異議あり！」の閃光に相当
   good: null,
   bad: null,
