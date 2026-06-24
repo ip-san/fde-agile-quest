@@ -4,7 +4,7 @@ import { endingImage, imageUrl } from '../data/images'
 import type { ValueBreakdown } from '../engine/progression'
 import { sfxReveal } from '../engine/sfx'
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
-import type { Epilogue, LogEntry, Meters } from '../types'
+import type { Epilogue, GameFlag, LogEntry, Meters } from '../types'
 import { CustomerValueBar } from './CustomerValueBar'
 import { DecisiveFlash } from './DecisiveFlash'
 import { MeterHUD } from './MeterHUD'
@@ -23,6 +23,8 @@ interface Props {
   valueHistory: number[]
   /** 第1章で掴んだ不正の"伏線"の深さ（次章への引き）。none=気づかず / clue=違和感 / case=輪郭 */
   fraudHint?: 'none' | 'clue' | 'case'
+  /** この周回で立った永続フラグ。3スプリントの選択を“次章への引き”に反映するために読む（読み取り専用）。 */
+  flags: ReadonlySet<GameFlag>
   log: LogEntry[]
   onReset: () => void
 }
@@ -86,6 +88,31 @@ function FraudStanceBeat({ hint }: { hint: 'clue' | 'case' }) {
       </div>
     </div>
   )
+}
+
+/** "次章への引き"の周回差分。3スプリントの選択（＝到達したエンディング種別とキーフラグ）を1〜2文で
+ *  締めに反映し、周回ごとに違う後味を残す。全周回共通の「次章へ」核（親会社の皮肉な報告）は別ブロックで
+ *  残し、ここはその核の手前に置く"この周回が次章に持ち越すもの"の一文に徹する。決着はつけない（§6.5）。
+ *
+ *  優先順位: ① disliked / orderTaker＝今期の判断が「次に効いてくる損」を抱えた周回を最優先で受ける
+ *  → ② topDown（管理主義で押し切った）→ ③ soloHero（一人で抱えた・属人化）→ ④ trueFde×genbaTrust
+ *  （現場の信頼を資産まで育てた最上位）→ ⑤ genbaTrust（現場側に立った）→ ⑥ それ以外（及第点）。
+ *  ※ メーターや永続フラグには影響しないフレーバー。地の文の硬質トーンを保ち、抽象的な比喩は避ける。 */
+function carryoverLine(endingId: string, flags: ReadonlySet<GameFlag>): string {
+  const solo = flags.has('soloHero')
+  if (endingId === 'disliked')
+    return '——現場には嫌われた。耳の痛い事実を先に置いたことが正しかったのかは、次のフェーズが答えを持っている。背中を向けた人ほど、後でその理由を覚えている。'
+  if (endingId === 'orderTaker')
+    return '——言われた通りに作って、納期は守った。だが現場が本当に困っていた何かは、要望書の外に置き去りのままだ。次のフェーズで、その宿題が戻ってくる。'
+  if (flags.has('topDown'))
+    return '——上から決めて、効率は通した。次のフェーズで誰かが背を向けたとき、なぜ通したのかをもう一度説明する場面が来る。'
+  if (solo)
+    return '——結局、最後まで自分が運用の窓口だった。仕組みは回ったが、回しているのは自分一人。次は、誰かを走らせる番かもしれない。'
+  if (endingId === 'trueFde' && flags.has('genbaTrust'))
+    return `——${displayName('cargo')}の現場と築いた信頼は、次のフェーズで最大の資産になる。今期の積み上げは、誰に何を頼めるかという人間関係の地図として、現場に刻まれた。`
+  if (flags.has('genbaTrust'))
+    return `——${displayName('cargo')}の現場の側に立って積み上げたものは、消えずに残る。次のフェーズは、その信頼を元手に始められる。`
+  return '——案件は前へ進んだ。取り切れなかったトレードオフが、次のフェーズの入り口で待っている。'
 }
 
 /** S/A ランク演出のフラッシュ色（ResultModal の greatExit 相当の amber）。 */
@@ -188,12 +215,15 @@ export function EndingScreen({
   valueBaseline,
   valueHistory,
   fraudHint = 'none',
+  flags,
   log,
   onReset,
 }: Props) {
   const failed = ending.id.startsWith('fail-')
   const rank = valueRank(customerValue)
   const teaser = fraudHint === 'none' ? null : FRAUD_TEASER[fraudHint]
+  // この周回が次章に持ち越すもの（到達したエンディング種別＋キーフラグで分岐）。
+  const carryover = carryoverLine(ending.id, flags)
   const imgKey = endingImage(ending.id)
 
   // S/A ランクの一撃演出フェーズ。
@@ -262,6 +292,9 @@ export function EndingScreen({
           <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-widest text-amber-400/80">
             To be continued — 次章へ
           </p>
+          {/* この周回の選択を締めに反映する1〜2文（エンディング種別＋キーフラグで分岐）。
+              全周回共通の核（下の親会社の皮肉な報告）の手前に置き、周回ごとの後味を変える。 */}
+          <p className="mb-3 text-sm font-medium leading-relaxed text-amber-100">{carryover}</p>
           <p className="text-sm leading-relaxed text-amber-100/90">
             ——後日、グループの定例報告。{displayName('parentCo')}は、現場の実態を確かめもせず、さらに上の
             {displayName('groupHq')}へ、こう上げたという。「フィジカルAI実証、順調に進んでおります。現場のIT化が
