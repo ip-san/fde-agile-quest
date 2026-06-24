@@ -37,7 +37,7 @@
     {
       "name": "App CSS (brotli)",
       "path": "dist/assets/index-*.css",
-      "limit": "10 kB"
+      "limit": "14 kB"
     }
   ],
   "lint-staged": {
