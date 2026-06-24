@@ -12,6 +12,7 @@
 - **はじめてのスプリント計画** `s1-plan-goal`（顧客） 心得:10,37
     - ⚠ 約束通り「予測機能の着手」をゴールにする `{ trust: 1, insight: -1 }` →chasedPromise
     - 「なぜ画面が使われないかを突き止める」をゴールにする `{ insight: 1, culture: 1, trust: -1 }` →groundedGoal
+    - 「この一週間で誤出荷を一件でも減らす」をゴールにする `{ culture: 1 }`
 
 ### デイリー
 
