@@ -28,8 +28,10 @@ export function DeductionModal({ event, onResolve }: Props) {
 
   if (!d) return null
 
+  const isHeavy = d.weight === 'heavy'
   const titleId = `deduction-title-${event.id}`
-  const flashColor = picked ? (correct ? '#fbbf24' : '#fb7185') : null
+  // heavy の当たり：orange 系の強い閃光。normal の当たり：amber。外し：rose は共通。
+  const flashColor = picked ? (correct ? (isHeavy ? '#f97316' : '#fbbf24') : '#fb7185') : null
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:px-safe sm:pt-safe sm:pb-safe">
@@ -83,7 +85,7 @@ export function DeductionModal({ event, onResolve }: Props) {
                   type="button"
                   onClick={() => {
                     setPicked(o)
-                    sfxReveal(o.truth ? 'impact' : 'bad')
+                    sfxReveal(o.truth ? (isHeavy ? 'heavy' : 'impact') : 'bad')
                   }}
                   className="group block w-full rounded-xl border border-[var(--border)] bg-[var(--panel)]/40 px-4 py-3 text-left transition hover:border-[var(--link)] hover:bg-[var(--panel)]"
                 >
@@ -95,14 +97,22 @@ export function DeductionModal({ event, onResolve }: Props) {
             </div>
           ) : (
             <div className="space-y-3">
-              {/* 当たり＝見抜いた！／外し＝読み違い。どちらも選択へは進む。 */}
+              {/* 当たり＝見抜いた！（heavy時は核心を突いた。）／外し＝読み違い。どちらも選択へは進む。 */}
               <div
                 className={`rounded-xl border px-4 py-3 ${
-                  correct ? 'border-amber-500/60 bg-amber-500/10' : 'border-rose-500/50 bg-rose-500/10'
+                  correct
+                    ? isHeavy
+                      ? 'border-orange-500/70 bg-orange-500/15 shadow-lg shadow-orange-900/20'
+                      : 'border-amber-500/60 bg-amber-500/10'
+                    : 'border-rose-500/50 bg-rose-500/10'
                 }`}
               >
-                <p className={`text-sm font-bold ${correct ? 'text-amber-200' : 'text-rose-200'}`}>
-                  {correct ? <>見抜いた！</> : '— 読み違えた'}
+                <p
+                  className={`text-sm font-bold ${
+                    correct ? (isHeavy ? 'text-orange-300' : 'text-amber-200') : 'text-rose-200'
+                  }`}
+                >
+                  {correct ? isHeavy ? <>——核心を突いた。</> : <>見抜いた！</> : '— 読み違えた'}
                 </p>
                 <p className="mt-1 text-sm text-[var(--text-body)]">
                   {correct ? (
