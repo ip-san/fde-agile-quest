@@ -33,6 +33,22 @@ const FRAUD_TEASER: Record<'clue' | 'case', string> = {
   case: '——あなたは見てしまった。同じ機材が書類の上だけを巡る、架空の循環取引の輪郭を。一介のFDEが今この場で動かせる話ではない。だがその記録は、静かに胸に刻まれた。いつか、決着をつける日のために。',
 }
 
+/** 不正アークを追った周回への"章内の払い"（§6.5・労力に報酬を返す）。
+ *  次章への「引き」（FRAUD_TEASER）が情緒の余韻なのに対し、こちらは「追った手間が次フェーズで効く資産として
+ *  残った」ことを具体的に確認する一段。決着は次章へ繰り延べる（§6.5）ため、ここでは"暴く"ではなく
+ *  「掴んだものが消えずに次へ持ち越される」ことだけを担保し、全スルー周回との"差"を体感に変える。
+ *  掴んだ深さ（clue=違和感の入口／case=固めた記録）で払いの重みに勾配をつける。 */
+const FRAUD_CARRYOVER: Record<'clue' | 'case', { label: string; body: string }> = {
+  case: {
+    label: '持ち越す手札',
+    body: '——あなたが裏取りに費やした時間は、無駄ではなかった。突き合わせ、控えに残したその記録は、誰かの記憶任せではない、消えない一束の証拠としてまだ手の中にある。今は動かせなくても、次のフェーズで必ず使うときが来る。追った者だけが、その手札を持って次の舞台に立つ。',
+  },
+  clue: {
+    label: '持ち越す糸口',
+    body: '——あなたが立ち止まって確かめた一手は、無駄ではなかった。流していれば気づかぬまま終わっていた糸口を、見える場所に掴んでいる。まだ証拠と呼べる固さはない。それでも、追った者だけが次の一歩の入口に立っている。',
+  },
+}
+
 /** 「決断の一歩手前」（不正を掴んだ周回のみ）。告発の決着は次章へ繰り延べる（§6.5）ので、
  *  ここでは"決着"ではなく主人公の「姿勢」を一つ選ばせ、繰り延べを"自分で選んだ焦らし"に変える。
  *  フレーバー（結びの一文を彩る）に留め、メーターや永続フラグには影響しない。 */
@@ -194,6 +210,7 @@ export function EndingScreen({
   const failed = ending.id.startsWith('fail-')
   const rank = valueRank(customerValue)
   const teaser = fraudHint === 'none' ? null : FRAUD_TEASER[fraudHint]
+  const fraudCarryover = fraudHint === 'none' ? null : FRAUD_CARRYOVER[fraudHint]
   const imgKey = endingImage(ending.id)
 
   // S/A ランクの一撃演出フェーズ。
@@ -275,6 +292,16 @@ export function EndingScreen({
           {teaser && (
             <div className="mt-3 border-t border-amber-600/20 pt-3">
               <p className="text-sm leading-relaxed text-amber-100/90">{teaser}</p>
+              {/* 章内の"払い"（§6.5・労力に報酬を返す）。追った手間が「次フェーズで効く資産」として残った
+                  ことを具体に確認し、全スルー周回との差を体感に変える。決着は次章へ繰り延べたまま。 */}
+              {fraudCarryover && (
+                <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3.5 py-3">
+                  <p className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-amber-300/80">
+                    {fraudCarryover.label}
+                  </p>
+                  <p className="text-sm leading-relaxed text-amber-100/90">{fraudCarryover.body}</p>
+                </div>
+              )}
               <FraudStanceBeat hint={fraudHint as 'clue' | 'case'} />
             </div>
           )}
