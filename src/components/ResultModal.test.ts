@@ -1,8 +1,8 @@
 // @vitest-environment node
-// pickHeadline は DOM 不要の純関数テスト。
+// pickHeadline / splitHeadlineSentence は DOM 不要の純関数テスト。
 import { describe, expect, it } from 'vitest'
 import type { Meters, ResultView } from '../types'
-import { type HeadlineKind, pickHeadline } from './ResultModal'
+import { type HeadlineKind, pickHeadline, splitHeadlineSentence } from './ResultModal'
 
 /** テスト用の ResultView 最小セット */
 const base = (): Pick<ResultView, 'execTier' | 'tierResultText' | 'newPreceptIds' | 'backlogReview'> => ({
@@ -14,6 +14,38 @@ const base = (): Pick<ResultView, 'execTier' | 'tierResultText' | 'newPreceptIds
 
 const noMeter: (keyof Meters)[] = []
 const withDanger: (keyof Meters)[] = ['trust']
+
+describe('splitHeadlineSentence — normal ヘッドライン分割', () => {
+  it('句点がある場合、最初の句点を含む部分を head に、残りを rest に返す', () => {
+    const { head, rest } = splitHeadlineSentence('結城さんの顔がほどけた。"約束を守ってくれる人"。信頼が増す。')
+    expect(head).toBe('結城さんの顔がほどけた。')
+    expect(rest).toBe('"約束を守ってくれる人"。信頼が増す。')
+  })
+
+  it('句点が1つだけの場合、全文が head、rest は空文字', () => {
+    const { head, rest } = splitHeadlineSentence('見なかったことにした。')
+    expect(head).toBe('見なかったことにした。')
+    expect(rest).toBe('')
+  })
+
+  it('句点がない場合、全文が head、rest は空文字', () => {
+    const { head, rest } = splitHeadlineSentence('句点のないテキスト')
+    expect(head).toBe('句点のないテキスト')
+    expect(rest).toBe('')
+  })
+
+  it('先頭直後に句点がある場合も正しく分割する', () => {
+    const { head, rest } = splitHeadlineSentence('短文。残り部分。')
+    expect(head).toBe('短文。')
+    expect(rest).toBe('残り部分。')
+  })
+
+  it('rest の先頭スペースはトリムされる', () => {
+    const { head, rest } = splitHeadlineSentence('head部分。 　rest部分。')
+    expect(head).toBe('head部分。')
+    expect(rest).toBe('rest部分。')
+  })
+})
 
 describe('pickHeadline — 5段階優先度', () => {
   it('1) dangerMeters がある場合は danger を返す', () => {
