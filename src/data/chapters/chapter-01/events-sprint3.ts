@@ -320,7 +320,10 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     hearingOptions: [
       { text: 'このダッシュボード、いま誰が・どの場面で実際に開いていますか', good: true },
       { text: '自分が抜けた後にこれを見て動く人は誰か、その人に必要な形になっていますか', good: true },
-      { text: '立派な画面を作ったんだから、見てもらえますよね？', good: false },
+      {
+        text: '利用率が上がらないのはUIの問題なので、もっと分かりやすいデザインに作り直せば自然と見てもらえますよね？',
+        good: false,
+      },
       { text: '見ないのは現場の意識の問題なので、こちらは関係ないですよね？', good: false },
       { text: 'とりあえず置いておけば、そのうち誰か見ますよね？', good: false },
     ],
