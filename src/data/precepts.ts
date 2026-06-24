@@ -165,6 +165,8 @@ export const EVENT_PRECEPTS: Record<string, number[]> = {
   's3-daily-bottleneck': [98, 99], // 小さく作り大きく学び太く残せ / 組織を賢くしろ
   's1-plan-goal': [10, 37],
   's1-daily-warehouse': [1, 3, 9],
+  // 機を読んで先に動く＝この局面の最善（深追いの問いは罠）。その場で動かす者が主導権を握る / その場で試せ。
+  's1-daily-rush-help': [36, 35],
   's1-daily-logs': [6, 8],
   's1-daily-standup': [99],
   's1-daily-scope': [82, 83],
