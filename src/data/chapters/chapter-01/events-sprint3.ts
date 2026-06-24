@@ -1589,8 +1589,8 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     hearingOptions: [
       { text: '間宮さん、この機材、期末ごとに誰と誰の間で売り買いされているか追えますか', good: true },
       { text: '帳簿の売上と現場の在庫ゼロ、どこで食い違うのか一件ずつ突き合わせられますか', good: true },
-      { text: 'これは大きすぎる話なので、見なかったことにしておきましょうか？', good: false },
-      { text: '数字が合っているなら、裏まで確かめなくていいですよね？', good: false },
+      { text: '仕訳を一本足せば帳尻だけは合いますよね、そこで丸めておきませんか？', good: false },
+      { text: '間宮さんが消し込めば、この違和感ごと無かったことにできますよね？', good: false },
       { text: '誰の不正か、いまこの場で決めつけて上に上げてしまいませんか？', good: false },
     ],
     choices: [
@@ -1633,7 +1633,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     hearingOptions: [
       { text: '守屋さん、この承認印、実際にはどの順番で・誰が押しているんですか', good: true },
       { text: '領収書が後付けでも通った例、最近だとどんな時にありましたか', good: true },
-      { text: '自分の領分じゃないので、言われた通り処理して返せばいいですよね？', good: false },
+      { text: 'これだけ緩いなら、自分の精算もついでに楽に通しておきませんか？', good: false },
       { text: '今までこれで回ってきたなら、問題ないということですよね？', good: false },
       { text: '誰の手抜きか、はっきりさせて報告しちゃいませんか？', good: false },
     ],
@@ -1674,8 +1674,8 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     hearingOptions: [
       { text: '守屋さん、この機材の契約書と請求書、日付と相手をひとつずつ照らせますか', good: true },
       { text: '同じ型番が何度も出てきますが、現物の受け渡しの記録はどこにありますか', good: true },
-      { text: '面倒なので、書類はそっと元に戻しておきましょうか？', good: false },
-      { text: '守屋さんが出してくれたんだから、中身は信じていいですよね？', good: false },
+      { text: '決定的な一枚だけ抜いて、自分の手柄として握っておきませんか？', good: false },
+      { text: '補助金の通知書は話がややこしくなるので、見なかったことにしましょうか？', good: false },
       { text: 'これは不正だと、もう決めて上に上げてしまいませんか？', good: false },
     ],
     choices: [
@@ -1758,7 +1758,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     hearingOptions: [
       { text: '同じシリアルがどの会社を・どんな順で巡っているのか、一周たどれますか', good: true },
       { text: '実物が動いた記録はありますか。動いているのが数字だけか確かめられますか', good: true },
-      { text: '触れてはいけない領域なので、ログは閉じておきましょうか？', good: false },
+      { text: '後ろにセンセイ方が乗ってるなら、こちらも乗っておいた方が得ですよね？', good: false },
       { text: 'グループ内の取引なんだから、正しいということでいいですよね？', good: false },
       { text: 'これは循環取引だと断じて、いますぐ告発してしまいませんか？', good: false },
     ],

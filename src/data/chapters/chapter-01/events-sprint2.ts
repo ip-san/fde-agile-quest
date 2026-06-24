@@ -1571,7 +1571,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     hearingOptions: [
       { text: '間宮さん、この売上、最後に“現物”で相手と品物を確かめられたのはいつですか', good: true },
       { text: '違和感のある取引、いつ・どの相手で起きているのか、一件たどれますか', good: true },
-      { text: '経理の数字は経理で見てもらえれば、こちらは触らなくていいですよね？', good: false },
+      { text: 'まだ裏も取れてないのに、この“発見”を先に上へ売り込んでおきませんか？', good: false },
       { text: '決算が締まるなら、中身も合っているということでいいですよね？', good: false },
       { text: '間宮さんの気のせいかもしれないし、深掘りはやめておきます？', good: false },
     ],
@@ -1817,7 +1817,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     hearingOptions: [
       { text: '田淵さん、この型番の{{フィジカルAI}}機材、20年で一度でも倉庫で見ましたか', good: true },
       { text: '「導入済み」と帳簿に入った日、現場では誰が受け入れの検品をしたんですか', good: true },
-      { text: 'ただの{{棚卸}}差異でしょうから、帳簿に合わせておけばいいですよね？', good: false },
+      { text: 'ベテランの田淵さんが置き場所を取り違えただけ、で済ませませんか？', good: false },
       { text: '高額機材が無いのは面倒な話なので、見なかったことにしていいですよね？', good: false },
       { text: 'どこかに移しただけだ。現物を探すまでもなく、帳簿を信じればいい。', good: false },
     ],
