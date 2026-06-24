@@ -383,11 +383,20 @@ export function ResultModal({ result, meters, onContinue }: Props) {
         aria-labelledby={titleId}
         className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-[var(--border)] bg-[var(--card)] shadow-2xl sm:max-h-[90vh] sm:rounded-2xl"
       >
+        {/* ceremony === 'review' / 'retro' は節目のため帯色とバッジ色で差別化する。
+            'review'=amber 系（スプリントゴール達成の確認）、'retro'=violet 系（内省・改善）。
+            色だけで情報を伝えない：バッジのテキスト（ACTION_LABELS）が常に読める前提。 */}
         <header
-          className="flex flex-wrap items-center gap-2 px-5 py-3"
-          style={{ backgroundColor: `${SEGMENT_COLORS[result.segment]}22` }}
+          className={`flex flex-wrap items-center gap-2 px-5 py-3 ${result.ceremony === 'review' ? 'bg-amber-500/10' : result.ceremony === 'retro' ? 'bg-violet-500/10' : ''}`}
+          style={
+            result.ceremony === 'daily' || result.ceremony === 'planning'
+              ? { backgroundColor: `${SEGMENT_COLORS[result.segment]}22` }
+              : undefined
+          }
         >
-          <span className="rounded-full bg-[var(--bg-deep)]/60 px-2.5 py-0.5 text-xs font-bold text-[var(--text-body)]">
+          <span
+            className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${result.ceremony === 'review' ? 'bg-amber-500/25 text-amber-200' : result.ceremony === 'retro' ? 'bg-violet-500/25 text-violet-200' : 'bg-[var(--bg-deep)]/60 text-[var(--text-body)]'}`}
+          >
             {ACTION_LABELS[result.ceremony]}
           </span>
           <span
