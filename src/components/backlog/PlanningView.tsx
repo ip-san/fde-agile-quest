@@ -22,6 +22,7 @@ import type { ExecTier } from '../../types'
 import { MiniGame } from '../minigame/MiniGame'
 import { RichText } from '../RichText'
 import { LegacySummary, PbiBadges, StakeholderBalance, VelocityChart } from './BacklogShared'
+import { BacklogTutorialOverlay } from './BacklogTutorialOverlay'
 
 // ───────────────────────── ヘルパ ─────────────────────────
 
@@ -156,7 +157,9 @@ export function PlanningView({
       </div>
 
       {/* 元：プロダクトバックログ（選ぶ側） */}
-      <section className="rounded-xl bg-slate-900/40 p-2">
+      {/* relative: BacklogTutorialOverlay の absolute 配置の基準になる */}
+      <section className="relative rounded-xl bg-slate-900/40 p-2">
+        <BacklogTutorialOverlay />
         <h3 className="mb-1 px-1 text-xs font-bold text-slate-300">
           <RichText text="{{プロダクトバックログ}}" />
           <span className="ml-1 font-normal text-slate-400">価値順・上位から選ぶ</span>
