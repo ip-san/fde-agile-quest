@@ -159,7 +159,9 @@ describe('悪手（warn）の常設 — ラチェット', () => {
   // サクラ大戦の「言ってはいけない一手」に倣い、デイリーの判断にはほぼ必ず
   // "誘惑的だがFDE原則を裏切る悪手"（warn）を1つ置く。warn 無しは意図的な例外のみ許可リストで認める。
   // 例外＝『意図的な技術的負債』のように悪手とは言えない正当な判断（件数だけでなくIDで縛り、別イベントの後退を捕捉）。
-  const WARN_EXEMPT = new Set(['s2-daily-debt'])
+  // s1-daily-soumu-access: 「速く現場へ入る」は悪手ではなく、速さ vs 組織学習の正当なトレードオフ
+  //（trust+ と insight− を機会コストで引き換える）。「a＝必ず罠」の構造読みを崩すため意図的に warn を外した。
+  const WARN_EXEMPT = new Set(['s2-daily-debt', 's1-daily-soumu-access'])
 
   it('複数選択肢のデイリーで warn が無いのは許可リストのイベントだけ', () => {
     const noWarn = EVENTS.filter(
