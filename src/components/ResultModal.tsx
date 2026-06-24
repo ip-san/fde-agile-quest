@@ -276,8 +276,8 @@ function SeedReveal({ seedId, seedNew }: { seedId?: string; seedNew?: boolean })
 
 // ─── Headline（主役）選定 ────────────────────────────────────────────────
 
-/** 主役ブロックの種別。5段階の優先度で一意に決まる。 */
-export type HeadlineKind = 'danger' | 'greatExit' | 'precept' | 'valueGain' | 'normal'
+/** 主役ブロックの種別。6段階の優先度で一意に決まる。 */
+export type HeadlineKind = 'danger' | 'greatExit' | 'poorExit' | 'precept' | 'valueGain' | 'normal'
 
 /**
  * resultText を「冒頭1文（head）」と「残り（rest）」に分割する純関数。
@@ -298,9 +298,10 @@ export function splitHeadlineSentence(text: string): { head: string; rest: strin
  * 優先度:
  * 1) 致命圏 — dangerMeters.length>0 / onBrink
  * 2) 会心の山場出口 — execTier==='great' && tierResultText
- * 3) 心得の新規獲得 — newPreceptIds.length>0
- * 4) 顧客価値の伸び — backlogReview?.valueGain>0
- * 5) それ以外（通常: メーター差分が主役）
+ * 3) 詰め甘の山場出口 — execTier==='poor' && tierResultText
+ * 4) 心得の新規獲得 — newPreceptIds.length>0
+ * 5) 顧客価値の伸び — backlogReview?.valueGain>0
+ * 6) それ以外（通常: メーター差分が主役）
  */
 export function pickHeadline(
   result: Pick<ResultView, 'execTier' | 'tierResultText' | 'newPreceptIds' | 'backlogReview'>,
@@ -308,6 +309,7 @@ export function pickHeadline(
 ): HeadlineKind {
   if (dangerMeters.length > 0) return 'danger'
   if (result.execTier === 'great' && result.tierResultText) return 'greatExit'
+  if (result.execTier === 'poor' && result.tierResultText) return 'poorExit'
   if (result.newPreceptIds.length > 0) return 'precept'
   if ((result.backlogReview?.valueGain ?? 0) > 0) return 'valueGain'
   return 'normal'
@@ -351,8 +353,11 @@ export function ResultModal({ result, meters, onContinue }: Props) {
   const gotSeed = !!result.seedNew
   // 致命圏ならフラッシュも警告色（rose）で上書きする。
   // great + tierResultText がある場合（山場の出口）は amber で格上げする（危険圏には勝てない）。
+  // poor + tierResultText がある場合（詰め甘の山場出口）は rose で閃光を放つ（amber とは別のシグナル）。
   const greatExit = result.execTier === 'great' && !!result.tierResultText
-  const flashColor = dangerMeters.length > 0 ? '#fb7185' : greatExit ? '#fbbf24' : FLASH_COLOR[kind]
+  const poorExit = result.execTier === 'poor' && !!result.tierResultText
+  const flashColor =
+    dangerMeters.length > 0 ? '#fb7185' : greatExit ? '#fbbf24' : poorExit ? '#fb7185' : FLASH_COLOR[kind]
   // sfx 選択ロジックを effect 外で確定させ、union 型の値を deps に入れる。
   // これにより effect 内の参照が常に最新値となり biome-ignore が不要になる。
   // 優先度（headlineKind と整合）: danger > greatExit(sfxReveal) > precept > kind
@@ -424,7 +429,7 @@ export function ResultModal({ result, meters, onContinue }: Props) {
 
         <div className="space-y-3 px-5 py-4">
           {/* ═══ 主役ブロック（HeadlineKind ごとに1つだけ前面に大きく） ═══
-              優先度: danger > greatExit > precept > valueGain > normal
+              優先度: danger > greatExit > poorExit > precept > valueGain > normal
               normal のみメーター差分がそのまま主役になる（専用ブロックなし） */}
 
           {/* 1) 致命圏警告 ── 最優先。0 で案件終了する緊張感を前面に。
@@ -466,6 +471,18 @@ export function ResultModal({ result, meters, onContinue }: Props) {
                 <span aria-hidden="true">◎</span> 会心の手応え
               </p>
               <p className="text-base font-bold leading-relaxed text-amber-200">
+                <RichText text={result.tierResultText} />
+              </p>
+            </div>
+          )}
+
+          {/* 3) 詰め甘の山場出口 ── poor + tierResultText を rose 系主役ブロックに格上げ表示。 */}
+          {headlineKind === 'poorExit' && result.tierResultText && (
+            <div className="rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-3">
+              <p className="mb-1 text-[11px] font-semibold text-rose-300">
+                <span aria-hidden="true">△</span> 詰めが甘く取り逃した
+              </p>
+              <p className="text-base font-bold leading-relaxed text-rose-200 motion-safe:animate-[fadeSlideIn_0.25s_ease-out]">
                 <RichText text={result.tierResultText} />
               </p>
             </div>
@@ -550,18 +567,11 @@ export function ResultModal({ result, meters, onContinue }: Props) {
             </div>
           )}
 
-          {/* tier 依存の「跳ね返りの一文」（greatExit 以外のケース）。
-              greatExit は主役ブロックで表示済みなので重複しない。
-              poor＝詰めが甘かった重さを slate で。
+          {/* tier 依存の「跳ね返りの一文」（greatExit / poorExit 以外のケース）。
+              greatExit / poorExit は主役ブロックで表示済みなので重複しない。
               追加情報なので role 付与は不要（見出し構造は破らない）。interactive=false 固定。 */}
-          {result.tierResultText && headlineKind !== 'greatExit' && (
-            <p
-              className={`rounded-lg px-3 py-2.5 text-sm leading-relaxed ${
-                result.execTier === 'poor'
-                  ? 'bg-slate-500/15 text-slate-300'
-                  : 'bg-[var(--panel)]/40 text-[var(--text-body)]'
-              }`}
-            >
+          {result.tierResultText && headlineKind !== 'greatExit' && headlineKind !== 'poorExit' && (
+            <p className="rounded-lg bg-[var(--panel)]/40 px-3 py-2.5 text-sm leading-relaxed text-[var(--text-body)]">
               <RichText text={result.tierResultText} />
             </p>
           )}

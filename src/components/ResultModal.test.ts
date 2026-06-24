@@ -47,7 +47,7 @@ describe('splitHeadlineSentence — normal ヘッドライン分割', () => {
   })
 })
 
-describe('pickHeadline — 5段階優先度', () => {
+describe('pickHeadline — 6段階優先度', () => {
   it('1) dangerMeters がある場合は danger を返す', () => {
     const result: HeadlineKind = pickHeadline(base(), withDanger)
     expect(result).toBe('danger')
@@ -69,22 +69,43 @@ describe('pickHeadline — 5段階優先度', () => {
     expect(pickHeadline(r, noMeter)).toBe('normal')
   })
 
-  it('2) poor + tierResultText は greatExit にならない（danger/precept/valueGain/normal）', () => {
+  it('3) poor + tierResultText は poorExit を返す', () => {
     const r = { ...base(), execTier: 'poor' as const, tierResultText: '詰めが甘かった' }
+    expect(pickHeadline(r, noMeter)).toBe('poorExit')
+  })
+
+  it('3) poor でも tierResultText がなければ poorExit にならない', () => {
+    const r = { ...base(), execTier: 'poor' as const, tierResultText: undefined }
     expect(pickHeadline(r, noMeter)).toBe('normal')
   })
 
-  it('3) 新規心得がある場合は precept を返す（danger/greatExit なし）', () => {
+  it('3) poorExit は greatExit より低優先度', () => {
+    // great + poor の両方が揃うことは通常ないが、greatExit が優先されることを確認
+    const r = { ...base(), execTier: 'great' as const, tierResultText: '会心！' }
+    expect(pickHeadline(r, noMeter)).toBe('greatExit')
+  })
+
+  it('3) poorExit は danger より低優先度', () => {
+    const r = { ...base(), execTier: 'poor' as const, tierResultText: '詰めが甘かった' }
+    expect(pickHeadline(r, withDanger)).toBe('danger')
+  })
+
+  it('4) 新規心得がある場合は precept を返す（danger/greatExit/poorExit なし）', () => {
     const r = { ...base(), newPreceptIds: [5, 12] }
     expect(pickHeadline(r, noMeter)).toBe('precept')
   })
 
-  it('3) precept は greatExit より低優先度', () => {
+  it('4) precept は greatExit より低優先度', () => {
     const r = { ...base(), execTier: 'great' as const, tierResultText: '会心！', newPreceptIds: [1] }
     expect(pickHeadline(r, noMeter)).toBe('greatExit')
   })
 
-  it('4) backlogReview.valueGain>0 の場合は valueGain を返す', () => {
+  it('4) precept は poorExit より低優先度', () => {
+    const r = { ...base(), execTier: 'poor' as const, tierResultText: '詰めが甘かった', newPreceptIds: [1] }
+    expect(pickHeadline(r, noMeter)).toBe('poorExit')
+  })
+
+  it('5) backlogReview.valueGain>0 の場合は valueGain を返す', () => {
     const r = {
       ...base(),
       backlogReview: {
@@ -98,7 +119,7 @@ describe('pickHeadline — 5段階優先度', () => {
     expect(pickHeadline(r, noMeter)).toBe('valueGain')
   })
 
-  it('4) backlogReview.valueGain===0 は valueGain にならない', () => {
+  it('5) backlogReview.valueGain===0 は valueGain にならない', () => {
     const r = {
       ...base(),
       backlogReview: {
@@ -112,7 +133,7 @@ describe('pickHeadline — 5段階優先度', () => {
     expect(pickHeadline(r, noMeter)).toBe('normal')
   })
 
-  it('4) backlogReview.valueGain<0 は valueGain にならない', () => {
+  it('5) backlogReview.valueGain<0 は valueGain にならない', () => {
     const r = {
       ...base(),
       backlogReview: {
@@ -126,7 +147,7 @@ describe('pickHeadline — 5段階優先度', () => {
     expect(pickHeadline(r, noMeter)).toBe('normal')
   })
 
-  it('5) 何もなければ normal を返す', () => {
+  it('6) 何もなければ normal を返す', () => {
     expect(pickHeadline(base(), noMeter)).toBe('normal')
   })
 
@@ -147,7 +168,7 @@ describe('pickHeadline — 5段階優先度', () => {
     expect(kind !== 'greatExit').toBe(true)
   })
 
-  it('4) valueGain は precept より低優先度', () => {
+  it('5) valueGain は precept より低優先度', () => {
     const r = {
       ...base(),
       newPreceptIds: [7],
