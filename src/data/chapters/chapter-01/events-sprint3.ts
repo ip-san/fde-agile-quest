@@ -313,7 +313,11 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
-    minigame: 'hearing',
+    // 行動の芯＝作った誤出荷率ダッシュボード（成果物）を点検し「誰が・どの場面で見て動くか」を見極める＝レビュー。
+    // “現場に問う”のではなく“出来上がった成果物が運用に耐えるか確かめる”回なので review に振る（成果物確認）。
+    // 注: review は汎用の差分デッキ(dealReview)を出すため、下の hearingOptions / deduction は実際には未使用（残置）。
+    // 将来 hearing に戻す余地として残すだけで、ミニゲームの出題には反映されない。choices/フラグ/結果文は不変。
+    minigame: 'review',
     hearingTheme: 'genba',
     title: '誰がダッシュボードを見るか',
     narrative: '誤出荷率の{{ダッシュボード}}を作ったが、自分が抜けたら誰も見ない懸念がある。',
@@ -1166,6 +1170,11 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'team',
+    // 行動の実体は「当夜パッチの止血を段取って手順に起こす」本番対応の段取り＝開発ミニゲーム（手順並べ替え）。
+    // “誰に問うか”ではなく“どの順で止血し、後で手順整備するか”が芯なので dev に振る（本番化・手順整備）。
+    // 注: dev は汎用の手順並べ替え(dealDevFlow)を出すため、下の hearingOptions は実際には未使用（残置）。
+    // 将来 hearing に戻す余地として残すだけで、ミニゲームの出題には反映されない。choices/結果文は不変。
+    minigame: 'dev',
     title: '最終日の、本番障害',
     narrative:
       'スプリント最終日の夜。基幹切り替えの直後、出荷バッチが落ちて現場の出荷が止まった。原因は、切り替え当夜に自分が書いた一時パッチの中——いまこの場でその文脈を持っているのは、自分だけだ。「明日チームに引き継いで直そう」か、「今夜のうちに自分で止血する」か。朝番の出荷まで、もう時間がない。',
@@ -1306,6 +1315,11 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'kokyaku',
+    // 行動の芯＝依存をやめても回ると不安がる結城さんを「自走の価値」の論拠で動かし移譲を受け入れさせる＝説得（巻き込み）。
+    // “不安を聞き取る”だけでなく“居続ける約束でなく自走の形を選ばせる”交渉が芯なので persuade に振る（移譲の説得・巻き込み）。
+    // 注: persuade は汎用の論拠デッキ(PERSUADE_DECK)を出すため、下の hearingOptions は実際には未使用（残置）。
+    // 将来 hearing に戻す余地として残すだけで、ミニゲームの出題には反映されない。choices/結果文は不変。
+    minigame: 'persuade',
     title: '「あなたが抜けたら…」',
     advocacy: {
       po: '「あなたが抜けたら…」と言われるうちは、まだ移譲できていない。会議室で、頼られ方を見直してきてくれ。',
