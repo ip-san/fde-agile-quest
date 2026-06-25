@@ -323,6 +323,8 @@ interface Props {
   result: ResultView
   /** 判断適用後のメーター（致命圏入りの検知に使う） */
   meters: Meters
+  /** 物語の結末を変える分岐フラグを立てる「取り消せない一手」かどうか（重み演出用） */
+  isPivotal?: boolean
   onContinue: () => void
 }
 
@@ -336,7 +338,7 @@ const FLASH_COLOR: Record<RevealKind, string | null> = {
   normal: null,
 }
 
-export function ResultModal({ result, meters, onContinue }: Props) {
+export function ResultModal({ result, meters, isPivotal = false, onContinue }: Props) {
   // フォーカストラップ＋Escで次へ。Enter/Space は data-initial-focus を当てた
   // 「次へ」ボタンへ初期フォーカスが乗るので native に処理される
   const ref = useFocusTrap<HTMLDivElement>(onContinue)
@@ -361,8 +363,13 @@ export function ResultModal({ result, meters, onContinue }: Props) {
   // poor + tierResultText がある場合（詰め甘の山場出口）は rose で閃光を放つ（amber とは別のシグナル）。
   const greatExit = result.execTier === 'great' && !!result.tierResultText
   const poorExit = result.execTier === 'poor' && !!result.tierResultText
-  const flashColor =
+  // 物語分岐フラグ（取り消せない一手）の演出色。
+  // indigo-400（#818cf8）＝「運命の岐路」として amber/rose とは異なるシグナルで区別。
+  // 優先度: 致命圏 > greatExit > poorExit > 通常演出(FLASH_COLOR) > 分岐フラグ
+  // 致命圏・山場出口と重なった場合は元の色を優先し、上書きしない。
+  const baseFlashColor =
     dangerMeters.length > 0 ? '#fb7185' : greatExit ? '#fbbf24' : poorExit ? '#fb7185' : FLASH_COLOR[kind]
+  const flashColor = baseFlashColor ?? (isPivotal ? '#818cf8' : null)
   // sfx 選択ロジックを effect 外で確定させ、union 型の値を deps に入れる。
   // これにより effect 内の参照が常に最新値となり biome-ignore が不要になる。
   // 優先度（headlineKind と整合）: danger > greatExit(sfxReveal) > precept > kind

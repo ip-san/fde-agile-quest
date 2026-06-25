@@ -10,7 +10,18 @@ import { hearingThemeFor } from '../lib/hearingTheme'
 import { readBool, writeBool } from '../lib/persist'
 import { seedFor } from '../lib/seed'
 import { useEngagement } from '../store/engagementStore'
-import type { Ceremony, Choice, GameEvent } from '../types'
+import type { Ceremony, Choice, GameEvent, GameFlag } from '../types'
+
+/** 物語の結末を左右する「取り消せない一手」のフラグ群。
+ *  この choice.setsFlag が含まれる選択をした瞬間に DecisiveFlash で1段強い演出を発火させる。 */
+const PIVOTAL_FLAGS = new Set<GameFlag>([
+  'chasedPromise',
+  'groundedGoal',
+  'topDown',
+  'genbaTrust',
+  'fraudClue',
+  'fraudCase',
+])
 
 // バックログ操作パネル・遊び方・都度教示は"開いた時だけ"要るモーダル＝コード分割で初期バンドルから外す。
 // MiniGame（hearingミニゲーム系 + review系データ含む）も選択後にのみ表示されるため lazy 化して初期バンドルを軽量化。
@@ -89,6 +100,8 @@ export function Board() {
   const [timed, setTimed] = useState(timedChoicePref)
   // 選択 → 実行ミニゲーム → 結果。選んだ choice を保持し、ミニゲームの出来を tier として渡す
   const [pendingChoice, setPendingChoice] = useState<Choice | null>(null)
+  // 物語分岐フラグを立てる「取り消せない一手」かどうか（ResultModal の演出強化用）
+  const [isPivotalChoice, setIsPivotalChoice] = useState(false)
   // 「本音を見抜く」推理の解決状態（イベントIDで管理＝イベントが変われば自動リセット）。
   // 当てると reveal ヒントを選択画面に渡す＝核心が"開く"。
   const [deduction, setDeduction] = useState<{ id: string; correct: boolean } | null>(null)
@@ -501,6 +514,9 @@ export function Board() {
           revealHint={revealHint}
           timed={timed}
           onChoose={(choice) => {
+            // 物語分岐フラグを立てる「取り消せない一手」かどうかを先に判定しておく
+            const isPivotal = !!choice.setsFlag && PIVOTAL_FLAGS.has(choice.setsFlag)
+            setIsPivotalChoice(isPivotal)
             if (currentEvent.deduction) {
               // deduction イベント：推理の出来を実行 tier に変換して即・結果へ（ミニゲームを差し替え）。
               // 当てた(great) / 外した(good)。外しても poor にはしない（reveal 喪失が既に代償）。
@@ -539,7 +555,17 @@ export function Board() {
       )}
 
       {/* 結果オーバーレイ（判断直後に一度ちゃんと見せる） */}
-      {result && <ResultModal result={result} meters={meters} onContinue={dismissResult} />}
+      {result && (
+        <ResultModal
+          result={result}
+          meters={meters}
+          isPivotal={isPivotalChoice}
+          onContinue={() => {
+            setIsPivotalChoice(false)
+            dismissResult()
+          }}
+        />
+      )}
 
       {/* 心得手帳 */}
       {bookOpen && <PreceptBook seen={seenPrecepts} onClose={() => setBookOpen(false)} />}
