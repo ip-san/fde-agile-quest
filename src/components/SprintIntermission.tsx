@@ -1,0 +1,79 @@
+import { useEffect } from 'react'
+import { sfxReveal } from '../engine/sfx'
+import { useFocusTrap } from '../hooks/useFocusTrap'
+
+/** スプリント境界幕間の定義（S1→S2, S2→S3）。
+ *  演出専用テキスト——events-sprint*.ts の本文は変えない。正本(STORY.md)の設定の範囲内。 */
+const INTERMISSION: Record<number, { completedTitle: string; hook: string; nextLabel: string }> = {
+  1: {
+    completedTitle: 'Sprint 1 完了 — 現場を知った',
+    hook: '視察の日付が決まった。次は形にする番だ。',
+    nextLabel: 'Sprint 2 へ',
+  },
+  2: {
+    completedTitle: 'Sprint 2 完了 — 仮説を形にした',
+    hook: '仕組みの種は蒔いた。次は届けられるか。',
+    nextLabel: 'Sprint 3 へ',
+  },
+}
+
+interface Props {
+  /** 完了したスプリント番号（1 or 2）*/
+  completedSprintNo: number
+  onContinue: () => void
+}
+
+/**
+ * スプリント境界幕間モーダル。
+ * retro 結果を閉じた直後、次スプリントの planning に突入する前に1枚挟む。
+ * 「Sprint N 完了」の達成感 + retro の引きを受け止め + 次スプリントへの問いを提示する。
+ * タップ or Enter 1発で通過（スキップ不要・ワンタップ即通過）。
+ */
+export function SprintIntermission({ completedSprintNo, onContinue }: Props) {
+  const data = INTERMISSION[completedSprintNo]
+  const ref = useFocusTrap<HTMLDivElement>(onContinue)
+
+  // 達成の区切り音（明るい上昇アルペジオ = sfxReveal の good）
+  useEffect(() => {
+    sfxReveal('good')
+  }, [])
+
+  if (!data) return null
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/80 px-4 backdrop-blur-sm">
+      <div
+        ref={ref}
+        role="dialog"
+        aria-modal="true"
+        aria-label={data.completedTitle}
+        className="w-full max-w-sm rounded-2xl border border-[var(--accent)]/40 bg-[var(--card)] shadow-2xl motion-safe:animate-[fadeSlideIn_0.3s_ease-out]"
+      >
+        {/* 帯：達成の区切り感 */}
+        <div className="rounded-t-2xl bg-[var(--accent)]/10 px-6 py-4 text-center">
+          {/* Sprint 番号ドット */}
+          <p className="mb-2 text-[11px] font-semibold tracking-widest text-amber-400 uppercase">Sprint Complete</p>
+          <h2 className="text-xl font-extrabold leading-snug text-[var(--text)]">{data.completedTitle}</h2>
+        </div>
+
+        {/* retro の引きを受け止める "問い" */}
+        <div className="border-t border-[var(--border)] px-6 py-5 text-center">
+          <p className="text-base leading-relaxed text-[var(--text-body)]">{data.hook}</p>
+        </div>
+
+        {/* CTA */}
+        <div className="border-t border-[var(--border)] px-6 pb-6 pt-4">
+          <button
+            type="button"
+            onClick={onContinue}
+            data-initial-focus
+            aria-label={`${data.nextLabel}へ進む`}
+            className="w-full rounded-xl bg-[var(--accent)] py-3 font-bold text-[var(--bg)] shadow-lg shadow-[var(--accent)]/30 transition hover:bg-[var(--accent-hover)] active:scale-95"
+          >
+            {data.nextLabel} →
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
