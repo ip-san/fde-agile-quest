@@ -112,6 +112,15 @@ export function Board() {
   const [normalStreak, setNormalStreak] = useState(0)
   // result が null になった時に"前回の result"を参照するため ref で保持する。
   const prevResultRef = useRef<typeof result | null>(null)
+  // meters を ref でミラー: pickHeadline 計算に必要だが meters 単独変化で streak が走らないよう dep から外す。
+  const metersRef = useRef(meters)
+  metersRef.current = meters
+
+  // generation 変化（= reset()）でカウントと ref をクリア。greatStreak は store 側でリセット済み。
+  useEffect(() => {
+    setNormalStreak(0)
+    prevResultRef.current = null
+  }, [generation])
 
   // result が null になった = 結果モーダルが閉じられた瞬間に normalStreak を更新する。
   // 前回の result を prevResultRef から取り出し、headlineKind が normal だったかを判定する。
@@ -126,10 +135,10 @@ export function Board() {
     if (prev === null) return
     // dangerMeters を再現（ResultModal と同じロジック）して pickHeadline に渡す。
     const meterKeys = ['trust', 'insight', 'culture'] as (keyof Meters)[]
-    const dangerMeters = meterKeys.filter((k) => (prev.effects[k] ?? 0) < 0 && meters[k] <= METER_CRITICAL)
-    const kind = pickHeadline(prev, dangerMeters, meters)
+    const dangerMeters = meterKeys.filter((k) => (prev.effects[k] ?? 0) < 0 && metersRef.current[k] <= METER_CRITICAL)
+    const kind = pickHeadline(prev, dangerMeters, metersRef.current)
     setNormalStreak((prev_) => (kind === 'normal' ? prev_ + 1 : 0))
-  }, [result, meters])
+  }, [result])
 
   // 「本音を見抜く」推理の解決状態（イベントIDで管理＝イベントが変われば自動リセット）。
   // 当てると reveal ヒントを選択画面に渡す＝核心が"開く"。
