@@ -110,8 +110,8 @@ describe('伏線レジストリ（threads）の整合性', () => {
 
 describe('openThreads（盤面の未回収伏線）', () => {
   it('立っていて未回収の event 伏線だけを返す（ending/score は除外）', () => {
-    // missedHearing=event回収・未回収→出る／fraudCase=ending回収→出ない
-    const open = openThreads(['missedHearing', 'fraudCase'], () => false)
+    // missedHearing=event回収・未回収→出る／exposed=ending専用回収→出ない
+    const open = openThreads(['missedHearing', 'exposed'], () => false)
     expect(open.map((t) => t.flag)).toEqual(['missedHearing'])
     expect(open[0].teaser).toBe(THREADS.missedHearing.teaser)
   })

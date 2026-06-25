@@ -268,6 +268,7 @@ export const EVENT_PRECEPTS: Record<string, number[]> = {
   's3-retro': [98, 99],
   's3-retro-topdown': [40, 99],
   's3-retro-trust': [99, 87],
+  's3-retro-fraud-evidence': [73, 89],
   's3-daily-ai-regression': [47, 49],
   's3-daily-outcome': [20, 56],
   's3-daily-3pl': [98, 99],
