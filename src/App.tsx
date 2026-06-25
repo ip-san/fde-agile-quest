@@ -92,6 +92,7 @@ export default function App() {
         valueBaseline={valueBaseline}
         valueHistory={valueHistory}
         fraudHint={fraudHint}
+        flags={flags}
         log={log}
         onReset={reset}
       />
