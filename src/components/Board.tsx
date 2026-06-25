@@ -92,8 +92,8 @@ export function Board() {
   // 「本音を見抜く」推理の解決状態（イベントIDで管理＝イベントが変われば自動リセット）。
   // 当てると reveal ヒントを選択画面に渡す＝核心が"開く"。
   const [deduction, setDeduction] = useState<{ id: string; correct: boolean } | null>(null)
-  // 初回はプロローグを自動表示。以降は「あらすじ」から再生できる
-  const [prologueOpen, setPrologueOpen] = useState(prologueSeen() === false)
+  // 初回（generation===0）かつ未既読のときだけ自動表示。2周目以降は「あらすじ」からのみ開ける
+  const [prologueOpen, setPrologueOpen] = useState(generation === 0 && prologueSeen() === false)
   const closePrologue = () => {
     writeBool(PROLOGUE_SEEN_KEY, true)
     setPrologueOpen(false)
@@ -554,8 +554,8 @@ export function Board() {
         </Suspense>
       )}
 
-      {/* プロローグ（初回自動・以降は「あらすじ」から） */}
-      {prologueOpen && <Prologue onClose={closePrologue} />}
+      {/* プロローグ（初回自動・以降は「あらすじ」から。2周目以降は登場人物ページに直行） */}
+      {prologueOpen && <Prologue onClose={closePrologue} generation={generation} />}
 
       {/* 遊び方リファレンス（下部メニュー「遊び方」から・いつでも。オンデマンド読込） */}
       {howToOpen && (
