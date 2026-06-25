@@ -324,6 +324,8 @@ interface Props {
   /** 判断適用後のメーター（致命圏入りの検知に使う） */
   meters: Meters
   onContinue: () => void
+  /** 物語主軸フラグ（S3の結末を変える選択）を立てた選択かどうか。true なら通常より1段強い indigo フラッシュを追加 */
+  isPivotalChoice?: boolean
 }
 
 /** 開示演出のフラッシュ色。閃光は"決定的瞬間"だけに絞る（impact/heavy のみ／danger は別途 rose）。
@@ -336,7 +338,7 @@ const FLASH_COLOR: Record<RevealKind, string | null> = {
   normal: null,
 }
 
-export function ResultModal({ result, meters, onContinue }: Props) {
+export function ResultModal({ result, meters, onContinue, isPivotalChoice = false }: Props) {
   // フォーカストラップ＋Escで次へ。Enter/Space は data-initial-focus を当てた
   // 「次へ」ボタンへ初期フォーカスが乗るので native に処理される
   const ref = useFocusTrap<HTMLDivElement>(onContinue)
@@ -359,10 +361,19 @@ export function ResultModal({ result, meters, onContinue }: Props) {
   // 致命圏ならフラッシュも警告色（rose）で上書きする。
   // great + tierResultText がある場合（山場の出口）は amber で格上げする（危険圏には勝てない）。
   // poor + tierResultText がある場合（詰め甘の山場出口）は rose で閃光を放つ（amber とは別のシグナル）。
+  // isPivotalChoice（物語主軸フラグ）は danger/greatExit/poorExit には勝てないが、通常演出より1段上: indigo。
   const greatExit = result.execTier === 'great' && !!result.tierResultText
   const poorExit = result.execTier === 'poor' && !!result.tierResultText
   const flashColor =
-    dangerMeters.length > 0 ? '#fb7185' : greatExit ? '#fbbf24' : poorExit ? '#fb7185' : FLASH_COLOR[kind]
+    dangerMeters.length > 0
+      ? '#fb7185'
+      : greatExit
+        ? '#fbbf24'
+        : poorExit
+          ? '#fb7185'
+          : isPivotalChoice
+            ? '#818cf8' // indigo-400 ＝「戻れない分岐点」の重さを可視化（danger/great/poor には後退）
+            : FLASH_COLOR[kind]
   // sfx 選択ロジックを effect 外で確定させ、union 型の値を deps に入れる。
   // これにより effect 内の参照が常に最新値となり biome-ignore が不要になる。
   // 優先度（headlineKind と整合）: danger > greatExit(sfxReveal) > precept > kind
@@ -393,6 +404,22 @@ export function ResultModal({ result, meters, onContinue }: Props) {
         aria-labelledby={titleId}
         className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-[var(--border)] bg-[var(--card)] shadow-2xl sm:max-h-[90vh] sm:rounded-2xl"
       >
+        {/* 物語主軸フラグの分岐点バナー（isPivotalChoice のときのみ）。
+            indigo 帯＋「戻れない分岐点」テキストで「この選択は取り消せない」重さを可視化する。
+            装飾ではなく情報伝達なので aria-hidden は付けない（スクリーンリーダーでも読まれる）。
+            prefers-reduced-motion ではフラッシュのみ消え、バナーテキストは残る。 */}
+        {isPivotalChoice && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="flex items-center gap-2 border-b border-indigo-500/30 bg-indigo-500/15 px-5 py-2 motion-safe:animate-[fadeSlideIn_0.3s_ease-out]"
+          >
+            <span aria-hidden="true" className="text-indigo-300">
+              ◆
+            </span>
+            <span className="text-xs font-semibold text-indigo-200">この選択は物語の分岐点——引き返せない</span>
+          </div>
+        )}
         {/* ceremony === 'review' / 'retro' は節目のため帯色とバッジ色で差別化する。
             'review'=amber 系（スプリントゴール達成の確認）、'retro'=violet 系（内省・改善）。
             色だけで情報を伝えない：バッジのテキスト（ACTION_LABELS）が常に読める前提。 */}
