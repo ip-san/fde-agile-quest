@@ -4,7 +4,7 @@ import { endingImage, imageUrl } from '../data/images'
 import type { ValueBreakdown } from '../engine/progression'
 import { sfxReveal } from '../engine/sfx'
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
-import type { Epilogue, LogEntry, Meters } from '../types'
+import type { Epilogue, GameFlag, LogEntry, Meters } from '../types'
 import { CustomerValueBar } from './CustomerValueBar'
 import { DecisiveFlash } from './DecisiveFlash'
 import { MeterHUD } from './MeterHUD'
@@ -23,6 +23,8 @@ interface Props {
   valueHistory: number[]
   /** 第1章で掴んだ不正の"伏線"の深さ（次章への引き）。none=気づかず / clue=違和感 / case=輪郭 */
   fraudHint?: 'none' | 'clue' | 'case'
+  /** この周回で立ったフラグ（エンディング引き文の周回差別化に使用） */
+  flags?: ReadonlySet<GameFlag>
   log: LogEntry[]
   onReset: () => void
 }
@@ -47,6 +49,23 @@ const FRAUD_CARRYOVER: Record<'clue' | 'case', { label: string; body: string }> 
     label: '持ち越す糸口',
     body: '——あなたが立ち止まって確かめた一手は、無駄ではなかった。流していれば気づかぬまま終わっていた糸口を、見える場所に掴んでいる。まだ証拠と呼べる固さはない。それでも、追った者だけが次の一歩の入口に立っている。',
   },
+}
+
+/** 「次章への引き」の末尾に周回の判断を反映した1文を追加する（#190）。
+ *  ending.id と主要フラグで最初にマッチした一文を返す。全員共通の核（テラー文）はそのまま残す。 */
+function carryoverLine(endingId: string, flags: ReadonlySet<GameFlag>): string | null {
+  if (endingId.startsWith('fail-')) return null
+  if (endingId === 'disliked')
+    return '嫌われた。それが正しかったかどうかは、次のフェーズが答えを持っている。背を向けた人ほど、理由を覚えているものだ。'
+  if (endingId === 'orderTaker' || flags.has('topDown'))
+    return '言われた通り作って、納期は守った。要望書の外に残した宿題が、次のフェーズで戻ってくる。'
+  if (flags.has('genbaTrust') && endingId === 'trueFde')
+    return '翠流物流の現場と築いた信頼は、次のフェーズで最大の資産になる。この3スプリントで刻んだ人間関係の地図は、消えない。'
+  if (flags.has('genbaTrust')) return '現場の側に立ち続けた積み上げは残る。次のフェーズでそれが効く場面が来る。'
+  if (endingId === 'trueFde')
+    return '取り切れたトレードオフと、取り切れなかったトレードオフ。どちらも次の入り口で待っている。'
+  // decent / hero / その他クリアエンド
+  return '取り切れなかったトレードオフが、次の入り口で待っている。'
 }
 
 /** 「決断の一歩手前」（不正を掴んだ周回のみ）。告発の決着は次章へ繰り延べる（§6.5）ので、
@@ -204,6 +223,7 @@ export function EndingScreen({
   valueBaseline,
   valueHistory,
   fraudHint = 'none',
+  flags = new Set(),
   log,
   onReset,
 }: Props) {
@@ -211,6 +231,7 @@ export function EndingScreen({
   const rank = valueRank(customerValue)
   const teaser = fraudHint === 'none' ? null : FRAUD_TEASER[fraudHint]
   const fraudCarryover = fraudHint === 'none' ? null : FRAUD_CARRYOVER[fraudHint]
+  const carry = carryoverLine(ending.id, flags)
   const imgKey = endingImage(ending.id)
 
   // S/A ランクの一撃演出フェーズ。
@@ -279,6 +300,7 @@ export function EndingScreen({
           <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-widest text-amber-400/80">
             To be continued — 次章へ
           </p>
+          {carry && <p className="mb-3 text-sm italic leading-relaxed text-amber-200/80">{carry}</p>}
           <p className="text-sm leading-relaxed text-amber-100/90">
             ——後日、グループの定例報告。{displayName('parentCo')}は、現場の実態を確かめもせず、さらに上の
             {displayName('groupHq')}へ、こう上げたという。「フィジカルAI実証、順調に進んでおります。現場のIT化が
