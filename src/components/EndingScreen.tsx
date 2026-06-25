@@ -126,11 +126,31 @@ function FraudStanceBeat({ hint }: { hint: 'clue' | 'case' }) {
 /** S/A ランク演出のフラッシュ色（ResultModal の greatExit 相当の amber）。 */
 const RANK_FLASH_COLOR = '#fbbf24' // amber-400
 
-/** C/D ランク時に前面に出す「次回に向けての一言」。
- *  演出を抑え、改善への動機を持って帰ってもらうことを主眼に置く。 */
-const LOW_RANK_MESSAGE: Record<'C' | 'D', string> = {
+/** ランク閾値（valueRank 関数と必ず一致させる）。
+ *  EndingScreen 内でギャップ計算に使う唯一の定義場所。 */
+const RANK_THRESHOLDS = { S: 90, A: 75, B: 60, C: 40 } as const
+
+/** C/D ランク時の固定メッセージ（スコアギャップ表示が使えない場合のフォールバック）。 */
+const LOW_RANK_FALLBACK: Record<'C' | 'D', string> = {
   C: 'まだ見えていない現場がある。次は、もう一歩だけ深く踏み込んでみよう。',
   D: '価値を届けられなかった判断の跡を、一度ゆっくり辿ってみよう。次は違う景色が見える。',
+}
+
+/** C/D ランク・FAIL 時の「惜しさ・次への焦点」ヒントを返す純関数。
+ *  C ランクかつギャップ 15 以内: スコアギャップを具体的に名指し（例A）。
+ *  それ以外: 別ルートへの1行ヒント（例C ベース）。 */
+function lowRankHint(grade: 'C' | 'D' | 'fail', customerValue: number): string {
+  if (grade === 'fail') {
+    return 'どのゲージが先に尽きたか確かめて、そのゲージに関わる判断をひとつ変えてみよう。'
+  }
+  if (grade === 'C') {
+    const gap = RANK_THRESHOLDS.B - customerValue // 正値 = B 未満
+    if (gap > 0 && gap <= 15) {
+      return `あと ${gap} ポイントで B ランクだった。その差を埋めた判断が、次の鍵になる。`
+    }
+  }
+  // D ランク or C ランクでギャップが大きい場合: 別ルートヒント
+  return LOW_RANK_FALLBACK[grade === 'C' ? 'C' : 'D']
 }
 
 /** 顧客価値（北極星）の最終ランク。案件の"スコア"として結果に意味を与える。 */
@@ -330,16 +350,26 @@ export function EndingScreen({
         </div>
       )}
 
-      {/* C/D ランク時：演出なし・「次回に向けての一言」を前面に出す。
-          メーター/グラフより先に表示して「改善への意欲」を持ち帰らせる。 */}
+      {/* C/D ランク時：演出なし・「惜しさと次への焦点」を前面に出す。
+          メーター/グラフより先に表示して「改善への意欲」を持ち帰らせる。
+          スコアギャップが 15 以内なら具体的なポイント差を名指しし、それ以外は別ルートヒント。 */}
       {!failed && (rank.grade === 'C' || rank.grade === 'D') && (
         <div className="rounded-2xl border border-[var(--border-strong)]/70 bg-[var(--card)]/80 px-5 py-4">
           <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-widest text-[var(--text-sub)]">
             次回に向けて
           </p>
           <p className="text-base font-bold leading-relaxed text-[var(--text-body)]">
-            {LOW_RANK_MESSAGE[rank.grade as 'C' | 'D']}
+            {lowRankHint(rank.grade as 'C' | 'D', customerValue)}
           </p>
+        </div>
+      )}
+
+      {/* FAIL 時：「どのゲージが先に尽きたか確かめる」リトライ焦点を追加する。
+          既存の reflection テキストの直後に表示し、次への具体的な手がかりを渡す。 */}
+      {failed && (
+        <div className="rounded-2xl border border-rose-500/30 bg-rose-950/20 px-5 py-4">
+          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-widest text-rose-400/80">次への焦点</p>
+          <p className="text-sm leading-relaxed text-rose-100/90">{lowRankHint('fail', customerValue)}</p>
         </div>
       )}
 
