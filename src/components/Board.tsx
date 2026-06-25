@@ -10,7 +10,7 @@ import { hearingThemeFor } from '../lib/hearingTheme'
 import { readBool, writeBool } from '../lib/persist'
 import { seedFor } from '../lib/seed'
 import { useEngagement } from '../store/engagementStore'
-import type { Ceremony, Choice, GameEvent } from '../types'
+import type { Ceremony, Choice, GameEvent, GameFlag } from '../types'
 
 // バックログ操作パネル・遊び方・都度教示は"開いた時だけ"要るモーダル＝コード分割で初期バンドルから外す。
 // MiniGame（hearingミニゲーム系 + review系データ含む）も選択後にのみ表示されるため lazy 化して初期バンドルを軽量化。
@@ -34,6 +34,17 @@ import { Roulette } from './Roulette'
 import { SecondaryStats } from './SecondaryStats'
 import { SprintIntermission } from './SprintIntermission'
 import { Travel } from './Travel'
+
+/** 物語主軸フラグ：S3 の結末を左右する選択（「戻れない分岐点」演出を発火する対象）。
+ *  小さなデイリー選択（wrongKpi / borrowedDebt / aiOverreliance 等）は含めない。 */
+const PIVOTAL_FLAGS = new Set<GameFlag>([
+  'chasedPromise',
+  'groundedGoal',
+  'topDown',
+  'genbaTrust',
+  'fraudClue',
+  'fraudCase',
+])
 
 const PROLOGUE_SEEN_KEY = 'fde-agile-quest:prologue-seen'
 const prologueSeen = (): boolean => readBool(PROLOGUE_SEEN_KEY)
@@ -90,6 +101,9 @@ export function Board() {
   const [timed, setTimed] = useState(timedChoicePref)
   // 選択 → 実行ミニゲーム → 結果。選んだ choice を保持し、ミニゲームの出来を tier として渡す
   const [pendingChoice, setPendingChoice] = useState<Choice | null>(null)
+  // 物語主軸フラグを立てる選択かどうか（true なら ResultModal で indigo フラッシュを追加発火）。
+  // dismissResult と同時にリセットするため、state として独立管理する。
+  const [isPivotalChoice, setIsPivotalChoice] = useState(false)
   // スプリント境界幕間（retro 完了 → 次 planning 突入の間に1枚）。
   // 完了したスプリント番号（1 or 2）を保持。null = 非表示。
   const [pendingIntermission, setPendingIntermission] = useState<number | null>(null)
@@ -507,6 +521,9 @@ export function Board() {
           revealHint={revealHint}
           timed={timed}
           onChoose={(choice) => {
+            // 物語主軸フラグを立てる選択かどうかを判定してフラッシュ演出フラグを立てる。
+            // deduction / 非 deduction どちらにも共通して適用する。
+            setIsPivotalChoice(!!choice.setsFlag && PIVOTAL_FLAGS.has(choice.setsFlag))
             if (currentEvent.deduction) {
               // deduction イベント：推理の出来を実行 tier に変換して即・結果へ（ミニゲームを差し替え）。
               // 当てた(great) / 外した(good)。外しても poor にはしない（reveal 喪失が既に代償）。
@@ -549,7 +566,10 @@ export function Board() {
         <ResultModal
           result={result}
           meters={meters}
+          isPivotalChoice={isPivotalChoice}
           onContinue={() => {
+            // 結果を閉じたら isPivotalChoice をリセット（次のイベントに引き継がない）。
+            setIsPivotalChoice(false)
             // retro 完了（S1→S2 / S2→S3 の境界）なら幕間を挟む。
             // eventId が "s{N}-retro" の形（S1/S2 のみ。S3 retro はキャンペーン完走→エンディングへ）。
             if (result.ceremony === 'retro') {
