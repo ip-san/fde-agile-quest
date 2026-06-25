@@ -1546,6 +1546,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       reveal:
         '転記ミスでも気のせいでもない。相手も品物も帳簿の上にしか無く、現物で確かめられない——数字だけが動く取引だ。部署の壁を越え、原票まで一件ずつ照らして裏を取れ。',
       weight: 'heavy',
+      variant: 'arc',
       options: [
         {
           id: 'typo',
@@ -1827,6 +1828,7 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       reveal:
         'ただの{{棚卸}}差異ではなさそうだ。高額機材が帳簿上だけ存在する——数字そのものが疑わしい。一台ずつ事実を確かめ、記録を残せ。',
       weight: 'heavy',
+      variant: 'arc',
       options: [
         {
           id: 'miscount',
