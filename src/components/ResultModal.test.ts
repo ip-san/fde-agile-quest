@@ -1,8 +1,8 @@
 // @vitest-environment node
-// pickHeadline / splitHeadlineSentence は DOM 不要の純関数テスト。
+// pickHeadline / splitHeadlineSentence / isCompactResult は DOM 不要の純関数テスト。
 import { describe, expect, it } from 'vitest'
 import type { Meters, ResultView } from '../types'
-import { type HeadlineKind, pickHeadline, splitHeadlineSentence } from './ResultModal'
+import { type HeadlineKind, isCompactResult, pickHeadline, splitHeadlineSentence } from './ResultModal'
 
 /** テスト用の ResultView 最小セット */
 const base = (): Pick<ResultView, 'execTier' | 'tierResultText' | 'newPreceptIds' | 'backlogReview' | 'effects'> => ({
@@ -209,5 +209,67 @@ describe('pickHeadline — 7段階優先度', () => {
       },
     }
     expect(pickHeadline(r, noMeter, defaultMeters)).toBe('precept')
+  })
+})
+
+describe('isCompactResult — 軽量モード判定', () => {
+  it('normal かつ変動0 かつ新規心得なし かつ pivotal でない → true', () => {
+    expect(isCompactResult('normal', {}, [], false)).toBe(true)
+  })
+
+  it('normal かつ変動1 かつ新規心得なし かつ pivotal でない → true（境界値）', () => {
+    expect(isCompactResult('normal', { trust: 1 }, [], false)).toBe(true)
+  })
+
+  it('normal かつ変動-1 かつ新規心得なし かつ pivotal でない → true（負の境界値）', () => {
+    expect(isCompactResult('normal', { trust: -1 }, [], false)).toBe(true)
+  })
+
+  it('normal かつ変動2 → false（2pt は軽量モード外）', () => {
+    expect(isCompactResult('normal', { trust: 2 }, [], false)).toBe(false)
+  })
+
+  it('normal かつ変動-2 → false（絶対値2pt は軽量モード外）', () => {
+    expect(isCompactResult('normal', { insight: -2 }, [], false)).toBe(false)
+  })
+
+  it('normal かつ変動1 でも新規心得あり → false', () => {
+    expect(isCompactResult('normal', { trust: 1 }, [5], false)).toBe(false)
+  })
+
+  it('normal かつ変動1 でも isPivotalChoice=true → false', () => {
+    expect(isCompactResult('normal', { trust: 1 }, [], true)).toBe(false)
+  })
+
+  it('danger のとき → false（headlineKind !== normal）', () => {
+    expect(isCompactResult('danger', {}, [], false)).toBe(false)
+  })
+
+  it('greatExit のとき → false', () => {
+    expect(isCompactResult('greatExit', {}, [], false)).toBe(false)
+  })
+
+  it('poorExit のとき → false', () => {
+    expect(isCompactResult('poorExit', {}, [], false)).toBe(false)
+  })
+
+  it('precept のとき → false', () => {
+    expect(isCompactResult('precept', {}, [], false)).toBe(false)
+  })
+
+  it('valueGain のとき → false', () => {
+    expect(isCompactResult('valueGain', {}, [], false)).toBe(false)
+  })
+
+  it('cultureLand のとき → false', () => {
+    expect(isCompactResult('cultureLand', {}, [], false)).toBe(false)
+  })
+
+  it('複数メーターで最大絶対値が1以内 → true', () => {
+    expect(isCompactResult('normal', { trust: 1, insight: -1, culture: 0 }, [], false)).toBe(true)
+  })
+
+  it('複数メーターで最大絶対値が2 → false', () => {
+    expect(isCompactResult('normal', { trust: 1, insight: -2 }, [], false)).toBe(false)
   })
 })
