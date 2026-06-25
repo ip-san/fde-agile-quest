@@ -645,7 +645,12 @@ export function Board() {
 
       {/* スプリント境界幕間（S1→S2 / S2→S3）: retro 完了 → 次スプリントの planning の間に1枚 */}
       {pendingIntermission !== null && (
-        <SprintIntermission completedSprintNo={pendingIntermission} onContinue={() => setPendingIntermission(null)} />
+        <SprintIntermission
+          completedSprintNo={pendingIntermission}
+          onContinue={() => setPendingIntermission(null)}
+          generation={generation}
+          flags={flags}
+        />
       )}
 
       {/* 心得手帳 */}
