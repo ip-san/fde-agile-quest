@@ -326,6 +326,8 @@ interface Props {
   onContinue: () => void
   /** 物語主軸フラグ（S3の結末を変える選択）を立てた選択かどうか。true なら通常より1段強い indigo フラッシュを追加 */
   isPivotalChoice?: boolean
+  /** normal（great/poor/precept/danger 以外）の結果が連続した回数。3以上で積み上がりバッジを表示。 */
+  normalStreak?: number
 }
 
 /** 開示演出のフラッシュ色。閃光は"決定的瞬間"だけに絞る（impact/heavy のみ／danger は別途 rose）。
@@ -338,7 +340,7 @@ const FLASH_COLOR: Record<RevealKind, string | null> = {
   normal: null,
 }
 
-export function ResultModal({ result, meters, onContinue, isPivotalChoice = false }: Props) {
+export function ResultModal({ result, meters, onContinue, isPivotalChoice = false, normalStreak = 0 }: Props) {
   // フォーカストラップ＋Escで次へ。Enter/Space は data-initial-focus を当てた
   // 「次へ」ボタンへ初期フォーカスが乗るので native に処理される
   const ref = useFocusTrap<HTMLDivElement>(onContinue)
@@ -581,6 +583,21 @@ export function ResultModal({ result, meters, onContinue, isPivotalChoice = fals
                 </div>
               )
             })()}
+
+          {/* normal 連続の積み上がり可視化。headlineKind=normal が3回以上続いた時のみ表示。
+              会心（great）や危険圏（danger）の場面では表示しない（headlineKind で自然に消える）。
+              ポジティブな強調ではなく「無難でも積み上がっている」という静かな確認なので、
+              落ち着いた slate-400 / bg-[var(--panel)]/20 で greatStreak バッジより抑えた演出にする。 */}
+          {headlineKind === 'normal' && normalStreak >= 3 && (
+            <p
+              role="status"
+              aria-live="polite"
+              aria-label={`着実な積み上げ ${normalStreak} 回継続中。無難でも積み上がっている`}
+              className="text-center text-xs text-slate-400"
+            >
+              着実 {normalStreak} 回継続 — 無難でも積み上がっている
+            </p>
+          )}
 
           {/* ─── 選んだ判断 ─── */}
           <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)]/40 px-4 py-2.5">
