@@ -54,10 +54,10 @@ const INTRO_RECKONING: readonly string[] = [
   '先延ばしは利子が付く。その請求書が、今日届いた——',
 ] as const
 
-/** 朝会の論点バッジ。実状態（候補数・清算か）に忠実なラベルのみ。フレーバーの捏造はしない。 */
+/** 朝会の論点バッジ。実状態（候補数・清算か）に忠実なラベルのみ。フレーバーの捏造はしない。
+ *  reckoning のみ rose 系（amber より高い緊張色）に変更し、通常日との緩急を演出する。 */
 function candidateCountBadge(mode: 'reckoning' | 'single' | 'multi'): { label: string; className: string } {
-  if (mode === 'reckoning')
-    return { label: '清算の日', className: 'bg-amber-500/15 text-amber-300 border-amber-500/40' }
+  if (mode === 'reckoning') return { label: '⚠ 清算の日', className: 'bg-rose-500/20 text-rose-300 border-rose-500/50' }
   if (mode === 'single') return { label: '論点は1つ', className: 'bg-slate-500/15 text-slate-300 border-slate-500/30' }
   return { label: '論点が割れている', className: 'bg-violet-500/15 text-violet-300 border-violet-500/30' }
 }
@@ -251,8 +251,15 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
 
   return (
     <div className="flex w-full flex-col gap-4">
-      {/* リモート朝会パネル（競合する主張） */}
-      <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/60 p-3">
+      {/* リモート朝会パネル（競合する主張）
+           reckoning 時のみ rose リングと背景アクセントで「今日の空気が違う」を常時表示で演出する */}
+      <section
+        className={`rounded-2xl border p-3 transition ${
+          isReckoning
+            ? 'border-rose-700/60 bg-rose-950/20 ring-2 ring-rose-500/30'
+            : 'border-[var(--border)] bg-[var(--card)]/60'
+        }`}
+      >
         <div className="mb-2 flex items-center justify-between px-1">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-bold text-[var(--text)]">リモート・デイリースクラム</h2>
@@ -273,8 +280,13 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
             LIVE
           </span>
         </div>
-        {/* 導入文：候補数に応じて framing を切り替え、複数パターンで単調さを崩す */}
-        <p className="mb-2.5 px-1 text-[11px] text-[var(--text-sub)]">
+        {/* 導入文：候補数に応じて framing を切り替え、複数パターンで単調さを崩す。
+             reckoning 時は左ボーダーと背景を追加して「読まないと損する朝」を常時表示で示す */}
+        <p
+          className={`mb-2.5 text-[11px] text-[var(--text-sub)] ${
+            isReckoning ? 'rounded-r-md border-l-2 border-rose-500/60 bg-rose-950/25 px-2.5 py-1.5' : 'px-1'
+          }`}
+        >
           本社{displayName('lumen')}
           のチームが、各自の観点（価値／プロセス／技術）で気づきを共有する。{introVariant}
           <span className="text-[var(--text-body)]">
