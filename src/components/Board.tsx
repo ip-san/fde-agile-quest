@@ -160,6 +160,19 @@ export function Board() {
   const ceremony: Ceremony = sprint.beats[Math.min(beatIndex, sprint.beats.length - 1)]
   const useRoulette = isRouletteCeremony(ceremony)
 
+  // 通算デイリー番号（0始まり）。Travel.tsx の型崩し判定用（描画レイヤー専用・engine 不変）。
+  // 各スプリントのビート列から daily の総数を前スプリント分合計し、現スプリント内の daily 番号を加算。
+  // ceremony が daily でない状態では Travel は表示されないが型安全のため 0 にフォールバック。
+  const dailySeq = (() => {
+    const prevDailies = SPRINTS.slice(0, sprintIndex).reduce(
+      (acc, sp) => acc + sp.beats.filter((b) => b === 'daily').length,
+      0
+    )
+    if (ceremony !== 'daily') return prevDailies
+    const inSprintDailyNo = sprint.beats.slice(0, beatIndex + 1).filter((b) => b === 'daily').length - 1
+    return prevDailies + inSprintDailyNo
+  })()
+
   // プランニングの進行ゲート：ゴールを決めたら、スプリントバックログ（予測）を1件以上組むまで開始できない。
   // ＝スプリント計画の成果物（選択した PBI）を必ず作らせる。ゴール選択イベント自体は妨げない。
   const planningGoalSet = ceremony === 'planning' && !!sprintGoals[sprintIndex]
@@ -375,6 +388,7 @@ export function Board() {
                 .filter((e): e is GameEvent => !!e)}
               peekLocation={peekLocation}
               onTravel={arrive}
+              dailySeq={dailySeq}
             />
           ) : (
             <>

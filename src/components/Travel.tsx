@@ -69,6 +69,12 @@ interface Props {
   peekLocation: LocationId | null
   /** マップで行き先を選んだ */
   onTravel: (location: LocationId) => void
+  /**
+   * キャンペーン通算デイリー番号（0始まり）。
+   * 描画レイヤーで「型崩しデー」を判定するためだけに使う（engine 不変）。
+   * Board.tsx で sprintIndex × DAILIES_PER_SPRINT + スプリント内デイリー番号 として計算。
+   */
+  dailySeq: number
 }
 
 // Tailwind は動的クラス名を解析できないので、役割の色は静的に引く
@@ -201,7 +207,7 @@ function MapPin({ id, selectedId, liveLocations, initialFocus, onSelect, onTrave
 
 /** リモート・デイリースクラム（競合する主張）＋現地マップ。
  *  3役がそれぞれ別の場所のイベントを推す。1つだけ選べる——見送った重要事は後で響く。 */
-export function Travel({ candidates, peekLocation, onTravel }: Props) {
+export function Travel({ candidates, peekLocation, onTravel, dailySeq }: Props) {
   const voices = standupFor(candidates)
   const liveLocations = new Set(voices.map((v) => v.location))
   const reduceMotion = usePrefersReducedMotion()
@@ -224,6 +230,12 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
       : INTRO_MULTI[atmoSeed % INTRO_MULTI.length]
   // バッジ：実状態（清算か／候補数）に忠実な事実ベースのラベル
   const atmosphereBadge = candidateCountBadge(mode)
+
+  // ── 型崩しデー（ルーティン崩し）判定 ──────────────
+  // 毎 7 デイリーに1回（dailySeq % 7 === 6）、通常のグリッドレイアウトを横スクロール1行に崩す。
+  // reckoning（清算の日）・isSingleCandidate（静かな朝）は既に固有演出があるため上書きしない。
+  // engine（progression.ts）は一切変えず、描画レイヤーだけで実現する。
+  const isRoutineBreak = !isReckoning && !isSingleCandidate && dailySeq % 7 === 6
   // ── ここまで ──────────────────────────────────────
 
   // マップは"地理"として読ませる。ゾーンは2つ：
@@ -262,8 +274,12 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
       >
         <div className="mb-2 flex items-center justify-between px-1">
           <div className="flex items-center gap-2">
-            <h2 className="text-sm font-bold text-[var(--text)]">リモート・デイリースクラム</h2>
-            {/* 論点数バッジ：candidates の件数（実状態）を事実ベースで表示 */}
+            {/* 型崩しデーはタイトルを変えて「今日は違う」を最初の一行で示す */}
+            <h2 className="text-sm font-bold text-[var(--text)]">
+              {isRoutineBreak ? '今朝は流れが変わった — デイリースクラム' : 'リモート・デイリースクラム'}
+            </h2>
+            {/* 論点数バッジ：candidates の件数（実状態）を事実ベースで表示。
+                型崩しデーは通常バッジに追加の「流れが変わった」バッジを添える */}
             <span
               aria-live="polite"
               aria-atomic="true"
@@ -271,6 +287,11 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
             >
               {atmosphereBadge.label}
             </span>
+            {isRoutineBreak && (
+              <span className="rounded border border-sky-500/40 bg-sky-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-sky-300">
+                今日は違う流れ
+              </span>
+            )}
           </div>
           <span className="flex items-center gap-1 text-[11px] font-semibold text-rose-300">
             <span
@@ -295,12 +316,17 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
           。どれを採る？（動けるのは1箇所。選ばなかった方は見送りになる）
         </p>
 
-        {/* 役割タイル（それぞれ別の候補を主張） */}
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {/* 役割タイル（それぞれ別の候補を主張）
+            型崩しデーは横スクロール1行に並べてグリッドの「縦積み＝毎朝同じ」を視覚的に崩す。
+            通常日はグリッド（sm:grid-cols-2）を維持。 */}
+        <div className={isRoutineBreak ? 'flex gap-2 overflow-x-auto pb-1' : 'grid grid-cols-1 gap-2 sm:grid-cols-2'}>
           {voices.map((v) => {
             const tone = TONE[v.tone]
             return (
-              <div key={v.role} className={`rounded-xl border ${tone.ring} bg-[var(--bg-deep)]/40 p-2.5`}>
+              <div
+                key={v.role}
+                className={`rounded-xl border ${tone.ring} bg-[var(--bg-deep)]/40 p-2.5${isRoutineBreak ? ' min-w-[15rem] flex-shrink-0' : ''}`}
+              >
                 <div className="mb-1 flex items-center gap-1.5">
                   <span className={`text-sm font-bold ${tone.name}`}>{v.name}</span>
                   <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${tone.badge}`}>{v.label}</span>
@@ -316,7 +342,9 @@ export function Travel({ candidates, peekLocation, onTravel }: Props) {
             )
           })}
           {/* あなた＝現地タイル */}
-          <div className="rounded-xl border border-amber-500/40 bg-amber-950/30 p-2.5">
+          <div
+            className={`rounded-xl border border-amber-500/40 bg-amber-950/30 p-2.5${isRoutineBreak ? ' min-w-[15rem] flex-shrink-0' : ''}`}
+          >
             <div className="mb-1 flex items-center gap-1.5">
               <span className="text-sm font-bold text-amber-200">あなた</span>
               <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300">
