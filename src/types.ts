@@ -51,6 +51,9 @@ export type GameFlag =
   | 'chasedPromise' // S1: 背景を確かめず“約束（予測機能）”を追ってゴールにした → 後で空回り
   | 'groundedGoal' // S1: 現場の沈黙を起点に“なぜ使われないか”をゴールに据えた → 後で芯を捉える
   | 'soloHero' // S3: 移譲せず“自分が運用の窓口”をゴールにした → 後で属人化のボトルネック
+  // レトロのプロセス改善が後で“効いた実感”として返るアーク（genbaTrust/topDown とは別軸）:
+  | 'retroCapacity' // s1-retro で capacity レバー（レビューの量を増やす）を選んだ → 次レトロが前回の手応えを受けて始まる
+  | 'retroWip' // s1-retro で wip レバー（仕掛りを絞る）を選んだ → 次レトロが前回の手応えを受けて始まる
 
 /** 進行状態。travel＝デイリーでルーレット後、リモート朝会＋現地マップ移動の最中 */
 export type Status = 'playing' | 'travel' | 'event' | 'ended'

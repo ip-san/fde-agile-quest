@@ -315,6 +315,7 @@ FDEの務めは現場を直すだけではない。**現場でしか掴めない
 | `chasedPromise` | s1-plan-goal a（背景を確かめず“予測機能”をゴールに） | s2-daily-promise-gap（要chasedPromise） | プランニング→分岐: 約束を追ったゴールが空回り→立て直す |
 | `groundedGoal` | s1-plan-goal b（現場の沈黙を起点に“なぜ使われないか”をゴールに） | s1-daily-refine-grounded（要groundedGoal・途中）／s2-daily-grounded-core（要groundedGoal・回収） | プランニング→分岐(chasedPromiseの対): 把握パスの途中で“何を確かめるか”を並べ替え→S2で沈黙の理由が要件に結実（前向き・芯を捉える）。トレードオフは残す |
 | `soloHero` | s3-plan-handoff a（移譲せず“自分が窓口”をゴールに） | s3-daily-bottleneck（要soloHero） | プランニング→分岐: 属人化のボトルネック→終盤でも移譲に転じられる |
+| `retroCapacity`/`retroWip` | s1-retro b（capacity）／c（wip）＝レバー選択で排他に立つ（genbaTrust/topDown とは別軸） | s2-retro-cap／s2-retro-wip（既定 s2-retro の前に置くバリアント・冒頭 narrative だけ callback） | レトロのカイゼンが効いた実感: 次の振り返りが「前スプリントで量/質どちらに賭けたか」の手応えを受けて始まる。choices は既定 s2-retro と同一（主軸分岐は不変）。s3-retro 既定は名指しせず「量に賭けるか質に賭けるかを自分で選んできた」と連続性を一文で締める |
 
 > プランニングの決定が後で響く分岐（プランニング→ストーリー展開）。プレイヤーがプランニングで選んだ
 > 「ゴール／KPI」が、表示ゴール（ヘッダ）になると同時に、誤った置き方なら後スプリントの回収イベントを誘発する。

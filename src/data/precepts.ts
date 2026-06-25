@@ -216,6 +216,8 @@ export const EVENT_PRECEPTS: Record<string, number[]> = {
   's2-daily-depth': [92, 93],
   's2-review': [55, 56],
   's2-retro': [64, 81],
+  's2-retro-cap': [64, 81], // 既定 s2-retro と同一構造（前スプリント capacity レバーの callback バリアント）
+  's2-retro-wip': [64, 81], // 既定 s2-retro と同一構造（前スプリント wip レバーの callback バリアント）
   's2-daily-ai-handoff': [43, 48],
   's2-daily-dod': [97, 13],
   's2-daily-goalcreep': [37, 78],
