@@ -124,20 +124,37 @@ export function Prologue({ onClose, generation = 0 }: Props) {
                   </span>
                 )}
               </div>
-              {/* 二重構造の舞台モチーフ：表（受託の常駐）と裏（文化変革）の二面性を明示し、群像の意味づけをする。 */}
-              <div className="rounded-xl border border-violet-500/30 bg-violet-500/10 px-3 py-2 text-xs leading-relaxed text-violet-100">
-                <p className="font-semibold text-violet-200">
-                  <span aria-hidden="true">🎭</span> 二重の任務
-                </p>
-                <p className="mt-0.5">
-                  表の顔は、「StockPilot」を直しに来た常駐エンジニア。だが裏には、二つの本当の任務がある。
-                  ひとつは、現場にアジャイルの文化を根づかせ
-                  <span className="font-semibold">あなたが去っても回り続ける組織</span>を残すこと。
-                  もうひとつは、現場でしか掴めない<span className="font-semibold">"次の機能の種"</span>
-                  を吸い上げ、自社SaaS「StockPilot」へ還元すること。
-                  AIで誰でもソフトを作れる時代に、現場に立つFDEだけが見つけられる価値が、会社の生き残る道だ。
-                </p>
-              </div>
+              {/* 二重構造の舞台モチーフ：表（受託の常駐）と裏（文化変革）の二面性を明示し、群像の意味づけをする。
+                  2周目以降（generation > 0）は読み済みのため折りたたんで表示する。 */}
+              {generation === 0 ? (
+                <div className="rounded-xl border border-violet-500/30 bg-violet-500/10 px-3 py-2 text-xs leading-relaxed text-violet-100">
+                  <p className="font-semibold text-violet-200">
+                    <span aria-hidden="true">🎭</span> 二重の任務
+                  </p>
+                  <p className="mt-0.5">
+                    表の顔は、「StockPilot」を直しに来た常駐エンジニア。だが裏には、二つの本当の任務がある。
+                    ひとつは、現場にアジャイルの文化を根づかせ
+                    <span className="font-semibold">あなたが去っても回り続ける組織</span>を残すこと。
+                    もうひとつは、現場でしか掴めない<span className="font-semibold">"次の機能の種"</span>
+                    を吸い上げ、自社SaaS「StockPilot」へ還元すること。
+                    AIで誰でもソフトを作れる時代に、現場に立つFDEだけが見つけられる価値が、会社の生き残る道だ。
+                  </p>
+                </div>
+              ) : (
+                <details className="rounded-xl border border-violet-500/30 bg-violet-500/10 px-3 py-2 text-xs leading-relaxed text-violet-100">
+                  <summary className="cursor-pointer select-none font-semibold text-violet-200/70">
+                    <span aria-hidden="true">🎭</span> 二重の任務（おさらい）
+                  </summary>
+                  <p className="mt-0.5">
+                    表の顔は、「StockPilot」を直しに来た常駐エンジニア。だが裏には、二つの本当の任務がある。
+                    ひとつは、現場にアジャイルの文化を根づかせ
+                    <span className="font-semibold">あなたが去っても回り続ける組織</span>を残すこと。
+                    もうひとつは、現場でしか掴めない<span className="font-semibold">"次の機能の種"</span>
+                    を吸い上げ、自社SaaS「StockPilot」へ還元すること。
+                    AIで誰でもソフトを作れる時代に、現場に立つFDEだけが見つけられる価値が、会社の生き残る道だ。
+                  </p>
+                </details>
+              )}
               <p className="text-xs text-[var(--text-sub)]">
                 この物語で何度も顔を合わせる相手。彼らとの距離が、3つのメーターになる。
               </p>
