@@ -32,6 +32,7 @@ import { ResultModal } from './ResultModal'
 import { RichText } from './RichText'
 import { Roulette } from './Roulette'
 import { SecondaryStats } from './SecondaryStats'
+import { SprintIntermission } from './SprintIntermission'
 import { Travel } from './Travel'
 
 const PROLOGUE_SEEN_KEY = 'fde-agile-quest:prologue-seen'
@@ -89,6 +90,10 @@ export function Board() {
   const [timed, setTimed] = useState(timedChoicePref)
   // 選択 → 実行ミニゲーム → 結果。選んだ choice を保持し、ミニゲームの出来を tier として渡す
   const [pendingChoice, setPendingChoice] = useState<Choice | null>(null)
+  // スプリント境界幕間（retro 完了 → 次 planning 突入の間に1枚）。
+  // 完了したスプリント番号（1 or 2）を保持。null = 非表示。
+  const [pendingIntermission, setPendingIntermission] = useState<number | null>(null)
+
   // 「本音を見抜く」推理の解決状態（イベントIDで管理＝イベントが変われば自動リセット）。
   // 当てると reveal ヒントを選択画面に渡す＝核心が"開く"。
   const [deduction, setDeduction] = useState<{ id: string; correct: boolean } | null>(null)
@@ -172,6 +177,7 @@ export function Board() {
   const modalOpen =
     (status === 'event' && !!currentEvent && !result) ||
     !!result ||
+    !!pendingIntermission ||
     bookOpen ||
     prologueOpen ||
     repoOpen ||
@@ -539,7 +545,31 @@ export function Board() {
       )}
 
       {/* 結果オーバーレイ（判断直後に一度ちゃんと見せる） */}
-      {result && <ResultModal result={result} meters={meters} onContinue={dismissResult} />}
+      {result && (
+        <ResultModal
+          result={result}
+          meters={meters}
+          onContinue={() => {
+            // retro 完了（S1→S2 / S2→S3 の境界）なら幕間を挟む。
+            // eventId が "s{N}-retro" の形（S1/S2 のみ。S3 retro はキャンペーン完走→エンディングへ）。
+            if (result.ceremony === 'retro') {
+              const m = /^s(\d+)-retro/.exec(result.eventId)
+              const sprintNo = m ? Number(m[1]) : null
+              if (sprintNo !== null && sprintNo < 3) {
+                dismissResult()
+                setPendingIntermission(sprintNo)
+                return
+              }
+            }
+            dismissResult()
+          }}
+        />
+      )}
+
+      {/* スプリント境界幕間（S1→S2 / S2→S3）: retro 完了 → 次スプリントの planning の間に1枚 */}
+      {pendingIntermission !== null && (
+        <SprintIntermission completedSprintNo={pendingIntermission} onContinue={() => setPendingIntermission(null)} />
+      )}
 
       {/* 心得手帳 */}
       {bookOpen && <PreceptBook seen={seenPrecepts} onClose={() => setBookOpen(false)} />}
