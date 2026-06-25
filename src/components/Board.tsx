@@ -1,16 +1,16 @@
-import { lazy, Suspense, useMemo, useReducer, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { CEREMONY_LABELS, CEREMONY_SHORT, PRODUCT_GOAL, SPRINTS } from '../data/chapters/chapter-01'
 import { PRECEPTS } from '../data/precepts'
 import { openThreads } from '../data/threads'
 import { GEN_TOKEN_COST } from '../engine/backlog'
-import { miniGameKindFor } from '../engine/game'
+import { METER_CRITICAL, miniGameKindFor } from '../engine/game'
 import { customerValueBreakdown, getEventPool, isRouletteCeremony, repoStats } from '../engine/progression'
 import { isMuted, toggleMuted } from '../engine/sfx'
 import { hearingThemeFor } from '../lib/hearingTheme'
 import { readBool, writeBool } from '../lib/persist'
 import { seedFor } from '../lib/seed'
 import { useEngagement } from '../store/engagementStore'
-import type { Ceremony, Choice, GameEvent, GameFlag } from '../types'
+import type { Ceremony, Choice, GameEvent, GameFlag, Meters } from '../types'
 
 // バックログ操作パネル・遊び方・都度教示は"開いた時だけ"要るモーダル＝コード分割で初期バンドルから外す。
 // MiniGame（hearingミニゲーム系 + review系データ含む）も選択後にのみ表示されるため lazy 化して初期バンドルを軽量化。
@@ -28,7 +28,7 @@ import { MeterHUD } from './MeterHUD'
 import { PreceptBook } from './PreceptBook'
 import { Prologue } from './Prologue'
 import { RepoPanel } from './RepoPanel'
-import { ResultModal } from './ResultModal'
+import { pickHeadline, ResultModal } from './ResultModal'
 import { RichText } from './RichText'
 import { Roulette } from './Roulette'
 import { SecondaryStats } from './SecondaryStats'
@@ -107,6 +107,29 @@ export function Board() {
   // スプリント境界幕間（retro 完了 → 次 planning 突入の間に1枚）。
   // 完了したスプリント番号（1 or 2）を保持。null = 非表示。
   const [pendingIntermission, setPendingIntermission] = useState<number | null>(null)
+  // normal 連続カウント（great/poor/precept/valueGain/danger 以外が続く場合）。
+  // result が null になった瞬間（= dismissResult が呼ばれた後）に前回 result で判定して更新する。
+  const [normalStreak, setNormalStreak] = useState(0)
+  // result が null になった時に"前回の result"を参照するため ref で保持する。
+  const prevResultRef = useRef<typeof result | null>(null)
+
+  // result が null になった = 結果モーダルが閉じられた瞬間に normalStreak を更新する。
+  // 前回の result を prevResultRef から取り出し、headlineKind が normal だったかを判定する。
+  useEffect(() => {
+    if (result !== null) {
+      // result が存在する間は ref を最新に保つ（次の null 化タイミングで使うため）。
+      prevResultRef.current = result
+      return
+    }
+    // result が null になった = 直前の result を判定してカウントを更新する。
+    const prev = prevResultRef.current
+    if (prev === null) return
+    // dangerMeters を再現（ResultModal と同じロジック）して pickHeadline に渡す。
+    const meterKeys = ['trust', 'insight', 'culture'] as (keyof Meters)[]
+    const dangerMeters = meterKeys.filter((k) => (prev.effects[k] ?? 0) < 0 && meters[k] <= METER_CRITICAL)
+    const kind = pickHeadline(prev, dangerMeters, meters)
+    setNormalStreak((prev_) => (kind === 'normal' ? prev_ + 1 : 0))
+  }, [result, meters])
 
   // 「本音を見抜く」推理の解決状態（イベントIDで管理＝イベントが変われば自動リセット）。
   // 当てると reveal ヒントを選択画面に渡す＝核心が"開く"。
@@ -272,6 +295,16 @@ export function Board() {
             aria-label={`会心の連鎖 ${greatStreak} 回。次の会心でコード品質ボーナスが増える`}
           >
             会心 {greatStreak} 連鎖中 — 次も会心ならコード品質ボーナス増
+          </p>
+        )}
+        {/* 着実な連続（normal が3回以上続いている）を可視化。会心の連鎖中は非表示（greatStreak 優先）。 */}
+        {greatStreak < 2 && normalStreak >= 3 && (
+          <p
+            className="-mt-1 text-center text-xs text-slate-400"
+            role="status"
+            aria-label={`着実な積み上げ ${normalStreak} 回継続中`}
+          >
+            着実 {normalStreak} 回継続 — 無難でも積み上がっている
           </p>
         )}
         <p className="-mt-2 text-center text-xs leading-snug text-[var(--text-sub)]">
@@ -567,6 +600,7 @@ export function Board() {
           result={result}
           meters={meters}
           isPivotalChoice={isPivotalChoice}
+          normalStreak={normalStreak}
           onContinue={() => {
             // 結果を閉じたら isPivotalChoice をリセット（次のイベントに引き継がない）。
             setIsPivotalChoice(false)
