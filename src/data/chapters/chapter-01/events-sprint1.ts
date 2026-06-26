@@ -579,7 +579,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       { text: '入庫・出庫はフローが見えますけど、返品だけ流れが描けない。どう動いてます？', good: true },
       { text: '返品なんて滅多に来ないから、フローに描かなくていいですよね？', good: false },
       { text: '返品の流れなんて例外だ。フローからは外して作っていい。', good: false },
-      { text: 'だいたい合ってますよね、細かい例外は気にしなくて大丈夫ですか？', good: false },
+      { text: 'このフローを一枚にまとめて全員に配って確認してもらえば、整合は取れますよね？', good: false },
     ],
     choices: [
       {
@@ -621,7 +621,7 @@ export const SPRINT1_EVENTS: GameEvent[] = [
       { text: 'その画面を一番見るのは誰で、その人は今どこで困ってますか', good: true },
       { text: '{{ダッシュボード}}にグラフとKPIをずらっと並べれば、見える化できたことになりますよね？', good: false },
       { text: '見える化なんて、要するに在庫の一覧画面を出せば済む話だ。', good: false },
-      { text: '見える化はもう当たり前なので、要件は固まってるとみていいですか？', good: false },
+      { text: '{{ダッシュボード}}の見た目さえ結城さんと合意できれば、要件は固まったとみていいですよね？', good: false },
     ],
     choices: [
       {
