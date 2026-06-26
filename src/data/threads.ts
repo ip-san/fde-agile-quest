@@ -66,8 +66,8 @@ export const THREADS: Record<GameFlag, Thread> = {
   },
   fraudCase: {
     setVia: ['choice'],
-    payoffVia: ['ending'],
-    note: '強い証拠を固める→暴露エンディングの強度に反映',
+    payoffVia: ['event', 'ending'],
+    note: '強い証拠を固める→S3 daily(s3-daily-fraud-evidence)で確証を手に収める着地ビート、暴露エンディングの強度に反映',
     teaser: '掴んだ証拠の重みは、まだ宙づりだ。',
   },
   exposed: { setVia: ['finale'], payoffVia: ['ending'], note: 'フィナーレで暴く→専用エンディング', teaser: '—' },

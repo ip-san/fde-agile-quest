@@ -244,6 +244,7 @@ export const EVENT_PRECEPTS: Record<string, number[]> = {
   's2-daily-hqorder': [52, 55],
   's2-daily-ghost-stock': [8, 73],
   's3-plan-handoff': [16, 99],
+  's3-daily-fraud-evidence': [73, 89],
   's3-daily-rework': [67],
   's3-daily-onboard': [99],
   's3-daily-genba': [56, 57],
