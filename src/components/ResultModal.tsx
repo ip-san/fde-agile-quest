@@ -274,6 +274,86 @@ function SeedReveal({ seedId, seedNew }: { seedId?: string; seedNew?: boolean })
   )
 }
 
+/** 副次情報ブロック（seed / discoveredPbi / addedPbi / tokenSpent / coverage・debt / backlogReview）。
+ *  軽量モード詳細とフルモード詳細の両方から呼ばれる共通コンポーネント。 */
+function ResultSecondaryInfo({
+  result,
+}: {
+  result: Pick<
+    ResultView,
+    'seedId' | 'seedNew' | 'discoveredPbi' | 'addedPbi' | 'tokenSpent' | 'coverageDelta' | 'debtDelta' | 'backlogReview'
+  >
+}) {
+  return (
+    <>
+      <SeedReveal seedId={result.seedId} seedNew={result.seedNew} />
+
+      {result.discoveredPbi && (
+        <div className="space-y-1 rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-2.5">
+          <p className="text-[11px] font-semibold text-rose-300">現場の声から、新しいバックログ項目が見つかった</p>
+          <p className="text-sm font-medium text-[var(--text)]">『{result.discoveredPbi.title}』</p>
+          <p className="text-[11px] text-[var(--text-sub)]">
+            プロダクトバックログに追加。次のプランニングで優先順位を検討しましょう。
+          </p>
+        </div>
+      )}
+
+      {result.addedPbi && (
+        <div
+          className={`space-y-1 rounded-xl border px-4 py-2.5 ${
+            result.addedPbi.toSprint ? 'border-amber-500/50 bg-amber-500/10' : 'border-sky-500/40 bg-sky-500/10'
+          }`}
+        >
+          <p className={`text-[11px] font-semibold ${result.addedPbi.toSprint ? 'text-amber-300' : 'text-sky-300'}`}>
+            {result.addedPbi.toSprint
+              ? '⚠ 割り込みを受けた：今スプリントに要望を差し込んだ'
+              : '要望をプロダクトバックログに積んだ'}
+          </p>
+          <p className="text-sm font-medium text-[var(--text)]">『{result.addedPbi.title}』</p>
+          <p className="text-[11px] text-[var(--text-sub)]">
+            {result.addedPbi.toSprint
+              ? '今スプリントの予測が増えた。1日のレビュー容量を超えれば、その分は終わらず持ち越しに——スプリントゴールを危うくしうる。PO と再交渉し、ゴールを守れる範囲か見極めを。'
+              : '次のプランニングで Ready 化し、優先順位を検討しましょう。今の焦点は守られた。'}
+          </p>
+        </div>
+      )}
+
+      {result.tokenSpent ? (
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-semibold text-[var(--text-sub)]">AIトークン</span>
+          <span className="rounded-lg bg-cyan-500/15 px-2.5 py-1 text-sm font-bold tabular-nums text-cyan-300">
+            ▼ −{result.tokenSpent}
+          </span>
+        </div>
+      ) : null}
+
+      {result.coverageDelta || result.debtDelta ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[11px] font-semibold text-[var(--text-sub)]">リポジトリ</span>
+          {result.coverageDelta ? (
+            <span
+              className={`rounded-lg px-2.5 py-1 text-sm font-bold tabular-nums ${result.coverageDelta > 0 ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'}`}
+            >
+              コード {result.coverageDelta > 0 ? '▲ +' : '▼ '}
+              {result.coverageDelta}%
+            </span>
+          ) : null}
+          {result.debtDelta ? (
+            <span
+              className={`rounded-lg px-2.5 py-1 text-sm font-bold tabular-nums ${result.debtDelta > 0 ? 'bg-rose-500/15 text-rose-300' : 'bg-emerald-500/15 text-emerald-300'}`}
+            >
+              ▲ 負債 {result.debtDelta > 0 ? '+' : ''}
+              {result.debtDelta}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+
+      {result.backlogReview && <BacklogReviewBlock review={result.backlogReview} />}
+    </>
+  )
+}
+
 // ─── Headline（主役）選定 ────────────────────────────────────────────────
 
 /** 主役ブロックの種別。7段階の優先度で一意に決まる。 */
@@ -328,6 +408,24 @@ interface Props {
   isPivotalChoice?: boolean
   /** normal（great/poor/precept/danger 以外）の結果が連続した回数。3以上で積み上がりバッジを表示。 */
   normalStreak?: number
+}
+
+/**
+ * 「平凡な結果」の判定。
+ * headlineKind==='normal' かつ メーター変動が全て 1pt 以下 かつ 新規心得なし かつ isPivotalChoice でない。
+ * 上記4条件をすべて満たした場合のみ軽量モード（true）を返す。
+ */
+export function isCompactResult(
+  headlineKind: HeadlineKind,
+  effects: Effects,
+  newPreceptIds: number[],
+  isPivotalChoice: boolean
+): boolean {
+  if (headlineKind !== 'normal') return false
+  if (isPivotalChoice) return false
+  if (newPreceptIds.length > 0) return false
+  const maxAbsDelta = Math.max(...Object.values(effects).map((v) => Math.abs(v ?? 0)), 0)
+  return maxAbsDelta <= 1
 }
 
 /** 開示演出のフラッシュ色。閃光は"決定的瞬間"だけに絞る（impact/heavy のみ／danger は別途 rose）。
@@ -394,6 +492,10 @@ export function ResultModal({ result, meters, onContinue, isPivotalChoice = fals
   const headlineKind = pickHeadline(result, dangerMeters, meters)
   // 副次情報パネルの開閉（details/summary の代替: aria-expanded + aria-controls で同等の a11y）
   const [detailsOpen, setDetailsOpen] = useState(false)
+  // 軽量モードの判定（平凡な結果＝normal・小変動・新規心得なし・pivotal でない）
+  const isCompact = isCompactResult(headlineKind, result.effects, result.newPreceptIds, isPivotalChoice)
+  // 軽量モード時の「詳細を見る」展開状態
+  const [compactDetailsOpen, setCompactDetailsOpen] = useState(false)
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:px-safe sm:pt-safe sm:pb-safe">
@@ -570,8 +672,8 @@ export function ResultModal({ result, meters, onContinue, isPivotalChoice = fals
                   <p className="text-[17px] font-bold leading-snug text-[var(--text)] motion-safe:animate-[fadeSlideIn_0.25s_ease-out]">
                     <RichText text={head} />
                   </p>
-                  {/* 残り文：補足として続ける */}
-                  {rest && (
+                  {/* 残り文：補足として続ける（isCompact 時は詳細パネルへ移動するため非表示） */}
+                  {rest && !isCompact && (
                     <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--text-body)]">
                       <RichText text={rest} />
                     </p>
@@ -599,22 +701,95 @@ export function ResultModal({ result, meters, onContinue, isPivotalChoice = fals
             </p>
           )}
 
+          {/* ══════════════════════════════════════════════════════════════════════
+              軽量モード（isCompact=true）
+              平凡な結果（normal・小変動・新規心得なし・pivotal でない）のみ。
+              主役1文＋メーター差分を表示した後、「詳細を見る」トグルで残りを展開する。
+              詳細セクションは常時 DOM にマウントし hidden 属性で切替（axe 対応）。
+              ══════════════════════════════════════════════════════════════════════ */}
+          {isCompact && (
+            <div className="rounded-xl border border-[var(--border)]">
+              <button
+                type="button"
+                aria-expanded={compactDetailsOpen}
+                aria-controls="compact-details"
+                onClick={() => setCompactDetailsOpen((v) => !v)}
+                className="flex w-full cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-[11px] font-semibold text-[var(--text-sub)] hover:text-[var(--text-body)]"
+              >
+                <span aria-hidden="true">{compactDetailsOpen ? '▼' : '▶'}</span>
+                詳細を見る
+              </button>
+              <div
+                id="compact-details"
+                hidden={!compactDetailsOpen}
+                className="space-y-3 border-t border-[var(--border)] px-4 pb-3 pt-3"
+              >
+                {/* 残りの resultText（冒頭1文以降） */}
+                {(() => {
+                  const { rest } = splitHeadlineSentence(result.resultText)
+                  return rest ? (
+                    <p className="text-[13px] leading-relaxed text-[var(--text-body)]">
+                      <RichText text={rest} />
+                    </p>
+                  ) : null
+                })()}
+
+                {/* あなたの判断 */}
+                <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)]/40 px-4 py-2.5">
+                  <p className="text-[11px] font-semibold text-[var(--text-sub)]">あなたの判断</p>
+                  <p className="text-sm font-medium text-[var(--text)]">
+                    {result.warn && (
+                      <span className="mr-1" aria-hidden="true">
+                        ⚠
+                      </span>
+                    )}
+                    <RichText text={result.choiceLabel} />
+                  </p>
+                </div>
+
+                {/* 実行ミニゲームの出来 */}
+                <ExecBadge result={result} />
+
+                {/* トレードオフ（isCompact 時は小変動のみなので通常 null だが念のため出力） */}
+                <TradeoffNote effects={result.effects} />
+
+                {/* 既出心得チップ（新規心得があれば isCompact=false になるので、ここは既出のみ） */}
+                {result.precepts.length > 0 && (
+                  <PreceptsBlock
+                    precepts={result.precepts}
+                    newPreceptIds={result.newPreceptIds}
+                    headlineKind={headlineKind}
+                  />
+                )}
+
+                {/* 副次情報（seed / discoveredPbi / addedPbi / tokenSpent / coverage・debt / backlogReview） */}
+                <ResultSecondaryInfo result={result} />
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════════
+              フル表示モード（isCompact=false）
+              ══════════════════════════════════════════════════════════════════════ */}
+
           {/* ─── 選んだ判断 ─── */}
-          <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)]/40 px-4 py-2.5">
-            <p className="text-[11px] font-semibold text-[var(--text-sub)]">あなたの判断</p>
-            <p className="text-sm font-medium text-[var(--text)]">
-              {result.warn && (
-                <span className="mr-1" aria-hidden="true">
-                  ⚠
-                </span>
-              )}
-              <RichText text={result.choiceLabel} />
-            </p>
-          </div>
+          {!isCompact && (
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)]/40 px-4 py-2.5">
+              <p className="text-[11px] font-semibold text-[var(--text-sub)]">あなたの判断</p>
+              <p className="text-sm font-medium text-[var(--text)]">
+                {result.warn && (
+                  <span className="mr-1" aria-hidden="true">
+                    ⚠
+                  </span>
+                )}
+                <RichText text={result.choiceLabel} />
+              </p>
+            </div>
+          )}
 
           {/* 何が起きたか（normal 以外のケースで表示）。
               normal のときは上記のヘッドラインブロックで表示済みなので重複しない。 */}
-          {headlineKind !== 'normal' && (
+          {!isCompact && headlineKind !== 'normal' && (
             <div>
               <p className="mb-1 text-[11px] font-semibold text-[var(--text-sub)]">結果</p>
               <p className="text-[15px] leading-relaxed text-[var(--text)]">
@@ -626,17 +801,17 @@ export function ResultModal({ result, meters, onContinue, isPivotalChoice = fals
           {/* tier 依存の「跳ね返りの一文」（greatExit / poorExit 以外のケース）。
               greatExit / poorExit は主役ブロックで表示済みなので重複しない。
               追加情報なので role 付与は不要（見出し構造は破らない）。interactive=false 固定。 */}
-          {result.tierResultText && headlineKind !== 'greatExit' && headlineKind !== 'poorExit' && (
+          {!isCompact && result.tierResultText && headlineKind !== 'greatExit' && headlineKind !== 'poorExit' && (
             <p className="rounded-lg bg-[var(--panel)]/40 px-3 py-2.5 text-sm leading-relaxed text-[var(--text-body)]">
               <RichText text={result.tierResultText} />
             </p>
           )}
 
           {/* 実行ミニゲームの出来 */}
-          <ExecBadge result={result} />
+          {!isCompact && <ExecBadge result={result} />}
 
           {/* メーター増減（normal 時はヘッドラインブロック内に統合済みなのでここでは表示しない） */}
-          {headlineKind !== 'normal' && (
+          {!isCompact && headlineKind !== 'normal' && (
             <div className="flex items-center gap-2 border-t border-[var(--panel)] pt-3">
               <span className="text-[11px] font-semibold text-[var(--text-sub)]">メーター</span>
               <EffectDeltas effects={result.effects} />
@@ -644,10 +819,10 @@ export function ResultModal({ result, meters, onContinue, isPivotalChoice = fals
           )}
 
           {/* トレードオフの明示（機会コストの言語化）。 */}
-          <TradeoffNote effects={result.effects} />
+          {!isCompact && <TradeoffNote effects={result.effects} />}
 
           {/* 見抜きボーナス（推理で本音を当てた報酬。その選択の主正メーターに別枠で +）。 */}
-          {result.deductionBonus && result.execPrimary ? (
+          {!isCompact && result.deductionBonus && result.execPrimary ? (
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-semibold text-amber-300">見抜きボーナス</span>
               <span className="rounded-lg bg-amber-500/15 px-2.5 py-1 text-sm font-bold tabular-nums text-amber-200">
@@ -658,7 +833,7 @@ export function ResultModal({ result, meters, onContinue, isPivotalChoice = fals
 
           {/* 心得ブロック（precept が主役の場合は新規獲得済みなので既出チップのみ。
               その他のケースでは新規＋既出チップ両方を通常サイズで表示）。 */}
-          {result.precepts.length > 0 && (
+          {!isCompact && result.precepts.length > 0 && (
             <PreceptsBlock
               precepts={result.precepts}
               newPreceptIds={result.newPreceptIds}
@@ -670,108 +845,35 @@ export function ResultModal({ result, meters, onContinue, isPivotalChoice = fals
               seed / discoveredPbi / addedPbi / tokenSpent / coverage・debt / backlogReview
               いずれも「あれば展開」の追加情報。aria-expanded+aria-controls でキーボード・SR 対応。
               フォーカス順=DOM順=視覚順を一致させるため、主コンテンツの後に配置。 */}
-          {(result.seedId ||
-            result.discoveredPbi ||
-            result.addedPbi ||
-            result.tokenSpent ||
-            result.coverageDelta ||
-            result.debtDelta ||
-            result.backlogReview) && (
-            <div className="rounded-xl border border-[var(--border)]">
-              <button
-                type="button"
-                aria-expanded={detailsOpen}
-                aria-controls="result-details"
-                onClick={() => setDetailsOpen((v) => !v)}
-                className="flex w-full cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-[11px] font-semibold text-[var(--text-sub)] hover:text-[var(--text-body)]"
-              >
-                <span aria-hidden="true">{detailsOpen ? '▼' : '▶'}</span>
-                詳細を見る
-              </button>
-              <div
-                id="result-details"
-                hidden={!detailsOpen}
-                className="space-y-3 border-t border-[var(--border)] px-4 pb-3 pt-3"
-              >
-                {/* 次の機能の種：現場で掴んだプロダクトの種を発見＝自社SaaSへ還元できる（FDEの本懐）。 */}
-                <SeedReveal seedId={result.seedId} seedNew={result.seedNew} />
-
-                {/* ヒアリングで掘り当てた発見可PBI：プロダクトバックログに新たな項目が加わった。 */}
-                {result.discoveredPbi && (
-                  <div className="space-y-1 rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-2.5">
-                    <p className="text-[11px] font-semibold text-rose-300">
-                      現場の声から、新しいバックログ項目が見つかった
-                    </p>
-                    <p className="text-sm font-medium text-[var(--text)]">『{result.discoveredPbi.title}』</p>
-                    <p className="text-[11px] text-[var(--text-sub)]">
-                      プロダクトバックログに追加。次のプランニングで優先順位を検討しましょう。
-                    </p>
-                  </div>
-                )}
-
-                {/* イベントで受けた要望PBI：今スプリントへ割り込み（toSprint）か、次のために積んだか で出し分ける。 */}
-                {result.addedPbi && (
-                  <div
-                    className={`space-y-1 rounded-xl border px-4 py-2.5 ${
-                      result.addedPbi.toSprint
-                        ? 'border-amber-500/50 bg-amber-500/10'
-                        : 'border-sky-500/40 bg-sky-500/10'
-                    }`}
-                  >
-                    <p
-                      className={`text-[11px] font-semibold ${result.addedPbi.toSprint ? 'text-amber-300' : 'text-sky-300'}`}
-                    >
-                      {result.addedPbi.toSprint
-                        ? '⚠ 割り込みを受けた：今スプリントに要望を差し込んだ'
-                        : '要望をプロダクトバックログに積んだ'}
-                    </p>
-                    <p className="text-sm font-medium text-[var(--text)]">『{result.addedPbi.title}』</p>
-                    <p className="text-[11px] text-[var(--text-sub)]">
-                      {result.addedPbi.toSprint
-                        ? '今スプリントの予測が増えた。1日のレビュー容量を超えれば、その分は終わらず持ち越しに——スプリントゴールを危うくしうる。PO と再交渉し、ゴールを守れる範囲か見極めを。'
-                        : '次のプランニングで Ready 化し、優先順位を検討しましょう。今の焦点は守られた。'}
-                    </p>
-                  </div>
-                )}
-
-                {/* 生成AIトークンの消費（AIに頼った選択のみ） */}
-                {result.tokenSpent ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-semibold text-[var(--text-sub)]">AIトークン</span>
-                    <span className="rounded-lg bg-cyan-500/15 px-2.5 py-1 text-sm font-bold tabular-nums text-cyan-300">
-                      ▼ −{result.tokenSpent}
-                    </span>
-                  </div>
-                ) : null}
-
-                {/* リポジトリ：コード（カバレッジ）／技術的負債の増減 */}
-                {result.coverageDelta || result.debtDelta ? (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[11px] font-semibold text-[var(--text-sub)]">リポジトリ</span>
-                    {result.coverageDelta ? (
-                      <span
-                        className={`rounded-lg px-2.5 py-1 text-sm font-bold tabular-nums ${result.coverageDelta > 0 ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'}`}
-                      >
-                        コード {result.coverageDelta > 0 ? '▲ +' : '▼ '}
-                        {result.coverageDelta}%
-                      </span>
-                    ) : null}
-                    {result.debtDelta ? (
-                      <span
-                        className={`rounded-lg px-2.5 py-1 text-sm font-bold tabular-nums ${result.debtDelta > 0 ? 'bg-rose-500/15 text-rose-300' : 'bg-emerald-500/15 text-emerald-300'}`}
-                      >
-                        ▲ 負債 {result.debtDelta > 0 ? '+' : ''}
-                        {result.debtDelta}
-                      </span>
-                    ) : null}
-                  </div>
-                ) : null}
-
-                {/* スプリントレビュー：スプリントバックログの精算（done/キャリーオーバー/ベロシティ） */}
-                {result.backlogReview && <BacklogReviewBlock review={result.backlogReview} />}
+          {!isCompact &&
+            (result.seedId ||
+              result.discoveredPbi ||
+              result.addedPbi ||
+              result.tokenSpent ||
+              result.coverageDelta ||
+              result.debtDelta ||
+              result.backlogReview) && (
+              <div className="rounded-xl border border-[var(--border)]">
+                <button
+                  type="button"
+                  aria-expanded={detailsOpen}
+                  aria-controls="result-details"
+                  onClick={() => setDetailsOpen((v) => !v)}
+                  className="flex w-full cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-[11px] font-semibold text-[var(--text-sub)] hover:text-[var(--text-body)]"
+                >
+                  <span aria-hidden="true">{detailsOpen ? '▼' : '▶'}</span>
+                  詳細を見る
+                </button>
+                <div
+                  id="result-details"
+                  hidden={!detailsOpen}
+                  className="space-y-3 border-t border-[var(--border)] px-4 pb-3 pt-3"
+                >
+                  {/* 副次情報（seed / discoveredPbi / addedPbi / tokenSpent / coverage・debt / backlogReview） */}
+                  <ResultSecondaryInfo result={result} />
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
           {/* 主CTAはスクロール内容の最下部に sticky 固定し、常に親指の届く位置に置く（HIG） */}
           <div className="sticky bottom-0 -mx-5 -mb-4 border-t border-[var(--border)] bg-[var(--card)]/95 px-5 py-3 pb-safe backdrop-blur">
