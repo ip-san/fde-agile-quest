@@ -51,7 +51,7 @@ export function fetchBoard(cfg) {
           field(name:"${cfg.stageField}"){
             ... on ProjectV2SingleSelectField { id name options { id name } }
           }
-          items(first:100){
+          items(last:100){
             nodes{
               id
               fieldValueByName(name:"${cfg.stageField}"){
