@@ -18,6 +18,51 @@
 
 <!-- ここに指揮者が新しい順で追記する。 -->
 
+## 2026-06-28 — A 背圧 BLOCKED (10/10) — 次ティックはマージ後に再開
+
+- 背圧: open PR = 10 / limit = 10 → blocked:true → 実装停止
+- このティックで #278・#279 を完了・PR 提出したことで 10 に到達
+- 次ティックは PR マージ後に自動解除される
+
+## 2026-06-28 — #279 S2 advocacy 3件 役割緊張 [ブランチ: loop/s2-advocacy-tension-279-20260628]
+
+- 問題: record/hypothesis/crossdock の advocacy 3件が全員格言同方向・説教感3連続
+- 設計: record(PO=一行で十分/速く動く↔dev=防具として言質必須)/hypothesis(PO=検討に戦略的余地↔dev=手が止まる)/crossdock(PO=条件付き前向き↔SM=言い切りを戒める)
+- R1 🔴1: record の PO が SEGMENT_LEAD(kokyaku=po) で最頻表示なのに a=warn 方向を推していた → PO を「一行で十分・足を止めずに動け」に修正
+- レビュー: story-reviewer + agile-expert 並列 → R1 🔴1修正 → R2 ドライ（🔴ゼロ）
+- ゲート: npm run check（typecheck+biome+vitest 395 tests）全通過 + gen:index(133 events)
+- 状態: PR #282 作成・#279 inReview
+- 残課題: なし
+
+## 2026-06-28 — #278 s2後半デイリー c択追加（fillrate/stakeholders）[ブランチ: loop/s2-late-c-choices-278-20260628]
+
+- 問題: s2-daily-fillrate/stakeholders が 2択のまま残っていて「またこれか」
+- 追加: fillrate(ABC分析/insight+2/trust-1)/stakeholders(操作ログ+現場観察/insight+2/trust-1) — 現場の知 vs データの証拠型
+- R1 🟡4件修正: stakeholders c の "b" ID 名指し→内容言及 / fillrate c 末尾一般論→翌日帰結描写 / 「変動係数」→「出荷量のばらつき」 / コメント「機会コスト」→「実損」
+- レビュー: story-reviewer + learning-designer 並列 × 2ラウンドで dry（🔴ゼロ）
+- ゲート: npm run check（typecheck+biome+vitest 395 tests）全通過 + gen:index(133 events)
+- 状態: PR #281 作成・#278 inReview
+- 残課題: 🟡台帳 fillrate c 末尾「結城さんの表情が動いた」がtrust回復に読まれうる（story-reviewer 追跡）
+
+## 2026-06-28 — D フェーズ playtest-triage（S2後半〜S3）
+
+- 焦点: S2後半デイリー帯/S2 advocacy残り3件/S3移譲テーマ — 除外済み事項は重複チェック済み
+- 🔴1: S2後半（fillrate/crossdock/stakeholders等）2択連打=中盤で手が作業化 → issued: #278 (Backlog)
+- 🔴2: S2 advocacy残り3件(record/hypothesis/crossdock)格言同方向 → issued: #279 (Backlog)
+- 🔴3: S3後半 移譲テーマ飽和（handover2/handoff-trust/bottleneck等） → issued: #280 (Backlog)
+- 🟡: s2-daily-tolerance deduction不足 / fraud hearing固定型 / deduction miss文が長い / EndingScreen周回フック弱い → findings.md に記録
+- 🟢: S3 c択効果確認 / 最終レビューフラグ分岐 / fraud縦糸の引き / 機会損失アーク遅延回収
+
+## 2026-06-28 — #272 S2 advocacy dod/depth 役割緊張 [ブランチ: loop/s2-advocacy-diversity-272-20260628]
+
+- 問題: S2 advocacy 全件が PO/SM/dev 同方向でエージェンシー消失（2件を改善）
+- s2-daily-dod: PO(全部入れろ)↔dev(最小から)↔SM(守れるか問い直す) 三角構図に
+- s2-daily-depth: dev を「広く浅くでいい」逆張りに変更（a択と正対・AI混線も解消）
+- レビュー: R1（story/agile 並列）🔴1→修正(SM復活・dev台詞修正)→R2 ドライ（全🟢）
+- ゲート: npm run check（typecheck+biome+vitest 395 tests）全通過
+- 状態: PR #277 作成・#272 inReview
+- 残課題: 残り3件(record/hypothesis/crossdock) → #279 として Backlog 積み
+
 ## 2026-06-28 — #271 s2-daily-return c択 insight+2 [ブランチ: loop/s2-return-c-agency-271-20260628]
 
 - 診断: c択が b(insight+1,culture+1)に完全支配されていた（同insight+1かつtrust-1のみ）。エージェンシー消失

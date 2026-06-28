@@ -123,6 +123,28 @@
 #### 🟢 強み（記録のみ）
 - `s1-physical-ai-showcase`：映像コントラスト（ロボット vs 手書き台帳）＋謎の引きが抜群。横展開価値大。
 - `s3-review-topdown` c択（崩れたデモを止めて田淵の手順を見せる）：選んだ甲斐が最大。周回性の核。
+
+### 2026-06-28 / playtest-triage（S2後半〜S3焦点 / ループ継続ティック）
+
+#### 起票
+- [resolved] (🔴→PR #281) playtest-critic / events-sprint2.ts:S2後半帯 — fillrate/crossdock/demofail/stakeholders等で2択a=warn/b=正解が密集。c択・deductionゼロで「またこれか」が定着しスマホに手が伸びる。issued: #278 → PR #281(inReview)。2026-06-28。
+  - fillrate c: ABC分析/出荷量ばらつき/insight+2/trust-1。stakeholders c: 操作ログ+現場観察/insight+2/trust-1。
+  - [open] (🟡台帳) story-reviewer / events-sprint2.ts:s2-daily-fillrate c — resultText末尾「結城さんの表情が動いた」がtrust回復に読まれうる可能性（原則違反なし・台帳追跡のみ）。2026-06-28。
+- [resolved] (🔴→PR #282) playtest-critic / events-sprint2.ts:s2-daily-record/hypothesis/crossdock — advocacy残り3件が格言同方向（全員「〜してこい」）で3連続説教感。issued: #279 → PR #282(inReview)。2026-06-28。
+  - 設計: record(PO=一行で十分↔dev=防具)/hypothesis(PO=検討に戦略余地↔dev=手が止まる)/crossdock(PO=前向き↔SM=言い切りを戒める)。R1 🔴(record PO が SEGMENT_LEAD で a=warn 方向)→修正→R2 dry。
+- [open] (🔴) playtest-critic / events-sprint3.ts:S3後半移譲テーマ — handover2/handoff-trust/bottleneck等が「抱える vs 渡す」同型連打で後半まるごと同じ味。issued: #280。
+
+#### 未起票🟡（上限外・次回候補）
+- (🟡) playtest-critic / events-sprint2.ts:s2-daily-tolerance — 精度99%罠が面白い題材なのに素2択埋没。deductionを足すと中盤の山になれる。
+- (🟡) playtest-critic / events-sprint3.ts:fraud hearing — keiri-closing/soumu-paper/circularのhearingがbad択3件固定型。周回で読める。
+- (🟡) playtest-critic / 横断:deduction miss文 — s3-daily-scale等のdeduction miss textが説明的で長い。短く刺して reveal で納得させる配分に。
+- (🟡) playtest-critic / EndingScreen — 周回フックが弱い。topDown/genbaTrust分岐で最終レビューが変わる強みをエンディングで示唆していない。
+
+#### 🟢 強み（記録のみ）
+- S3 c択（onboard/drive/ai-agent/burn）が「軸そのものを変えるベクトル」で機能。S2後半への逆輸入が最小コスト最大効果。
+- 最終レビューのフラグ分岐（topDown/genbaTrust）が周回性の核。EndingScreenでフィーチャーすると2周目動機になる。
+- fraud縦糸（ghost-stock→keiri→circular→soumu-paper）の「次どうなる？」焦らし設計。本作最大の引き。
+- 機会損失アーク（deprioritizedJoushi/deprioritizedGenba）の時間差回収——前スプリントの判断が終盤に別の重さで返る稀有な設計。
 - `s2-retro-cap/wip`：前スプリントレバーの callback で「覚えていてくれる」感覚が機能。
 
 ### 2026-06-26 / playtest-triage Tick 59（S3 fraudCase アーク・escalation）
