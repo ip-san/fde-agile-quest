@@ -151,6 +151,8 @@ stateDiagram-v2
 | `.claude/agents/ledger/RUNLOG.md` | ティックごとの作業記録（朝の引き継ぎ） |
 | `.claude/agents/ledger/findings.md` | 非ブロッキング指摘の持ち越し台帳 |
 | `docs/SELF_IMPROVEMENT.md` | 3 層ループの概念説明（入口ドキュメント） |
+| `.claude/agents/loop-meta-engineer.md` | ループ構造の自己改善エージェント（メタ改善担当） |
+| `.claude/skills/loop-meta/SKILL.md` | 単発でループ構造を診断・修正するスキル |
 
 > **このファイルは設計図（地図）であって正本ではない。**
 > 正本は各 `.claude/agents/*.md` とスクリプト群。実装が変わったらここを追従する。

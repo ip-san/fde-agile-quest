@@ -257,6 +257,19 @@ body {
   animation: pull-land-fade 1.3s ease-out forwards;
 }
 
+/* normal 結果のヘッドライン文が下からふわっと上昇して現れる（ResultModal.tsx の normal ケース）。
+ * motion-safe:animate-[fadeSlideIn_...] で呼び出すため、prefers-reduced-motion では自動的に無効化される。 */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* モーション過敏設定では閃光・回転などの動きを無効化する（アクセシビリティ）。 */
 @media (prefers-reduced-motion: reduce) {
   .decisive-flash {
