@@ -10,6 +10,7 @@ import {
   canReview,
   canStart,
   dailyBeatsInSprint,
+  deliveredPbiIds,
   estimateOf,
   forecastPoints,
   GEN_TOKEN_COST,
@@ -25,6 +26,7 @@ import {
   wipLimitFor,
 } from '../../engine/backlog'
 import type { ProgressCore } from '../../engine/progression'
+import { sfxPrecept, sfxReveal } from '../../engine/sfx'
 import { seedFor } from '../../lib/seed'
 import type { ExecTier, ReviewDepth } from '../../types'
 import { MiniGame } from '../minigame/MiniGame'
@@ -94,6 +96,13 @@ export function KanbanView({
   const [justPulledId, setJustPulledId] = useState<string | null>(null)
   const pullToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pullHighlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Ship 演出：Done 遷移トースト・カードハイライト・インクリメント完成フラグ
+  const [shipToast, setShipToast] = useState<{ label: string; key: number; isIncrement: boolean } | null>(null)
+  const [justShippedId, setJustShippedId] = useState<string | null>(null)
+  const shipToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const shipHighlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Done 遷移を検知するために直前の backlogDone を記憶する
+  const prevBacklogDoneRef = useRef<readonly string[]>(core.backlogDone)
   const tabsId = useId()
   const tabKanbanRef = useRef<HTMLButtonElement>(null)
   const tabBacklogRef = useRef<HTMLButtonElement>(null)
@@ -150,8 +159,46 @@ export function KanbanView({
     return () => {
       if (pullToastTimerRef.current) clearTimeout(pullToastTimerRef.current)
       if (pullHighlightTimerRef.current) clearTimeout(pullHighlightTimerRef.current)
+      if (shipToastTimerRef.current) clearTimeout(shipToastTimerRef.current)
+      if (shipHighlightTimerRef.current) clearTimeout(shipHighlightTimerRef.current)
     }
   }, [])
+
+  // Done 遷移の検知：core.backlogDone が増えたとき演出を起動する
+  useEffect(() => {
+    const prev = prevBacklogDoneRef.current
+    const prevSet = new Set(prev)
+    const newDoneIds = core.backlogDone.filter((id) => !prevSet.has(id))
+    prevBacklogDoneRef.current = core.backlogDone
+
+    if (newDoneIds.length === 0) return
+
+    // 新たに Done になった id のうち最初の1件で演出する（通常は1件ずつ）
+    const shippedId = newDoneIds[0]
+
+    // インクリメント完成判定：親 PBI が新たに納品済みになったか
+    const prevDelivered = new Set(deliveredPbiIds(prev))
+    const nextDelivered = new Set(deliveredPbiIds(core.backlogDone))
+    const incrementCompleted = [...nextDelivered].some((id) => !prevDelivered.has(id))
+
+    // 効果音（インクリメント完成＝sfxPrecept、単品 Done＝sfxReveal('good')）
+    if (incrementCompleted) {
+      sfxPrecept()
+    } else {
+      sfxReveal('good')
+    }
+
+    // トースト
+    if (shipToastTimerRef.current) clearTimeout(shipToastTimerRef.current)
+    const label = incrementCompleted ? '価値を1つ届けた' : 'Shipped！顧客に届いた'
+    setShipToast({ label, key: Date.now(), isIncrement: incrementCompleted })
+    shipToastTimerRef.current = setTimeout(() => setShipToast(null), 2000)
+
+    // カードハイライト（Done カードを一瞬光らせる）
+    if (shipHighlightTimerRef.current) clearTimeout(shipHighlightTimerRef.current)
+    setJustShippedId(shippedId)
+    shipHighlightTimerRef.current = setTimeout(() => setJustShippedId(null), 1400)
+  }, [core.backlogDone])
 
   // 引き込みボタンのラッパー：演出を起動してから実際のアクションを呼ぶ
   const handlePullIntoSprint = useCallback(
@@ -543,6 +590,7 @@ export function KanbanView({
             {done.map((id) => {
               const parent = backlogItem(parentPbiOf(id))
               if (!parent) return null
+              const isJustShipped = id === justShippedId
               return (
                 <Card
                   key={id}
@@ -551,6 +599,7 @@ export function KanbanView({
                   dimmed
                   parentLabel={isSbi(id) ? parent.title : undefined}
                   badges={<PbiBadges id={parentPbiOf(id)} stakeholder={parent.stakeholder} />}
+                  highlight={isJustShipped}
                 >
                   {undoneSet.has(id) ? (
                     <span
@@ -590,6 +639,28 @@ export function KanbanView({
       {/* スクリーンリーダー向け：引き込み確定の読み上げ（aria-live=polite） */}
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {pullToast ? `${pullToast.pts}ポイントをスプリントに積みました` : ''}
+      </div>
+
+      {/* Ship トースト — Done 遷移の瞬間に「届けた」を知らせる。
+          pull-toast アニメーションを流用（CSS追加なし）。
+          インクリメント完成（全SBI Done＝顧客価値を一つ納品）はより明るい amber で区別。
+          aria-hidden で視覚装飾専用。スクリーンリーダー向けは下の aria-live 側。 */}
+      {shipToast && (
+        <div aria-hidden="true" className="relative h-0">
+          <span
+            key={shipToast.key}
+            className={`pull-toast pointer-events-none absolute left-1/2 top-2 z-10 whitespace-nowrap rounded-full px-3 py-1 text-[12px] font-bold text-white shadow-lg ${
+              shipToast.isIncrement ? 'bg-amber-500' : 'bg-emerald-600'
+            }`}
+          >
+            {shipToast.label}
+          </span>
+        </div>
+      )}
+
+      {/* スクリーンリーダー向け：Ship 確定の読み上げ（aria-live=assertive で確実に読み上げる） */}
+      <div aria-live="assertive" aria-atomic="true" className="sr-only">
+        {shipToast ? shipToast.label : ''}
       </div>
 
       {/* ── プロダクトバックログパネル ──

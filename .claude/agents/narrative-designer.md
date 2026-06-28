@@ -44,7 +44,9 @@ model: opus
    npm run typecheck
    npm test
    ```
-4. **自分でレビュー合格判定はしない**。`story-reviewer` / `learning-designer` の 🔴 を受けて直す側に回る。
+4. **full-autonomous（loop C-phase 経由の委任）の場合**: story-reviewer / learning-designer 相当の
+   自己チェック（呼称・設定継続・メーター原則・フラグ配線・トーン・学習効果）を自分で実施し、
+   問題なければそのまま完結させてよい。召集型（showrunner 経由）の場合は外部エージェントに渡す。
 
 ## 真実源の編集境界（cast.ts / STORY.md は「触れる所」と「触れない所」を分ける）
 

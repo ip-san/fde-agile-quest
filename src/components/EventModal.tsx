@@ -167,6 +167,15 @@ export function EventModal({ event, unexpected, aiTokens, revealHint, timed, onC
               <p className="text-xs font-semibold text-[var(--text-sub)]">あなたの判断は？</p>
               <p className="text-xs text-[var(--text-sub)]">※ 正解はない。結果は決めてから分かる</p>
             </div>
+            {event.choices.length > 2 && (
+              <p
+                aria-label={`選択肢が${event.choices.length}つあります。分岐が深い回です`}
+                className="inline-flex items-center gap-1 rounded-full bg-violet-500/15 px-2.5 py-0.5 text-xs font-bold text-violet-300"
+              >
+                <span aria-hidden="true">◈</span>
+                {event.choices.length}択 — 分岐が深い回
+              </p>
+            )}
             {event.choices.map((c) => {
               const cost = c.tokenCost ?? 0
               // 生成AIに頼る選択は、残量が足りなければ封印（engine の canAfford と同一述語）

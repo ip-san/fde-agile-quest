@@ -9,9 +9,57 @@ interface Props {
   seed: number
   /** レビュー対象 PBI の id。あればそのタスク内容に一致する作問を出す（無ければ seed で巡回）。 */
   pbiId?: string
-  /** 2回目以降のレビュー（再レビュー／同じ親PBIの別作業項目）。true なら題材一致を避けて別の作問を出す。 */
+  /** 2回目以降のレビュー（再レビュー／同じ親PBIの別の作業項目）。true なら題材一致を避けて別の作問を出す。 */
   variety?: boolean
   onResolve: (tier: ExecTier) => void
+}
+
+// ───────────────────────────────────────────────────────────
+// AI自己申告のトーンバリエーション（seed % 3 で3パターン）
+//
+// パターン 0（通常）: 過信を誘う既定トーン。aiNote をそのまま表示。
+// パターン 1（断言）: 「問題はない、全部確認した」と攻撃的に断言する。
+//   → AI を素通りさせる誘惑が高まる = 正解を拾う重みが増す。
+// パターン 2（正直）: 確認できなかった箇所があると珍しく告白する。
+//   → LGTM が正解の回で「AIが自ら言うなら通してよい」の信頼感をテスト。
+//
+// データ層の aiNote は変更しない。表示ロジックのみで振り分ける。
+// ───────────────────────────────────────────────────────────
+type AiTone = 'normal' | 'assertive' | 'honest'
+
+function aiToneFor(seed: number): AiTone {
+  const pattern = ((seed % 3) + 3) % 3
+  if (pattern === 1) return 'assertive'
+  if (pattern === 2) return 'honest'
+  return 'normal'
+}
+
+interface AiNoteConfig {
+  label: string
+  labelClass: string
+  prefix: string
+  suffix: string
+}
+
+const AI_NOTE_CONFIG: Record<AiTone, AiNoteConfig> = {
+  normal: {
+    label: '🤖 AI：',
+    labelClass: 'font-semibold text-sky-400',
+    prefix: '',
+    suffix: '',
+  },
+  assertive: {
+    label: '🤖 AI（断言）：',
+    labelClass: 'font-semibold text-rose-400',
+    prefix: '「',
+    suffix: '」——問題はない。すべて確認した。',
+  },
+  honest: {
+    label: '🤖 AI（注）：',
+    labelClass: 'font-semibold text-amber-400',
+    prefix: '自分では確認できなかった箇所が1〜2点ある。それ以外は問題ない——',
+    suffix: '',
+  },
 }
 
 interface RevealedRowProps {
@@ -48,6 +96,10 @@ export function MiniGameReview({ seed, pbiId, variety, onResolve }: Props) {
 
   const revealed = tier !== null
   const n = picked.length
+
+  // seed % 3 で AI 自己申告のトーンを決める（データ層の aiNote は変更しない）
+  const tone = aiToneFor(seed)
+  const noteConfig = AI_NOTE_CONFIG[tone]
 
   // 答え合わせ表示に切り替わった際、「確定する」ボタンへフォーカスを移す
   const confirmRef = useRef<HTMLButtonElement>(null)
@@ -126,9 +178,12 @@ export function MiniGameReview({ seed, pbiId, variety, onResolve }: Props) {
       {/* AI が書いた差分 */}
       <DiffView diff={round.diff} />
 
-      {/* AI の自己申告（過信を誘うメモ）— text-sky-400 は意味色（AIを示す色）として保持 */}
+      {/* AI の自己申告 — seed % 3 で3トーンに変化させ、パターン処理化を防ぐ */}
       <p className="rounded-lg bg-[var(--panel)]/40 px-3 py-1.5 text-xs text-[var(--text-sub)]">
-        <span className="font-semibold text-sky-400">🤖 AI：</span> <RichText text={round.aiNote} interactive={false} />
+        <span className={noteConfig.labelClass}>{noteConfig.label}</span>
+        {noteConfig.prefix}
+        <RichText text={round.aiNote} interactive={false} />
+        {noteConfig.suffix}
       </p>
 
       {/* 点検項目：選択フェーズ（SelectableOptionList）と答え合わせフェーズ（RevealedRow）で切り替え */}
