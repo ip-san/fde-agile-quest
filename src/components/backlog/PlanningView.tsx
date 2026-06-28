@@ -22,6 +22,7 @@ import type { ExecTier } from '../../types'
 import { MiniGame } from '../minigame/MiniGame'
 import { RichText } from '../RichText'
 import { LegacySummary, PbiBadges, StakeholderBalance, VelocityChart } from './BacklogShared'
+import { BacklogTutorialOverlay } from './BacklogTutorialOverlay'
 
 // ───────────────────────── ヘルパ ─────────────────────────
 
@@ -156,11 +157,25 @@ export function PlanningView({
       </div>
 
       {/* 元：プロダクトバックログ（選ぶ側） */}
-      <section className="rounded-xl bg-slate-900/40 p-2">
+      {/* relative: BacklogTutorialOverlay の absolute 配置の基準になる */}
+      <section className="relative rounded-xl bg-slate-900/40 p-2">
+        <BacklogTutorialOverlay />
         <h3 className="mb-1 px-1 text-xs font-bold text-slate-300">
           <RichText text="{{プロダクトバックログ}}" />
           <span className="ml-1 font-normal text-slate-400">価値順・上位から選ぶ</span>
         </h3>
+
+        {/* S3（文化を残す）のみ：引き継ぎ視点のヒントを表示する */}
+        {sprintIndex === 2 && (
+          <p
+            role="note"
+            className="mb-2 rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-2 text-xs leading-relaxed text-violet-200"
+          >
+            <span className="font-semibold">このスプリントのゴール：「成果を本番と人に根付かせる」</span>
+            <br />
+            運用手順書・オンボーディング・監視手順の3項目を届けると、自分がいなくても回る状態が残ります。今回は「出力を増やす」より「引き継ぐ」視点で予測を組みましょう。
+          </p>
+        )}
 
         {/* 持ち越しがある場合だけ注意書きを出す */}
         {carryoverSet.size > 0 && (

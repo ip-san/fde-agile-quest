@@ -45,12 +45,16 @@ const SPIN_MS = 2200
 export function Roulette({ disabled, onResult }: Props) {
   const [rotation, setRotation] = useState(0)
   const [spinning, setSpinning] = useState(false)
+  // transition を即カットするためのフラグ（スキップ時のみ true）
+  const [skipTransition, setSkipTransition] = useState(false)
   // スクリーンリーダー向けの結果アナウンス
   const [announce, setAnnounce] = useState('')
   // 前庭障害対策: prefers-reduced-motion なら回転アニメを省く
   const reduceMotion = usePrefersReducedMotion()
   const pendingSegment = useRef<Segment | null>(null)
   const pendingPick = useRef(0)
+  // スキップ時の着地角度（transition:none で即セットするため）
+  const landingRef = useRef(0)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // 1回の回転で onResult を二重発火させないためのガード（transitionend と保険タイマーの競合対策）
   const resolvedRef = useRef(true)
@@ -64,6 +68,7 @@ export function Roulette({ disabled, onResult }: Props) {
       timeoutRef.current = null
     }
     setSpinning(false)
+    setSkipTransition(false)
     const seg = pendingSegment.current
     if (seg) {
       sfxStop() // 止まった瞬間の合図（お題が確定する区切り）
@@ -84,10 +89,12 @@ export function Roulette({ disabled, onResult }: Props) {
     const landing = (360 - center) % 360
     const base = rotation - (rotation % 360)
     const spins = 5 + Math.floor(Math.random() * 3)
+    landingRef.current = base + landing
     setRotation(base + spins * 360 + landing)
     setSpinning(true)
+    setSkipTransition(false)
     sfxSpin() // 回り出した合図
-    setAnnounce('ルーレットを回しています…')
+    setAnnounce('ルーレットを回しています… タップまたは Enter でスキップできます')
 
     // transitionend 取りこぼし（タブ非アクティブ・reduced-motion 等）の保険。
     // reduced-motion 時はアニメ無しなので短時間で解決する
@@ -95,19 +102,39 @@ export function Roulette({ disabled, onResult }: Props) {
     timeoutRef.current = setTimeout(finishSpin, reduceMotion ? 80 : SPIN_MS + 300)
   }, [disabled, spinning, rotation, finishSpin, reduceMotion])
 
-  // SPACE で回す。ただしボタン等のフォーカス可能な要素に居る間は native の挙動
-  //（ボタン活性化・スクロール）を奪わない——「回す」ボタン自身も onClick が Space で発火する
+  // スピン中クリック/Enter/Space で即確定（待ち時間をスキップ）
+  const skipSpin = useCallback(() => {
+    if (!spinning || resolvedRef.current) return
+    // transition を切って着地角度へ即セット → finishSpin で結果を返す
+    setSkipTransition(true)
+    setRotation(landingRef.current)
+    // transition:none で DOM 更新が入るが transitionend は飛ばない。
+    // 1フレーム後に finishSpin を呼ぶことで確実に解決する
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    timeoutRef.current = setTimeout(finishSpin, 32)
+  }, [spinning, finishSpin])
+
+  // SPACE/Enter で操作。スピン中は skipSpin、スピン前は spin
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.code !== 'Space' || disabled || spinning) return
+      if (e.code !== 'Space' && e.code !== 'Enter') return
+      if (disabled) return
       const el = e.target as HTMLElement | null
+      // スキップボタン自身がフォーカスを持つ時は native の onClick に任せる
+      if (el && el.dataset['skipBtn']) return
+      if (spinning) {
+        e.preventDefault()
+        skipSpin()
+        return
+      }
+      // フォーカス可能な要素（スキップボタン以外）では native 動作を保つ
       if (el && el.closest('button, a, input, textarea, select, [tabindex], [contenteditable]')) return
       e.preventDefault()
       spin()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [spin, disabled, spinning])
+  }, [spin, skipSpin, disabled, spinning])
 
   // アンマウント時に保険タイマーを破棄（reset による key 付け替え再マウントで stale 発火を断つ）
   useEffect(
@@ -125,12 +152,15 @@ export function Roulette({ disabled, onResult }: Props) {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      {/* 盤面そのものもクリックで回せる（初見ユーザーは盤面を押しがち）。アクセシブルな導線は下の「回す」ボタン＋SPACE が担うので、
-          この盤面ボタンは aria-hidden・非フォーカスにして二重読み上げ/二重タブ停止を避ける（マウス操作の利便だけ足す）。 */}
+      {/* 盤面そのものもクリックで操作できる（初見ユーザーは盤面を押しがち）。
+          スピン前: クリックでスピン開始。
+          スピン中: クリックでスキップ（即確定）。
+          アクセシブルな主導線は下の「回す」ボタン＋スキップボタン＋キーボードが担うので、
+          この盤面ボタンは aria-hidden・非フォーカスにして二重読み上げ/二重タブ停止を避ける。 */}
       <button
         type="button"
-        onClick={spin}
-        disabled={disabled || spinning}
+        onClick={spinning ? skipSpin : spin}
+        disabled={disabled && !spinning}
         aria-hidden="true"
         tabIndex={-1}
         className="relative h-56 w-56 rounded-full border-0 bg-transparent p-0 min-[400px]:h-64 min-[400px]:w-64 sm:h-72 sm:w-72 disabled:cursor-default [&:not(:disabled)]:cursor-pointer"
@@ -149,7 +179,9 @@ export function Roulette({ disabled, onResult }: Props) {
           style={{
             transform: `rotate(${rotation}deg)`,
             transition:
-              spinning && !reduceMotion ? `transform ${SPIN_MS / 1000}s cubic-bezier(0.17, 0.67, 0.12, 0.99)` : 'none',
+              spinning && !reduceMotion && !skipTransition
+                ? `transform ${SPIN_MS / 1000}s cubic-bezier(0.17, 0.67, 0.12, 0.99)`
+                : 'none',
           }}
           onTransitionEnd={handleTransitionEnd}
           aria-hidden="true"
@@ -257,18 +289,44 @@ export function Roulette({ disabled, onResult }: Props) {
           />
           <path d="M16 26 L9 8 Q16 5 23 8 Z" fill="rgba(255,255,255,0.35)" />
         </svg>
+
+        {/* スピン中オーバーレイ：タップ面積の視覚補助（スピン時のみ表示、aria-hidden） */}
+        {spinning && (
+          <span
+            className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-full"
+            aria-hidden="true"
+          >
+            <span className="rounded-full bg-black/40 px-3 py-1 text-xs font-bold text-white/90 backdrop-blur-[2px]">
+              タップで確定
+            </span>
+          </span>
+        )}
       </button>
 
-      <button
-        type="button"
-        onClick={spin}
-        disabled={disabled || spinning}
-        data-focus-return
-        aria-label="ルーレットを回して、その日の出来事を引く"
-        className="rounded-xl bg-[var(--accent)] px-8 py-3 text-lg font-bold text-[var(--bg)] shadow-lg shadow-[var(--accent)]/30 transition hover:bg-[var(--accent-hover)] active:scale-95 disabled:cursor-not-allowed disabled:bg-[var(--border-strong)] disabled:text-[var(--text-disabled)] disabled:shadow-none"
-      >
-        {spinning ? '回転中…' : '回す（SPACE）'}
-      </button>
+      {/* スピン前: 「回す」ボタン / スピン中: 「スキップ」ボタン（アクセシブル主導線） */}
+      {spinning ? (
+        <button
+          type="button"
+          onClick={skipSpin}
+          data-skip-btn="true"
+          data-focus-return
+          aria-label="ルーレットを今すぐ確定する（スキップ）"
+          className="rounded-xl bg-slate-600 px-8 py-3 text-lg font-bold text-white shadow-lg transition hover:bg-slate-500 active:scale-95"
+        >
+          確定（Enter）
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={spin}
+          disabled={disabled}
+          data-focus-return
+          aria-label="ルーレットを回して、その日の出来事を引く"
+          className="rounded-xl bg-[var(--accent)] px-8 py-3 text-lg font-bold text-[var(--bg)] shadow-lg shadow-[var(--accent)]/30 transition hover:bg-[var(--accent-hover)] active:scale-95 disabled:cursor-not-allowed disabled:bg-[var(--border-strong)] disabled:text-[var(--text-disabled)] disabled:shadow-none"
+        >
+          回す（SPACE）
+        </button>
+      )}
 
       {/* スクリーンリーダー向けの状態通知 */}
       <span className="sr-only" role="status" aria-live="assertive">

@@ -274,10 +274,101 @@ function SeedReveal({ seedId, seedNew }: { seedId?: string; seedNew?: boolean })
   )
 }
 
+/** 副次情報ブロック（seed / discoveredPbi / addedPbi / tokenSpent / coverage・debt / backlogReview）。
+ *  軽量モード詳細とフルモード詳細の両方から呼ばれる共通コンポーネント。 */
+function ResultSecondaryInfo({
+  result,
+}: {
+  result: Pick<
+    ResultView,
+    'seedId' | 'seedNew' | 'discoveredPbi' | 'addedPbi' | 'tokenSpent' | 'coverageDelta' | 'debtDelta' | 'backlogReview'
+  >
+}) {
+  return (
+    <>
+      <SeedReveal seedId={result.seedId} seedNew={result.seedNew} />
+
+      {result.discoveredPbi && (
+        <div className="space-y-1 rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-2.5">
+          <p className="text-[11px] font-semibold text-rose-300">現場の声から、新しいバックログ項目が見つかった</p>
+          <p className="text-sm font-medium text-[var(--text)]">『{result.discoveredPbi.title}』</p>
+          <p className="text-[11px] text-[var(--text-sub)]">
+            プロダクトバックログに追加。次のプランニングで優先順位を検討しましょう。
+          </p>
+        </div>
+      )}
+
+      {result.addedPbi && (
+        <div
+          className={`space-y-1 rounded-xl border px-4 py-2.5 ${
+            result.addedPbi.toSprint ? 'border-amber-500/50 bg-amber-500/10' : 'border-sky-500/40 bg-sky-500/10'
+          }`}
+        >
+          <p className={`text-[11px] font-semibold ${result.addedPbi.toSprint ? 'text-amber-300' : 'text-sky-300'}`}>
+            {result.addedPbi.toSprint
+              ? '⚠ 割り込みを受けた：今スプリントに要望を差し込んだ'
+              : '要望をプロダクトバックログに積んだ'}
+          </p>
+          <p className="text-sm font-medium text-[var(--text)]">『{result.addedPbi.title}』</p>
+          <p className="text-[11px] text-[var(--text-sub)]">
+            {result.addedPbi.toSprint
+              ? '今スプリントの予測が増えた。1日のレビュー容量を超えれば、その分は終わらず持ち越しに——スプリントゴールを危うくしうる。PO と再交渉し、ゴールを守れる範囲か見極めを。'
+              : '次のプランニングで Ready 化し、優先順位を検討しましょう。今の焦点は守られた。'}
+          </p>
+        </div>
+      )}
+
+      {result.tokenSpent ? (
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-semibold text-[var(--text-sub)]">AIトークン</span>
+          <span className="rounded-lg bg-cyan-500/15 px-2.5 py-1 text-sm font-bold tabular-nums text-cyan-300">
+            ▼ −{result.tokenSpent}
+          </span>
+        </div>
+      ) : null}
+
+      {result.coverageDelta || result.debtDelta ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[11px] font-semibold text-[var(--text-sub)]">リポジトリ</span>
+          {result.coverageDelta ? (
+            <span
+              className={`rounded-lg px-2.5 py-1 text-sm font-bold tabular-nums ${result.coverageDelta > 0 ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'}`}
+            >
+              コード {result.coverageDelta > 0 ? '▲ +' : '▼ '}
+              {result.coverageDelta}%
+            </span>
+          ) : null}
+          {result.debtDelta ? (
+            <span
+              className={`rounded-lg px-2.5 py-1 text-sm font-bold tabular-nums ${result.debtDelta > 0 ? 'bg-rose-500/15 text-rose-300' : 'bg-emerald-500/15 text-emerald-300'}`}
+            >
+              ▲ 負債 {result.debtDelta > 0 ? '+' : ''}
+              {result.debtDelta}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+
+      {result.backlogReview && <BacklogReviewBlock review={result.backlogReview} />}
+    </>
+  )
+}
+
 // ─── Headline（主役）選定 ────────────────────────────────────────────────
 
-/** 主役ブロックの種別。5段階の優先度で一意に決まる。 */
-export type HeadlineKind = 'danger' | 'greatExit' | 'precept' | 'valueGain' | 'normal'
+/** 主役ブロックの種別。7段階の優先度で一意に決まる。 */
+export type HeadlineKind = 'danger' | 'greatExit' | 'poorExit' | 'precept' | 'valueGain' | 'cultureLand' | 'normal'
+
+/**
+ * resultText を「冒頭1文（head）」と「残り（rest）」に分割する純関数。
+ * 句点「。」で最初の文を切り出す。句点がなければ全文を head、rest は空文字。
+ * normal ケースのヘッドライン主役化に使う。
+ */
+export function splitHeadlineSentence(text: string): { head: string; rest: string } {
+  const idx = text.indexOf('。')
+  if (idx === -1) return { head: text, rest: '' }
+  return { head: text.slice(0, idx + 1), rest: text.slice(idx + 1).trimStart() }
+}
 
 /**
  * 毎ターンの「主役」を1つだけ選ぶ純関数（優先度順）。
@@ -287,18 +378,24 @@ export type HeadlineKind = 'danger' | 'greatExit' | 'precept' | 'valueGain' | 'n
  * 優先度:
  * 1) 致命圏 — dangerMeters.length>0 / onBrink
  * 2) 会心の山場出口 — execTier==='great' && tierResultText
- * 3) 心得の新規獲得 — newPreceptIds.length>0
- * 4) 顧客価値の伸び — backlogReview?.valueGain>0
- * 5) それ以外（通常: メーター差分が主役）
+ * 3) 詰め甘の山場出口 — execTier==='poor' && tierResultText
+ * 4) 心得の新規獲得 — newPreceptIds.length>0
+ * 5) 顧客価値の伸び — backlogReview?.valueGain>0
+ * 6) 文化の着地 — effects.culture>0 && meters.culture>=6
+ * 7) それ以外（通常: メーター差分が主役）
  */
 export function pickHeadline(
-  result: Pick<ResultView, 'execTier' | 'tierResultText' | 'newPreceptIds' | 'backlogReview'>,
-  dangerMeters: (keyof Meters)[]
+  result: Pick<ResultView, 'execTier' | 'tierResultText' | 'newPreceptIds' | 'backlogReview' | 'effects'>,
+  dangerMeters: (keyof Meters)[],
+  meters: Meters
 ): HeadlineKind {
   if (dangerMeters.length > 0) return 'danger'
   if (result.execTier === 'great' && result.tierResultText) return 'greatExit'
+  if (result.execTier === 'poor' && result.tierResultText) return 'poorExit'
   if (result.newPreceptIds.length > 0) return 'precept'
   if ((result.backlogReview?.valueGain ?? 0) > 0) return 'valueGain'
+  // 6) 文化の着地 — culture+ の選択 かつ cultureメーターが一定以上（定着フェーズ実感）
+  if ((result.effects.culture ?? 0) > 0 && meters.culture >= 6) return 'cultureLand'
   return 'normal'
 }
 
@@ -307,18 +404,41 @@ interface Props {
   /** 判断適用後のメーター（致命圏入りの検知に使う） */
   meters: Meters
   onContinue: () => void
+  /** 物語主軸フラグ（S3の結末を変える選択）を立てた選択かどうか。true なら通常より1段強い indigo フラッシュを追加 */
+  isPivotalChoice?: boolean
+  /** normal（great/poor/precept/danger 以外）の結果が連続した回数。3以上で積み上がりバッジを表示。 */
+  normalStreak?: number
 }
 
-/** 開示演出のフラッシュ色。閃光は"決定的瞬間"だけに絞る（impact のみ／danger は別途 rose）。
+/**
+ * 「平凡な結果」の判定。
+ * headlineKind==='normal' かつ メーター変動が全て 1pt 以下 かつ 新規心得なし かつ isPivotalChoice でない。
+ * 上記4条件をすべて満たした場合のみ軽量モード（true）を返す。
+ */
+export function isCompactResult(
+  headlineKind: HeadlineKind,
+  effects: Effects,
+  newPreceptIds: number[],
+  isPivotalChoice: boolean
+): boolean {
+  if (headlineKind !== 'normal') return false
+  if (isPivotalChoice) return false
+  if (newPreceptIds.length > 0) return false
+  const maxAbsDelta = Math.max(...Object.values(effects).map((v) => Math.abs(v ?? 0)), 0)
+  return maxAbsDelta <= 1
+}
+
+/** 開示演出のフラッシュ色。閃光は"決定的瞬間"だけに絞る（impact/heavy のみ／danger は別途 rose）。
  *  good/bad/normal は音のみ＝結果画面の閃光過多と認知負荷を避ける。 */
 const FLASH_COLOR: Record<RevealKind, string | null> = {
+  heavy: '#f97316', // orange-500 ＝ fraud系・重大真実（impact より一段強い）
   impact: '#fbbf24', // amber-400 ＝「異議あり！」の閃光に相当
   good: null,
   bad: null,
   normal: null,
 }
 
-export function ResultModal({ result, meters, onContinue }: Props) {
+export function ResultModal({ result, meters, onContinue, isPivotalChoice = false, normalStreak = 0 }: Props) {
   // フォーカストラップ＋Escで次へ。Enter/Space は data-initial-focus を当てた
   // 「次へ」ボタンへ初期フォーカスが乗るので native に処理される
   const ref = useFocusTrap<HTMLDivElement>(onContinue)
@@ -340,8 +460,20 @@ export function ResultModal({ result, meters, onContinue }: Props) {
   const gotSeed = !!result.seedNew
   // 致命圏ならフラッシュも警告色（rose）で上書きする。
   // great + tierResultText がある場合（山場の出口）は amber で格上げする（危険圏には勝てない）。
+  // poor + tierResultText がある場合（詰め甘の山場出口）は rose で閃光を放つ（amber とは別のシグナル）。
+  // isPivotalChoice（物語主軸フラグ）は danger/greatExit/poorExit には勝てないが、通常演出より1段上: indigo。
   const greatExit = result.execTier === 'great' && !!result.tierResultText
-  const flashColor = dangerMeters.length > 0 ? '#fb7185' : greatExit ? '#fbbf24' : FLASH_COLOR[kind]
+  const poorExit = result.execTier === 'poor' && !!result.tierResultText
+  const flashColor =
+    dangerMeters.length > 0
+      ? '#fb7185'
+      : greatExit
+        ? '#fbbf24'
+        : poorExit
+          ? '#fb7185'
+          : isPivotalChoice
+            ? '#818cf8' // indigo-400 ＝「戻れない分岐点」の重さを可視化（danger/great/poor には後退）
+            : FLASH_COLOR[kind]
   // sfx 選択ロジックを effect 外で確定させ、union 型の値を deps に入れる。
   // これにより effect 内の参照が常に最新値となり biome-ignore が不要になる。
   // 優先度（headlineKind と整合）: danger > greatExit(sfxReveal) > precept > kind
@@ -357,9 +489,13 @@ export function ResultModal({ result, meters, onContinue }: Props) {
   }, [sfxKind])
 
   // 主役選定（純関数で決定）
-  const headlineKind = pickHeadline(result, dangerMeters)
+  const headlineKind = pickHeadline(result, dangerMeters, meters)
   // 副次情報パネルの開閉（details/summary の代替: aria-expanded + aria-controls で同等の a11y）
   const [detailsOpen, setDetailsOpen] = useState(false)
+  // 軽量モードの判定（平凡な結果＝normal・小変動・新規心得なし・pivotal でない）
+  const isCompact = isCompactResult(headlineKind, result.effects, result.newPreceptIds, isPivotalChoice)
+  // 軽量モード時の「詳細を見る」展開状態
+  const [compactDetailsOpen, setCompactDetailsOpen] = useState(false)
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:px-safe sm:pt-safe sm:pb-safe">
@@ -372,11 +508,36 @@ export function ResultModal({ result, meters, onContinue }: Props) {
         aria-labelledby={titleId}
         className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-[var(--border)] bg-[var(--card)] shadow-2xl sm:max-h-[90vh] sm:rounded-2xl"
       >
+        {/* 物語主軸フラグの分岐点バナー（isPivotalChoice のときのみ）。
+            indigo 帯＋「戻れない分岐点」テキストで「この選択は取り消せない」重さを可視化する。
+            装飾ではなく情報伝達なので aria-hidden は付けない（スクリーンリーダーでも読まれる）。
+            prefers-reduced-motion ではフラッシュのみ消え、バナーテキストは残る。 */}
+        {isPivotalChoice && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="flex items-center gap-2 border-b border-indigo-500/30 bg-indigo-500/15 px-5 py-2 motion-safe:animate-[fadeSlideIn_0.3s_ease-out]"
+          >
+            <span aria-hidden="true" className="text-indigo-300">
+              ◆
+            </span>
+            <span className="text-xs font-semibold text-indigo-200">この選択は物語の分岐点——引き返せない</span>
+          </div>
+        )}
+        {/* ceremony === 'review' / 'retro' は節目のため帯色とバッジ色で差別化する。
+            'review'=amber 系（スプリントゴール達成の確認）、'retro'=violet 系（内省・改善）。
+            色だけで情報を伝えない：バッジのテキスト（ACTION_LABELS）が常に読める前提。 */}
         <header
-          className="flex flex-wrap items-center gap-2 px-5 py-3"
-          style={{ backgroundColor: `${SEGMENT_COLORS[result.segment]}22` }}
+          className={`flex flex-wrap items-center gap-2 px-5 py-3 ${result.ceremony === 'review' ? 'bg-amber-500/10' : result.ceremony === 'retro' ? 'bg-violet-500/10' : ''}`}
+          style={
+            result.ceremony === 'daily' || result.ceremony === 'planning'
+              ? { backgroundColor: `${SEGMENT_COLORS[result.segment]}22` }
+              : undefined
+          }
         >
-          <span className="rounded-full bg-[var(--bg-deep)]/60 px-2.5 py-0.5 text-xs font-bold text-[var(--text-body)]">
+          <span
+            className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${result.ceremony === 'review' ? 'bg-amber-500/25 text-amber-200' : result.ceremony === 'retro' ? 'bg-violet-500/25 text-violet-200' : 'bg-[var(--bg-deep)]/60 text-[var(--text-body)]'}`}
+          >
             {ACTION_LABELS[result.ceremony]}
           </span>
           <span
@@ -404,7 +565,7 @@ export function ResultModal({ result, meters, onContinue }: Props) {
 
         <div className="space-y-3 px-5 py-4">
           {/* ═══ 主役ブロック（HeadlineKind ごとに1つだけ前面に大きく） ═══
-              優先度: danger > greatExit > precept > valueGain > normal
+              優先度: danger > greatExit > poorExit > precept > valueGain > cultureLand > normal
               normal のみメーター差分がそのまま主役になる（専用ブロックなし） */}
 
           {/* 1) 致命圏警告 ── 最優先。0 で案件終了する緊張感を前面に。
@@ -451,6 +612,18 @@ export function ResultModal({ result, meters, onContinue }: Props) {
             </div>
           )}
 
+          {/* 3) 詰め甘の山場出口 ── poor + tierResultText を rose 系主役ブロックに格上げ表示。 */}
+          {headlineKind === 'poorExit' && result.tierResultText && (
+            <div className="rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-3">
+              <p className="mb-1 text-[11px] font-semibold text-rose-300">
+                <span aria-hidden="true">△</span> 詰めが甘く取り逃した
+              </p>
+              <p className="text-base font-bold leading-relaxed text-rose-200 motion-safe:animate-[fadeSlideIn_0.25s_ease-out]">
+                <RichText text={result.tierResultText} />
+              </p>
+            </div>
+          )}
+
           {/* 3) 心得の新規獲得 ── 新たに獲得した心得を前面に大きく表示。 */}
           {headlineKind === 'precept' && result.newPreceptIds.length > 0 && (
             <div className="space-y-2 rounded-xl border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-4 py-3 ring-1 ring-[var(--accent)]/40">
@@ -480,59 +653,176 @@ export function ResultModal({ result, meters, onContinue }: Props) {
             </div>
           )}
 
-          {/* 5) normal ── 専用主役なし。下のメーター差分が自然に主役になる。 */}
+          {/* 5) 文化の着地 ── culture+ の選択かつ cultureメーターが定着域（≥6）に達した瞬間を祝う。 */}
+          {headlineKind === 'cultureLand' && (
+            <p role="status" aria-live="polite" className="text-center text-lg font-bold text-emerald-300">
+              <span aria-hidden="true">🌱</span> 文化が、根付いた
+            </p>
+          )}
+
+          {/* 6) normal ── resultText の冒頭1文を主役に据えてレイアウトを逆転させる。
+              メーター差分バッジは小型右寄せに縮小し、「何が起きたか」を前面に出す。
+              他の headlineKind では従来どおり「結果」ラベルつきの通常サイズ表示を維持する。 */}
+          {headlineKind === 'normal' &&
+            (() => {
+              const { head, rest } = splitHeadlineSentence(result.resultText)
+              return (
+                <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)]/30 px-4 py-3">
+                  {/* 冒頭1文：主役として大きく */}
+                  <p className="text-[17px] font-bold leading-snug text-[var(--text)] motion-safe:animate-[fadeSlideIn_0.25s_ease-out]">
+                    <RichText text={head} />
+                  </p>
+                  {/* 残り文：補足として続ける（isCompact 時は詳細パネルへ移動するため非表示） */}
+                  {rest && !isCompact && (
+                    <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--text-body)]">
+                      <RichText text={rest} />
+                    </p>
+                  )}
+                  {/* メーター差分バッジ：small・右寄せで常に可視 */}
+                  <div className="mt-2.5 flex items-center justify-end gap-1.5">
+                    <EffectDeltas effects={result.effects} />
+                  </div>
+                </div>
+              )
+            })()}
+
+          {/* normal 連続の積み上がり可視化。headlineKind=normal が3回以上続いた時のみ表示。
+              会心（great）や危険圏（danger）の場面では表示しない（headlineKind で自然に消える）。
+              ポジティブな強調ではなく「無難でも積み上がっている」という静かな確認なので、
+              落ち着いた slate-400 / bg-[var(--panel)]/20 で greatStreak バッジより抑えた演出にする。 */}
+          {headlineKind === 'normal' && normalStreak >= 3 && (
+            <p
+              role="status"
+              aria-live="polite"
+              aria-label={`着実な積み上げ ${normalStreak} 回継続中。無難でも積み上がっている`}
+              className="text-center text-xs text-slate-400"
+            >
+              着実 {normalStreak} 回継続 — 無難でも積み上がっている
+            </p>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════════
+              軽量モード（isCompact=true）
+              平凡な結果（normal・小変動・新規心得なし・pivotal でない）のみ。
+              主役1文＋メーター差分を表示した後、「詳細を見る」トグルで残りを展開する。
+              詳細セクションは常時 DOM にマウントし hidden 属性で切替（axe 対応）。
+              ══════════════════════════════════════════════════════════════════════ */}
+          {isCompact && (
+            <div className="rounded-xl border border-[var(--border)]">
+              <button
+                type="button"
+                aria-expanded={compactDetailsOpen}
+                aria-controls="compact-details"
+                onClick={() => setCompactDetailsOpen((v) => !v)}
+                className="flex w-full cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-[11px] font-semibold text-[var(--text-sub)] hover:text-[var(--text-body)]"
+              >
+                <span aria-hidden="true">{compactDetailsOpen ? '▼' : '▶'}</span>
+                詳細を見る
+              </button>
+              <div
+                id="compact-details"
+                hidden={!compactDetailsOpen}
+                className="space-y-3 border-t border-[var(--border)] px-4 pb-3 pt-3"
+              >
+                {/* 残りの resultText（冒頭1文以降） */}
+                {(() => {
+                  const { rest } = splitHeadlineSentence(result.resultText)
+                  return rest ? (
+                    <p className="text-[13px] leading-relaxed text-[var(--text-body)]">
+                      <RichText text={rest} />
+                    </p>
+                  ) : null
+                })()}
+
+                {/* あなたの判断 */}
+                <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)]/40 px-4 py-2.5">
+                  <p className="text-[11px] font-semibold text-[var(--text-sub)]">あなたの判断</p>
+                  <p className="text-sm font-medium text-[var(--text)]">
+                    {result.warn && (
+                      <span className="mr-1" aria-hidden="true">
+                        ⚠
+                      </span>
+                    )}
+                    <RichText text={result.choiceLabel} />
+                  </p>
+                </div>
+
+                {/* 実行ミニゲームの出来 */}
+                <ExecBadge result={result} />
+
+                {/* トレードオフ（isCompact 時は小変動のみなので通常 null だが念のため出力） */}
+                <TradeoffNote effects={result.effects} />
+
+                {/* 既出心得チップ（新規心得があれば isCompact=false になるので、ここは既出のみ） */}
+                {result.precepts.length > 0 && (
+                  <PreceptsBlock
+                    precepts={result.precepts}
+                    newPreceptIds={result.newPreceptIds}
+                    headlineKind={headlineKind}
+                  />
+                )}
+
+                {/* 副次情報（seed / discoveredPbi / addedPbi / tokenSpent / coverage・debt / backlogReview） */}
+                <ResultSecondaryInfo result={result} />
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════════
+              フル表示モード（isCompact=false）
+              ══════════════════════════════════════════════════════════════════════ */}
 
           {/* ─── 選んだ判断 ─── */}
-          <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)]/40 px-4 py-2.5">
-            <p className="text-[11px] font-semibold text-[var(--text-sub)]">あなたの判断</p>
-            <p className="text-sm font-medium text-[var(--text)]">
-              {result.warn && (
-                <span className="mr-1" aria-hidden="true">
-                  ⚠
-                </span>
-              )}
-              <RichText text={result.choiceLabel} />
-            </p>
-          </div>
+          {!isCompact && (
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)]/40 px-4 py-2.5">
+              <p className="text-[11px] font-semibold text-[var(--text-sub)]">あなたの判断</p>
+              <p className="text-sm font-medium text-[var(--text)]">
+                {result.warn && (
+                  <span className="mr-1" aria-hidden="true">
+                    ⚠
+                  </span>
+                )}
+                <RichText text={result.choiceLabel} />
+              </p>
+            </div>
+          )}
 
-          {/* 何が起きたか（結果文を一度ちゃんと見せる） */}
-          <div>
-            <p className="mb-1 text-[11px] font-semibold text-[var(--text-sub)]">結果</p>
-            <p className="text-[15px] leading-relaxed text-[var(--text)]">
-              <RichText text={result.resultText} />
-            </p>
-          </div>
+          {/* 何が起きたか（normal 以外のケースで表示）。
+              normal のときは上記のヘッドラインブロックで表示済みなので重複しない。 */}
+          {!isCompact && headlineKind !== 'normal' && (
+            <div>
+              <p className="mb-1 text-[11px] font-semibold text-[var(--text-sub)]">結果</p>
+              <p className="text-[15px] leading-relaxed text-[var(--text)]">
+                <RichText text={result.resultText} />
+              </p>
+            </div>
+          )}
 
-          {/* tier 依存の「跳ね返りの一文」（greatExit 以外のケース）。
-              greatExit は主役ブロックで表示済みなので重複しない。
-              poor＝詰めが甘かった重さを slate で。
+          {/* tier 依存の「跳ね返りの一文」（greatExit / poorExit 以外のケース）。
+              greatExit / poorExit は主役ブロックで表示済みなので重複しない。
               追加情報なので role 付与は不要（見出し構造は破らない）。interactive=false 固定。 */}
-          {result.tierResultText && headlineKind !== 'greatExit' && (
-            <p
-              className={`rounded-lg px-3 py-2.5 text-sm leading-relaxed ${
-                result.execTier === 'poor'
-                  ? 'bg-slate-500/15 text-slate-300'
-                  : 'bg-[var(--panel)]/40 text-[var(--text-body)]'
-              }`}
-            >
+          {!isCompact && result.tierResultText && headlineKind !== 'greatExit' && headlineKind !== 'poorExit' && (
+            <p className="rounded-lg bg-[var(--panel)]/40 px-3 py-2.5 text-sm leading-relaxed text-[var(--text-body)]">
               <RichText text={result.tierResultText} />
             </p>
           )}
 
           {/* 実行ミニゲームの出来 */}
-          <ExecBadge result={result} />
+          {!isCompact && <ExecBadge result={result} />}
 
-          {/* メーター増減 */}
-          <div className="flex items-center gap-2 border-t border-[var(--panel)] pt-3">
-            <span className="text-[11px] font-semibold text-[var(--text-sub)]">メーター</span>
-            <EffectDeltas effects={result.effects} />
-          </div>
+          {/* メーター増減（normal 時はヘッドラインブロック内に統合済みなのでここでは表示しない） */}
+          {!isCompact && headlineKind !== 'normal' && (
+            <div className="flex items-center gap-2 border-t border-[var(--panel)] pt-3">
+              <span className="text-[11px] font-semibold text-[var(--text-sub)]">メーター</span>
+              <EffectDeltas effects={result.effects} />
+            </div>
+          )}
 
           {/* トレードオフの明示（機会コストの言語化）。 */}
-          <TradeoffNote effects={result.effects} />
+          {!isCompact && <TradeoffNote effects={result.effects} />}
 
           {/* 見抜きボーナス（推理で本音を当てた報酬。その選択の主正メーターに別枠で +）。 */}
-          {result.deductionBonus && result.execPrimary ? (
+          {!isCompact && result.deductionBonus && result.execPrimary ? (
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-semibold text-amber-300">見抜きボーナス</span>
               <span className="rounded-lg bg-amber-500/15 px-2.5 py-1 text-sm font-bold tabular-nums text-amber-200">
@@ -543,7 +833,7 @@ export function ResultModal({ result, meters, onContinue }: Props) {
 
           {/* 心得ブロック（precept が主役の場合は新規獲得済みなので既出チップのみ。
               その他のケースでは新規＋既出チップ両方を通常サイズで表示）。 */}
-          {result.precepts.length > 0 && (
+          {!isCompact && result.precepts.length > 0 && (
             <PreceptsBlock
               precepts={result.precepts}
               newPreceptIds={result.newPreceptIds}
@@ -555,108 +845,35 @@ export function ResultModal({ result, meters, onContinue }: Props) {
               seed / discoveredPbi / addedPbi / tokenSpent / coverage・debt / backlogReview
               いずれも「あれば展開」の追加情報。aria-expanded+aria-controls でキーボード・SR 対応。
               フォーカス順=DOM順=視覚順を一致させるため、主コンテンツの後に配置。 */}
-          {(result.seedId ||
-            result.discoveredPbi ||
-            result.addedPbi ||
-            result.tokenSpent ||
-            result.coverageDelta ||
-            result.debtDelta ||
-            result.backlogReview) && (
-            <div className="rounded-xl border border-[var(--border)]">
-              <button
-                type="button"
-                aria-expanded={detailsOpen}
-                aria-controls="result-details"
-                onClick={() => setDetailsOpen((v) => !v)}
-                className="flex w-full cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-[11px] font-semibold text-[var(--text-sub)] hover:text-[var(--text-body)]"
-              >
-                <span aria-hidden="true">{detailsOpen ? '▼' : '▶'}</span>
-                詳細を見る
-              </button>
-              <div
-                id="result-details"
-                hidden={!detailsOpen}
-                className="space-y-3 border-t border-[var(--border)] px-4 pb-3 pt-3"
-              >
-                {/* 次の機能の種：現場で掴んだプロダクトの種を発見＝自社SaaSへ還元できる（FDEの本懐）。 */}
-                <SeedReveal seedId={result.seedId} seedNew={result.seedNew} />
-
-                {/* ヒアリングで掘り当てた発見可PBI：プロダクトバックログに新たな項目が加わった。 */}
-                {result.discoveredPbi && (
-                  <div className="space-y-1 rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-2.5">
-                    <p className="text-[11px] font-semibold text-rose-300">
-                      現場の声から、新しいバックログ項目が見つかった
-                    </p>
-                    <p className="text-sm font-medium text-[var(--text)]">『{result.discoveredPbi.title}』</p>
-                    <p className="text-[11px] text-[var(--text-sub)]">
-                      プロダクトバックログに追加。次のプランニングで優先順位を検討しましょう。
-                    </p>
-                  </div>
-                )}
-
-                {/* イベントで受けた要望PBI：今スプリントへ割り込み（toSprint）か、次のために積んだか で出し分ける。 */}
-                {result.addedPbi && (
-                  <div
-                    className={`space-y-1 rounded-xl border px-4 py-2.5 ${
-                      result.addedPbi.toSprint
-                        ? 'border-amber-500/50 bg-amber-500/10'
-                        : 'border-sky-500/40 bg-sky-500/10'
-                    }`}
-                  >
-                    <p
-                      className={`text-[11px] font-semibold ${result.addedPbi.toSprint ? 'text-amber-300' : 'text-sky-300'}`}
-                    >
-                      {result.addedPbi.toSprint
-                        ? '⚠ 割り込みを受けた：今スプリントに要望を差し込んだ'
-                        : '要望をプロダクトバックログに積んだ'}
-                    </p>
-                    <p className="text-sm font-medium text-[var(--text)]">『{result.addedPbi.title}』</p>
-                    <p className="text-[11px] text-[var(--text-sub)]">
-                      {result.addedPbi.toSprint
-                        ? '今スプリントの予測が増えた。1日のレビュー容量を超えれば、その分は終わらず持ち越しに——スプリントゴールを危うくしうる。PO と再交渉し、ゴールを守れる範囲か見極めを。'
-                        : '次のプランニングで Ready 化し、優先順位を検討しましょう。今の焦点は守られた。'}
-                    </p>
-                  </div>
-                )}
-
-                {/* 生成AIトークンの消費（AIに頼った選択のみ） */}
-                {result.tokenSpent ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-semibold text-[var(--text-sub)]">AIトークン</span>
-                    <span className="rounded-lg bg-cyan-500/15 px-2.5 py-1 text-sm font-bold tabular-nums text-cyan-300">
-                      ▼ −{result.tokenSpent}
-                    </span>
-                  </div>
-                ) : null}
-
-                {/* リポジトリ：コード（カバレッジ）／技術的負債の増減 */}
-                {result.coverageDelta || result.debtDelta ? (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[11px] font-semibold text-[var(--text-sub)]">リポジトリ</span>
-                    {result.coverageDelta ? (
-                      <span
-                        className={`rounded-lg px-2.5 py-1 text-sm font-bold tabular-nums ${result.coverageDelta > 0 ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'}`}
-                      >
-                        コード {result.coverageDelta > 0 ? '▲ +' : '▼ '}
-                        {result.coverageDelta}%
-                      </span>
-                    ) : null}
-                    {result.debtDelta ? (
-                      <span
-                        className={`rounded-lg px-2.5 py-1 text-sm font-bold tabular-nums ${result.debtDelta > 0 ? 'bg-rose-500/15 text-rose-300' : 'bg-emerald-500/15 text-emerald-300'}`}
-                      >
-                        ▲ 負債 {result.debtDelta > 0 ? '+' : ''}
-                        {result.debtDelta}
-                      </span>
-                    ) : null}
-                  </div>
-                ) : null}
-
-                {/* スプリントレビュー：スプリントバックログの精算（done/キャリーオーバー/ベロシティ） */}
-                {result.backlogReview && <BacklogReviewBlock review={result.backlogReview} />}
+          {!isCompact &&
+            (result.seedId ||
+              result.discoveredPbi ||
+              result.addedPbi ||
+              result.tokenSpent ||
+              result.coverageDelta ||
+              result.debtDelta ||
+              result.backlogReview) && (
+              <div className="rounded-xl border border-[var(--border)]">
+                <button
+                  type="button"
+                  aria-expanded={detailsOpen}
+                  aria-controls="result-details"
+                  onClick={() => setDetailsOpen((v) => !v)}
+                  className="flex w-full cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-[11px] font-semibold text-[var(--text-sub)] hover:text-[var(--text-body)]"
+                >
+                  <span aria-hidden="true">{detailsOpen ? '▼' : '▶'}</span>
+                  詳細を見る
+                </button>
+                <div
+                  id="result-details"
+                  hidden={!detailsOpen}
+                  className="space-y-3 border-t border-[var(--border)] px-4 pb-3 pt-3"
+                >
+                  {/* 副次情報（seed / discoveredPbi / addedPbi / tokenSpent / coverage・debt / backlogReview） */}
+                  <ResultSecondaryInfo result={result} />
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
           {/* 主CTAはスクロール内容の最下部に sticky 固定し、常に親指の届く位置に置く（HIG） */}
           <div className="sticky bottom-0 -mx-5 -mb-4 border-t border-[var(--border)] bg-[var(--card)]/95 px-5 py-3 pb-safe backdrop-blur">

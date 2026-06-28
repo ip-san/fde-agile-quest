@@ -1,16 +1,16 @@
-import { lazy, Suspense, useMemo, useReducer, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { CEREMONY_LABELS, CEREMONY_SHORT, PRODUCT_GOAL, SPRINTS } from '../data/chapters/chapter-01'
 import { PRECEPTS } from '../data/precepts'
 import { openThreads } from '../data/threads'
 import { GEN_TOKEN_COST } from '../engine/backlog'
-import { miniGameKindFor } from '../engine/game'
+import { METER_CRITICAL, miniGameKindFor } from '../engine/game'
 import { customerValueBreakdown, getEventPool, isRouletteCeremony, repoStats } from '../engine/progression'
 import { isMuted, toggleMuted } from '../engine/sfx'
 import { hearingThemeFor } from '../lib/hearingTheme'
 import { readBool, writeBool } from '../lib/persist'
 import { seedFor } from '../lib/seed'
 import { useEngagement } from '../store/engagementStore'
-import type { Ceremony, Choice, GameEvent } from '../types'
+import type { Ceremony, Choice, GameEvent, GameFlag, Meters } from '../types'
 
 // バックログ操作パネル・遊び方・都度教示は"開いた時だけ"要るモーダル＝コード分割で初期バンドルから外す。
 // MiniGame（hearingミニゲーム系 + review系データ含む）も選択後にのみ表示されるため lazy 化して初期バンドルを軽量化。
@@ -28,11 +28,23 @@ import { MeterHUD } from './MeterHUD'
 import { PreceptBook } from './PreceptBook'
 import { Prologue } from './Prologue'
 import { RepoPanel } from './RepoPanel'
-import { ResultModal } from './ResultModal'
+import { pickHeadline, ResultModal } from './ResultModal'
 import { RichText } from './RichText'
 import { Roulette } from './Roulette'
 import { SecondaryStats } from './SecondaryStats'
+import { SprintIntermission } from './SprintIntermission'
 import { Travel } from './Travel'
+
+/** 物語主軸フラグ：S3 の結末を左右する選択（「戻れない分岐点」演出を発火する対象）。
+ *  小さなデイリー選択（wrongKpi / borrowedDebt / aiOverreliance 等）は含めない。 */
+const PIVOTAL_FLAGS = new Set<GameFlag>([
+  'chasedPromise',
+  'groundedGoal',
+  'topDown',
+  'genbaTrust',
+  'fraudClue',
+  'fraudCase',
+])
 
 const PROLOGUE_SEEN_KEY = 'fde-agile-quest:prologue-seen'
 const prologueSeen = (): boolean => readBool(PROLOGUE_SEEN_KEY)
@@ -89,11 +101,50 @@ export function Board() {
   const [timed, setTimed] = useState(timedChoicePref)
   // 選択 → 実行ミニゲーム → 結果。選んだ choice を保持し、ミニゲームの出来を tier として渡す
   const [pendingChoice, setPendingChoice] = useState<Choice | null>(null)
+  // 物語主軸フラグを立てる選択かどうか（true なら ResultModal で indigo フラッシュを追加発火）。
+  // dismissResult と同時にリセットするため、state として独立管理する。
+  const [isPivotalChoice, setIsPivotalChoice] = useState(false)
+  // スプリント境界幕間（retro 完了 → 次 planning 突入の間に1枚）。
+  // 完了したスプリント番号（1 or 2）を保持。null = 非表示。
+  const [pendingIntermission, setPendingIntermission] = useState<number | null>(null)
+  // normal 連続カウント（great/poor/precept/valueGain/danger 以外が続く場合）。
+  // result が null になった瞬間（= dismissResult が呼ばれた後）に前回 result で判定して更新する。
+  const [normalStreak, setNormalStreak] = useState(0)
+  // result が null になった時に"前回の result"を参照するため ref で保持する。
+  const prevResultRef = useRef<typeof result | null>(null)
+  // meters を ref でミラー: pickHeadline 計算に必要だが meters 単独変化で streak が走らないよう dep から外す。
+  const metersRef = useRef(meters)
+  metersRef.current = meters
+
+  // generation 変化（= reset()）でカウントと ref をクリア。greatStreak は store 側でリセット済み。
+  useEffect(() => {
+    setNormalStreak(0)
+    prevResultRef.current = null
+  }, [generation])
+
+  // result が null になった = 結果モーダルが閉じられた瞬間に normalStreak を更新する。
+  // 前回の result を prevResultRef から取り出し、headlineKind が normal だったかを判定する。
+  useEffect(() => {
+    if (result !== null) {
+      // result が存在する間は ref を最新に保つ（次の null 化タイミングで使うため）。
+      prevResultRef.current = result
+      return
+    }
+    // result が null になった = 直前の result を判定してカウントを更新する。
+    const prev = prevResultRef.current
+    if (prev === null) return
+    // dangerMeters を再現（ResultModal と同じロジック）して pickHeadline に渡す。
+    const meterKeys = ['trust', 'insight', 'culture'] as (keyof Meters)[]
+    const dangerMeters = meterKeys.filter((k) => (prev.effects[k] ?? 0) < 0 && metersRef.current[k] <= METER_CRITICAL)
+    const kind = pickHeadline(prev, dangerMeters, metersRef.current)
+    setNormalStreak((prev_) => (kind === 'normal' ? prev_ + 1 : 0))
+  }, [result])
+
   // 「本音を見抜く」推理の解決状態（イベントIDで管理＝イベントが変われば自動リセット）。
   // 当てると reveal ヒントを選択画面に渡す＝核心が"開く"。
   const [deduction, setDeduction] = useState<{ id: string; correct: boolean } | null>(null)
-  // 初回はプロローグを自動表示。以降は「あらすじ」から再生できる
-  const [prologueOpen, setPrologueOpen] = useState(prologueSeen() === false)
+  // 初回（generation===0）かつ未既読のときだけ自動表示。2周目以降は「あらすじ」からのみ開ける
+  const [prologueOpen, setPrologueOpen] = useState(generation === 0 && prologueSeen() === false)
   const closePrologue = () => {
     writeBool(PROLOGUE_SEEN_KEY, true)
     setPrologueOpen(false)
@@ -108,6 +159,19 @@ export function Board() {
   const sprint = SPRINTS[Math.min(sprintIndex, SPRINTS.length - 1)]
   const ceremony: Ceremony = sprint.beats[Math.min(beatIndex, sprint.beats.length - 1)]
   const useRoulette = isRouletteCeremony(ceremony)
+
+  // 通算デイリー番号（0始まり）。Travel.tsx の型崩し判定用（描画レイヤー専用・engine 不変）。
+  // 各スプリントのビート列から daily の総数を前スプリント分合計し、現スプリント内の daily 番号を加算。
+  // ceremony が daily でない状態では Travel は表示されないが型安全のため 0 にフォールバック。
+  const dailySeq = (() => {
+    const prevDailies = SPRINTS.slice(0, sprintIndex).reduce(
+      (acc, sp) => acc + sp.beats.filter((b) => b === 'daily').length,
+      0
+    )
+    if (ceremony !== 'daily') return prevDailies
+    const inSprintDailyNo = sprint.beats.slice(0, beatIndex + 1).filter((b) => b === 'daily').length - 1
+    return prevDailies + inSprintDailyNo
+  })()
 
   // プランニングの進行ゲート：ゴールを決めたら、スプリントバックログ（予測）を1件以上組むまで開始できない。
   // ＝スプリント計画の成果物（選択した PBI）を必ず作らせる。ゴール選択イベント自体は妨げない。
@@ -172,6 +236,7 @@ export function Board() {
   const modalOpen =
     (status === 'event' && !!currentEvent && !result) ||
     !!result ||
+    !!pendingIntermission ||
     bookOpen ||
     prologueOpen ||
     repoOpen ||
@@ -254,6 +319,16 @@ export function Board() {
             会心 {greatStreak} 連鎖中 — 次も会心ならコード品質ボーナス増
           </p>
         )}
+        {/* 着実な連続（normal が3回以上続いている）を可視化。会心の連鎖中は非表示（greatStreak 優先）。 */}
+        {greatStreak < 2 && normalStreak >= 3 && (
+          <p
+            className="-mt-1 text-center text-xs text-slate-400"
+            role="status"
+            aria-label={`着実な積み上げ ${normalStreak} 回継続中`}
+          >
+            着実 {normalStreak} 回継続 — 無難でも積み上がっている
+          </p>
+        )}
         <p className="-mt-2 text-center text-xs leading-snug text-[var(--text-sub)]">
           どれか1つでも <span className="text-rose-400">0</span> になると案件は終了。削りすぎは命取り。
         </p>
@@ -313,6 +388,7 @@ export function Board() {
                 .filter((e): e is GameEvent => !!e)}
               peekLocation={peekLocation}
               onTravel={arrive}
+              dailySeq={dailySeq}
             />
           ) : (
             <>
@@ -501,6 +577,9 @@ export function Board() {
           revealHint={revealHint}
           timed={timed}
           onChoose={(choice) => {
+            // 物語主軸フラグを立てる選択かどうかを判定してフラッシュ演出フラグを立てる。
+            // deduction / 非 deduction どちらにも共通して適用する。
+            setIsPivotalChoice(!!choice.setsFlag && PIVOTAL_FLAGS.has(choice.setsFlag))
             if (currentEvent.deduction) {
               // deduction イベント：推理の出来を実行 tier に変換して即・結果へ（ミニゲームを差し替え）。
               // 当てた(great) / 外した(good)。外しても poor にはしない（reveal 喪失が既に代償）。
@@ -539,7 +618,40 @@ export function Board() {
       )}
 
       {/* 結果オーバーレイ（判断直後に一度ちゃんと見せる） */}
-      {result && <ResultModal result={result} meters={meters} onContinue={dismissResult} />}
+      {result && (
+        <ResultModal
+          result={result}
+          meters={meters}
+          isPivotalChoice={isPivotalChoice}
+          normalStreak={normalStreak}
+          onContinue={() => {
+            // 結果を閉じたら isPivotalChoice をリセット（次のイベントに引き継がない）。
+            setIsPivotalChoice(false)
+            // retro 完了（S1→S2 / S2→S3 の境界）なら幕間を挟む。
+            // eventId が "s{N}-retro" の形（S1/S2 のみ。S3 retro はキャンペーン完走→エンディングへ）。
+            if (result.ceremony === 'retro') {
+              const m = /^s(\d+)-retro/.exec(result.eventId)
+              const sprintNo = m ? Number(m[1]) : null
+              if (sprintNo !== null && sprintNo < 3) {
+                dismissResult()
+                setPendingIntermission(sprintNo)
+                return
+              }
+            }
+            dismissResult()
+          }}
+        />
+      )}
+
+      {/* スプリント境界幕間（S1→S2 / S2→S3）: retro 完了 → 次スプリントの planning の間に1枚 */}
+      {pendingIntermission !== null && (
+        <SprintIntermission
+          completedSprintNo={pendingIntermission}
+          onContinue={() => setPendingIntermission(null)}
+          generation={generation}
+          flags={flags}
+        />
+      )}
 
       {/* 心得手帳 */}
       {bookOpen && <PreceptBook seen={seenPrecepts} onClose={() => setBookOpen(false)} />}
@@ -554,8 +666,8 @@ export function Board() {
         </Suspense>
       )}
 
-      {/* プロローグ（初回自動・以降は「あらすじ」から） */}
-      {prologueOpen && <Prologue onClose={closePrologue} />}
+      {/* プロローグ（初回自動・以降は「あらすじ」から。2周目以降は登場人物ページに直行） */}
+      {prologueOpen && <Prologue onClose={closePrologue} generation={generation} />}
 
       {/* 遊び方リファレンス（下部メニュー「遊び方」から・いつでも。オンデマンド読込） */}
       {howToOpen && (

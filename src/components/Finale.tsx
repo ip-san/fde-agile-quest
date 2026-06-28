@@ -36,19 +36,16 @@ export function Finale({ onResolve }: Props) {
       </p>
 
       <div className="space-y-2.5">
+        {/* warn スタイル・アイコンは選択前に伏せる（選択後の結果確認で初めて表示）。
+            全選択肢を同一の amber 系スタイルで統一し、どれが罠かを外見から読めないようにする。 */}
         {FINALE.choices.map((c, i) => (
           <button
             key={c.id}
             type="button"
             onClick={() => onResolve(c.flag)}
             autoFocus={i === 0}
-            className={`block w-full rounded-xl border px-4 py-3 text-left text-sm font-medium transition active:scale-95 ${
-              c.warn
-                ? 'border-rose-500/40 bg-rose-950/20 text-[var(--text-body)] hover:border-rose-400 hover:bg-rose-950/40'
-                : 'border-amber-500/50 bg-amber-950/20 text-[var(--text-body)] hover:border-amber-400 hover:bg-amber-900/40'
-            }`}
+            className="block w-full rounded-xl border border-amber-500/50 bg-amber-950/20 px-4 py-3 text-left text-sm font-medium text-[var(--text-body)] transition active:scale-95 hover:border-amber-400 hover:bg-amber-900/40"
           >
-            {c.warn && <span className="mr-1">⚠</span>}
             {c.label}
           </button>
         ))}

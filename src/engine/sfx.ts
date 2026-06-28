@@ -97,17 +97,26 @@ export function sfxDecide(): void {
   tone(ac, { freq: 880, t0: 0.07, dur: 0.1, gain: 0.1 })
 }
 
-/** 結果開示の演出強度。impact＝決定的瞬間（大きく動いた／警告）。 */
-export type RevealKind = 'impact' | 'good' | 'bad' | 'normal'
+/** 結果開示の演出強度。impact＝決定的瞬間（大きく動いた／警告）。heavy＝fraud系・組織の根幹を揺るがす真実。 */
+export type RevealKind = 'impact' | 'heavy' | 'good' | 'bad' | 'normal'
 
 /**
- * 結果を開示する瞬間の一撃。逆転裁判の「静寂→一撃」を“一拍の間（無音）→開示音”で再現する。
+ * 結果を開示する瞬間の一撃。逆転裁判の「静寂→一撃」を”一拍の間（無音）→開示音”で再現する。
  * impact は鋭く上昇する三段の一撃で「決定的瞬間」を強調する。
+ * heavy は fraud系の重大真実用——低音の警告から一気に突き上げる四段の打撃で、impact より一段重い手応え。
  */
 export function sfxReveal(kind: RevealKind): void {
   const ac = audio()
   if (!ac) return
   switch (kind) {
+    case 'heavy':
+      // 低音の不穏な一撃→沈黙→鋭く突き上げる三段の打撃（fraud系の重大真実用）
+      // impact より一段重い：低い導音で不穏感を先立てから、一拍の沈黙を挟んで突き上げる
+      tone(ac, { freq: 165, t0: 0.0, dur: 0.22, type: 'sawtooth', gain: 0.1, slideTo: 110 })
+      tone(ac, { freq: 330, t0: 0.22, dur: 0.18, type: 'sawtooth', gain: 0.11, slideTo: 880 })
+      tone(ac, { freq: 1100, t0: 0.3, dur: 0.25, gain: 0.12 })
+      tone(ac, { freq: 1470, t0: 0.38, dur: 0.32, gain: 0.08 })
+      return
     case 'impact':
       // 一拍おいて、鋭く突き上げる一撃（追い詰める／突きつける感触）
       tone(ac, { freq: 330, t0: 0.12, dur: 0.18, type: 'sawtooth', gain: 0.09, slideTo: 740 })

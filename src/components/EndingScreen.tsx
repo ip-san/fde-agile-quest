@@ -1,9 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { displayName } from '../data/chapters/chapter-01/names'
 import { endingImage, imageUrl } from '../data/images'
 import type { ValueBreakdown } from '../engine/progression'
-import type { Epilogue, LogEntry, Meters } from '../types'
+import { sfxReveal } from '../engine/sfx'
+import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
+import type { Epilogue, GameFlag, LogEntry, Meters } from '../types'
 import { CustomerValueBar } from './CustomerValueBar'
+import { DecisiveFlash } from './DecisiveFlash'
 import { MeterHUD } from './MeterHUD'
 
 interface Props {
@@ -20,6 +23,8 @@ interface Props {
   valueHistory: number[]
   /** 第1章で掴んだ不正の"伏線"の深さ（次章への引き）。none=気づかず / clue=違和感 / case=輪郭 */
   fraudHint?: 'none' | 'clue' | 'case'
+  /** この周回で立ったフラグ（エンディング引き文の周回差別化に使用） */
+  flags?: ReadonlySet<GameFlag>
   log: LogEntry[]
   onReset: () => void
 }
@@ -28,6 +33,39 @@ interface Props {
 const FRAUD_TEASER: Record<'clue' | 'case', string> = {
   clue: '——本物の仕事を進めるほどに、グループの数字の裏に、説明のつかない違和感が一つ、残った。それが何なのか、今はまだ分からない。だが、見なかったことには、できない。',
   case: '——あなたは見てしまった。同じ機材が書類の上だけを巡る、架空の循環取引の輪郭を。一介のFDEが今この場で動かせる話ではない。だがその記録は、静かに胸に刻まれた。いつか、決着をつける日のために。',
+}
+
+/** 不正アークを追った周回への"章内の払い"（§6.5・労力に報酬を返す）。
+ *  次章への「引き」（FRAUD_TEASER）が情緒の余韻なのに対し、こちらは「追った手間が次フェーズで効く資産として
+ *  残った」ことを具体的に確認する一段。決着は次章へ繰り延べる（§6.5）ため、ここでは"暴く"ではなく
+ *  「掴んだものが消えずに次へ持ち越される」ことだけを担保し、全スルー周回との"差"を体感に変える。
+ *  掴んだ深さ（clue=違和感の入口／case=固めた記録）で払いの重みに勾配をつける。 */
+const FRAUD_CARRYOVER: Record<'clue' | 'case', { label: string; body: string }> = {
+  case: {
+    label: '持ち越す手札',
+    body: '——あなたが裏取りに費やした時間は、無駄ではなかった。突き合わせ、控えに残したその記録は、誰かの記憶任せではない、消えない一束の証拠としてまだ手の中にある。今は動かせなくても、次のフェーズで必ず使うときが来る。追った者だけが、その手札を持って次の舞台に立つ。',
+  },
+  clue: {
+    label: '持ち越す糸口',
+    body: '——あなたが立ち止まって確かめた一手は、無駄ではなかった。流していれば気づかぬまま終わっていた糸口を、見える場所に掴んでいる。まだ証拠と呼べる固さはない。それでも、追った者だけが次の一歩の入口に立っている。',
+  },
+}
+
+/** 「次章への引き」の末尾に周回の判断を反映した1文を追加する（#190）。
+ *  ending.id と主要フラグで最初にマッチした一文を返す。全員共通の核（テラー文）はそのまま残す。 */
+function carryoverLine(endingId: string, flags: ReadonlySet<GameFlag>): string | null {
+  if (endingId.startsWith('fail-')) return null
+  if (endingId === 'disliked')
+    return '嫌われた。それが正しかったかどうかは、次のフェーズが答えを持っている。背を向けた人ほど、理由を覚えているものだ。'
+  if (endingId === 'orderTaker' || flags.has('topDown'))
+    return '言われた通り作って、納期は守った。要望書の外に残した宿題が、次のフェーズで戻ってくる。'
+  if (flags.has('genbaTrust') && endingId === 'trueFde')
+    return '翠流物流の現場と築いた信頼は、次のフェーズで最大の資産になる。この3スプリントで刻んだ人間関係の地図は、消えない。'
+  if (flags.has('genbaTrust')) return '現場の側に立ち続けた積み上げは残る。次のフェーズでそれが効く場面が来る。'
+  if (endingId === 'trueFde')
+    return '取り切れたトレードオフと、取り切れなかったトレードオフ。どちらも次の入り口で待っている。'
+  // decent / hero / その他クリアエンド
+  return '取り切れなかったトレードオフが、次の入り口で待っている。'
 }
 
 /** 「決断の一歩手前」（不正を掴んだ周回のみ）。告発の決着は次章へ繰り延べる（§6.5）ので、
@@ -85,6 +123,36 @@ function FraudStanceBeat({ hint }: { hint: 'clue' | 'case' }) {
   )
 }
 
+/** S/A ランク演出のフラッシュ色（ResultModal の greatExit 相当の amber）。 */
+const RANK_FLASH_COLOR = '#fbbf24' // amber-400
+
+/** ランク閾値（valueRank 関数と必ず一致させる）。
+ *  EndingScreen 内でギャップ計算に使う唯一の定義場所。 */
+const RANK_THRESHOLDS = { S: 90, A: 75, B: 60, C: 40 } as const
+
+/** C/D ランク時の固定メッセージ（スコアギャップ表示が使えない場合のフォールバック）。 */
+const LOW_RANK_FALLBACK: Record<'C' | 'D', string> = {
+  C: 'まだ見えていない現場がある。次は、もう一歩だけ深く踏み込んでみよう。',
+  D: '価値を届けられなかった判断の跡を、一度ゆっくり辿ってみよう。次は違う景色が見える。',
+}
+
+/** C/D ランク・FAIL 時の「惜しさ・次への焦点」ヒントを返す純関数。
+ *  C ランクかつギャップ 15 以内: スコアギャップを具体的に名指し（例A）。
+ *  それ以外: 別ルートへの1行ヒント（例C ベース）。 */
+function lowRankHint(grade: 'C' | 'D' | 'fail', customerValue: number): string {
+  if (grade === 'fail') {
+    return 'どのゲージが先に尽きたか確かめて、そのゲージに関わる判断をひとつ変えてみよう。'
+  }
+  if (grade === 'C') {
+    const gap = RANK_THRESHOLDS.B - customerValue // 正値 = B 未満
+    if (gap > 0 && gap <= 15) {
+      return `あと ${gap} ポイントで B ランクだった。その差を埋めた判断が、次の鍵になる。`
+    }
+  }
+  // D ランク or C ランクでギャップが大きい場合: 別ルートヒント
+  return LOW_RANK_FALLBACK[grade === 'C' ? 'C' : 'D']
+}
+
 /** 顧客価値（北極星）の最終ランク。案件の"スコア"として結果に意味を与える。 */
 function valueRank(v: number): { grade: string; label: string; cls: string } {
   if (v >= 90)
@@ -100,7 +168,7 @@ function valueRank(v: number): { grade: string; label: string; cls: string } {
     return {
       grade: 'C',
       label: '価値は道半ば',
-      cls: 'text-[var(--text-body)] border-[var(--border-strong)]/40 bg-[var(--border-strong)]/10',
+      cls: 'text-[var(--text-body)] border-[var(--border-strong)]/70 bg-[var(--border-strong)]/10',
     }
   return { grade: 'D', label: '価値を残せなかった', cls: 'text-rose-300 border-rose-400/40 bg-rose-400/10' }
 }
@@ -175,16 +243,40 @@ export function EndingScreen({
   valueBaseline,
   valueHistory,
   fraudHint = 'none',
+  flags = new Set(),
   log,
   onReset,
 }: Props) {
   const failed = ending.id.startsWith('fail-')
   const rank = valueRank(customerValue)
   const teaser = fraudHint === 'none' ? null : FRAUD_TEASER[fraudHint]
+  const fraudCarryover = fraudHint === 'none' ? null : FRAUD_CARRYOVER[fraudHint]
+  const carry = carryoverLine(ending.id, flags)
   const imgKey = endingImage(ending.id)
+
+  // S/A ランクの一撃演出フェーズ。
+  // 'flash'=閃光・音のみ表示 → 600ms 後に 'reveal'=グラフ・ランクバッジ表示。
+  // prefers-reduced-motion 時・S/A 以外は最初から 'reveal'。
+  const reducedMotion = usePrefersReducedMotion()
+  const isHighRank = !failed && (rank.grade === 'S' || rank.grade === 'A')
+  const [phase, setPhase] = useState<'flash' | 'reveal'>(isHighRank && !reducedMotion ? 'flash' : 'reveal')
+
+  // S/A ランクかつモーション有効な場合のみ演出を起動する。
+  // マウント直後に sfxReveal('impact') を鳴らし、600ms 後に reveal フェーズへ。
+  // 依存配列を空にするのは意図的：コンポーネントは1回だけマウントされ、演出も1回だけ起動する。
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 初回マウント時の1回起動が意図した動作
+  useEffect(() => {
+    if (!isHighRank || reducedMotion) return
+    sfxReveal('impact')
+    const timer = setTimeout(() => setPhase('reveal'), 600)
+    return () => clearTimeout(timer)
+  }, [])
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center gap-6 px-safe py-10">
+      {/* S/A ランク演出：閃光（phase==='flash' の間だけ全画面表示し、音は useEffect で鳴らす） */}
+      {isHighRank && phase === 'flash' && <DecisiveFlash color={RANK_FLASH_COLOR} />}
+
       <div className="text-center">
         <p
           className={`text-xs font-semibold uppercase tracking-widest ${failed ? 'text-rose-400' : 'text-[var(--text-sub)]'}`}
@@ -228,6 +320,7 @@ export function EndingScreen({
           <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-widest text-amber-400/80">
             To be continued — 次章へ
           </p>
+          {carry && <p className="mb-3 text-sm italic leading-relaxed text-amber-200/80">{carry}</p>}
           <p className="text-sm leading-relaxed text-amber-100/90">
             ——後日、グループの定例報告。{displayName('parentCo')}は、現場の実態を確かめもせず、さらに上の
             {displayName('groupHq')}へ、こう上げたという。「フィジカルAI実証、順調に進んでおります。現場のIT化が
@@ -241,34 +334,75 @@ export function EndingScreen({
           {teaser && (
             <div className="mt-3 border-t border-amber-600/20 pt-3">
               <p className="text-sm leading-relaxed text-amber-100/90">{teaser}</p>
+              {/* 章内の"払い"（§6.5・労力に報酬を返す）。追った手間が「次フェーズで効く資産」として残った
+                  ことを具体に確認し、全スルー周回との差を体感に変える。決着は次章へ繰り延べたまま。 */}
+              {fraudCarryover && (
+                <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3.5 py-3">
+                  <p className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-amber-300/80">
+                    {fraudCarryover.label}
+                  </p>
+                  <p className="text-sm leading-relaxed text-amber-100/90">{fraudCarryover.body}</p>
+                </div>
+              )}
               <FraudStanceBeat hint={fraudHint as 'clue' | 'case'} />
             </div>
           )}
         </div>
       )}
 
-      <div className="space-y-2">
-        <p className="mb-2 text-xs font-semibold text-[var(--text-sub)]">最終評価</p>
-        {/* 顧客価値ランク＝この案件で届けた価値の総合スコア（北極星の結実） */}
-        <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${rank.cls}`}>
-          <span className="text-3xl font-black tabular-nums">{rank.grade}</span>
-          <div className="min-w-0">
-            <p className="text-sm font-bold">顧客価値ランク：{rank.label}</p>
-            <p className="text-xs opacity-80">最終顧客価値 {customerValue} / 100</p>
-          </div>
+      {/* C/D ランク時：演出なし・「惜しさと次への焦点」を前面に出す。
+          メーター/グラフより先に表示して「改善への意欲」を持ち帰らせる。
+          スコアギャップが 15 以内なら具体的なポイント差を名指しし、それ以外は別ルートヒント。 */}
+      {!failed && (rank.grade === 'C' || rank.grade === 'D') && (
+        <div className="rounded-2xl border border-[var(--border-strong)]/70 bg-[var(--card)]/80 px-5 py-4">
+          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-widest text-[var(--text-sub)]">
+            次回に向けて
+          </p>
+          <p className="text-base font-bold leading-relaxed text-[var(--text-body)]">
+            {lowRankHint(rank.grade as 'C' | 'D', customerValue)}
+          </p>
         </div>
-        <CustomerValueBar value={customerValue} breakdown={valueBreakdown} />
-        {/* 開始 → 各スプリント末の顧客価値の歩み（成長曲線）。案件の総括として右肩上がりを見せる。 */}
-        <ValueTrend baseline={valueBaseline} history={valueHistory} />
-        <MeterHUD meters={meters} />
-        {/* 届けたインクリメント＝スプリントバックログを Done にした成果。0 は"使わなかった機会損失"として可視化 */}
-        <div className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--card)]/60 px-4 py-2.5 text-sm">
-          <span className="text-[var(--text-body)]">届けたインクリメント</span>
-          {deliveredItems > 0 ? (
-            <span className="font-bold tabular-nums text-emerald-300">{deliveredItems} 件</span>
-          ) : (
-            <span className="text-xs text-[var(--text-sub)]">0 件 — バックログを Done にできなかった</span>
-          )}
+      )}
+
+      {/* FAIL 時：「どのゲージが先に尽きたか確かめる」リトライ焦点を追加する。
+          既存の reflection テキストの直後に表示し、次への具体的な手がかりを渡す。 */}
+      {failed && (
+        <div className="rounded-2xl border border-rose-500/30 bg-rose-950/20 px-5 py-4">
+          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-widest text-rose-400/80">次への焦点</p>
+          <p className="text-sm leading-relaxed text-rose-100/90">{lowRankHint('fail', customerValue)}</p>
+        </div>
+      )}
+
+      {/* S/A ランク演出中（phase==='flash'）はグラフ・ランクバッジを非表示にし、
+          演出後（phase==='reveal'）にフェードインして提示する（苦労の山 → データ提示の順）。 */}
+      <div
+        className={
+          phase === 'flash' ? 'invisible' : isHighRank ? 'motion-safe:animate-[fadeSlideIn_0.25s_ease-out]' : ''
+        }
+      >
+        <div className="space-y-2">
+          <p className="mb-2 text-xs font-semibold text-[var(--text-sub)]">最終評価</p>
+          {/* 顧客価値ランク＝この案件で届けた価値の総合スコア（北極星の結実） */}
+          <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${rank.cls}`}>
+            <span className="text-2xl font-bold tabular-nums">{rank.grade}</span>
+            <div className="min-w-0">
+              <p className="text-sm font-bold">顧客価値ランク：{rank.label}</p>
+              <p className="text-xs opacity-80">最終顧客価値 {customerValue} / 100</p>
+            </div>
+          </div>
+          <CustomerValueBar value={customerValue} breakdown={valueBreakdown} />
+          {/* 開始 → 各スプリント末の顧客価値の歩み（成長曲線）。案件の総括として右肩上がりを見せる。 */}
+          <ValueTrend baseline={valueBaseline} history={valueHistory} />
+          <MeterHUD meters={meters} />
+          {/* 届けたインクリメント＝スプリントバックログを Done にした成果。0 は"使わなかった機会損失"として可視化 */}
+          <div className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--card)]/60 px-4 py-2.5 text-sm">
+            <span className="text-[var(--text-body)]">届けたインクリメント</span>
+            {deliveredItems > 0 ? (
+              <span className="font-bold tabular-nums text-emerald-300">{deliveredItems} 件</span>
+            ) : (
+              <span className="text-xs text-[var(--text-sub)]">0 件 — バックログを Done にできなかった</span>
+            )}
+          </div>
         </div>
       </div>
 

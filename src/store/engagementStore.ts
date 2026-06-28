@@ -184,6 +184,8 @@ const VALID_FLAGS = {
   borrowedDebt: true,
   deprioritizedJoushi: true,
   deprioritizedGenba: true,
+  retroCapacity: true,
+  retroWip: true,
 } satisfies Record<GameFlag, true>
 const FLAG_SET = new Set<string>(Object.keys(VALID_FLAGS))
 
