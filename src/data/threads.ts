@@ -66,8 +66,8 @@ export const THREADS: Record<GameFlag, Thread> = {
   },
   fraudCase: {
     setVia: ['choice'],
-    payoffVia: ['ending'],
-    note: '強い証拠を固める→暴露エンディングの強度に反映',
+    payoffVia: ['event', 'ending'],
+    note: '強い証拠を固める→S3 daily(s3-daily-fraud-evidence)で確証を手に収める着地ビート、暴露エンディングの強度に反映',
     teaser: '掴んだ証拠の重みは、まだ宙づりだ。',
   },
   exposed: { setVia: ['finale'], payoffVia: ['ending'], note: 'フィナーレで暴く→専用エンディング', teaser: '—' },
@@ -156,6 +156,23 @@ export const THREADS: Record<GameFlag, Thread> = {
     payoffVia: ['event', 'score'],
     note: '情シスのゴールを届け現場(田淵)のゴールを後回し→ s3-daily-genba-deprioritized で現場の手戻り・機会損失として回収（insight・機会損失アークの時間差）',
     teaser: '使える物を待つ現場を、後回しにしたかもしれない。',
+  },
+  retroCapacity: {
+    // s1-retro choice b（capacity レバー＝レビューの量を増やす）の setsFlag で立つ。
+    // 次レトロ(s2-retro-cap)が「キャリーオーバーは確かに減った」と前回の手応えを受けて始まる＝改善が効いた実感の回収。
+    // genbaTrust/topDown とは別軸（同じレトロで両方立ちうる）。プロセス改善の連続性だけを担う。
+    setVia: ['choice'],
+    payoffVia: ['event'],
+    note: 's1-retro で capacity レバー（レビューの量を増やす）を選ぶ→ s2-retro-cap が前スプリントの手応え（キャリーオーバー減）を受けて始まる＝改善が効いた実感の回収',
+    teaser: '前回のカイゼンが、次の振り返りに効いてくる。',
+  },
+  retroWip: {
+    // s1-retro choice c（wip レバー＝仕掛りを絞る）の setsFlag で立つ。
+    // 次レトロ(s2-retro-wip)が「一つずつ深く仕上がるリズムになった」と前回の手応えを受けて始まる。
+    setVia: ['choice'],
+    payoffVia: ['event'],
+    note: 's1-retro で wip レバー（仕掛りを絞る）を選ぶ→ s2-retro-wip が前スプリントの手応え（流れを作れた実感）を受けて始まる＝改善が効いた実感の回収',
+    teaser: '前回のカイゼンが、次の振り返りに効いてくる。',
   },
 }
 

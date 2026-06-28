@@ -33,6 +33,7 @@
 | 専門家 | `ai-dx-expert` / `fde-expert` / `agile-expert` / `logistics-expert` / `robotics-expert` | 顧問 | read-only（+Web） |
 | 監修 | `story-reviewer` / `learning-designer` / `code-reviewer` / `playtest-critic` | checker | read-only |
 | 品質ゲート | `quality-gatekeeper` | checker+修正 | code write（自動マージ不可） |
+| **メタ改善** | `loop-meta-engineer` | **maker（ループ専用）** | `.claude/` write（`src/` 禁止） |
 
 考証の軸を分ける: **専門家＝ドメインの正確さ** / **story-reviewer＝物語の筋** /
 **learning-designer＝教育価値** / **code-reviewer＝設計・可読性** / **playtest-critic＝面白さ・飽きにくさ
@@ -53,7 +54,8 @@
 - **skill＝手順書（how-to）**: 今のスレッドにインライン展開して実行する。**ユーザーが単発で
   「〜して」と頼むとき**はこちら（例: 「物語レビューして」→ `story-review` skill、「品質ゲート直して」
   → `quality-fix` skill、「コードレビューして」→ home の `code-review` skill、「プレイテストして直して」
-  → `playtest-gate` skill、「プレイテストして起票」→ `playtest-triage` skill）。
+  → `playtest-gate` skill、「プレイテストして起票」→ `playtest-triage` skill、
+  「ループを直して」「エージェント定義を更新して」→ `loop-meta` skill）。
   **playtest 系2つの棲み分け**:
   - `playtest-gate` = **試す→maker が対応→全員レビュー→品質ゲート**を1サイクル束ね、feature ブランチで PR まで出す
     *doer*（ゲート本体は `loop-runbook.md` ステップ3〜5を再利用）。`loop` を回すほどでない単発の「直して」用。
@@ -63,7 +65,8 @@
 - **agent＝役者（who）**: 独立コンテキスト窓＋制限ツール＋憲章/learnings を持ち、**loop / `showrunner`
   が委任して並列・隔離実行**させるための器。agent は手順を対応する skill に委ねる
   （`story-reviewer`→`story-review` / `quality-gatekeeper`→`quality-fix` /
-  `code-reviewer`→`typescript-react-reviewer` / `agile-expert`→`agile-coach` / `ux-engineer`→`accessibility`）。
+  `code-reviewer`→`typescript-react-reviewer` / `agile-expert`→`agile-coach` / `ux-engineer`→`accessibility` /
+  `loop-meta-engineer`→`loop-meta`）。
 
 判断に迷ったら: **単発の手作業＝skill、夜間 loop の自動運用＝agent**。各 agent の description は
 「loop運用での委任を想定」と明記してあり、キーワードでの直接起動より loop からの委任を優先する。

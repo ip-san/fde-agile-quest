@@ -165,6 +165,8 @@ export const EVENT_PRECEPTS: Record<string, number[]> = {
   's3-daily-bottleneck': [98, 99], // 小さく作り大きく学び太く残せ / 組織を賢くしろ
   's1-plan-goal': [10, 37],
   's1-daily-warehouse': [1, 3, 9],
+  // 機を読んで先に動く＝この局面の最善（深追いの問いは罠）。その場で動かす者が主導権を握る / その場で試せ。
+  's1-daily-rush-help': [36, 35],
   's1-daily-logs': [6, 8],
   's1-daily-standup': [99],
   's1-daily-scope': [82, 83],
@@ -214,6 +216,8 @@ export const EVENT_PRECEPTS: Record<string, number[]> = {
   's2-daily-depth': [92, 93],
   's2-review': [55, 56],
   's2-retro': [64, 81],
+  's2-retro-cap': [64, 81], // 既定 s2-retro と同一構造（前スプリント capacity レバーの callback バリアント）
+  's2-retro-wip': [64, 81], // 既定 s2-retro と同一構造（前スプリント wip レバーの callback バリアント）
   's2-daily-ai-handoff': [43, 48],
   's2-daily-dod': [97, 13],
   's2-daily-goalcreep': [37, 78],
@@ -240,6 +244,7 @@ export const EVENT_PRECEPTS: Record<string, number[]> = {
   's2-daily-hqorder': [52, 55],
   's2-daily-ghost-stock': [8, 73],
   's3-plan-handoff': [16, 99],
+  's3-daily-fraud-evidence': [73, 89],
   's3-daily-rework': [67],
   's3-daily-onboard': [99],
   's3-daily-genba': [56, 57],
