@@ -25,6 +25,11 @@ export const SEEDS: FeatureSeed[] = [
   // legacy-bridge は中立な出自イベント s1-daily-legacy（choice b）と懲罰分岐 s3-daily-stuck-base（choice b）の
   // 双方で拾える。源流で正しく向き合った player も種を得られ、他5種との非対称を解消（発見は集合追加で冪等）。
   { id: 'legacy-bridge', title: 'レガシー基盤との安全な橋渡し', from: '20年ものの基幹システム' },
+  {
+    id: 'freeze-recovery',
+    title: 'フリーズの自己診断と復旧ガイド',
+    from: '出荷直前に固まったWMSの原因をたどった夕方',
+  },
 ]
 
 export const SEED_BY_ID: Record<string, FeatureSeed> = Object.fromEntries(SEEDS.map((s) => [s.id, s]))
