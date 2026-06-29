@@ -20,6 +20,7 @@ export default function App() {
     resolveFinale,
     resolvedIds,
     flags,
+    foundSeeds,
     aiTokens,
     repoCoverage,
     repoDebt,
@@ -93,6 +94,7 @@ export default function App() {
         valueHistory={valueHistory}
         fraudHint={fraudHint}
         flags={flags}
+        foundSeeds={foundSeeds}
         log={log}
         onReset={reset}
       />
