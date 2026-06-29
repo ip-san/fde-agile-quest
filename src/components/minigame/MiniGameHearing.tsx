@@ -15,7 +15,8 @@ import { SelectableOptionList } from './SelectableCheckItem'
 import { useGlyphSelection } from './useGlyphSelection'
 
 interface Props {
-  seed: number
+  /** @deprecated マウント時ランダムシャッフルに移行したため使用されない。後方互換のため残置。将来削除予定。 */
+  seed?: number
   theme?: HearingTheme
   /** イベント固有の問い（指定時は良問2以上＋悪問1以上を満たす場合に優先使用） */
   hearingOptions?: HearingOption[]
@@ -25,21 +26,24 @@ interface Props {
 }
 
 /** ヒアリング・ミニゲーム：5つの問いから「深掘りになる質問」を2つ選ぶ（現場主義）。
- *  hearingOptions がある場合はイベント固有の問いを（良問2+悪問1以上を満たすとき）シードでシャッフルして使用。
- *  条件を満たさなければ従来の dealHearing(seed, theme) にフォールバック。
+ *  hearingOptions がある場合はイベント固有の問いを（良問2+悪問1以上を満たすとき）マウント時にランダムシャッフルして使用。
+ *  条件を満たさなければ従来の dealHearing(theme) にフォールバック。いずれもマウント時1回限りのシャッフルで
+ *  good/bad の位置を毎回変え、「上2つ=正解」の固定学習を解消する。
  *  persuadeContext='demo' のときはリード文・CTA をスプリントレビューのお披露目専用に差し替える。 */
-export function MiniGameHearing({ seed, theme, hearingOptions, persuadeContext, onResolve }: Props) {
+export function MiniGameHearing({ theme, hearingOptions, persuadeContext, onResolve }: Props) {
   const [options] = useState<HearingOption[]>(() => {
+    // マウント時に1回だけ乱数シードを生成し、毎回 good/bad の位置が異なるよう保証する。
+    // Math.random() はここ（useState 初期値関数）でのみ呼び出し、レンダリング中には呼ばない。
+    const renderSeed = Math.floor(Math.random() * 2 ** 31)
     // イベント固有の問いが十分（良問2以上かつ悪問1以上）なら優先使用
     if (
       hearingOptions &&
       hearingOptions.filter((o) => o.good).length >= 2 &&
       hearingOptions.filter((o) => !o.good).length >= 1
     ) {
-      // 共通の shuffle（minigames.ts）でシードを揃え、dealHearing と同一分布にする
-      return shuffle(hearingOptions, seed)
+      return shuffle(hearingOptions, renderSeed)
     }
-    return dealHearing(seed, theme)
+    return dealHearing(renderSeed, theme)
   })
   const [picked, setPicked] = useState<number[]>([])
   const ready = picked.length === 2
