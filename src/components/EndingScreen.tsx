@@ -51,6 +51,19 @@ const FRAUD_CARRYOVER: Record<'clue' | 'case', { label: string; body: string }> 
   },
 }
 
+/** To be continued セクションの末尾に、主軸フラグで「次章への入口の温度」を1〜2文で差別化する（#290）。
+ *  topDown（経営主導で数字を残した）周回と genbaTrust（現場に文化を残した）周回で
+ *  「次章への入口の空気感」を変える。全員共通の核テキストはそのまま残し、この文を後ろに添える。
+ *  fail エンドは次章への期待を立てないため null を返す。 */
+function continuedLine(endingId: string, flags: ReadonlySet<GameFlag>): string | null {
+  if (endingId.startsWith('fail-')) return null
+  if (flags.has('topDown'))
+    return '——ただし、地盤はまだ揺れている。数字は残したが、現場との距離は縮まっていない。次の舞台へ渡る橋は、まだ架け直しの途中だ。'
+  if (flags.has('genbaTrust'))
+    return '——現場の誰かが、もう次のことを口にし始めている。あなたが去った後も、引き継ぎは静かに動き出した。次の舞台へ続く扉を、最初に開けたのは現場だった。'
+  return null
+}
+
 /** 「次章への引き」の末尾に周回の判断を反映した1文を追加する（#190）。
  *  ending.id と主要フラグで最初にマッチした一文を返す。全員共通の核（テラー文）はそのまま残す。 */
 function carryoverLine(endingId: string, flags: ReadonlySet<GameFlag>): string | null {
@@ -252,6 +265,7 @@ export function EndingScreen({
   const teaser = fraudHint === 'none' ? null : FRAUD_TEASER[fraudHint]
   const fraudCarryover = fraudHint === 'none' ? null : FRAUD_CARRYOVER[fraudHint]
   const carry = carryoverLine(ending.id, flags)
+  const continued = continuedLine(ending.id, flags)
   const imgKey = endingImage(ending.id)
 
   // S/A ランクの一撃演出フェーズ。
@@ -329,8 +343,11 @@ export function EndingScreen({
             まだ終わっていない。——デモ機の足元のパネルに小さく並んでいた{displayName('powerDevice')}
             という名が、ふと脳裏をよぎる。次の舞台は、その奥にある。
           </p>
-          {/* 不正の伏線を掴んだ周回だけ、個人の“違和感”の引きを重ねる。決着はつけず（§6.5）、
-              主人公の"姿勢"だけを選ばせて繰り延べを焦らしに変える。 */}
+          {/* 主軸フラグ（topDown/genbaTrust）で「次章への入口の温度」を1〜2文で差別化する（#290）。
+              全員共通の核テキストの後に添え、周回ごとに読み味を変える。 */}
+          {continued && <p className="mt-2 text-sm leading-relaxed text-amber-200/70">{continued}</p>}
+          {/* 不正の伏線を掴んだ周回だけ、個人の”違和感”の引きを重ねる。決着はつけず（§6.5）、
+              主人公の”姿勢”だけを選ばせて繰り延べを焦らしに変える。 */}
           {teaser && (
             <div className="mt-3 border-t border-amber-600/20 pt-3">
               <p className="text-sm leading-relaxed text-amber-100/90">{teaser}</p>
