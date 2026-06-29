@@ -164,6 +164,10 @@ describe('悪手（warn）の常設 — ラチェット', () => {
   // s2-daily-leadtime / s2-daily-refine（#296）: S2 デイリーの warn-a/virtuous-b 固定律動を崩すため、
   //   両択とも warn なしの genuine ambiguity に置換。leadtime＝攻め(先回り)vs守り(検証)、
   //   refine＝経験主義(最小着手で検証)vs事前合意(リファインメント)。どちらも明確悪手でなく機会コスト型。
+  // s2-daily-idea: 「ゴールに集中（規律=insight）」vs「現場の発案を即取り込む（巻き込み=culture）」。
+  //   スプリントバックログの更新はゴールを危うくしない範囲で valid（Scrum Guide 2020）＝どちらも悪手ではない非支配トレードオフ。
+  // s2-daily-close: 「白熱の熱を保つ（巻き込み=culture）」vs「次の一手を決め切る（insight）」。
+  //   場の温度を取りに行くのも経験主義で決め切るのも valid＝悪手ではない非支配トレードオフ（脳死 a 押し解消・#309）。
   const WARN_EXEMPT = new Set([
     's2-daily-debt',
     's1-daily-soumu-access',
@@ -171,6 +175,8 @@ describe('悪手（warn）の常設 — ラチェット', () => {
     's2-daily-ai-eval',
     's2-daily-leadtime',
     's2-daily-refine',
+    's2-daily-idea',
+    's2-daily-close',
   ])
 
   it('複数選択肢のデイリーで warn が無いのは許可リストのイベントだけ', () => {
