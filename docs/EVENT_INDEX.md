@@ -181,7 +181,7 @@
 - **締切と技術的負債** `s2-daily-debt`（トラブル） 心得:13,97
     - 意図的に負債を借りて、まず動く{{MVP}}を締切に間に合わせる `{ insight: 1, trust: 1, culture: -1 }` →borrowedDebt
     - 品質に妥協せず、リリースを1スプリント遅らせる `{ culture: 1, trust: -1 }`
-    - 今スプリントは最小限だけ借りて、返済タスクを同スプリントのバックログに切っておく `{ culture: 1, insight: 1, trust: -1 }` →borrowedDebt
+    - 最重要箇所だけ今スプリント後半に先に返す部分返済計画を出す `{ insight: 1, trust: 1 }`
 
 - **現場からの改善案** `s2-daily-idea`（チャンス） 心得:68,84
     - ⚠ 自分の設計が正しいので丁重に断る `{ culture: -1, insight: -1 }`
