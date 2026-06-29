@@ -92,7 +92,9 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'trouble',
     location: 'warehouse',
-    minigame: 'hearing',
+    // 行動の芯＝「狙った的（KPI）が外れた本当の原因はどれか」を読み解く真因分析。deduction ブロックを持つ
+    // 推理の回なので、聞き取り(hearing)ではなく作る/直すを含む実装判断 dev に振り、診断ビートを際立たせる。
+    minigame: 'dev',
     hearingTheme: 'genba',
     requiresFlag: 'wrongKpi',
     title: '手戻り——使われない新機能',
@@ -365,7 +367,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'trouble',
     // 行動の芯＝作った誤出荷率ダッシュボード（成果物）を点検し「誰が・どの場面で見て動くか」を見極める＝レビュー。
-    // “現場に問う”のではなく“出来上がった成果物が運用に耐えるか確かめる”回なので review に振る（成果物確認）。
+    // “現場に問う”のではなく”出来上がった成果物が運用に耐えるか確かめる”回なので review に振る（成果物確認）。
     // 注: review は汎用の差分デッキ(dealReview)を出すため、下の hearingOptions / deduction は実際には未使用（残置）。
     // 将来 hearing に戻す余地として残すだけで、ミニゲームの出題には反映されない。choices/フラグ/結果文は不変。
     minigame: 'review',
@@ -446,7 +448,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
-    // 権限の境界とロールバック経路を“相手に問うて掘り下げる”局面＝深掘りラリー（drill・inin）。
+    // 権限の境界とロールバック経路を”相手に問うて掘り下げる”局面＝深掘りラリー（drill・inin）。
     // dev（汎用の手順並べ替え）だと固有の「AIへの権限委譲設計」が消えるため、theme:inin を活かす drill に。
     // inin の drill セットが「任せる線・関所・戻し手順」を扱い、deduction（境界の設計）と手触りが噛み合う。
     // 隣接の hearing 回（s3-daily-metrics／s3-daily-ai-partner）に別種を挟み、作業化も崩す。
@@ -494,7 +496,9 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'chance',
-    minigame: 'hearing',
+    // 行動の芯＝AIに任せる部分と現場知で仕上げる部分の線引きという実装方針の判断。聞き取りでなく
+    // 設計の段取りなので hearing から dev に振る。
+    minigame: 'dev',
     hearingTheme: 'inin',
     title: 'AIに任せきるか',
     narrative:
@@ -1409,7 +1413,9 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
-    minigame: 'hearing',
+    // 行動の芯＝「いつまでに・誰の決めで動くか」という意思決定プロセスの段取り。s3-daily-lastman が
+    // 同じ“ラストマンが座る”聞き取りの回なので、こちらは決め方の手順を組む dev に振り作業を分散する。
+    minigame: 'dev',
     hearingTheme: 'team',
     title: '誰が決めるのか',
     narrative:
@@ -1570,7 +1576,9 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
-    minigame: 'hearing',
+    // 行動の芯＝「同じ条件なら誰がやっても起きたか／仕組みのどこに穴があったか」を切り分ける
+    // ブレームレスな真因分析。聞き取りでなく原因診断の回なので hearing から dev に振る。
+    minigame: 'dev',
     hearingTheme: 'team',
     title: '「誰のミスだ」',
     advocacy: {
@@ -1765,7 +1773,9 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
-    minigame: 'hearing',
+    // 行動の芯＝帳簿の売上と現場の在庫ゼロの食い違いを一件ずつ突き合わせて循環取引を読み解く調査。
+    // 不正アークの調査回は“聞く”より“データを突き合わせて見抜く”が芯なので hearing から dev に振る。
+    minigame: 'dev',
     hearingTheme: 'chousa',
     location: 'keiri',
     requiresFlag: 'fraudClue',
@@ -1816,7 +1826,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
-    // 承認フローの実態を“返ってきた言葉を捌いて掘り下げる”局面＝深掘りラリー（drill・chousa）。
+    // 承認フローの実態を”返ってきた言葉を捌いて掘り下げる”局面＝深掘りラリー（drill・chousa）。
     // 不正暴露アークの調査回が hearing 一色になる帯（連結の帳尻／書類の裏取り／循環取引）を割る。
     minigame: 'drill',
     hearingTheme: 'chousa',
@@ -1858,7 +1868,9 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
-    minigame: 'hearing',
+    // 行動の芯＝契約書と請求書の控えを日付・相手先まで突き合わせ、循環取引の符合を見抜く裏取り調査。
+    // 聞き取りでなく書類とデータを照合して読み解く回なので hearing から dev に振る。
+    minigame: 'dev',
     hearingTheme: 'chousa',
     location: 'soumu',
     requiresFlag: 'fraudClue',
@@ -1947,7 +1959,7 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
-    // 同一シリアルの巡りを“一周たどって突き合わせる”取引データ調査＝深掘りラリー（drill・chousa）。
+    // 同一シリアルの巡りを”一周たどって突き合わせる”取引データ調査＝深掘りラリー（drill・chousa）。
     // deduction（数字のからくりを見抜く）→ drill（裏取りを掘る）で調査の手触りが噛み合う。
     minigame: 'drill',
     hearingTheme: 'chousa',
