@@ -161,7 +161,17 @@ describe('悪手（warn）の常設 — ラチェット', () => {
   // 例外＝『意図的な技術的負債』のように悪手とは言えない正当な判断（件数だけでなくIDで縛り、別イベントの後退を捕捉）。
   // s1-daily-soumu-access: 「速く現場へ入る」は悪手ではなく、速さ vs 組織学習の正当なトレードオフ
   //（trust+ と insight− を機会コストで引き換える）。「a＝必ず罠」の構造読みを崩すため意図的に warn を外した。
-  const WARN_EXEMPT = new Set(['s2-daily-debt', 's1-daily-soumu-access', 's2-daily-return', 's2-daily-ai-eval'])
+  // s2-daily-leadtime / s2-daily-refine（#296）: S2 デイリーの warn-a/virtuous-b 固定律動を崩すため、
+  //   両択とも warn なしの genuine ambiguity に置換。leadtime＝攻め(先回り)vs守り(検証)、
+  //   refine＝経験主義(最小着手で検証)vs事前合意(リファインメント)。どちらも明確悪手でなく機会コスト型。
+  const WARN_EXEMPT = new Set([
+    's2-daily-debt',
+    's1-daily-soumu-access',
+    's2-daily-return',
+    's2-daily-ai-eval',
+    's2-daily-leadtime',
+    's2-daily-refine',
+  ])
 
   it('複数選択肢のデイリーで warn が無いのは許可リストのイベントだけ', () => {
     const noWarn = EVENTS.filter(
