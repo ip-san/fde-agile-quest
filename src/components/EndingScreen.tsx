@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { displayName } from '../data/chapters/chapter-01/names'
 import { endingImage, imageUrl } from '../data/images'
+import { SEEDS } from '../data/seeds'
 import type { ValueBreakdown } from '../engine/progression'
 import { sfxReveal } from '../engine/sfx'
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
@@ -25,6 +26,8 @@ interface Props {
   fraudHint?: 'none' | 'clue' | 'case'
   /** この周回で立ったフラグ（エンディング引き文の周回差別化に使用） */
   flags?: ReadonlySet<GameFlag>
+  /** これまでに発見した「次の機能の種」ID（周回をまたいで永続） */
+  foundSeeds?: ReadonlySet<string>
   log: LogEntry[]
   onReset: () => void
 }
@@ -66,6 +69,21 @@ function carryoverLine(endingId: string, flags: ReadonlySet<GameFlag>): string |
     return '取り切れたトレードオフと、取り切れなかったトレードオフ。どちらも次の入り口で待っている。'
   // decent / hero / その他クリアエンド
   return '取り切れなかったトレードオフが、次の入り口で待っている。'
+}
+
+/** 現場で発見した「次の機能の種」の収集数をエンディングに反映する純関数（クリアエンドのみ）。
+ *  全種収集: 現場観察→製品還元のフィードバックループ完結を祝う一段。
+ *  部分達成（4種以上）: 手応えを体感させ、次周回での全収集意欲に繋げる。
+ *  fail-* エンディングでは非表示（return null）。 */
+function seedsLine(endingId: string, foundSeeds: ReadonlySet<string>): string | null {
+  if (endingId.startsWith('fail-')) return null
+  if (foundSeeds.size >= SEEDS.length) {
+    return `${SEEDS.length}つの種がすべてStockPilotに還元された——現場の声が製品になる回路を、あなたが繋いだ。`
+  }
+  if (foundSeeds.size >= 4) {
+    return `${foundSeeds.size}つの現場の声がStockPilotに届いている——観察が製品を変える手応えが、ここにある。`
+  }
+  return null
 }
 
 /** 「決断の一歩手前」（不正を掴んだ周回のみ）。告発の決着は次章へ繰り延べる（§6.5）ので、
@@ -244,6 +262,7 @@ export function EndingScreen({
   valueHistory,
   fraudHint = 'none',
   flags = new Set(),
+  foundSeeds = new Set(),
   log,
   onReset,
 }: Props) {
@@ -348,6 +367,12 @@ export function EndingScreen({
             </div>
           )}
         </div>
+      )}
+
+      {/* Seeds ナレーション: 現場観察→製品還元ループの達成をクリアエンドのみで表示する。
+          全種収集・部分達成（4種以上）でそれぞれ異なる一段を出す。fail-* は非表示（seedsLine が null を返す）。 */}
+      {seedsLine(ending.id, foundSeeds) && (
+        <p className="mt-2 text-sm leading-relaxed text-emerald-200/70">{seedsLine(ending.id, foundSeeds)}</p>
       )}
 
       {/* C/D ランク時：演出なし・「惜しさと次への焦点」を前面に出す。
