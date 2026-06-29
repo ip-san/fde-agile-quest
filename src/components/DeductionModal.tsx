@@ -12,6 +12,17 @@ interface Props {
   onResolve: (correct: boolean) => void
 }
 
+/** マウント時1回だけ呼ばれる Fisher-Yates シャッフル（Math.random ベース）。
+ *  useState 初期値関数内でのみ使用し、レンダリング中は呼ばない。 */
+function shuffleOnce<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
 /**
  * 選択の前の「現場の本音を見抜く」推理ステップ。
  * 建前・ノイズに紛れた本音（真の制約）を1つ当てる＝逆転裁判の"見抜く/突きつける"快感の移植。
@@ -27,6 +38,9 @@ interface Props {
 export function DeductionModal({ event, onResolve }: Props) {
   const d = event.deduction
   const [picked, setPicked] = useState<DeductionOption | null>(null)
+  // マウント時1回だけシャッフルし、2周目以降の「正解位置の記憶」による作業化を解消。
+  // hearing（MiniGameHearing.tsx）と同パターン：useState 初期値関数内でのみ乱数を生成。
+  const [shuffledOptions] = useState<DeductionOption[]>(() => (d ? shuffleOnce(d.options) : []))
   const ref = useFocusTrap<HTMLDivElement>()
   const correct = !!picked?.truth
 
@@ -106,7 +120,7 @@ export function DeductionModal({ event, onResolve }: Props) {
               <p className="text-xs font-semibold text-[var(--text-sub)]">
                 {isArc ? '核心を突け' : 'どれが現場の本音だ？'}
               </p>
-              {d.options.map((o) => (
+              {shuffledOptions.map((o) => (
                 <button
                   key={o.id}
                   type="button"
