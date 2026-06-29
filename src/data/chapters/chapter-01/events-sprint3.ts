@@ -48,7 +48,9 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     ceremony: 'daily',
     segment: 'trouble',
     location: 'warehouse',
-    minigame: 'hearing',
+    // 行動の芯＝「狙った的（KPI）が外れた本当の原因はどれか」を読み解く真因分析。deduction ブロックを持つ
+    // 推理の回なので、聞き取り(hearing)ではなく作る/直すを含む実装判断 dev に振り、診断ビートを際立たせる。
+    minigame: 'dev',
     hearingTheme: 'genba',
     requiresFlag: 'wrongKpi',
     title: '手戻り——使われない新機能',
@@ -137,6 +139,17 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         resultText:
           'たどたどしくても、若手が運用を自分の言葉で語り始めた。{{オンボーディング}}が、人に根を下ろす。今日は不慣れな手つきで入力を一件間違え、確認に呼ばれて自分の手も二度止まった——誰かのミスを責めずに一緒に直せる現場なら、人に任せていける。（自分が握る安心の信頼+は取り逃す）',
         seedId: 'guided-onboarding',
+      },
+      {
+        // 「任せる/巻き取る」の移譲軸ではなく、本人の不安そのものに向き合う情緒の軸。
+        // b（任せて詰まったら支える）は手順の渡し方の話。cは「なぜ顔色をうかがうのか」を先に聞き、
+        // 横に座って一件だけ一緒に通すことで怖さをほどく。心理的安全が先か、自走の機会が先かの判断。
+        // 不安の正体が「失敗を責められる怖さ」ならcが効く。手順さえ渡せば動ける段階ならbが速い。
+        id: 'c',
+        label: '横に座り、不安を聞いてから一件だけ一緒に通す',
+        effects: { insight: 1 },
+        resultText:
+          'いきなり任せず、まず「どこが怖い？」と聞いた。間違えても戻せること、誰も責めないことを示し、横に座って一件だけ一緒に通す。手が止まっていたのは操作ではなく「失敗して怒られること」だと分かった——その怖さがほどけて初めて、若手は自分から二件目に手を伸ばした。今日進んだのは一件だけ。自分が巻き取れば速く回して見せられた進捗（信頼+）は取り逃す。だが人が育つ土台は、手順より先に気持ちの側にある。',
       },
     ],
   },
@@ -263,6 +276,16 @@ export const SPRINT3_EVENTS: GameEvent[] = [
         effects: { trust: 1, culture: 1 },
         resultText: '最後までやり切る背中が、関係者の信頼を厚くする（信頼+）。その評判が、次の入口を連れてくる。',
       },
+      {
+        // 「今を続ける/次へ移る」の継続軸ではなく、紹介の中身を実務で見極める軸。
+        // bはその場で関係を繋ぐ判断。cは「その部署の困りごとが今の延長で解けるのか、飛び地なのか」を先に切り分ける。
+        // 別部署の課題が誤出荷と同じ筋なら横展開できるが、別物なら同じ型は刺さらない——スコープの当たりを付けてから受ける。
+        id: 'c',
+        label: '別部署の困りごとが今の延長で解けるか、先に中身を確かめる',
+        effects: { insight: 1 },
+        resultText:
+          '「来てくれ」に即答せず、その部署が何に困っているのかを聞きに行った。蓋を開けると、誤出荷とは別筋の在庫精度の問題で、今の型はそのままでは刺さらない。安請け合いすれば、また別の場所に黙り込む画面を作るところだった。受けるかどうかは、当たりを付けてから決める。すぐ繋いで関係を厚くする信頼+は今日は取り逃すが、合わない案件を抱え込む前に踏みとどまった。',
+      },
     ],
   },
   {
@@ -270,7 +293,9 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
-    minigame: 'hearing',
+    // 行動の芯＝「ダッシュボードの本当の懸念は何か（属人化）」を読み解く診断。deduction ブロックを持つ
+    // 推理の回なので hearing から dev に振り、原因を切り分ける手触りを残す。
+    minigame: 'dev',
     hearingTheme: 'genba',
     title: '誰がダッシュボードを見るか',
     narrative: '誤出荷率の{{ダッシュボード}}を作ったが、自分が抜けたら誰も見ない懸念がある。',
@@ -331,7 +356,9 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
-    minigame: 'hearing',
+    // 行動の芯＝書き込み権限の境界とロールバック経路をどう設計するかの技術判断。聞き取りでなく
+    // “作る/直す”側の段取りなので hearing から dev に振る。
+    minigame: 'dev',
     hearingTheme: 'inin',
     title: 'AIエージェントに権限を渡すか',
     narrative:
@@ -376,7 +403,9 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'chance',
-    minigame: 'hearing',
+    // 行動の芯＝AIに任せる部分と現場知で仕上げる部分の線引きという実装方針の判断。聞き取りでなく
+    // 設計の段取りなので hearing から dev に振る。
+    minigame: 'dev',
     hearingTheme: 'inin',
     title: 'AIに任せきるか',
     narrative:
@@ -1162,7 +1191,9 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
-    minigame: 'hearing',
+    // 行動の芯＝「いつまでに・誰の決めで動くか」という意思決定プロセスの段取り。s3-daily-lastman が
+    // 同じ“ラストマンが座る”聞き取りの回なので、こちらは決め方の手順を組む dev に振り作業を分散する。
+    minigame: 'dev',
     hearingTheme: 'team',
     title: '誰が決めるのか',
     narrative:
@@ -1306,7 +1337,9 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
-    minigame: 'hearing',
+    // 行動の芯＝「同じ条件なら誰がやっても起きたか／仕組みのどこに穴があったか」を切り分ける
+    // ブレームレスな真因分析。聞き取りでなく原因診断の回なので hearing から dev に振る。
+    minigame: 'dev',
     hearingTheme: 'team',
     title: '「誰のミスだ」',
     advocacy: {
@@ -1491,7 +1524,9 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
-    minigame: 'hearing',
+    // 行動の芯＝帳簿の売上と現場の在庫ゼロの食い違いを一件ずつ突き合わせて循環取引を読み解く調査。
+    // 不正アークの調査回は“聞く”より“データを突き合わせて見抜く”が芯なので hearing から dev に振る。
+    minigame: 'dev',
     hearingTheme: 'chousa',
     location: 'keiri',
     requiresFlag: 'fraudClue',
@@ -1534,7 +1569,9 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
-    minigame: 'hearing',
+    // 行動の芯＝承認印の形骸化・後付け領収書という内部統制の穴を切り分ける診断。聞き取りでなく
+    // 統制の欠陥を読み解く調査回なので hearing から dev に振る。
+    minigame: 'dev',
     hearingTheme: 'chousa',
     location: 'soumu',
     hints: {
@@ -1574,7 +1611,9 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
-    minigame: 'hearing',
+    // 行動の芯＝契約書と請求書の控えを日付・相手先まで突き合わせ、循環取引の符合を見抜く裏取り調査。
+    // 聞き取りでなく書類とデータを照合して読み解く回なので hearing から dev に振る。
+    minigame: 'dev',
     hearingTheme: 'chousa',
     location: 'soumu',
     requiresFlag: 'fraudClue',
@@ -1656,7 +1695,9 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'trouble',
-    minigame: 'hearing',
+    // 行動の芯＝同一シリアルの取引ログを一周たどり、架空の循環取引の正体を見抜く調査。deduction ブロックを
+    // 持つ推理の回なので、聞き取りでなくデータを突き合わせて読み解く dev に振る。
+    minigame: 'dev',
     hearingTheme: 'chousa',
     location: 'serverroom',
     hints: {
