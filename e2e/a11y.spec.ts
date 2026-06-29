@@ -26,6 +26,8 @@ async function gotoBoard(page: Page) {
     for (const k of ['intro', 'planning', 'daily', 'review', 'retro', 'minigame']) {
       localStorage.setItem(`fde-agile-quest:coach:${k}`, '1')
     }
+    // バックログパネル初回チュートリアルオーバーレイも抑止（role="dialog" が重複するのを防ぐ）。
+    localStorage.setItem('backlog-tutorial-seen', '1')
   })
   await page.goto('/')
 }
