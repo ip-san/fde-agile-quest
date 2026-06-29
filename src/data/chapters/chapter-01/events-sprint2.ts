@@ -361,10 +361,10 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     sprint: 2,
     ceremony: 'daily',
     segment: 'team',
-    // 行動の芯＝二分したチームを KPI という価値の論拠で動かし合意を取る＝説得（迎合・気合は悪手）。
-    minigame: 'persuade',
-    // 注: persuade は汎用の論拠デッキ(PERSUADE_DECK)を出すため、下の hearingOptions は実際には未使用（残置）。
-    // 将来 dev/hearing に戻す余地として残すだけで、ミニゲームの出題には反映されない。
+    // 行動の芯＝二分したチーム内の認識をすり合わせ、KPI を物差しに着手順の合意を取る＝チーム確認(hearing)。
+    // 相手は社外でなくチームであり、説得より「誰の仕事でもない交通整理を拾い、噛み合わない両派の見落としを聞き出す」がコア。
+    minigame: 'hearing',
+    hearingTheme: 'team',
     title: '優先順位の綱引き',
     narrative:
       '「予測機能が先だ」「いや写真入力だろ」。チームが二つに割れたまま、誰も交通整理をしない。あなたはエンジニアとして呼ばれた。だが、整理する人がいない。',
@@ -465,10 +465,9 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     sprint: 2,
     ceremony: 'daily',
     segment: 'kokyaku',
-    // 行動の芯＝経営を「業務の変化」という価値の論拠で動かす＝説得（見栄えの資料で取り繕うは悪手）。
-    minigame: 'persuade',
-    // 注: persuade は汎用の論拠デッキ(PERSUADE_DECK)を出すため、下の hearingOptions は実際には未使用（残置）。
-    // 将来 dev/hearing に戻す余地として残すだけで、ミニゲームの出題には反映されない。
+    // 行動の芯＝「立派な資料か、動くインクリメントか」という手段判断＝dev（並べ替え）。
+    // s1-review の demo persuade と価値訴求の型が被るため、説得ビートは s1-review に集約し、ここは作って見せる側に振る。
+    minigame: 'dev',
     title: '進捗を説明しろ',
     narrative: '経営会議で「進捗を説明しろ」と。立派な資料を作るか、動くデモを見せるか。',
     hearingOptions: [
@@ -1729,10 +1728,10 @@ export const SPRINT2_EVENTS: GameEvent[] = [
       sm: '急ぐな。一律で削れという話ほど、現場の事実から外れている。誰が本当に困るのか、見てくる。',
       dev: '一律3割って、品目を見ずに削る話ですよね。どこで{{欠品}}が出るか、数字で確かめてからにしません？',
     },
-    // 行動の芯＝本社経営企画を「品目別の事実」という価値の論拠で動かす＝説得（一律で飲ませる/数字だけ作るは悪手）。
-    minigame: 'persuade',
-    // 注: persuade は汎用の論拠デッキ(PERSUADE_DECK)を出すため、下の hearingOptions は実際には未使用（残置）。
-    // 将来 dev/hearing に戻す余地として残すだけで、ミニゲームの出題には反映されない。
+    // 行動の芯＝品目別に「削れる在庫／削れない在庫」を現場の事実で切り分ける＝現場確認(hearing)。
+    // 本社を動かすより先に、どの品目から欠品が出るかを田淵さんに聞いて事実を握るのがコアなので genba テーマで引く。
+    minigame: 'hearing',
+    hearingTheme: 'genba',
     title: '本社からの一律通達',
     narrative:
       '本社経営企画から「全倉庫、在庫を一律3割削減」の通達が降りてきた。現場は{{欠品}}を恐れてざわつく。赤城部長は「本社の言う通りにしておけ」と言う。',

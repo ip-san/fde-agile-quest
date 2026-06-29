@@ -1269,10 +1269,9 @@ export const SPRINT3_EVENTS: GameEvent[] = [
     sprint: 3,
     ceremony: 'daily',
     segment: 'kokyaku',
-    // 行動の芯＝郷田専務を「なぜ下がったか＝再現性」という価値の論拠で動かし継続投資を引き出す＝説得（数字だけ並べるは悪手）。
-    minigame: 'persuade',
-    // 注: persuade は汎用の論拠デッキ(PERSUADE_DECK)を出すため、下の hearingOptions は実際には未使用（残置）。
-    // 将来 dev/hearing に戻す余地として残すだけで、ミニゲームの出題には反映されない。
+    // 行動の芯＝郷田専務が「なぜ下がったか／次に何を残すか」の何を知りたいかを確かめ、数字に物語を添える＝確認(hearing)。
+    // s3-daily-sales / s3-daily-facts と経営への価値伝達が重なるため説得ビートからは外し、相手の関心をすり合わせる側に振る。
+    minigame: 'hearing',
     title: '数字だけ並べるか',
     narrative:
       '郷田専務に最終成果を報告する。{{誤出荷率}}は確かに下がった。だが「なぜ下がったか」「次に何を残すか」を語らず、数字だけ並べることもできる。',
