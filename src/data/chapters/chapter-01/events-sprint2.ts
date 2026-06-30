@@ -1106,7 +1106,10 @@ export const SPRINT2_EVENTS: GameEvent[] = [
     segment: 'kokyaku',
     // 行動の芯＝結城/PO とスプリントゴールを価値の論拠で再交渉する＝説得（断れず呑む/全部詰めるは悪手）。
     minigame: 'persuade',
-    // 注: persuade は汎用の論拠デッキ(PERSUADE_DECK)を出すため、下の hearingOptions は実際には未使用（残置）。
+    // この場固有の説得デッキ(GOALCREEP_PERSUADE_DECK)を出す＝残キャパシティ・完成の定義・本来ゴールへの
+    // 跳ね返りという“事実”で線を引く論拠が効き、迎合・先送り・全部呑むは効かない（minigames.ts）。
+    persuadeContext: 'goalcreep',
+    // 注: persuade は persuadeContext のデッキを出すため、下の hearingOptions は実際には未使用（残置）。
     // 将来 dev/hearing に戻す余地として残すだけで、ミニゲームの出題には反映されない。
     title: '揺らぐスプリントゴール',
     narrative:

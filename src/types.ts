@@ -83,8 +83,10 @@ export type MiniGameKind = 'dev' | 'hearing' | 'review' | 'persuade' | 'drill'
 export type HearingTheme = 'genba' | 'kokyaku' | 'chance' | 'team' | 'chousa' | 'inin' | 'persuade'
 
 /** 説得(persuade)ミニゲームの文脈別デッキの種別。未指定は汎用 PERSUADE_DECK（相手非依存・PO説得など）。
- *  'demo'＝スプリントレビューのお披露目（誠実に価値を示す論拠が効き、spin は効かない）。デッキは minigames.ts。 */
-export type PersuadeContext = 'demo'
+ *  'demo'＝スプリントレビューのお披露目（誠実に価値を示す論拠が効き、spin は効かない）。
+ *  'goalcreep'＝スプリント途中の割り込み交渉（残キャパシティと完成の定義で線を引く論拠が効き、迎合・先送り・全部呑むは効かない）。
+ *  デッキは minigames.ts。 */
+export type PersuadeContext = 'demo' | 'goalcreep'
 
 /** ミニゲームの出来。倍率＝選択の主正メーターを great:+1 / good:±0 / poor:-1 する */
 export type ExecTier = 'great' | 'good' | 'poor'
